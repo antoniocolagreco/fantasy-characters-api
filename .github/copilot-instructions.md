@@ -156,13 +156,13 @@ interface User {
 
 interface Image {
     id: string @id @default(uuid())
-    blob: Bytes // Binary data for the image
+    blob: Bytes // Binary data for the image (WebP format, max 350x450px)
     description: string? // Optional description
     filename: string
     size: Int // Size in bytes
-    mimeType: string // e.g., "image/png", "image/jpeg"
-    width: Int // Image width in pixels
-    height: Int // Image height in pixels
+    mimeType: string // Always "image/webp" after processing
+    width: Int // Image width in pixels (max 350)
+    height: Int // Image height in pixels (max 450)
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
     
@@ -614,17 +614,17 @@ GET    /api/health                 // Health check with system status
 #### Database Deliverables
 
 - [x] **Prisma Schema**: Complete database models
-- [ ] **Database Migrations**: Initial schema migration
-- [ ] **Seed Data**: Basic test data for development
+- [x] **Database Migrations**: Initial schema migration
+- [x] **Seed Data**: Basic test data for development
 - [x] **Database Services**: CRUD operations layer
-- [ ] **Connection Testing**: Database health checks
+- [x] **Connection Testing**: Database health checks
 
 #### Database Models Implemented
 
-- [ ] All models from the schema (User, Character, Race, etc.)
-- [ ] Proper relationships and constraints
-- [ ] Migration scripts
-- [ ] Seed data for testing
+- [x] All models from the schema (User, Character, Race, etc.)
+- [x] Proper relationships and constraints
+- [x] Migration scripts
+- [x] Seed data for testing
 
 #### Technical Implementation
 
@@ -648,18 +648,18 @@ GET    /api/health                 // Health check with system status
 
 #### Infrastructure Deliverables
 
-- [x] **Centralized Error Handling**: Global error handler with typed errors
+- [ ] **Centralized Error Handling**: Global error handler with typed errors
 - [ ] **Custom Error Classes**: Business logic and validation errors
-- [x] **Logging System**: Structured logging with Pino
+- [ ] **Logging System**: Structured logging with Pino
 - [ ] **Validation Schemas**: TypeBox schemas for request validation
 - [ ] **Response Formatters**: Standardized API response format
 - [ ] **Shared Utilities**: Common functions and helpers
 
 #### Infrastructure Components
 
-- [x] Global error handler middleware
+- [ ] Global error handler middleware
 - [ ] Custom error classes (ValidationError, NotFoundError, etc.)
-- [x] Structured logging with request tracking
+- [ ] Structured logging with request tracking
 - [ ] TypeBox validation schemas
 - [ ] Standard API response format
 - [ ] Utility functions and helpers
@@ -696,18 +696,26 @@ DELETE /api/users/:id              // Delete user
 **Duration**: 1-2 weeks
 **Status**: ❌ NOT STARTED
 
+#### Image Processing Requirements
+
+- **Image Resizing**: All uploaded images must be resized to maximum dimensions of **350x450 pixels** while maintaining aspect ratio
+- **Format Conversion**: All images must be converted to **WebP format** before saving to database for optimal compression and performance
+- **Quality Optimization**: WebP compression should maintain high quality while reducing file size
+
 #### Image TDD Implementation
 
 - [ ] File upload validation
 - [ ] Image processing and optimization
 - [ ] Storage management
 - [ ] Security validation
+- [ ] Image format conversion pipeline
+- [ ] Aspect ratio preservation during resize
 
 #### Image Endpoints
 
 ```typescript
-POST   /api/images                 // Upload image
-GET    /api/images/:id             // Get image
+POST   /api/images                 // Upload image (auto-resize to 350x450 and convert to WebP)
+GET    /api/images/:id             // Get image (WebP format)
 DELETE /api/images/:id             // Delete image
 ```
 
@@ -904,27 +912,6 @@ GET    /api/characters/:id         // Get character by ID
 POST   /api/characters             // Create new character
 PUT    /api/characters/:id         // Update character
 DELETE /api/characters/:id         // Delete character
-
-// Equipment Management
-PUT    /api/characters/:id/equipment // Update equipment slots
-POST   /api/characters/:id/equip   // Equip item to specific slot
-POST   /api/characters/:id/unequip // Unequip item from slot
-
-// Inventory Management
-GET    /api/characters/:id/inventory // Get character inventory
-PUT    /api/characters/:id/inventory // Update inventory
-POST   /api/characters/:id/inventory // Add item to inventory
-DELETE /api/characters/:id/inventory/:itemId // Remove item
-
-// Skills & Perks
-GET    /api/characters/:id/skills  // Get character skills
-PUT    /api/characters/:id/skills  // Update character skills
-GET    /api/characters/:id/perks   // Get character perks
-PUT    /api/characters/:id/perks   // Update character perks
-
-// Character Progression
-POST   /api/characters/:id/level-up // Level up character
-PUT    /api/characters/:id/stats   // Update character stats
 ```
 
 #### Characters Complex Business Logic

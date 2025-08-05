@@ -1,33 +1,33 @@
 {
-  "semi": true,
-  "trailingComma": "es5",
-  "singleQuote": true,
-  "printWidth": 80,
-  "tabWidth": 2,
-  "useTabs": false,
-  "quoteProps": "as-needed",
-  "bracketSpacing": true,
-  "bracketSameLine": false,
-  "arrowParens": "always",
-  "endOfLine": "lf",
-  "embeddedLanguageFormatting": "auto",
-  "insertPragma": false,
-  "proseWrap": "preserve",
-  "requirePragma": false,
-  "htmlWhitespaceSensitivity": "css",
-  "overrides": [
-    {
-      "files": "*.json",
-      "options": {
-        "printWidth": 120
-      }
-    },
-    {
-      "files": "*.md",
-      "options": {
-        "proseWrap": "always",
-        "printWidth": 100
-      }
-    }
-  ]
+    "semi": false,
+    "trailingComma": "none",
+    "singleQuote": true,
+    "printWidth": 120,
+    "tabWidth": 4,
+    "useTabs": false,
+    "quoteProps": "as-needed",
+    "bracketSpacing": true,
+    "bracketSameLine": true,
+    "arrowParens": "always",
+    "endOfLine": "lf",
+    "embeddedLanguageFormatting": "auto",
+    "insertPragma": false,
+    "proseWrap": "preserve",
+    "requirePragma": false,
+    "htmlWhitespaceSensitivity": "css",
+    "overrides": [
+        {
+            "files": "*.json",
+            "options": {
+                "printWidth": 120
+            }
+        },
+        {
+            "files": "*.md",
+            "options": {
+                "proseWrap": "always",
+                "printWidth": 100
+            }
+        }
+    ]
 }
