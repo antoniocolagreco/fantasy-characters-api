@@ -35,18 +35,12 @@
       "@/middleware/*": ["src/middleware/*"],
       "@/routes/*": ["src/routes/*"],
       "@/services/*": ["src/services/*"],
-      "@/controllers/*": ["src/controllers/*"]
+      "@/controllers/*": ["src/controllers/*"],
+      "@/schemas/*": ["src/schemas/*"]
     }
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "ts-node": {
     "esm": true
   }

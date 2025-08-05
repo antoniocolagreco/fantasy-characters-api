@@ -1,0 +1,427 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = env("DATABASE_URL")
+}
+
+// Core Enums
+enum Role {
+    USER
+    ADMIN
+    MODERATOR
+}
+
+enum Rarity {
+    COMMON
+    UNCOMMON
+    RARE
+    EPIC
+    LEGENDARY
+}
+
+enum Slot {
+    NONE
+    HEAD
+    CHEST
+    LEGS
+    FEET
+    HANDS
+    MAIN_HAND
+    OFF_HAND
+    RING
+    AMULET
+    BELT
+    BACK
+}
+
+// Authentication & Media Models
+model User {
+    // Core fields
+    id              String  @id @default(uuid())
+    email           String  @unique
+    passwordHash    String
+    role            Role    @default(USER)
+    isEmailVerified Boolean @default(false)
+    isActive        Boolean @default(true)
+
+    // Optional info fields
+    displayName String?
+    bio         String?
+
+    // OAuth fields
+    oauthProvider String?
+    oauthId       String?
+
+    // Timestamps  
+    lastPasswordChange DateTime?
+    lastLogin          DateTime  @default(now())
+    createdAt          DateTime  @default(now())
+    updatedAt          DateTime  @updatedAt
+
+    // Profile picture
+    profilePictureId String? @unique
+    profilePicture   Image?  @relation("UserProfilePicture", fields: [profilePictureId], references: [id], onDelete: Cascade)
+
+    // Relations
+    characters  Character[] @relation("UserCharacters")
+    images      Image[]     @relation("UserImages")
+    createdTags Tag[]       @relation("UserTags")
+    items       Item[]      @relation("UserItems")
+    races       Race[]      @relation("UserRaces")
+    perks       Perk[]      @relation("UserPerks")
+    skills      Skill[]     @relation("UserSkills")
+    archetype   Archetype[] @relation("UserArchetypes")
+
+    @@index([email])
+    @@index([displayName])
+    @@map("users")
+}
+
+model Image {
+    // Core fields
+    id          String  @id @default(uuid())
+    blob        Bytes // Binary data for the image
+    description String? // Optional description of the image
+    filename    String
+    size        Int // Size in bytes
+    mimeType    String // e.g., "image/png", "image/jpeg"
+    width       Int // Image width in pixels
+    height      Int // Image height in pixels
+
+    //User
+    uploadedById String?
+    uploadedBy   User?   @relation("UserImages", fields: [uploadedById], references: [id])
+
+    // Optional profile picture relation
+    userProfile User? @relation("UserProfilePicture")
+
+    // Relations
+    characters Character[] @relation("CharacterImages")
+    races      Race[]      @relation("RaceImages")
+    archetypes Archetype[] @relation("ArchetypeImages")
+    skills     Skill[]     @relation("SkillImages")
+    items      Item[]      @relation("ItemImages")
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("images")
+}
+
+// Game System Models
+model Tag {
+    // Core fields
+    id          String  @id @default(uuid())
+    name        String  @unique
+    description String?
+
+    //User
+    createdById String?
+    createdBy   User?   @relation("UserTags", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Relations
+    skills     Skill[]     @relation("SkillTags")
+    perks      Perk[]      @relation("PerkTags")
+    races      Race[]      @relation("RaceTags")
+    archetypes Archetype[] @relation("ArchetypeTags")
+    items      Item[]      @relation("ItemTags")
+    characters Character[] @relation("CharacterTags")
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("tags")
+}
+
+model Race {
+    // Core fields
+    id          String  @id @default(uuid())
+    name        String  @unique
+    description String?
+
+    // Attribute modifiers
+    healthModifier       Int @default(100)
+    manaModifier         Int @default(100)
+    staminaModifier      Int @default(100)
+    strengthModifier     Int @default(10)
+    constitutionModifier Int @default(10)
+    dexterityModifier    Int @default(10)
+    intelligenceModifier Int @default(10)
+    wisdomModifier       Int @default(10)
+    charismaModifier     Int @default(10)
+
+    //User
+    createdById String?
+    createdBy   User?   @relation("UserRaces", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Image    
+    imageId String?
+    image   Image?  @relation("RaceImages", fields: [imageId], references: [id], onDelete: Cascade)
+
+    // Relations
+    characters Character[] @relation("CharacterRaces")
+    skills     Skill[]     @relation("RaceSkills")
+    archetypes Archetype[] @relation("ArchetypeRequiredRaces")
+    tags       Tag[]       @relation("RaceTags")
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("races")
+}
+
+model Archetype {
+    // Core fields
+    id          String  @id @default(uuid())
+    name        String  @unique
+    description String?
+
+    // Image
+    imageId String?
+    image   Image?  @relation("ArchetypeImages", fields: [imageId], references: [id], onDelete: Cascade)
+
+    // Relations
+    characters    Character[] @relation("CharacterArchetypes")
+    skills        Skill[]     @relation("ArchetypeSkills")
+    requiredRaces Race[]      @relation("ArchetypeRequiredRaces")
+    tags          Tag[]       @relation("ArchetypeTags")
+
+    // User
+    createdById String?
+    createdBy   User?   @relation("UserArchetypes", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("archetypes")
+}
+
+model Skill {
+    id            String  @id @default(uuid())
+    name          String  @unique
+    description   String?
+    requiredLevel Int     @default(1)
+
+    // Image
+    imageId String?
+    image   Image?  @relation("SkillImages", fields: [imageId], references: [id], onDelete: Cascade)
+
+    //Relations
+    characters Character[] @relation("CharacterSkills")
+    races      Race[]      @relation("RaceSkills")
+    archetypes Archetype[] @relation("ArchetypeSkills")
+    items      Item[]      @relation("ItemBonusSkills")
+    tags       Tag[]       @relation("SkillTags")
+
+    // User
+    createdById String?
+    createdBy   User?   @relation("UserSkills", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("skills")
+}
+
+model Perk {
+    // Core fields
+    id            String  @id @default(uuid())
+    name          String  @unique
+    description   String?
+    requiredLevel Int     @default(0)
+
+    // Relations
+    characters Character[] @relation("CharacterPerks")
+    items      Item[]      @relation("ItemBonusPerks")
+    tags       Tag[]       @relation("PerkTags")
+
+    //User
+    createdById String?
+    createdBy   User?   @relation("UserPerks", fields: [createdById], references: [id], onDelete: Cascade)
+
+    // Metadata
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@map("perks")
+}
+
+// Item System Models
+model Item {
+    id          String  @id @default(uuid())
+    name        String  @unique
+    description String?
+
+    // Attribute bonuses
+    bonusHealth       Int?
+    bonusMana         Int?
+    bonusStamina      Int?
+    bonusStrength     Int?
+    bonusConstitution Int?
+    bonusDexterity    Int?
+    bonusIntelligence Int?
+    bonusWisdom       Int?
+    bonusCharisma     Int?
+
+    // Combat stats
+    damage  Int? // For weapons
+    defense Int? // For armor
+
+    // Item properties
+    rarity        Rarity  @default(COMMON)
+    slot          Slot    @default(NONE)
+    requiredLevel Int     @default(1)
+    weight        Float   @default(1.0)
+    durability    Int     @default(100)
+    maxDurability Int     @default(100)
+    value         Int     @default(0)
+    bonusSkills   Skill[] @relation("ItemBonusSkills")
+    bonusPerks    Perk[]  @relation("ItemBonusPerks")
+    tags          Tag[]   @relation("ItemTags")
+
+    // Item flags
+    isArmor      Boolean @default(false)
+    isWeapon     Boolean @default(false)
+    is2Handed    Boolean @default(false)
+    isShield     Boolean @default(false)
+    isThrowable  Boolean @default(false)
+    isConsumable Boolean @default(false)
+    isQuestItem  Boolean @default(false)
+    isTradeable  Boolean @default(true)
+
+    // User
+    userId String?
+    user   User?   @relation("UserItems", fields: [userId], references: [id], onDelete: Cascade)
+
+    // Image
+    imageId String?
+    image   Image?  @relation("ItemImages", fields: [imageId], references: [id], onDelete: Cascade)
+
+    // Equipment
+    charactersMainHand Character[] @relation("CharacterMainHandItem")
+    charactersOffHand  Character[] @relation("CharacterOffHandItem")
+    charactersHead     Character[] @relation("CharacterHeadItem")
+    charactersChest    Character[] @relation("CharacterChestItem")
+    charactersLegs     Character[] @relation("CharacterLegsItem")
+    charactersFeet     Character[] @relation("CharacterFeetItem")
+    charactersHands    Character[] @relation("CharacterHandsItem")
+    charactersRing1    Character[] @relation("CharacterRing1Item")
+    charactersRing2    Character[] @relation("CharacterRing2Item")
+    charactersAmulet   Character[] @relation("CharacterAmuletItem")
+    charactersBelt     Character[] @relation("CharacterBeltItem")
+    charactersBack     Character[] @relation("CharacterBackItem")
+
+    // Inventory
+    characterInventories Character[] @relation("CharacterInventory")
+
+    // Meta
+    isPublic  Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@index([rarity])
+    @@index([slot])
+    @@index([requiredLevel])
+    @@map("items")
+}
+
+// Character Model
+model Character {
+    id          String  @id @default(uuid())
+    name        String  @unique
+    description String?
+    level       Int     @default(1)
+    experience  Int     @default(0)
+
+    //Image
+    imageId String?
+    image   Image?  @relation("CharacterImages", fields: [imageId], references: [id], onDelete: Cascade)
+
+    //User
+    userId String
+    user   User   @relation("UserCharacters", fields: [userId], references: [id], onDelete: Cascade)
+
+    // Core attributes
+    health  Int @default(100)
+    mana    Int @default(100)
+    stamina Int @default(100)
+
+    // Primary attributes
+    strength     Int @default(10)
+    constitution Int @default(10)
+    dexterity    Int @default(10)
+    intelligence Int @default(10)
+    wisdom       Int @default(10)
+    charisma     Int @default(10)
+
+    // Equipment slots
+    mainHandItemId String?
+    offHandItemId  String?
+    headItemId     String?
+    chestItemId    String?
+    legsItemId     String?
+    feetItemId     String?
+    handsItemId    String?
+    ring1ItemId    String?
+    ring2ItemId    String?
+    amuletItemId   String?
+    beltItemId     String?
+    backItemId     String?
+
+    // Character
+    raceId      String
+    race        Race      @relation("CharacterRaces", fields: [raceId], references: [id], onDelete: Restrict)
+    archetypeId String
+    archetype   Archetype @relation("CharacterArchetypes", fields: [archetypeId], references: [id], onDelete: Restrict)
+
+    // Equipment
+    mainHandItem Item? @relation("CharacterMainHandItem", fields: [mainHandItemId], references: [id], onDelete: SetNull)
+    offHandItem  Item? @relation("CharacterOffHandItem", fields: [offHandItemId], references: [id], onDelete: SetNull)
+    headItem     Item? @relation("CharacterHeadItem", fields: [headItemId], references: [id], onDelete: SetNull)
+    chestItem    Item? @relation("CharacterChestItem", fields: [chestItemId], references: [id], onDelete: SetNull)
+    legsItem     Item? @relation("CharacterLegsItem", fields: [legsItemId], references: [id], onDelete: SetNull)
+    feetItem     Item? @relation("CharacterFeetItem", fields: [feetItemId], references: [id], onDelete: SetNull)
+    handsItem    Item? @relation("CharacterHandsItem", fields: [handsItemId], references: [id], onDelete: SetNull)
+    ring1Item    Item? @relation("CharacterRing1Item", fields: [ring1ItemId], references: [id], onDelete: SetNull)
+    ring2Item    Item? @relation("CharacterRing2Item", fields: [ring2ItemId], references: [id], onDelete: SetNull)
+    amuletItem   Item? @relation("CharacterAmuletItem", fields: [amuletItemId], references: [id], onDelete: SetNull)
+    beltItem     Item? @relation("CharacterBeltItem", fields: [beltItemId], references: [id], onDelete: SetNull)
+    backItem     Item? @relation("CharacterBackItem", fields: [backItemId], references: [id], onDelete: SetNull)
+
+    //Inventory
+    inventory Item[] @relation("CharacterInventory")
+
+    //Other relations
+    skills Skill[] @relation("CharacterSkills")
+    perks  Perk[]  @relation("CharacterPerks")
+    tags   Tag[]   @relation("CharacterTags")
+
+    // Meta relations
+    isPublic  Boolean  @default(true)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([name])
+    @@index([raceId])
+    @@index([archetypeId])
+    @@index([level])
+    @@index([isPublic])
+    @@map("characters")
+}

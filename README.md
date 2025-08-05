@@ -1,6 +1,6 @@
 # 🎮 Fantasy Character API
 
-[![CI/CD Pipeline](https://github.com/yourusername/fantasy-character-api/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/fantasy-character-api/actions/workflows/ci-cd.yml)
+[![CI/CD Pipeline](https://github.com/yourusername/fantasy-character-api/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/yourusername/fantasy-character-api/actions/workflows/ci-cd.yml.disabled)
 [![Coverage](https://codecov.io/gh/yourusername/fantasy-character-api/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/fantasy-character-api)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D24.0.0-brightgreen.svg)](https://nodejs.org/)
@@ -219,6 +219,7 @@ fantasy-character-api/
 │   ├── middleware/     # Custom middleware
 │   ├── routes/         # API route definitions
 │   ├── services/       # Business logic
+│   ├── schemas/        # Validation schemas
 │   ├── types/          # TypeScript definitions
 │   ├── utils/          # Utility functions
 │   ├── app.ts          # Fastify app setup
@@ -226,7 +227,7 @@ fantasy-character-api/
 ├── tests/              # Test files and utilities
 ├── .github/            # GitHub Actions workflows
 ├── docs/               # Additional documentation
-└── docker/             # Docker configurations
+└── assets/             # Static assets (images, fonts, etc.)
 ```
 
 ## 🚀 Deployment
@@ -254,14 +255,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/fantasy_api
 
 ### Production Deployment
 
-1. **Heroku**
-
-   ```bash
-   # Deploy to Heroku
-   git push heroku main
-   ```
-
-2. **Docker**
+1. **Docker**
 
    ```bash
    # Build production image
@@ -271,7 +265,7 @@ DATABASE_URL=postgresql://user:password@localhost:5432/fantasy_api
    docker run -p 3000:3000 --env-file .env fantasy-character-api
    ```
 
-3. **Manual Deployment**
+2. **Manual Deployment**
 
    ```bash
    # Install production dependencies
@@ -312,19 +306,6 @@ System metrics included in health checks:
 - Node.js version
 - Process information
 
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Run quality checks
-6. Submit a pull request
-
 ### Code of Conduct
 
 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
@@ -333,72 +314,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🎯 Roadmap
-
-### Chapter 1: Foundation & Deployment Infrastructure ✅
-
-- [x] Project setup and configuration
-- [x] Health check system
-- [x] Docker containerization
-- [x] CI/CD pipeline
-- [x] API documentation
-
-### Chapter 2: Authentication System 🚧
-
-- [ ] JWT authentication
-- [ ] User registration/login
-- [ ] Password security
-- [ ] Session management
-
-### Chapter 3: User Management 🚧
-
-- [ ] User profiles
-- [ ] Account settings
-- [ ] User preferences
-- [ ] Admin controls
-
-### Chapter 4: Character System 🚧
-
-- [ ] Character creation
-- [ ] Character management
-- [ ] Character statistics
-- [ ] Character progression
-
-### Chapter 5: Game Elements 🚧
-
-- [ ] Races system
-- [ ] Archetypes/Classes
-- [ ] Skills and abilities
-- [ ] Character perks
-
-### Chapter 6: Items & Equipment 🚧
-
-- [ ] Item management
-- [ ] Equipment system
-- [ ] Inventory tracking
-- [ ] Item categories
-
-### Chapter 7: Advanced Features 🚧
-
-- [ ] Tagging system
-- [ ] Search and filtering
-- [ ] Data import/export
-- [ ] Analytics and reporting
-
 ## 📞 Support
 
-- **Documentation**: [API Docs](http://localhost:3000/docs)
 - **Issues**: [GitHub Issues](https://github.com/yourusername/fantasy-character-api/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/fantasy-character-api/discussions)
-
-## 🏆 Acknowledgments
-
-- **Fastify**: Fast and low overhead web framework
-- **TypeScript**: Type safety and developer experience
-- **Jest**: Delightful JavaScript testing
-- **Docker**: Containerization platform
-- **GitHub Actions**: CI/CD automation
-
----
-
-**Built with ❤️ for the fantasy gaming community** 🎮⚔️🧙‍♂️
