@@ -22,23 +22,24 @@ describe('Health Check API', () => {
             expect(response.statusCode).toBe(200)
 
             const body = JSON.parse(response.body)
-            expect(body).toHaveProperty('status', 'healthy')
-            expect(body).toHaveProperty('timestamp')
-            expect(body).toHaveProperty('version')
-            expect(body).toHaveProperty('environment')
-            expect(body).toHaveProperty('uptime')
-            expect(body).toHaveProperty('memory')
-            expect(body).toHaveProperty('system')
-
-            // Validate memory object structure
-            expect(body.memory).toHaveProperty('used')
-            expect(body.memory).toHaveProperty('total')
-            expect(body.memory).toHaveProperty('percentage')
+            expect(body).toHaveProperty('success', true)
+            expect(body).toHaveProperty('data')
+            expect(body.data).toHaveProperty('status', 'healthy')
+            expect(body.data).toHaveProperty('timestamp')
+            expect(body.data).toHaveProperty('version')
+            expect(body.data).toHaveProperty('environment')
+            expect(body.data).toHaveProperty('uptime')
+            expect(body.data).toHaveProperty('memory')
+            expect(body.data).toHaveProperty('system')
+            expect(body.data).toHaveProperty('database')
+            expect(body.data.memory).toHaveProperty('used')
+            expect(body.data.memory).toHaveProperty('total')
+            expect(body.data.memory).toHaveProperty('percentage')
 
             // Validate system object structure
-            expect(body.system).toHaveProperty('platform')
-            expect(body.system).toHaveProperty('nodeVersion')
-            expect(body.system).toHaveProperty('pid')
+            expect(body.data.system).toHaveProperty('platform')
+            expect(body.data.system).toHaveProperty('nodeVersion')
+            expect(body.data.system).toHaveProperty('pid')
         })
 
         test('should return valid timestamp format', async () => {
@@ -48,7 +49,7 @@ describe('Health Check API', () => {
             })
 
             const body = JSON.parse(response.body)
-            const timestamp = new Date(body.timestamp)
+            const timestamp = new Date(body.data.timestamp)
 
             expect(timestamp).toBeInstanceOf(Date)
             expect(timestamp.getTime()).not.toBeNaN()
@@ -62,17 +63,17 @@ describe('Health Check API', () => {
 
             const body = JSON.parse(response.body)
 
-            expect(typeof body.uptime).toBe('number')
-            expect(body.uptime).toBeGreaterThanOrEqual(0)
+            expect(typeof body.data.uptime).toBe('number')
+            expect(body.data.uptime).toBeGreaterThanOrEqual(0)
 
-            expect(typeof body.memory.used).toBe('number')
-            expect(typeof body.memory.total).toBe('number')
-            expect(typeof body.memory.percentage).toBe('number')
+            expect(typeof body.data.memory.used).toBe('number')
+            expect(typeof body.data.memory.total).toBe('number')
+            expect(typeof body.data.memory.percentage).toBe('number')
 
-            expect(body.memory.used).toBeGreaterThan(0)
-            expect(body.memory.total).toBeGreaterThan(0)
-            expect(body.memory.percentage).toBeGreaterThanOrEqual(0)
-            expect(body.memory.percentage).toBeLessThanOrEqual(100)
+            expect(body.data.memory.used).toBeGreaterThan(0)
+            expect(body.data.memory.total).toBeGreaterThan(0)
+            expect(body.data.memory.percentage).toBeGreaterThanOrEqual(0)
+            expect(body.data.memory.percentage).toBeLessThanOrEqual(100)
         })
     })
 
@@ -86,8 +87,10 @@ describe('Health Check API', () => {
             expect(response.statusCode).toBe(200)
 
             const body = JSON.parse(response.body)
-            expect(body).toHaveProperty('status', 'ready')
-            expect(body).toHaveProperty('timestamp')
+            expect(body).toHaveProperty('success', true)
+            expect(body).toHaveProperty('data')
+            expect(body.data).toHaveProperty('status', 'ready')
+            expect(body.data).toHaveProperty('timestamp')
         })
     })
 
@@ -101,8 +104,10 @@ describe('Health Check API', () => {
             expect(response.statusCode).toBe(200)
 
             const body = JSON.parse(response.body)
-            expect(body).toHaveProperty('status', 'alive')
-            expect(body).toHaveProperty('timestamp')
+            expect(body).toHaveProperty('success', true)
+            expect(body).toHaveProperty('data')
+            expect(body.data).toHaveProperty('status', 'alive')
+            expect(body.data).toHaveProperty('timestamp')
         })
     })
 

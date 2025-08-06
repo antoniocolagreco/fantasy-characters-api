@@ -2,6 +2,8 @@ import { FastifyRequest, FastifyReply } from 'fastify'
 import { HealthCheckResponse } from '../schemas/api.js'
 import { config } from '../config/environment.js'
 import { checkDatabaseHealth, checkMigrationStatus } from '../services/database.service.js'
+import { createSuccessResponse, createErrorResponse } from '../utils/response.js'
+import { ErrorCode } from '../types/errors.js'
 
 /**
  * Get API health status
@@ -48,17 +50,15 @@ export const getHealth = async (request: FastifyRequest, reply: FastifyReply): P
         }
 
         const statusCode = healthResponse.status === 'healthy' ? 200 : 503
-        reply.code(statusCode).send(healthResponse)
+        const response = createSuccessResponse(healthResponse)
+        reply.code(statusCode).send(response)
     } catch (error) {
         request.log.error('Health check failed:', error)
 
-        reply.code(503).send({
-            error: {
-                code: 'HEALTH_CHECK_FAILED',
-                message: 'Health check failed',
-                timestamp: new Date().toISOString(),
-                path: request.url
-            }
-        })
+        reply
+            .code(503)
+            .send(
+                createErrorResponse(ErrorCode.INTERNAL_ERROR, 'Health check failed', undefined, request.url, request.id)
+            )
     }
 }

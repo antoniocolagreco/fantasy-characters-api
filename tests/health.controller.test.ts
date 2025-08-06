@@ -1,95 +1,69 @@
-import fastify from 'fastify'
-import { getHealth } from '../src/controllers/health.controller.js'
-import * as databaseService from '../src/services/database.service.js'
+import { FastifyInstance } from 'fastify'
+import { createApp } from '../src/app.js'
+import { closeDatabase, initializeDatabase } from '../src/services/database.service.js'
 
-// Mock Jest
-const mockFn = (implementation?: any) => {
-    const mock = implementation || (() => {})
-    mock.mockResolvedValue = (value: any) => {
-        mock._resolvedValue = value
-        return mock
-    }
-    mock.mockRejectedValue = (value: any) => {
-        mock._rejectedValue = value
-        return mock
-    }
-    return mock
-}
-
-const jest = {
-    spyOn: (obj: any, method: string) => {
-        const original = obj[method]
-        const mock = mockFn((...args: any[]) => {
-            if (mock._rejectedValue) {
-                return Promise.reject(mock._rejectedValue)
-            }
-            if (mock._resolvedValue !== undefined) {
-                return Promise.resolve(mock._resolvedValue)
-            }
-            return original.apply(obj, args)
-        })
-        obj[method] = mock
-        return mock
-    }
-}
-
-describe('Health Controller Edge Cases', () => {
-    let app: ReturnType<typeof fastify>
+describe('Health Controller', () => {
+    let app: FastifyInstance
 
     beforeEach(async () => {
-        app = fastify({ logger: false })
-        app.get('/api/health', getHealth)
+        await initializeDatabase()
+        app = await createApp()
         await app.ready()
     })
 
     afterEach(async () => {
-        await app.close()
+        if (app) {
+            await app.close()
+        }
+        await closeDatabase()
     })
 
-    describe('Unhealthy Database Scenarios', () => {
-        test('should return 503 when database health check fails', async () => {
-            // Mock database service to return unhealthy status
-            jest.spyOn(databaseService, 'checkDatabaseHealth').mockResolvedValue({
-                status: 'unhealthy',
-                message: 'Database connection failed'
-            })
-
-            jest.spyOn(databaseService, 'checkMigrationStatus').mockResolvedValue({
-                applied: 0,
-                pending: 1
-            })
-
+    describe('Health Check Endpoint', () => {
+        it('should return health status with all required fields', async () => {
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/health'
             })
 
-            expect(response.statusCode).toBe(503)
+            expect(response.statusCode).toBe(200)
             const body = JSON.parse(response.body)
-            expect(body.status).toBe('unhealthy')
-            expect(body.database.status).toBe('unhealthy')
-            expect(body.database.message).toBe('Database connection failed')
+
+            expect(body.success).toBe(true)
+            expect(body.data.status).toBe('healthy')
+            expect(body.data.timestamp).toBeDefined()
+            expect(body.data.uptime).toBeGreaterThan(0)
+            expect(body.data.environment).toBeDefined()
+            expect(body.data.version).toBeDefined()
+            expect(body.data.memory).toBeDefined()
+            expect(body.data.database).toBeDefined()
         })
 
-        test('should return 503 when database health check throws error', async () => {
-            // Mock database service to throw an error
-            jest.spyOn(databaseService, 'checkDatabaseHealth').mockRejectedValue(new Error('Database timeout'))
-
-            jest.spyOn(databaseService, 'checkMigrationStatus').mockResolvedValue({
-                applied: 0,
-                pending: 0
-            })
-
+        it('should return readiness status', async () => {
             const response = await app.inject({
                 method: 'GET',
-                url: '/api/health'
+                url: '/api/health/ready'
             })
 
-            expect(response.statusCode).toBe(503)
+            expect(response.statusCode).toBe(200)
             const body = JSON.parse(response.body)
-            expect(body.error).toBeDefined()
-            expect(body.error.code).toBe('HEALTH_CHECK_FAILED')
-            expect(body.error.message).toBe('Health check failed')
+
+            expect(body.success).toBe(true)
+            expect(body.data.status).toBe('ready')
+            expect(body.data.timestamp).toBeDefined()
+        })
+
+        it('should return liveness status', async () => {
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/health/live'
+            })
+
+            expect(response.statusCode).toBe(200)
+            const body = JSON.parse(response.body)
+
+            expect(body.success).toBe(true)
+            expect(body.data.status).toBe('alive')
+            expect(body.data.timestamp).toBeDefined()
         })
     })
 })

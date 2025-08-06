@@ -1,6 +1,9 @@
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { Type } from '@sinclair/typebox'
 import { getHealth } from '../controllers/health.controller.js'
-import { HealthCheckResponseSchema, ErrorResponseSchema } from '../schemas/api.js'
+import { HealthCheckResponseSchema, ErrorResponseSchema, SuccessResponseSchema } from '../schemas/api.js'
+import { createSuccessResponse, createErrorResponse } from '../utils/response.js'
+import { ErrorCode } from '../types/errors.js'
 
 export async function healthRoutes(fastify: FastifyInstance, _options: FastifyPluginOptions): Promise<void> {
     // Health check endpoint
@@ -12,7 +15,7 @@ export async function healthRoutes(fastify: FastifyInstance, _options: FastifyPl
             response: {
                 200: {
                     description: 'API is healthy',
-                    ...HealthCheckResponseSchema
+                    ...SuccessResponseSchema(HealthCheckResponseSchema)
                 },
                 503: {
                     description: 'API is unhealthy',
@@ -32,11 +35,12 @@ export async function healthRoutes(fastify: FastifyInstance, _options: FastifyPl
             response: {
                 200: {
                     description: 'API is ready',
-                    type: 'object',
-                    properties: {
-                        status: { type: 'string', const: 'ready' },
-                        timestamp: { type: 'string', format: 'date-time' }
-                    }
+                    ...SuccessResponseSchema(
+                        Type.Object({
+                            status: Type.Literal('ready'),
+                            timestamp: Type.String({ format: 'date-time' })
+                        })
+                    )
                 },
                 503: {
                     description: 'API is not ready',
@@ -48,20 +52,24 @@ export async function healthRoutes(fastify: FastifyInstance, _options: FastifyPl
             try {
                 // In future chapters, we can add more sophisticated readiness checks
                 // like database connectivity, external service availability, etc.
-                reply.code(200).send({
+                const response = createSuccessResponse({
                     status: 'ready',
                     timestamp: new Date().toISOString()
                 })
+                reply.code(200).send(response)
             } catch (error) {
                 request.log.error('Readiness check failed:', error)
-                reply.code(503).send({
-                    error: {
-                        code: 'NOT_READY',
-                        message: 'API is not ready to serve requests',
-                        timestamp: new Date().toISOString(),
-                        path: request.url
-                    }
-                })
+                reply
+                    .code(503)
+                    .send(
+                        createErrorResponse(
+                            ErrorCode.SERVICE_UNAVAILABLE,
+                            'API is not ready to serve requests',
+                            undefined,
+                            request.url,
+                            request.id
+                        )
+                    )
             }
         }
     })
@@ -74,20 +82,22 @@ export async function healthRoutes(fastify: FastifyInstance, _options: FastifyPl
             response: {
                 200: {
                     description: 'API is alive',
-                    type: 'object',
-                    properties: {
-                        status: { type: 'string', const: 'alive' },
-                        timestamp: { type: 'string', format: 'date-time' }
-                    }
+                    ...SuccessResponseSchema(
+                        Type.Object({
+                            status: Type.Literal('alive'),
+                            timestamp: Type.String({ format: 'date-time' })
+                        })
+                    )
                 }
             }
         },
         handler: async (_request, reply) => {
             // Simple liveness check - if we can respond, we're alive
-            reply.code(200).send({
+            const response = createSuccessResponse({
                 status: 'alive',
                 timestamp: new Date().toISOString()
             })
+            reply.code(200).send(response)
         }
     })
 }

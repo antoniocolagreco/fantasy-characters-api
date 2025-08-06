@@ -29,7 +29,8 @@ describe('App Integration Tests', () => {
 
         expect(response.statusCode).toBe(200)
         const body = JSON.parse(response.body)
-        expect(body.status).toBeDefined()
+        expect(body.success).toBe(true)
+        expect(body.data.status).toBeDefined()
     })
 
     test('should return 404 for unknown routes', async () => {
@@ -99,7 +100,7 @@ describe('App Integration Tests', () => {
 
             expect(response.statusCode).toBe(500)
             const body = JSON.parse(response.body)
-            expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
+            expect(body.error.code).toBe('INTERNAL_ERROR')
             expect(body.error.message).toBe('Test error')
             expect(body.error.stack).toBeDefined() // Stack should be included in development
         } finally {
@@ -134,7 +135,7 @@ describe('App Integration Tests', () => {
 
             expect(response.statusCode).toBe(500)
             const body = JSON.parse(response.body)
-            expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
+            expect(body.error.code).toBe('INTERNAL_ERROR')
             expect(body.error.message).toBe('An internal server error occurred') // Generic message in production
             expect(body.error.stack).toBeUndefined() // Stack should not be included in production
         } finally {

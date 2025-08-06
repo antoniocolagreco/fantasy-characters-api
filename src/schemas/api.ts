@@ -31,28 +31,44 @@ export const HealthCheckResponseSchema = Type.Object({
 
 export type HealthCheckResponse = Static<typeof HealthCheckResponseSchema>
 
-// Error Response Schema (for future use)
+// Enhanced Error Response Schema
 export const ErrorResponseSchema = Type.Object({
+    success: Type.Literal(false),
     error: Type.Object({
         code: Type.String(),
         message: Type.String(),
         details: Type.Optional(Type.Unknown()),
         timestamp: Type.String({ format: 'date-time' }),
-        path: Type.Optional(Type.String())
+        path: Type.Optional(Type.String()),
+        requestId: Type.Optional(Type.String())
     })
 })
 
 export type ErrorResponse = Static<typeof ErrorResponseSchema>
 
-// Success Response Schema (generic)
+// Enhanced Success Response Schema
 export const SuccessResponseSchema = <T extends TSchema>(dataSchema: T) =>
     Type.Object({
         success: Type.Literal(true),
         data: dataSchema,
-        timestamp: Type.String({ format: 'date-time' })
+        timestamp: Type.String({ format: 'date-time' }),
+        meta: Type.Optional(
+            Type.Object({
+                pagination: Type.Optional(
+                    Type.Object({
+                        page: Type.Number({ minimum: 1 }),
+                        limit: Type.Number({ minimum: 1, maximum: 100 }),
+                        total: Type.Number({ minimum: 0 }),
+                        totalPages: Type.Number({ minimum: 0 })
+                    })
+                ),
+                version: Type.Optional(Type.String()),
+                requestId: Type.Optional(Type.String())
+            })
+        )
     })
 
-// Pagination Schema (for future use)
+// Pagination Schema
 export const PaginationSchema = Type.Object({
     page: Type.Number({ minimum: 1, default: 1 }),
     limit: Type.Number({ minimum: 1, maximum: 100, default: 10 }),

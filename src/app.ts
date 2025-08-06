@@ -8,6 +8,7 @@ import swaggerUi from '@fastify/swagger-ui'
 import { config, logConfig, securityConfig, apiConfig } from './config/environment.js'
 import { healthRoutes } from './routes/health.route.js'
 import { initializeDatabase, closeDatabase } from './services/database.service.js'
+import { globalErrorHandler, notFoundHandler } from './middleware/error-handler.js'
 
 /**
  * Create and configure Fastify application instance
@@ -114,45 +115,9 @@ export async function createApp(): Promise<FastifyInstance> {
             { prefix: apiConfig.prefix }
         )
 
-        // Global error handler
-        app.setErrorHandler(async (error, request, reply) => {
-            request.log.error(
-                {
-                    error: error.message,
-                    stack: error.stack,
-                    url: request.url,
-                    method: request.method
-                },
-                'Unhandled error'
-            )
-
-            // Don't expose internal errors in production
-            const isDevelopment = config.NODE_ENV === 'development'
-
-            const errorResponse = {
-                error: {
-                    code: 'INTERNAL_SERVER_ERROR',
-                    message: isDevelopment ? error.message : 'An internal server error occurred',
-                    timestamp: new Date().toISOString(),
-                    path: request.url,
-                    ...(isDevelopment && { stack: error.stack })
-                }
-            }
-
-            reply.code(500).send(errorResponse)
-        })
-
-        // 404 handler
-        app.setNotFoundHandler(async (request, reply) => {
-            reply.code(404).send({
-                error: {
-                    code: 'NOT_FOUND',
-                    message: `Route ${request.method} ${request.url} not found`,
-                    timestamp: new Date().toISOString(),
-                    path: request.url
-                }
-            })
-        })
+        // Set custom error handlers
+        app.setErrorHandler(globalErrorHandler)
+        app.setNotFoundHandler(notFoundHandler)
 
         // Add graceful shutdown hook
         app.addHook('onClose', async () => {
