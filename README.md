@@ -4,60 +4,74 @@
 [![Coverage](https://codecov.io/gh/yourusername/fantasy-character-api/branch/main/graph/badge.svg)](https://codecov.io/gh/yourusername/fantasy-character-api)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D24.0.0-brightgreen.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6.3-blue.svg)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue.svg)](https://www.typescriptlang.org/)
 
 A comprehensive RESTful API designed for managing fantasy characters, perfect for game developers, tabletop RPG enthusiasts, and fantasy world builders.
+
+## 🚀 Current Status (August 2025)
+
+**Progress**: 4 out of 17 chapters completed ✅  
+**Test Suite**: 227 tests passing 🧪  
+**Database**: Fully populated with seed data 🗄️  
+**API Endpoints**: Health + Complete User Management 🌐
 
 ## ✨ Features
 
 ### 🏗️ Foundation (Chapter 1) - ✅ Complete
 
-- **Modern Stack**: Built with Fastify, TypeScript, and Node.js 24
+- **Modern Stack**: Built with Fastify v5, TypeScript, and Node.js 24
 - **Health Monitoring**: Comprehensive health checks with system metrics
 - **API Documentation**: Interactive Swagger/OpenAPI documentation
 - **Security**: Rate limiting, helmet protection, input validation
 - **Development Tools**: Hot reload, type checking, linting, formatting
 - **Testing**: Jest with coverage reporting and CI/CD integration
 - **Docker Support**: Multi-stage builds for development and production
-- **CI/CD Pipeline**: Automated testing, security scanning, and deployment
 
-### 🔐 Authentication (Chapter 2) - 🚧 Coming Soon
+### 🗄️ Database Foundation (Chapter 2) - ✅ Complete
 
-- JWT-based authentication
-- User registration and login
-- Role-based access control
-- Password hashing and security
+- **Prisma ORM**: Type-safe database interactions with SQLite
+- **Complete Schema**: All game models (User, Character, Race, Item, etc.)
+- **Database Migrations**: Version-controlled schema changes
+- **Seed Data**: Realistic test data for development
+- **Relationship Management**: CASCADE deletion and proper constraints
 
-### 👥 User Management (Chapter 3) - 🚧 Coming Soon
+### � Infrastructure (Chapter 3) - ✅ Complete
 
-- User profiles and preferences
-- Account management
-- User statistics and achievements
+- **Error Handling**: Centralized error management with custom error classes
+- **Logging System**: Structured logging with Pino and request tracking
+- **Validation**: TypeBox schemas for runtime validation
+- **Response Formatting**: Standardized API response structure
+- **Utilities**: Common functions following DRY principles
 
-### 🧙‍♂️ Character System (Chapter 4) - 🚧 Coming Soon
+### 👥 User Management (Chapter 4) - ✅ Complete
+
+- **Complete User CRUD**: Create, read, update, delete users
+- **User Validation**: Email format, role validation, field constraints
+- **User Statistics**: Character count and activity metrics
+- **Pagination & Filtering**: List users with query parameters
+- **Error Handling**: Proper validation errors and duplicate detection
+
+### 🖼️ Image Management (Chapter 5) - 🎯 Next Priority
+
+- File upload validation
+- Image processing and WebP conversion
+- Image resizing (max 350x450px)
+- Storage management
+
+### 🧙‍♂️ Character System (Chapters 6-12) - 🚧 Coming Soon
 
 - Complete character creation and management
-- Character statistics and attributes
-- Character progression tracking
-
-### 🌟 Game Elements (Chapter 5) - 🚧 Coming Soon
-
 - Races with unique traits and bonuses
 - Archetypes (classes) with specializations
 - Skills system with progression
-- Perks and abilities
-
-### 🎒 Items & Equipment (Chapter 6) - 🚧 Coming Soon
-
-- Comprehensive item system
-- Equipment and inventory management
-- Item rarity and enchantments
-
-### 🏷️ Advanced Features (Chapter 7) - 🚧 Coming Soon
-
+- Items & Equipment system
 - Tagging and categorization
-- Advanced search and filtering
-- Import/export functionality
+
+### 🔐 Authentication (Chapters 15-17) - 🚧 Coming Soon
+
+- JWT-based authentication
+- Role-based access control
+- OAuth integration (Google, GitHub)
 
 ## 🚀 Quick Start
 
@@ -129,13 +143,65 @@ A comprehensive RESTful API designed for managing fantasy characters, perfect fo
 http://localhost:3000/api
 ```
 
-### Health Check Endpoints
+### Currently Available Endpoints
+
+#### Health Check Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/health` | GET | Comprehensive health check with system metrics |
-| `/health/ready` | GET | Readiness probe for orchestrators |
-| `/health/live` | GET | Liveness probe for orchestrators |
+
+#### User Management Endpoints ✅
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/users` | GET | List all users with pagination and filtering |
+| `/users/:id` | GET | Get user profile by ID |
+| `/users` | POST | Create new user with validation |
+| `/users/:id` | PUT | Update user (partial updates supported) |
+| `/users/:id` | DELETE | Delete user (CASCADE deletes related data) |
+| `/users/:id/stats` | GET | Get user statistics |
+
+### User Management Examples
+
+#### Create User
+
+```bash
+POST /api/users
+Content-Type: application/json
+
+{
+  "email": "player@example.com",
+  "displayName": "Epic Player",
+  "bio": "A legendary adventurer",
+  "role": "USER"
+}
+```
+
+#### List Users with Pagination
+
+```bash
+GET /api/users?page=1&limit=10&role=USER
+```
+
+#### User Response Format
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "player@example.com",
+    "displayName": "Epic Player",
+    "bio": "A legendary adventurer",
+    "role": "USER",
+    "isEmailVerified": false,
+    "isActive": true,
+    "createdAt": "2025-08-06T00:00:00.000Z",
+    "updatedAt": "2025-08-06T00:00:00.000Z"
+  }
+}
+```
 
 ### Example Health Check Response
 
@@ -165,27 +231,44 @@ Visit `http://localhost:3000/docs` for the complete Swagger UI documentation wit
 
 ## 🧪 Testing
 
+### Current Test Status
+
+- **Total Tests**: 227 ✅
+- **Test Coverage**: Excellent across all implemented features
+- **Test Categories**: Unit tests, integration tests, controller tests
+
 ### Run Tests
 
 ```bash
 # Run all tests
-pnpm run test
+pnpm test
 
 # Run tests in watch mode
-pnpm run test:watch
+pnpm test:watch
 
 # Run tests with coverage
-pnpm run test:coverage
+pnpm test:coverage
+
+# Run specific test files
+pnpm test user.controller.test.ts
 ```
 
-### Test Coverage
+### Test Coverage Goals
 
-Current test coverage targets:
+- **Lines**: >90% (achieved)
+- **Functions**: >90% (achieved)
+- **Branches**: >90% (achieved)
+- **Statements**: >90% (achieved)
 
-- **Lines**: >80%
-- **Functions**: >80%
-- **Branches**: >80%
-- **Statements**: >80%
+### Database Testing
+
+All tests use isolated test databases with automatic cleanup:
+
+```bash
+# Reset and seed database for testing
+pnpm prisma:reset
+pnpm prisma:seed
+```
 
 ## 🛠️ Development
 
@@ -193,13 +276,36 @@ Current test coverage targets:
 
 | Script | Description |
 |--------|-------------|
-| `pnpm run dev` | Start development server with hot reload |
-| `pnpm run build` | Build for production |
-| `pnpm run start` | Start production server |
-| `pnpm run test` | Run test suite |
-| `pnpm run lint` | Lint code with ESLint |
-| `pnpm run format` | Format code with Prettier |
-| `pnpm run clean` | Clean build directory |
+| `pnpm dev` | Start development server with hot reload |
+| `pnpm build` | Build for production |
+| `pnpm start` | Start production server |
+| `pnpm test` | Run test suite |
+| `pnpm lint` | Lint code with ESLint |
+| `pnpm format` | Format code with Prettier |
+| `pnpm clean` | Clean build directory |
+
+### Database Scripts
+
+| Script | Description |
+|--------|-------------|
+| `pnpm prisma:studio` | Open Prisma Studio (database GUI) |
+| `pnpm prisma:migrate` | Create and apply database migrations |
+| `pnpm prisma:generate` | Generate Prisma client |
+| `pnpm prisma:reset` | Reset database (⚠️ deletes all data!) |
+| `pnpm prisma:seed` | Populate database with test data |
+
+### Database Management
+
+```bash
+# View database in browser
+pnpm prisma:studio
+
+# Add test data
+pnpm prisma:seed
+
+# Check current data
+echo "SELECT COUNT(*) FROM users;" | sqlite3 prisma/dev.db
+```
 
 ### Code Quality
 
@@ -214,20 +320,37 @@ Current test coverage targets:
 ```text
 fantasy-character-api/
 ├── src/
-│   ├── config/         # Configuration and environment
-│   ├── controllers/    # Request handlers
+│   ├── config/         # Environment configuration
+│   ├── controllers/    # HTTP request handlers
+│   │   ├── health.controller.ts
+│   │   └── user.controller.ts
 │   ├── middleware/     # Custom middleware
+│   │   └── error-handler.ts
 │   ├── routes/         # API route definitions
+│   │   ├── health.route.ts
+│   │   └── user.route.ts
 │   ├── services/       # Business logic
+│   │   ├── database.service.ts
+│   │   └── user.service.ts
 │   ├── schemas/        # Validation schemas
+│   │   ├── api.ts
+│   │   └── user.ts
 │   ├── types/          # TypeScript definitions
+│   │   └── errors.ts
 │   ├── utils/          # Utility functions
+│   │   ├── common.ts
+│   │   ├── logger.ts
+│   │   ├── response.ts
+│   │   └── validation.ts
 │   ├── app.ts          # Fastify app setup
 │   └── index.ts        # Application entry point
-├── tests/              # Test files and utilities
-├── .github/            # GitHub Actions workflows
-├── docs/               # Additional documentation
-└── assets/             # Static assets (images, fonts, etc.)
+├── tests/              # Test files (227 tests)
+├── prisma/             # Database schema and migrations
+│   ├── schema.prisma   # Database schema
+│   ├── seed.ts         # Test data seeding
+│   └── migrations/     # Database version history
+├── assets/             # Static assets (character images)
+└── docs/               # Additional documentation
 ```
 
 ## 🚀 Deployment

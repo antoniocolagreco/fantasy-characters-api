@@ -68,7 +68,7 @@ export type SearchQuery = Static<typeof SearchQuerySchema>
 export const NameSchema = Type.String({
     minLength: 1,
     maxLength: 100,
-    pattern: "^[a-zA-Z0-9\\s\\-\\.\\']+$",
+    pattern: "^[a-zA-Z0-9\\s\\-\\.']+$",
     description: 'Name must be 1-100 characters, alphanumeric with spaces, hyphens, dots, and apostrophes'
 })
 

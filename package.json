@@ -21,7 +21,15 @@
         "prebuild": "pnpm run clean",
         "docker:build": "docker build -t fantasy-character-api .",
         "docker:run": "docker run -p 3000:3000 fantasy-character-api",
-        "docker:dev": "docker build -f Dockerfile.dev -t fantasy-character-api:dev . && docker run -p 3000:3000 -v $(pwd):/app fantasy-character-api:dev"
+        "docker:dev": "docker build -f Dockerfile.dev -t fantasy-character-api:dev . && docker run -p 3000:3000 -v $(pwd):/app fantasy-character-api:dev",
+        "prisma:generate": "prisma generate",
+        "prisma:reset": "prisma migrate reset --force",
+        "prisma:migrate": "prisma migrate dev --name init",
+        "prisma:seed": "prisma db seed",
+        "prisma:studio": "prisma studio"
+    },
+    "prisma": {
+        "seed": "tsx prisma/seed.ts"
     },
     "keywords": [
         "fantasy",

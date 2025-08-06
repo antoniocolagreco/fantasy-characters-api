@@ -7,6 +7,7 @@ import swaggerUi from '@fastify/swagger-ui'
 
 import { config, logConfig, securityConfig, apiConfig } from './config/environment.js'
 import { healthRoutes } from './routes/health.route.js'
+import { userRoutes } from './routes/user.route.js'
 import { initializeDatabase, closeDatabase } from './services/database.service.js'
 import { globalErrorHandler, notFoundHandler } from './middleware/error-handler.js'
 
@@ -107,10 +108,14 @@ export async function createApp(): Promise<FastifyInstance> {
             transformSpecificationClone: true
         })
 
+        // Initialize database
+        initializeDatabase()
+
         // Register API routes with prefix
         await app.register(
             async function (fastify) {
                 await fastify.register(healthRoutes)
+                await fastify.register(userRoutes)
             },
             { prefix: apiConfig.prefix }
         )
