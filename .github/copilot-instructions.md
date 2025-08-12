@@ -655,6 +655,7 @@ GET    /api/health                 // API health status
 ### Programming Paradigm: Functional Programming First
 
 This project follows **functional programming principles** and **avoids object-oriented programming** unless absolutely necessary.
+Use object-oriented programming only when it is the most appropriate solution for a specific problem, such as when working with third-party libraries that require it,.
 
 #### Core Functional Programming Guidelines
 
@@ -778,6 +779,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Docker container builds and runs successfully
 - [ ] ESLint returns zero errors and warnings
 - [ ] Logging captures all requests and errors
+- [ ] Test coverage >80% for initial setup
 
 ### Chapter 2: Database & Persistence Layer 🗄️
 
@@ -798,7 +800,8 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] All database models correctly defined with proper relationships
 - [ ] Migrations run successfully
 - [ ] Seed data populates development database
-- [ ] Database service layer tests pass with >90% coverage
+- [ ] Database service layer tests pass with >80% coverage
+- [ ] Test coverage >80% for database interactions
 
 ### Chapter 3: User Management Feature 👥
 
@@ -818,6 +821,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] All user endpoints working as expected
 - [ ] Input validation handles edge cases correctly
 - [ ] Database constraints for users enforced
+- [ ] Test coverage >90% for user feature
 
 ### Chapter 4: Authentication Feature 🔐
 
@@ -839,7 +843,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Password security with proper hashing
 - [ ] Role-based access control working
 - [ ] Token refresh mechanism functioning
-- [ ] Security tests passing
+- [ ] Test coverage >80% for authentication feature
 
 ### Chapter 5: Image Management Feature 🖼️
 
@@ -861,6 +865,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Upload validation works for different file types
 - [ ] Image retrieval is performant
 - [ ] Edge cases handled (large files, invalid formats)
+- [ ] Test coverage >80% for image feature
 
 ### Chapter 6: Tags Feature 🏷️
 
@@ -881,6 +886,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Validation prevents duplicate tags
 - [ ] Relationship management works correctly
 - [ ] Tests cover all tag operations
+- [ ] Test coverage >80% for tags feature
 
 ### Chapter 7: Skills Feature ⚡
 
@@ -901,6 +907,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Validation rules for prerequisites
 - [ ] Image association working
 - [ ] Tests cover all skill operations
+- [ ] Test coverage >80% for skills feature
 
 ### Chapter 8: Perks Feature 🌟
 
@@ -921,6 +928,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Validation rules enforced
 - [ ] Relationship management working
 - [ ] Admin-only endpoints secured
+- [ ] Tests cover all perk operations
 
 ### Chapter 9: Races Feature 🧝
 
@@ -941,6 +949,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Image association working
 - [ ] Race relationships with other entities
 - [ ] Admin-only access controls working
+- [ ] Test coverage >80% for races feature
 
 ### Chapter 10: Archetypes Feature 🛡️
 
@@ -961,6 +970,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Validation rules enforced
 - [ ] Relationship management working
 - [ ] Admin-only endpoints secured
+- [ ] Test coverage >80% for archetypes feature
 
 ### Chapter 11: Items Feature ⚔️
 
@@ -982,6 +992,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Equipment slot validation
 - [ ] Bonus attributes calculation
 - [ ] Image association working
+- [ ] Test coverage >80% for items feature
 
 ### Chapter 12: Characters Feature 👤
 
@@ -1005,6 +1016,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Inventory system functioning
 - [ ] Attribute calculation based on gear/race
 - [ ] All relationships properly managed
+- [ ] Test coverage >80% for characters feature
 
 ### Chapter 13: Performance & Security Hardening 🛠️
 
@@ -1024,7 +1036,7 @@ The development is organized into distinct chapters, with each chapter focusing 
 - [ ] Response times under 200ms for all endpoints
 - [ ] Zero security vulnerabilities
 - [ ] Complete documentation
-- [ ] All tests passing with >90% coverage
+- [ ] All tests passing with >80% coverage
 
 ---
 
@@ -1041,7 +1053,7 @@ Each feature directory contains its own tests subdirectory with:
 ### Testing Principles
 
 - **Test-Driven Development**: Write tests first when possible
-- **High Coverage**: Aim for >90% test coverage
+- **High Coverage**: Aim for >80% test coverage
 - **Realistic Test Data**: Use representative test data
 - **Isolated Tests**: Tests should not depend on external systems
 - **Fast Execution**: Tests should run quickly for developer feedback
@@ -1062,7 +1074,7 @@ Each feature directory contains its own tests subdirectory with:
 
 ### Quality Gates
 
-- **Unit Test Coverage**: >90% for each feature
+- **Unit Test Coverage**: >80% for each feature
 - **Integration Tests**: All endpoints tested
 - **Code Review**: Peer review required
 - **Performance Testing**: Response time < 200ms

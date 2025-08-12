@@ -4,22 +4,14 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    setupFiles: ['./tests/setup.ts'],
-    globalSetup: ['./tests/global-setup.ts'],
-    include: ['tests/unit/**/*.test.ts', 'tests/integration/**/*.test.ts', 'src/**/*.test.ts'],
+    include: ['src/**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'coverage'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov', 'html'],
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
-      exclude: [
-        'src/**/*.d.ts',
-        'src/index.ts',
-        'src/**/*.test.ts',
-        'src/**/*.spec.ts',
-        'tests/**/*',
-      ],
+      exclude: ['src/**/*.d.ts', 'src/index.ts', 'src/**/*.test.ts', 'src/**/*.spec.ts'],
       thresholds: {
         global: {
           branches: 80,

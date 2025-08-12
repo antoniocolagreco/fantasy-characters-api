@@ -76,24 +76,24 @@ function loadEnvironment(): EnvironmentConfig {
   return env as EnvironmentConfig
 }
 
-export const config = loadEnvironment()
+export const environment = loadEnvironment()
 
 // Export individual config sections for convenience
 export const serverConfig = {
-  port: config.PORT,
-  host: config.HOST,
-  nodeEnv: config.NODE_ENV,
+  port: environment.PORT,
+  host: environment.HOST,
+  nodeEnv: environment.NODE_ENV,
 }
 
 export const apiConfig = {
-  prefix: config.API_PREFIX, // Use API_PREFIX: /api
-  version: config.API_VERSION,
+  prefix: environment.API_PREFIX, // Use API_PREFIX: /api
+  version: environment.API_VERSION,
 }
 
 export const logConfig = {
-  level: config.LOG_LEVEL,
+  level: environment.LOG_LEVEL,
   transport:
-    config.NODE_ENV === 'development'
+    environment.NODE_ENV === 'development'
       ? {
           target: 'pino-pretty',
           options: {
@@ -106,13 +106,13 @@ export const logConfig = {
 }
 
 export const securityConfig = {
-  jwtSecret: config.JWT_SECRET,
-  jwtExpiresIn: config.JWT_EXPIRES_IN,
-  rateLimitMax: config.RATE_LIMIT_MAX,
-  rateLimitTimeWindow: config.RATE_LIMIT_TIMEWINDOW,
-  corsOrigin: config.CORS_ORIGIN,
+  jwtSecret: environment.JWT_SECRET,
+  jwtExpiresIn: environment.JWT_EXPIRES_IN,
+  rateLimitMax: environment.RATE_LIMIT_MAX,
+  rateLimitTimeWindow: environment.RATE_LIMIT_TIMEWINDOW,
+  corsOrigin: environment.CORS_ORIGIN,
 }
 
 export const healthConfig = {
-  enabled: config.HEALTH_CHECK_ENABLED,
+  enabled: environment.HEALTH_CHECK_ENABLED,
 }
