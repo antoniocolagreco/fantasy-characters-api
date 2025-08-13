@@ -4,6 +4,7 @@
  */
 
 import { healthConfig } from '../config/environment.js'
+import { getDatabaseHealth } from '../shared/database/index.js'
 
 export type HealthStatus = 'healthy' | 'unhealthy' | 'degraded'
 
@@ -71,17 +72,31 @@ const checkUptime = (): HealthCheck => {
   }
 }
 
-// Database health check (for future chapters)
+// Database health check
 const checkDatabase = async (): Promise<HealthCheck> => {
-  // For now, just return healthy since we haven't implemented database yet
-  // This will be updated in Chapter 2
-  return {
-    name: 'database',
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    details: {
-      message: 'Database health check not implemented yet',
-    },
+  try {
+    const dbHealth = await getDatabaseHealth()
+
+    return {
+      name: 'database',
+      status: dbHealth.status,
+      timestamp: new Date().toISOString(),
+      details: {
+        connected: dbHealth.connected,
+        version: dbHealth.version,
+        errorMessage: dbHealth.errorMessage,
+      },
+    }
+  } catch (error) {
+    return {
+      name: 'database',
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      details: {
+        connected: false,
+        errorMessage: error instanceof Error ? error.message : 'Unknown database error',
+      },
+    }
   }
 }
 

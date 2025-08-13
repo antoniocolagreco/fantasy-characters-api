@@ -12,6 +12,10 @@ vi.mock('../config/environment.js', () => ({
   healthConfig: {
     enabled: true,
   },
+  environment: {
+    NODE_ENV: 'test',
+    DATABASE_URL: 'file:./test.db',
+  },
 }))
 
 describe('Health Service', () => {

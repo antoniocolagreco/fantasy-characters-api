@@ -13,6 +13,7 @@ import cors from '@fastify/cors'
 
 import { environment, logConfig, securityConfig, apiConfig } from './config/environment.js'
 import { errorHandler, notFoundHandler } from './shared/errors.js'
+import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { healthRoutes } from './health/health.route.js'
 
 // Create Fastify instance with configuration
@@ -109,7 +110,7 @@ const registerPlugins = async (): Promise<void> => {
         version: '1.0.0',
         contact: {
           name: 'Antonio Colagreco',
-          email: 'contact@example.com',
+          email: 'nevenbridge@gmail.com',
         },
         license: {
           name: 'MIT',
@@ -210,6 +211,9 @@ const setupErrorHandlers = (): void => {
 // Initialize application
 const initializeApp = async (): Promise<void> => {
   try {
+    // Connect to database first
+    await connectDatabase()
+
     await registerPlugins()
     await registerRoutes()
     setupErrorHandlers()
@@ -230,4 +234,5 @@ await initializeApp()
 // Add graceful shutdown hook
 app.addHook('onClose', async instance => {
   instance.log.info('Shutting down Fastify application...')
+  await disconnectDatabase()
 })
