@@ -2,7 +2,8 @@
 
 ## Project Overview
 
-The **Fantasy Character API** is a comprehensive RESTful API designed for managing fantasy characters.
+The **Fantasy Character API** is a comprehensive RESTful API designed for
+managing fantasy characters.
 
 ---
 
@@ -10,40 +11,52 @@ The **Fantasy Character API** is a comprehensive RESTful API designed for managi
 
 ### Backend Core
 
-- **Node.js v24+**: JavaScript runtime powering the backend, chosen for its performance and ecosystem
-- **TypeScript**: Adds static typing to JavaScript, improving code quality and maintainability
-- **Fastify v5+**: Web framework for building the API, lightweight and fast with built-in schema validation
-- **Functional Programming**: Project follows functional programming paradigms, avoiding OOP and classes unless absolutely necessary
+- **Node.js v24+**: JavaScript runtime powering the backend, chosen for its
+  performance and ecosystem
+- **TypeScript**: Adds static typing to JavaScript, improving code quality and
+  maintainability
+- **Fastify v5+**: Web framework for building the API, lightweight and fast with
+  built-in schema validation
+- **Functional Programming**: Project follows functional programming paradigms,
+  avoiding OOP and classes unless absolutely necessary
 
 ## Authentication & Security
 
-- **@fastify/jwt**: Official Fastify plugin for JWT token management with native integration
-- **@fastify/oauth2**: OAuth 2.0 implementation for social login (Google, GitHub)
-- **@fastify/session**: Session management for OAuth flows and secure user sessions
+- **@fastify/jwt**: Official Fastify plugin for JWT token management with native
+  integration
+- **@fastify/oauth2**: OAuth 2.0 implementation for social login (Google,
+  GitHub)
+- **@fastify/session**: Session management for OAuth flows and secure user
+  sessions
 - **@fastify/helmet**: Automatic HTTP security headers
 - **@fastify/rate-limit**: Rate limiting to prevent abuse
 - **bcrypt**: Industry-standard password hashing with configurable rounds
 
 ### Validation & Documentation
 
-- **TypeBox**: Library for defining JSON Schema-compatible schemas with TypeScript types
+- **TypeBox**: Library for defining JSON Schema-compatible schemas with
+  TypeScript types
 - **Ajv**: High-performance JSON Schema validator for runtime validation
 - **@fastify/swagger**: Automatically generates OpenAPI documentation
 - **@fastify/swagger-ui**: Interactive Swagger UI for API testing
 
 ### Database & ORM
 
-- **Prisma ORM**: Advanced ORM for TypeScript/Node.js with type-safe database interactions
+- **Prisma ORM**: Advanced ORM for TypeScript/Node.js with type-safe database
+  interactions
 - **SQLite**: Default database for local development (file-based)
 
 ### Monitoring & Logging
 
-- **Pino**: High-performance JSON logger for Node.js with native Fastify integration (currently used only in Fastify core, custom logging utilities need integration)
+- **Pino**: High-performance JSON logger for Node.js with native Fastify
+  integration (currently used only in Fastify core, custom logging utilities
+  need integration)
 - **@fastify/sensible**: Plugin with utilities and status codes
 
 ### Testing & Quality
 
-- **Vitest**: Modern testing framework for unit and integration tests with excellent TypeScript support and native ESM support
+- **Vitest**: Modern testing framework for unit and integration tests with
+  excellent TypeScript support and native ESM support
 - **@vitest/ui**: Optional web UI for test visualization and debugging
 
 ### Development Tools
@@ -173,32 +186,32 @@ fantasy-character-api/
 
 ```typescript
 enum Role {
-    USER = "user",
-    ADMIN = "admin",
-    MODERATOR = "moderator"
+  USER = 'user',
+  ADMIN = 'admin',
+  MODERATOR = 'moderator',
 }
 
 enum Rarity {
-    COMMON = "common",
-    UNCOMMON = "uncommon",
-    RARE = "rare",
-    EPIC = "epic",
-    LEGENDARY = "legendary"
+  COMMON = 'common',
+  UNCOMMON = 'uncommon',
+  RARE = 'rare',
+  EPIC = 'epic',
+  LEGENDARY = 'legendary',
 }
 
 enum Slot {
-    NONE = "none",
-    HEAD = "head",
-    CHEST = "chest",
-    LEGS = "legs",
-    FEET = "feet",
-    HANDS = "hands",
-    MAIN_HAND = "main_hand",
-    OFF_HAND = "off_hand",
-    RING = "ring",
-    AMULET = "amulet",
-    BELT = "belt",
-    BACK = "back"
+  NONE = 'none',
+  HEAD = 'head',
+  CHEST = 'chest',
+  LEGS = 'legs',
+  FEET = 'feet',
+  HANDS = 'hands',
+  MAIN_HAND = 'main_hand',
+  OFF_HAND = 'off_hand',
+  RING = 'ring',
+  AMULET = 'amulet',
+  BELT = 'belt',
+  BACK = 'back',
 }
 ```
 
@@ -220,11 +233,11 @@ interface User {
     lastLogin: DateTime @default(now())
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // Profile picture relationship
     profilePictureId: string? @unique
     profilePicture: Image? @relation("UserProfilePicture", fields: [profilePictureId], references: [id], onDelete: Cascade)
-    
+
     // Relations with CASCADE deletion to prevent orphans
     characters: Character[] @relation("UserCharacters")
     uploadedImages: Image[] @relation("UserImages") // Images uploaded by user
@@ -247,14 +260,14 @@ interface Image {
     height: Int // Image height in pixels (max 450)
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // User who uploaded the image
     uploadedById: string?
     uploadedBy: User? @relation("UserImages", fields: [uploadedById], references: [id], onDelete: Cascade)
-    
+
     // Profile picture relationship (inverse side)
     userProfile: User? @relation("UserProfilePicture")
-    
+
     // Content relationships with CASCADE deletion
     characters: Character[] @relation("CharacterImages")
     races: Race[] @relation("RaceImages")
@@ -273,7 +286,7 @@ interface Tag {
     description: string?
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // User who created the tag (CASCADE deletion)
     createdById: string?
     createdBy: User? @relation("UserTags", fields: [createdById], references: [id], onDelete: Cascade)
@@ -291,7 +304,7 @@ interface Race {
     id: string @id @default(uuid())
     name: string @unique
     description: string?
-    
+
     // Attribute modifiers
     healthModifier: Int @default(100)
     manaModifier: Int @default(100)
@@ -313,7 +326,7 @@ interface Race {
 
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // Relations
     characters: Character[] @relation("CharacterRaces")
     skills: Skill[] @relation("RaceSkills")
@@ -325,18 +338,18 @@ interface Archetype {
     id: string @id @default(uuid())
     name: string @unique
     description: string?
-    
+
     // Image with CASCADE deletion
     imageId: string?
     image: Image? @relation("ArchetypeImages", fields: [imageId], references: [id], onDelete: Cascade)
-    
+
     // User who created the archetype (CASCADE deletion)
     createdById: string?
     createdBy: User? @relation("UserArchetypes", fields: [createdById], references: [id], onDelete: Cascade)
-    
+
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // Relations
     characters: Character[] @relation("CharacterArchetypes")
     skills: Skill[] @relation("ArchetypeSkills")
@@ -349,18 +362,18 @@ interface Skill {
     name: string @unique
     description: string?
     requiredLevel: Int @default(1)
-    
+
     // Image with CASCADE deletion
     imageId: string?
     image: Image? @relation("SkillImages", fields: [imageId], references: [id], onDelete: Cascade)
-    
+
     // User who created the skill (CASCADE deletion)
     createdById: string?
     createdBy: User? @relation("UserSkills", fields: [createdById], references: [id], onDelete: Cascade)
-    
+
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // Relations
     characters: Character[] @relation("CharacterSkills")
     races: Race[] @relation("RaceSkills")
@@ -374,14 +387,14 @@ interface Perk {
     name: string @unique
     description: string?
     requiredLevel: Int @default(0) // Updated default to 0
-    
+
     // User who created the perk (CASCADE deletion)
     createdById: string?
     createdBy: User? @relation("UserPerks", fields: [createdById], references: [id], onDelete: Cascade)
-    
+
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
-    
+
     // Relations
     characters: Character[] @relation("CharacterPerks")
     items: Item[] @relation("ItemBonusPerks")
@@ -397,7 +410,7 @@ interface Item {
     name: string @unique
     description: string?
     rarity: Rarity @default(COMMON)
-    
+
     // Attribute bonuses
     bonusHealth: Int?
     bonusMana: Int?
@@ -408,17 +421,17 @@ interface Item {
     bonusIntelligence: Int?
     bonusWisdom: Int?
     bonusCharisma: Int?
-    
+
     // Combat stats
     damage: Int? // For weapons
     defense: Int? // For armor
-    
+
     // Item properties
     requiredLevel: Int @default(1)
     slot: Slot @default(NONE)
     weight: Float @default(1.0)
     value: Int @default(0) // Gold value
-    
+
     // Item flags
     isArmor: Boolean @default(false)
     isWeapon: Boolean @default(false)
@@ -428,28 +441,28 @@ interface Item {
     isConsumable: Boolean @default(false)
     isQuestItem: Boolean @default(false)
     isTradeable: Boolean @default(true)
-    
+
     // Durability system
     durability: Int @default(100)
     maxDurability: Int @default(100)
-    
+
     // Image with CASCADE deletion
     imageId: string?
     image: Image? @relation("ItemImages", fields: [imageId], references: [id], onDelete: Cascade)
-    
+
     // User who owns/created the item (CASCADE deletion)
     userId: string?
     user: User? @relation("UserItems", fields: [userId], references: [id], onDelete: Cascade)
-    
+
     createdAt: DateTime @default(now())
     updatedAt: DateTime @updatedAt
     isPublic: Boolean @default(true)
-    
+
     // Relations
     bonusSkills: Skill[] @relation("ItemBonusSkills")
     bonusPerks: Perk[] @relation("ItemBonusPerks")
     tags: Tag[] @relation("ItemTags")
-    
+
     // Equipment relations
     charactersMainHand: Character[] @relation("CharacterMainHandItem")
     charactersOffHand: Character[] @relation("CharacterOffHandItem")
@@ -463,7 +476,7 @@ interface Item {
     charactersAmulet: Character[] @relation("CharacterAmuletItem")
     charactersBelt: Character[] @relation("CharacterBeltItem")
     charactersBack: Character[] @relation("CharacterBackItem")
-    
+
     // Inventory relation
     characterInventories: Character[] @relation("CharacterInventory")
 }
@@ -478,12 +491,12 @@ interface Character {
     description: string?
     level: Int @default(1)
     experience: Int @default(0)
-    
+
     // Core attributes
     health: Int @default(100)
     mana: Int @default(100)
     stamina: Int @default(100)
-    
+
     // Primary attributes
     strength: Int @default(10)
     constitution: Int @default(10)
@@ -491,7 +504,7 @@ interface Character {
     intelligence: Int @default(10)
     wisdom: Int @default(10)
     charisma: Int @default(10)
-    
+
     // Equipment slots
     mainHandItemId: string?
     mainHandItem: Item? @relation("CharacterMainHandItem", fields: [mainHandItemId], references: [id], onDelete: SetNull)
@@ -517,19 +530,19 @@ interface Character {
     beltItem: Item? @relation("CharacterBeltItem", fields: [beltItemId], references: [id], onDelete: SetNull)
     backItemId: string?
     backItem: Item? @relation("CharacterBackItem", fields: [backItemId], references: [id], onDelete: SetNull)
-    
+
     // Character relations
     raceId: string
     race: Race @relation("CharacterRaces", fields: [raceId], references: [id], onDelete: Restrict)
     archetypeId: string
     archetype: Archetype @relation("CharacterArchetypes", fields: [archetypeId], references: [id], onDelete: Restrict)
-    
+
     // Many-to-many relations
     skills: Skill[] @relation("CharacterSkills")
     perks: Perk[] @relation("CharacterPerks")
     tags: Tag[] @relation("CharacterTags")
     inventory: Item[] @relation("CharacterInventory")
-    
+
     // Meta fields
     imageId: string?
     image: Image? @relation("CharacterImages", fields: [imageId], references: [id], onDelete: Cascade)
@@ -549,15 +562,15 @@ interface Character {
 
 ```typescript
 // User Authentication
-POST   /api/auth/register          // Register new user
-POST   /api/auth/login             // User login
-POST   /api/auth/logout            // User logout
-POST   /api/auth/refresh           // Refresh JWT token
+POST / api / auth / register // Register new user
+POST / api / auth / login // User login
+POST / api / auth / logout // User logout
+POST / api / auth / refresh // Refresh JWT token
 
 // User Profile
-GET    /api/auth/profile           // Get current user profile
-PUT    /api/auth/profile           // Update user profile
-PUT    /api/auth/password          // Change password
+GET / api / auth / profile // Get current user profile
+PUT / api / auth / profile // Update user profile
+PUT / api / auth / password // Change password
 ```
 
 ### User Management Endpoints
@@ -645,7 +658,7 @@ DELETE /api/tags/:id               // Delete tag
 
 ```typescript
 // Health Check
-GET    /api/health                 // API health status
+GET / api / health // API health status
 ```
 
 ---
@@ -654,14 +667,18 @@ GET    /api/health                 // API health status
 
 ### Programming Paradigm: Functional Programming First
 
-This project follows **functional programming principles** and **avoids object-oriented programming** unless absolutely necessary.
-Use object-oriented programming only when it is the most appropriate solution for a specific problem, such as when working with third-party libraries that require it,.
+This project follows **functional programming principles** and **avoids
+object-oriented programming** unless absolutely necessary. Use object-oriented
+programming only when it is the most appropriate solution for a specific
+problem, such as when working with third-party libraries that require it,.
 
 #### Core Functional Programming Guidelines
 
-1. **No Classes Unless Unavoidable**: Avoid creating classes and object-oriented designs. Use functions, modules, and TypeScript types/interfaces instead.
+1. **No Classes Unless Unavoidable**: Avoid creating classes and object-oriented
+   designs. Use functions, modules, and TypeScript types/interfaces instead.
 
-2. **Pure Functions**: Write pure functions without side effects whenever possible:
+2. **Pure Functions**: Write pure functions without side effects whenever
+   possible:
 
    ```typescript
    // ✅ Good: Pure function
@@ -671,7 +688,7 @@ Use object-oriented programming only when it is the most appropriate solution fo
        averageLevel: characters.reduce((sum, char) => sum + char.level, 0) / characters.length
      }
    }
-   
+
    // ❌ Avoid: Class-based approach
    class UserStatsCalculator {
      calculate(characters: Character[]): UserStats { ... }
@@ -685,9 +702,9 @@ Use object-oriented programming only when it is the most appropriate solution fo
    const updateUser = (user: User, updates: Partial<User>): User => ({
      ...user,
      ...updates,
-     updatedAt: new Date()
+     updatedAt: new Date(),
    })
-   
+
    // ❌ Avoid: Mutating state
    const updateUserMutable = (user: User, updates: Partial<User>): void => {
      Object.assign(user, updates)
@@ -695,7 +712,8 @@ Use object-oriented programming only when it is the most appropriate solution fo
    }
    ```
 
-4. **Function Composition**: Use function composition instead of class inheritance:
+4. **Function Composition**: Use function composition instead of class
+   inheritance:
 
    ```typescript
    // ✅ Good: Function composition
@@ -704,18 +722,19 @@ Use object-oriented programming only when it is the most appropriate solution fo
      validateUserData,
      sanitizeInput
    )
-   
+
    // ❌ Avoid: Class inheritance
    class ValidatedUserCreator extends UserCreator { ... }
    ```
 
-5. **Higher-Order Functions**: Use map, filter, reduce, and other functional array methods:
+5. **Higher-Order Functions**: Use map, filter, reduce, and other functional
+   array methods:
 
    ```typescript
    // ✅ Good: Functional approach
    const getActiveUsers = (users: User[]): User[] =>
      users.filter(user => user.isActive)
-   
+
    const getUserEmails = (users: User[]): string[] =>
      users.map(user => user.email)
    ```
@@ -742,20 +761,30 @@ export class UserService {
 
 #### Project Principles
 
-- **DRY (Don't Repeat Yourself)**: Avoid duplicating code or logic through function composition and reusable utilities
-- **KISS (Keep It Simple, Stupid)**: Keep the code as simple as possible, favoring readable functional code
-- **YAGNI (You Aren't Gonna Need It)**: Don't add functionality until it is necessary
+- **DRY (Don't Repeat Yourself)**: Avoid duplicating code or logic through
+  function composition and reusable utilities
+- **KISS (Keep It Simple, Stupid)**: Keep the code as simple as possible,
+  favoring readable functional code
+- **YAGNI (You Aren't Gonna Need It)**: Don't add functionality until it is
+  necessary
 - **Fail Fast**: Encourage early failure in development to catch issues sooner
-- **Single Responsibility Principle**: Each function should have a single responsibility and do it well
-- **Separation of Concerns**: Keep different concerns (e.g., validation, business logic, data access) in separate modules or functions
-- **Avoid Side Effects**: Functions should not have side effects; they should return new values without modifying inputs
-- **Use TypeScript Types**: Leverage TypeScript's type system to define clear interfaces and types for data structures, ensuring type safety and clarity
+- **Single Responsibility Principle**: Each function should have a single
+  responsibility and do it well
+- **Separation of Concerns**: Keep different concerns (e.g., validation,
+  business logic, data access) in separate modules or functions
+- **Avoid Side Effects**: Functions should not have side effects; they should
+  return new values without modifying inputs
+- **Use TypeScript Types**: Leverage TypeScript's type system to define clear
+  interfaces and types for data structures, ensuring type safety and clarity
 
 ---
 
 ## Development Roadmap
 
-The development is organized into distinct chapters, with each chapter focusing on a specific feature or set of related features. Each chapter is considered complete only when all tasks are finished, tests pass, and quality gates are met.
+The development is organized into distinct chapters, with each chapter focusing
+on a specific feature or set of related features. Each chapter is considered
+complete only when all tasks are finished, tests pass, and quality gates are
+met.
 
 ### Chapter 1: Foundation & Project Setup 🚀
 
@@ -811,17 +840,17 @@ The development is organized into distinct chapters, with each chapter focusing 
 
 **Chapter 3 Deliverables:**
 
-- [ ] User service with complete business logic
-- [ ] User validation schemas with TypeBox
-- [ ] User controller and routes implemented
-- [ ] Comprehensive test suite for user feature
+- [x] User service with complete business logic
+- [x] User validation schemas with TypeBox
+- [x] User controller and routes implemented
+- [x] Comprehensive test suite for user feature
 
 **Chapter 3 Success Criteria:**
 
-- [ ] All user endpoints working as expected
-- [ ] Input validation handles edge cases correctly
-- [ ] Database constraints for users enforced
-- [ ] Test coverage >90% for user feature
+- [x] All user endpoints working as expected
+- [x] Input validation handles edge cases correctly
+- [x] Database constraints for users enforced
+- [x] Test coverage >90% for user feature
 
 ### Chapter 4: Authentication Feature 🔐
 

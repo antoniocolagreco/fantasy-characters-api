@@ -1,6 +1,7 @@
 # 🎮 Fantasy Character API
 
-A comprehensive RESTful API designed for managing fantasy characters, built with modern functional programming principles.
+A comprehensive RESTful API designed for managing fantasy characters, built with
+modern functional programming principles.
 
 ## 🛠️ Technology Stack
 

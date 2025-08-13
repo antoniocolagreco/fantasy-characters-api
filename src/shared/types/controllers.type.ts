@@ -35,7 +35,3 @@ export type DeleteController<
   T extends RouteGenericInterface = RouteGenericInterface,
   TReply = unknown,
 > = ControllerHandler<T, TReply>
-export type GetStatsController<
-  T extends RouteGenericInterface = RouteGenericInterface,
-  TReply = unknown,
-> = ControllerHandler<T, TReply>

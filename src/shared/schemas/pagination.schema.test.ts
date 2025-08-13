@@ -61,7 +61,7 @@ describe('Pagination Schemas', () => {
 
       expect(pageSizeSchema.minimum).toBe(1)
       expect(pageSizeSchema.maximum).toBe(100)
-      expect(pageSizeSchema.default).toBe(20)
+      expect(pageSizeSchema.default).toBe(10)
     })
 
     it('should have sortOrder as union type', () => {
@@ -159,7 +159,7 @@ describe('Pagination Schemas', () => {
       const properties = ListPaginationQuerySchema.properties as Record<string, SchemaProperty>
 
       expect(properties.page.default).toBe(1)
-      expect(properties.pageSize.default).toBe(20)
+      expect(properties.pageSize.default).toBe(10)
       expect(properties.sortOrder.default).toBe('asc')
     })
 

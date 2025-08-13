@@ -76,7 +76,7 @@ model User {
     races       Race[]      @relation("UserRaces")
     perks       Perk[]      @relation("UserPerks")
     skills      Skill[]     @relation("UserSkills")
-    archetype   Archetype[] @relation("UserArchetypes")
+    archetypes  Archetype[] @relation("UserArchetypes")
 
     @@index([email])
     @@index([displayName])
@@ -96,7 +96,7 @@ model Image {
 
     //User
     uploadedById String?
-    uploadedBy   User?   @relation("UserImages", fields: [uploadedById], references: [id])
+    uploadedBy   User?   @relation("UserImages", fields: [uploadedById], references: [id], onDelete: Cascade)
 
     // Optional profile picture relation
     userProfile User? @relation("UserProfilePicture")

@@ -15,6 +15,7 @@ import { environment, logConfig, securityConfig, apiConfig } from './config/envi
 import { errorHandler, notFoundHandler } from './shared/errors.js'
 import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { healthRoutes } from './health/health.route.js'
+import { userRoutes } from './users/user.route.js'
 
 // Create Fastify instance with configuration
 export const app = Fastify({
@@ -177,6 +178,9 @@ const registerRoutes = async (): Promise<void> => {
       // Health check routes (no auth required)
       await fastify.register(healthRoutes)
 
+      // User management routes (Chapter 3)
+      await fastify.register(userRoutes)
+
       // Future routes will be added here in subsequent chapters:
       // - User routes (Chapter 3)
       // - Auth routes (Chapter 4)
@@ -195,6 +199,11 @@ const registerRoutes = async (): Promise<void> => {
 
 // Setup error handlers
 const setupErrorHandlers = (): void => {
+  // Custom schema error formatter for validation errors
+  app.setSchemaErrorFormatter((errors, _dataVar) => {
+    return new Error(errors[0]?.message || 'Validation failed')
+  })
+
   // Global error handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   app.setErrorHandler(async (error: Error, request: any, reply: any) => {
@@ -223,7 +232,7 @@ const initializeApp = async (): Promise<void> => {
     app.log.info(`Log level: ${logConfig.level}`)
     app.log.info(`API prefix: ${apiConfig.prefix}`)
   } catch (error) {
-    app.log.error('Failed to initialize Fastify application:', error)
+    app.log.error('Failed to initialize Fastify application: %s', String(error))
     throw error
   }
 }

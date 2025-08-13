@@ -54,7 +54,8 @@ describe('Environment Configuration', () => {
     it('should have default values', () => {
       expect(serverConfig.port).toBe(3000)
       expect(serverConfig.host).toBe('0.0.0.0')
-      expect(serverConfig.nodeEnv).toBe('development')
+      // NODE_ENV should be 'test' in test environment
+      expect(['test', 'development']).toContain(serverConfig.nodeEnv)
     })
 
     it('should be number for port', () => {
@@ -82,8 +83,13 @@ describe('Environment Configuration', () => {
     })
 
     it('should have transport in development', () => {
-      expect(logConfig.transport).toBeDefined()
-      expect(logConfig.transport?.target).toBe('pino-pretty')
+      // Transport is only set in development, not in test
+      if (serverConfig.nodeEnv === 'development') {
+        expect(logConfig.transport).toBeDefined()
+        expect(logConfig.transport?.target).toBe('pino-pretty')
+      } else {
+        expect(logConfig.transport).toBeUndefined()
+      }
     })
 
     it('should be valid log level', () => {

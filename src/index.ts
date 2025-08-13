@@ -10,7 +10,7 @@ const start = async (): Promise<void> => {
   try {
     const address = await app.listen({
       port: environment.PORT,
-      host: environment.HOST,
+      host: process.env.NODE_ENV === 'development' ? 'localhost' : environment.HOST,
     })
 
     app.log.info(`Server listening at ${address}`)
@@ -39,7 +39,7 @@ const start = async (): Promise<void> => {
         }
       }
     } else {
-      app.log.error('Failed to start server with unknown error:', error)
+      app.log.error('Failed to start server with unknown error.')
     }
 
     app.log.error('Server startup failed - exiting process')
@@ -62,7 +62,7 @@ const gracefulShutdown = async (signal: string): Promise<void> => {
         app.log.error(`Stack trace: ${error.stack}`)
       }
     } else {
-      app.log.error('Unknown error during shutdown:', error)
+      app.log.error('Unknown error during shutdown.')
     }
     app.log.error('Forcing process exit due to shutdown error')
     process.exit(1)

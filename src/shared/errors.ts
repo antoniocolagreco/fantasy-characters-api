@@ -143,7 +143,12 @@ export const errorHandler = async (
   }
 
   // Handle Fastify validation errors
-  if (error.name === 'FastifyValidationError' || error.name === 'ValidationError') {
+  if (
+    error.name === 'FastifyValidationError' ||
+    error.name === 'ValidationError' ||
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (error as any).code === 'FST_ERR_VALIDATION'
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validationError = createValidationError('Invalid request data', (error as any).validation)
     const errorResponse = createErrorResponse(validationError, request.url)

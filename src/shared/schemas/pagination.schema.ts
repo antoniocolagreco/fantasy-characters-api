@@ -13,7 +13,7 @@ export const ListPaginationQuerySchema = Type.Object(
       Type.Integer({
         minimum: 1,
         maximum: 100,
-        default: 20,
+        default: 10,
         description: 'Items per page (1-100)',
       }),
     ),
