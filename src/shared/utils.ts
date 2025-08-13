@@ -45,7 +45,8 @@ export const isPositiveInteger = (value: number): boolean => {
 }
 
 export const roundToDecimals = (value: number, decimals: number): number => {
-  return parseFloat(value.toFixed(decimals))
+  const factor = Math.pow(10, decimals)
+  return Math.round(value * factor) / factor
 }
 
 // Array utilities
@@ -234,4 +235,9 @@ export const isBoolean = (value: unknown): value is boolean => {
 
 export const isObject = (value: unknown): value is Record<string, unknown> => {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+// API response utilities
+export const createSuccessMessage = (message: string) => {
+  return { message }
 }

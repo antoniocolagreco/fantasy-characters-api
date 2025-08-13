@@ -39,7 +39,11 @@ export const createUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to create user')
+      const internalError = createInternalServerError('Failed to create user') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -70,7 +74,11 @@ export const getUserByIdHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to retrieve user')
+      const internalError = createInternalServerError('Failed to retrieve user') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -91,7 +99,7 @@ export const getUsersListHandler = async (
 
     await reply.status(HTTP_STATUS.OK).send({
       success: true,
-      data: result.users,
+      data: result.data,
       pagination: result.pagination,
       timestamp: new Date().toISOString(),
     })
@@ -102,7 +110,11 @@ export const getUsersListHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to retrieve users list')
+      const internalError = createInternalServerError('Failed to retrieve users list') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -138,7 +150,11 @@ export const updateUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to update user')
+      const internalError = createInternalServerError('Failed to update user') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -165,7 +181,11 @@ export const deleteUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to delete user')
+      const internalError = createInternalServerError('Failed to delete user') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }

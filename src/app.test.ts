@@ -40,7 +40,8 @@ describe('Fastify Application', () => {
       })
 
       expect(response.statusCode).toBe(200)
-      // Request IDs are generated internally and logged, not exposed as a direct method
+      expect(response.headers['x-request-id']).toBeDefined()
+      expect(response.headers['x-request-id']).toMatch(/^req_\d+_[a-z0-9]+$/)
     })
   })
 
@@ -114,7 +115,7 @@ describe('Fastify Application', () => {
 
       const body = JSON.parse(response.body)
       expect(body.error).toBeDefined()
-      expect(body.error.code).toBe('NOT_FOUND')
+      expect(body.error).toBe('Not Found')
     })
 
     it('should handle method not allowed', async () => {

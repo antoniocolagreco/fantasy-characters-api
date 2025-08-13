@@ -3,7 +3,7 @@
  * Functional approach following project principles
  */
 
-import { User, Role } from '@prisma/client'
+import { User, Role, Prisma } from '@prisma/client'
 import { db } from '../shared/database/index.js'
 import {
   createNotFoundError,
@@ -164,11 +164,11 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
     const skip = (page - 1) * pageSize
 
     // Build where clause for filtering
-    const where: any = {}
+    const where: Prisma.UserWhereInput = {}
 
     // Filter by role
     if (query.role) {
-      where.role = query.role
+      where.role = query.role as Role
     }
 
     // Filter by active status
@@ -188,7 +188,8 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
     }
 
     // Build orderBy clause
-    const orderBy: any = {}
+    let orderBy: Prisma.UserOrderByWithRelationInput = { createdAt: 'desc' } // Default sorting
+
     if (query.sortBy) {
       const sortField = query.sortBy
       const sortOrder = query.sortOrder || 'asc'
@@ -203,15 +204,11 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
         'lastLogin',
         'createdAt',
         'updatedAt',
-      ]
+      ] as const
 
-      if (allowedSortFields.includes(sortField)) {
-        orderBy[sortField] = sortOrder
-      } else {
-        orderBy.createdAt = 'desc' // Default sorting
+      if (allowedSortFields.includes(sortField as (typeof allowedSortFields)[number])) {
+        orderBy = { [sortField]: sortOrder }
       }
-    } else {
-      orderBy.createdAt = 'desc' // Default sorting
     }
 
     // Get total count and users in parallel
@@ -228,7 +225,7 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
     const totalPages = Math.ceil(total / pageSize)
 
     return {
-      users: users.map(transformUserToResponse),
+      data: users.map(transformUserToResponse),
       pagination: {
         page,
         pageSize,
@@ -298,7 +295,7 @@ export const updateUser = async (
     }
 
     // Prepare update data
-    const updatePayload: any = {}
+    const updatePayload: Prisma.UserUpdateInput = {}
 
     if (updateData.email !== undefined) {
       updatePayload.email = updateData.email.toLowerCase().trim()
@@ -381,7 +378,7 @@ export const userExists = async (id: string): Promise<boolean> => {
       select: { id: true },
     })
     return user !== null
-  } catch (error) {
+  } catch (_error) {
     return false
   }
 }

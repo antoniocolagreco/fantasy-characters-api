@@ -211,7 +211,7 @@ describe('User Service', () => {
     it('should return paginated users list', async () => {
       const result = await getUsersList({ page: 1, pageSize: 2 })
 
-      expect(result.users).toHaveLength(2)
+      expect(result.data).toHaveLength(2)
       expect(result.pagination.page).toBe(1)
       expect(result.pagination.pageSize).toBe(2)
       expect(result.pagination.total).toBe(3)
@@ -221,30 +221,30 @@ describe('User Service', () => {
     it('should filter users by role', async () => {
       const result = await getUsersList({ role: 'ADMIN' })
 
-      expect(result.users).toHaveLength(1)
-      expect(result.users[0].role).toBe('ADMIN')
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].role).toBe('ADMIN')
     })
 
     it('should filter users by active status', async () => {
       const result = await getUsersList({ isActive: false })
 
-      expect(result.users).toHaveLength(1)
-      expect(result.users[0].isActive).toBe(false)
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].isActive).toBe(false)
     })
 
     it('should search users by email and display name', async () => {
       const result = await getUsersList({ search: 'admin' })
 
-      expect(result.users).toHaveLength(1)
-      expect(result.users[0].email).toBe('admin@example.com')
+      expect(result.data).toHaveLength(1)
+      expect(result.data[0].email).toBe('admin@example.com')
     })
 
     it('should sort users by specified field', async () => {
       const result = await getUsersList({ sortBy: 'email', sortOrder: 'asc' })
 
-      expect(result.users[0].email).toBe('admin@example.com')
-      expect(result.users[1].email).toBe('inactive@example.com')
-      expect(result.users[2].email).toBe('user1@example.com')
+      expect(result.data[0].email).toBe('admin@example.com')
+      expect(result.data[1].email).toBe('inactive@example.com')
+      expect(result.data[2].email).toBe('user1@example.com')
     })
 
     it('should use default pagination values', async () => {

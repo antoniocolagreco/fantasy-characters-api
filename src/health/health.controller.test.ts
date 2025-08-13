@@ -51,21 +51,24 @@ describe('Health Controller', () => {
     it('should handle service errors gracefully', async () => {
       vi.mocked(getHealthStatus).mockRejectedValue(new Error('Service error'))
 
+      const mockLogError = vi.fn()
       const mockRequest = {
-        log: { error: vi.fn() },
+        log: { error: mockLogError },
         url: '/health',
       } as unknown as FastifyRequest
 
+      const mockStatus = vi.fn().mockReturnThis()
+      const mockSend = vi.fn()
       const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
+        status: mockStatus,
+        send: mockSend,
       } as unknown as FastifyReply
 
       await getHealth(mockRequest, mockReply)
 
-      expect(mockRequest.log.error).toHaveBeenCalled()
-      expect(mockReply.status).toHaveBeenCalledWith(500)
-      expect(mockReply.send).toHaveBeenCalled()
+      expect(mockLogError).toHaveBeenCalled()
+      expect(mockStatus).toHaveBeenCalledWith(500)
+      expect(mockSend).toHaveBeenCalled()
     })
 
     it('should return 500 status for unhealthy service', async () => {
@@ -85,15 +88,17 @@ describe('Health Controller', () => {
         url: '/health',
       } as unknown as FastifyRequest
 
+      const mockStatus = vi.fn().mockReturnThis()
+      const mockSend = vi.fn()
       const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
+        status: mockStatus,
+        send: mockSend,
       } as unknown as FastifyReply
 
       await getHealth(mockRequest, mockReply)
 
-      expect(mockReply.status).toHaveBeenCalledWith(500)
-      expect(mockReply.send).toHaveBeenCalledWith(unhealthyData)
+      expect(mockStatus).toHaveBeenCalledWith(500)
+      expect(mockSend).toHaveBeenCalledWith(unhealthyData)
     })
   })
 

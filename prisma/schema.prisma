@@ -69,18 +69,43 @@ model User {
     profilePicture   Image?  @relation("UserProfilePicture", fields: [profilePictureId], references: [id], onDelete: Cascade)
 
     // Relations
-    characters  Character[] @relation("UserCharacters")
-    images      Image[]     @relation("UserImages")
-    createdTags Tag[]       @relation("UserTags")
-    items       Item[]      @relation("UserItems")
-    races       Race[]      @relation("UserRaces")
-    perks       Perk[]      @relation("UserPerks")
-    skills      Skill[]     @relation("UserSkills")
-    archetypes  Archetype[] @relation("UserArchetypes")
+    characters    Character[]    @relation("UserCharacters")
+    images        Image[]        @relation("UserImages")
+    createdTags   Tag[]          @relation("UserTags")
+    items         Item[]         @relation("UserItems")
+    races         Race[]         @relation("UserRaces")
+    perks         Perk[]         @relation("UserPerks")
+    skills        Skill[]        @relation("UserSkills")
+    archetypes    Archetype[]    @relation("UserArchetypes")
+    refreshTokens RefreshToken[] @relation("UserRefreshTokens")
 
     @@index([email])
     @@index([displayName])
     @@map("users")
+}
+
+model RefreshToken {
+    // Core fields
+    id        String   @id @default(uuid())
+    token     String   @unique
+    userId    String
+    user      User     @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+    expiresAt DateTime
+    isRevoked Boolean  @default(false)
+
+    // Device/session info
+    deviceInfo String?
+    ipAddress  String?
+    userAgent  String?
+
+    // Timestamps
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([token])
+    @@index([userId])
+    @@index([expiresAt])
+    @@map("refresh_tokens")
 }
 
 model Image {

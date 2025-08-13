@@ -24,7 +24,11 @@ export const getHealth = async (request: FastifyRequest, reply: FastifyReply): P
     const appError = createInternalServerError(
       'Health check failed',
       error instanceof Error ? error.message : 'Unknown error',
-    )
+    ) as Error & {
+      statusCode: number
+      code?: string
+      details?: unknown
+    }
 
     const errorResponse = createErrorResponse(appError, request.url)
     await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)

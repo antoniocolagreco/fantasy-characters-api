@@ -8,14 +8,17 @@ import { environment } from './config/environment.js'
 
 const start = async (): Promise<void> => {
   try {
-    const address = await app.listen({
-      port: environment.PORT,
-      host: process.env.NODE_ENV === 'development' ? 'localhost' : environment.HOST,
-    })
+    const host = environment.NODE_ENV === 'development' ? 'localhost' : environment.HOST
+    const port = environment.PORT
+    const address = await app.listen({ port, host })
 
-    app.log.info(`Server listening at ${address}`)
-    app.log.info(`Health check: ${address}/api/health`)
-    app.log.info(`API docs: ${address}/docs`)
+    // For development, always show localhost URLs for better readability
+    const displayAddress =
+      environment.NODE_ENV === 'development' ? `http://localhost:${environment.PORT}` : address
+
+    app.log.info(`Server listening at ${displayAddress}`)
+    app.log.info(`Health check: ${displayAddress}/api/health`)
+    app.log.info(`API docs: ${displayAddress}/docs`)
   } catch (error) {
     // Enhanced error handling with specific error types
     if (error instanceof Error) {

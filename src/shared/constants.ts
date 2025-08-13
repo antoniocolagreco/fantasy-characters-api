@@ -108,9 +108,9 @@ export const ENVIRONMENTS = {
 
 // User roles (from database schema)
 export const USER_ROLES = {
-  USER: 'user',
-  ADMIN: 'admin',
-  MODERATOR: 'moderator',
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+  MODERATOR: 'MODERATOR',
 } as const
 
 // Item rarity (from database schema)

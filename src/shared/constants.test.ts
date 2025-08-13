@@ -175,9 +175,9 @@ describe('Application Constants', () => {
 
   describe('USER_ROLES', () => {
     it('should have all user roles', () => {
-      expect(USER_ROLES.USER).toBe('user')
-      expect(USER_ROLES.ADMIN).toBe('admin')
-      expect(USER_ROLES.MODERATOR).toBe('moderator')
+      expect(USER_ROLES.USER).toBe('USER')
+      expect(USER_ROLES.ADMIN).toBe('ADMIN')
+      expect(USER_ROLES.MODERATOR).toBe('MODERATOR')
     })
   })
 

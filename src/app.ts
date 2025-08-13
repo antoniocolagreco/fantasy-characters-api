@@ -10,12 +10,14 @@ import sensible from '@fastify/sensible'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import cors from '@fastify/cors'
+import fastifyJwt from '@fastify/jwt'
 
 import { environment, logConfig, securityConfig, apiConfig } from './config/environment.js'
 import { errorHandler, notFoundHandler } from './shared/errors.js'
 import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { healthRoutes } from './health/health.route.js'
 import { userRoutes } from './users/user.route.js'
+import { authRoutes } from './auth/auth.route.js'
 
 // Create Fastify instance with configuration
 export const app = Fastify({
@@ -101,6 +103,11 @@ const registerPlugins = async (): Promise<void> => {
   // Sensible plugin for HTTP errors and utilities
   await app.register(sensible)
 
+  // JWT authentication
+  await app.register(fastifyJwt, {
+    secret: securityConfig.jwtSecret,
+  })
+
   // Swagger documentation
   await app.register(swagger, {
     openapi: {
@@ -141,6 +148,16 @@ const registerPlugins = async (): Promise<void> => {
         { name: 'Images', description: 'Image management endpoints' },
         { name: 'Tags', description: 'Tag management endpoints' },
       ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'JWT token for authentication',
+          },
+        },
+      },
     },
   })
 
@@ -181,9 +198,10 @@ const registerRoutes = async (): Promise<void> => {
       // User management routes (Chapter 3)
       await fastify.register(userRoutes)
 
+      // Authentication routes (Chapter 4)
+      await fastify.register(authRoutes, { prefix: '/auth' })
+
       // Future routes will be added here in subsequent chapters:
-      // - User routes (Chapter 3)
-      // - Auth routes (Chapter 4)
       // - Image routes (Chapter 5)
       // - Tags routes (Chapter 6)
       // - Skills routes (Chapter 7)
@@ -197,24 +215,20 @@ const registerRoutes = async (): Promise<void> => {
   )
 }
 
+// Add hooks
+const setupHooks = (): void => {
+  // Add request ID to response headers
+  app.addHook('onSend', async (request, reply, payload) => {
+    reply.header('x-request-id', request.id)
+    return payload
+  })
+}
+
 // Setup error handlers
 const setupErrorHandlers = (): void => {
-  // Custom schema error formatter for validation errors
-  app.setSchemaErrorFormatter((errors, _dataVar) => {
-    return new Error(errors[0]?.message || 'Validation failed')
-  })
-
-  // Global error handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.setErrorHandler(async (error: Error, request: any, reply: any) => {
-    return await errorHandler(error, request, reply)
-  })
-
-  // 404 handler
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  app.setNotFoundHandler(async (request: any, reply: any) => {
-    return await notFoundHandler(request, reply)
-  })
+  // Register custom error handlers
+  app.setErrorHandler(errorHandler)
+  app.setNotFoundHandler(notFoundHandler)
 }
 
 // Initialize application
@@ -225,6 +239,7 @@ const initializeApp = async (): Promise<void> => {
 
     await registerPlugins()
     await registerRoutes()
+    setupHooks()
     setupErrorHandlers()
 
     app.log.info('Fastify application initialized successfully')

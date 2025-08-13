@@ -9,7 +9,10 @@ import {
 describe('Shared Error Utilities', () => {
   describe('Error Creation Functions', () => {
     it('should create validation error with correct properties', () => {
-      const error = createValidationError('Invalid input', { field: 'email' })
+      const error = createValidationError('Invalid input', { field: 'email' }) as Error & {
+        statusCode: number
+        code: string
+      }
 
       expect(error.name).toBe('ValidationError')
       expect(error.message).toBe('Invalid input')
@@ -18,7 +21,10 @@ describe('Shared Error Utilities', () => {
     })
 
     it('should create not found error', () => {
-      const error = createNotFoundError('User', '123')
+      const error = createNotFoundError('User', '123') as Error & {
+        statusCode: number
+        code: string
+      }
 
       expect(error.name).toBe('NotFoundError')
       expect(error.message).toBe('User with id 123 not found')
@@ -41,7 +47,11 @@ describe('Shared Error Utilities', () => {
 
   describe('createErrorResponse', () => {
     it('should create standardized error response', () => {
-      const appError = createNotFoundError('User', '123')
+      const appError = createNotFoundError('User', '123') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
       const response = createErrorResponse(appError, '/api/users/123')
 
       expect(response.error.code).toBe('NOT_FOUND')

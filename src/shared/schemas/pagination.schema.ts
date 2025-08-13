@@ -24,8 +24,8 @@ export const ListPaginationQuerySchema = Type.Object(
       }),
     ),
     sortOrder: Type.Optional(
-      Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
-        default: 'asc',
+      Type.String({
+        enum: ['asc', 'desc'],
         description: 'Sort order: ascending or descending',
       }),
     ),

@@ -7,12 +7,10 @@ import { Type, type Static } from '@sinclair/typebox'
 import { ListPaginationQuerySchema } from '../shared/schemas/pagination.schema.js'
 
 // User role enum schema
-export const UserRoleSchema = Type.Union(
-  [Type.Literal('USER'), Type.Literal('ADMIN'), Type.Literal('MODERATOR')],
-  {
-    description: 'User role in the system',
-  },
-)
+export const UserRoleSchema = Type.String({
+  enum: ['USER', 'ADMIN', 'MODERATOR'],
+  description: 'User role in the system',
+})
 
 // Base user schema (common fields)
 export const BaseUserSchema = Type.Object(
@@ -170,13 +168,11 @@ export const UserListQuerySchema = Type.Object(
     isActive: Type.Optional(
       Type.Boolean({
         description: 'Filter by active status',
-        examples: [true, false],
       }),
     ),
     isEmailVerified: Type.Optional(
       Type.Boolean({
         description: 'Filter by email verification status',
-        examples: [true, false],
       }),
     ),
     search: Type.Optional(
@@ -184,7 +180,6 @@ export const UserListQuerySchema = Type.Object(
         minLength: 1,
         maxLength: 100,
         description: 'Search in email and display name',
-        examples: ['john', 'admin@example.com'],
       }),
     ),
   },
@@ -197,7 +192,7 @@ export const UserListQuerySchema = Type.Object(
 // User list response schema
 export const UserListResponseSchema = Type.Object(
   {
-    users: Type.Array(UserResponseSchema, {
+    data: Type.Array(UserResponseSchema, {
       description: 'Array of users',
     }),
     pagination: Type.Object({

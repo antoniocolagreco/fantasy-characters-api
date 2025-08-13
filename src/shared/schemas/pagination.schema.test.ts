@@ -16,6 +16,7 @@ type SchemaProperty = {
   items?: unknown
   properties?: Record<string, unknown>
   anyOf?: unknown[]
+  enum?: string[]
   default?: unknown
   required?: string[]
   minLength?: number
@@ -64,13 +65,14 @@ describe('Pagination Schemas', () => {
       expect(pageSizeSchema.default).toBe(10)
     })
 
-    it('should have sortOrder as union type', () => {
+    it('should have sortOrder as enum type', () => {
       const properties = ListPaginationQuerySchema.properties as Record<string, SchemaProperty>
       const sortOrderSchema = properties.sortOrder
 
-      expect(sortOrderSchema.anyOf).toBeDefined()
-      expect(sortOrderSchema.anyOf).toHaveLength(2)
-      expect(sortOrderSchema.default).toBe('asc')
+      expect(sortOrderSchema.enum).toBeDefined()
+      expect(sortOrderSchema.enum).toHaveLength(2)
+      expect(sortOrderSchema.enum).toContain('asc')
+      expect(sortOrderSchema.enum).toContain('desc')
     })
 
     it('should have sortBy with minimum length', () => {
@@ -118,9 +120,7 @@ describe('Pagination Schemas', () => {
 
     it('should validate sortOrder values', () => {
       const properties = ListPaginationQuerySchema.properties as Record<string, SchemaProperty>
-      const sortOrderOptions = properties.sortOrder.anyOf?.map(
-        (item: unknown) => (item as { const: string }).const,
-      )
+      const sortOrderOptions = properties.sortOrder.enum
 
       expect(sortOrderOptions).toContain('asc')
       expect(sortOrderOptions).toContain('desc')
@@ -160,7 +160,6 @@ describe('Pagination Schemas', () => {
 
       expect(properties.page.default).toBe(1)
       expect(properties.pageSize.default).toBe(10)
-      expect(properties.sortOrder.default).toBe('asc')
     })
 
     it('should not have default for sortBy', () => {
