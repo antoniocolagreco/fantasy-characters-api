@@ -1,0 +1,89 @@
+import { FastifyInstance } from 'fastify'
+import * as imageController from './image.controller.js'
+import {
+  getImageResponseSchema,
+  deleteImageResponseSchema,
+  uploadImageResponseSchema,
+  imageNotFoundSchema,
+  imageValidationErrorSchema,
+  imageTooLargeErrorSchema,
+  imageProcessingErrorSchema,
+} from './image.schema.js'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+
+export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
+  // Upload image
+  fastify.post(
+    '/',
+    {
+      schema: {
+        description: 'Upload a new image',
+        tags: ['Images'],
+        consumes: ['multipart/form-data'],
+        response: {
+          201: uploadImageResponseSchema,
+          400: imageValidationErrorSchema,
+          413: imageTooLargeErrorSchema,
+          422: imageProcessingErrorSchema,
+        },
+      },
+      preHandler: [authenticateUser, requireActiveUser],
+    },
+    imageController.uploadImage,
+  )
+
+  // Get image metadata
+  fastify.get(
+    '/:id',
+    {
+      schema: {
+        description: 'Get image metadata by ID',
+        tags: ['Images'],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: getImageResponseSchema,
+          404: imageNotFoundSchema,
+        },
+      },
+    },
+    imageController.getImage,
+  )
+
+  // Delete image
+  fastify.delete(
+    '/:id',
+    {
+      schema: {
+        description: 'Delete an image',
+        tags: ['Images'],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: deleteImageResponseSchema,
+          403: {
+            type: 'object',
+            properties: {
+              message: { type: 'string' },
+              statusCode: { type: 'number' },
+              error: { type: 'string' },
+            },
+          },
+          404: imageNotFoundSchema,
+        },
+      },
+      preHandler: [authenticateUser, requireActiveUser],
+    },
+    imageController.deleteImage,
+  )
+}

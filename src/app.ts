@@ -11,6 +11,7 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import cors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
+import multipart from '@fastify/multipart'
 
 import { environment, logConfig, securityConfig, apiConfig } from './config/environment.js'
 import { errorHandler, notFoundHandler } from './shared/errors.js'
@@ -18,6 +19,7 @@ import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { healthRoutes } from './health/health.route.js'
 import { userRoutes } from './users/user.route.js'
 import { authRoutes } from './auth/auth.route.js'
+import { imageRoutes } from './images/image.route.js'
 
 // Create Fastify instance with configuration
 export const app = Fastify({
@@ -108,6 +110,18 @@ const registerPlugins = async (): Promise<void> => {
     secret: securityConfig.jwtSecret,
   })
 
+  // Multipart support for file uploads
+  await app.register(multipart, {
+    limits: {
+      fieldNameSize: 100, // Max field name size in bytes
+      fieldSize: 1000000, // Max field value size in bytes (1MB)
+      fields: 10, // Max number of non-file fields
+      fileSize: 5 * 1024 * 1024, // Max file size in bytes (5MB)
+      files: 1, // Max number of file fields
+      headerPairs: 2000, // Max number of header key=>value pairs
+    },
+  })
+
   // Swagger documentation
   await app.register(swagger, {
     openapi: {
@@ -139,6 +153,7 @@ const registerPlugins = async (): Promise<void> => {
         { name: 'Health', description: 'Health check endpoints' },
         { name: 'Users', description: 'User management endpoints' },
         { name: 'Auth', description: 'Authentication endpoints' },
+        { name: 'Images', description: 'Image upload and management endpoints' },
         { name: 'Characters', description: 'Character management endpoints' },
         { name: 'Races', description: 'Race management endpoints' },
         { name: 'Archetypes', description: 'Archetype management endpoints' },
@@ -201,8 +216,10 @@ const registerRoutes = async (): Promise<void> => {
       // Authentication routes (Chapter 4)
       await fastify.register(authRoutes, { prefix: '/auth' })
 
+      // Image routes (Chapter 5)
+      await fastify.register(imageRoutes, { prefix: '/images' })
+
       // Future routes will be added here in subsequent chapters:
-      // - Image routes (Chapter 5)
       // - Tags routes (Chapter 6)
       // - Skills routes (Chapter 7)
       // - Perks routes (Chapter 8)

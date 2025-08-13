@@ -579,13 +579,15 @@ PUT / api / auth / password // Change password
 // Users CRUD
 GET    /api/users                  // List all users with pagination and filtering
 GET    /api/users/:id              // Get user by ID with full profile
+GET    /api/users/stats            // Get user statistics
 POST   /api/users                  // Create new user with validation
 PUT    /api/users/:id              // Update user (partial updates supported)
 DELETE /api/users/:id              // Delete user (CASCADE deletes related data)
 
 // User Images
-POST   /api/images                 // Upload new image
+GET    /api/images                 // List all images without blob
 GET    /api/images/:id             // Get image by ID
+POST   /api/images                 // Upload new image
 DELETE /api/images/:id             // Delete image
 ```
 
@@ -595,6 +597,7 @@ DELETE /api/images/:id             // Delete image
 // Characters CRUD
 GET    /api/characters             // List characters (with pagination)
 GET    /api/characters/:id         // Get character by ID
+GET    /api/characters/stats       // Get character statistics
 POST   /api/characters             // Create new character
 PUT    /api/characters/:id         // Update character
 DELETE /api/characters/:id         // Delete character
@@ -606,6 +609,7 @@ DELETE /api/characters/:id         // Delete character
 // Races CRUD
 GET    /api/races                  // List all races
 GET    /api/races/:id              // Get race by ID
+GET    /api/races/stats            // Get race statistics
 POST   /api/races                  // Create new race (admin)
 PUT    /api/races/:id              // Update race (admin)
 DELETE /api/races/:id              // Delete race (admin)
@@ -613,6 +617,7 @@ DELETE /api/races/:id              // Delete race (admin)
 // Archetypes CRUD
 GET    /api/archetypes             // List all archetypes
 GET    /api/archetypes/:id         // Get archetype by ID
+GET    /api/archetypes/stats      // Get archetype statistics
 POST   /api/archetypes             // Create new archetype (admin)
 PUT    /api/archetypes/:id         // Update archetype (admin)
 DELETE /api/archetypes/:id         // Delete archetype (admin)
@@ -620,6 +625,7 @@ DELETE /api/archetypes/:id         // Delete archetype (admin)
 // Skills CRUD
 GET    /api/skills                 // List all skills
 GET    /api/skills/:id             // Get skill by ID
+GET    /api/skills/stats           // Get skill statistics
 POST   /api/skills                 // Create new skill (admin)
 PUT    /api/skills/:id             // Update skill (admin)
 DELETE /api/skills/:id             // Delete skill (admin)
@@ -627,6 +633,7 @@ DELETE /api/skills/:id             // Delete skill (admin)
 // Perks CRUD
 GET    /api/perks                  // List all perks
 GET    /api/perks/:id              // Get perk by ID
+GET    /api/perks/stats            // Get perk statistics
 POST   /api/perks                  // Create new perk (admin)
 PUT    /api/perks/:id              // Update perk (admin)
 DELETE /api/perks/:id              // Delete perk (admin)
@@ -638,6 +645,7 @@ DELETE /api/perks/:id              // Delete perk (admin)
 // Items CRUD
 GET    /api/items                  // List all items
 GET    /api/items/:id              // Get item by ID
+GET    /api/items/stats            // Get item statistics
 POST   /api/items                  // Create new item (admin)
 PUT    /api/items/:id              // Update item (admin)
 DELETE /api/items/:id              // Delete item (admin)
@@ -649,6 +657,7 @@ DELETE /api/items/:id              // Delete item (admin)
 // Tags CRUD
 GET    /api/tags                   // List all tags
 GET    /api/tags/:id               // Get tag by ID
+GET    /api/tags/stats             // Get tag statistics
 POST   /api/tags                   // Create new tag
 PUT    /api/tags/:id               // Update tag
 DELETE /api/tags/:id               // Delete tag
@@ -862,7 +871,8 @@ met.
 
 - [x] JWT integration with Fastify (`@fastify/jwt` configured)
 - [x] User registration and login flows (fully implemented)
-- [x] Token management including refresh tokens (complete database-backed implementation)
+- [x] Token management including refresh tokens (complete database-backed
+      implementation)
 - [x] Password hashing with bcrypt (12 salt rounds, strong validation)
 - [x] Role-based authorization middleware (complete with flexible role checking)
 - [x] Complete authentication service layer
@@ -896,24 +906,26 @@ met.
 ### Chapter 5: Image Management Feature 🖼️
 
 **Feature Focus**: Image upload, processing, and retrieval  
-**Status**: ❌ NOT STARTED  
+**Status**: ✅ COMPLETED (100%)
 **Estimated Duration**: 1-2 weeks
 
 **Chapter 5 Deliverables:**
 
-- [ ] Image upload endpoint with validation
-- [ ] WebP conversion pipeline
-- [ ] Image resizing to 350x450px
-- [ ] Binary storage in database
-- [ ] Image retrieval endpoint
+- [x] Image upload endpoint with validation
+- [x] WebP conversion pipeline
+- [x] Image resizing to 350x450px
+- [x] Binary storage in database
+- [x] Image retrieval endpoint
+- [x] Authentication and authorization (JWT-based)
+- [x] User ownership validation
 
 **Chapter 5 Success Criteria:**
 
-- [ ] Images properly resized and converted
-- [ ] Upload validation works for different file types
-- [ ] Image retrieval is performant
-- [ ] Edge cases handled (large files, invalid formats)
-- [ ] Test coverage >80% for image feature
+- [x] Images properly resized and converted
+- [x] Upload validation works for different file types
+- [x] Image retrieval is performant
+- [x] Edge cases handled (large files, invalid formats)
+- [x] Test coverage >80% for image feature
 
 ### Chapter 6: Tags Feature 🏷️
 
