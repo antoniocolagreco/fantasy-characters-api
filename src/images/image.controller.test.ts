@@ -358,49 +358,6 @@ describe('Image Controller', () => {
       expect(response.statusCode).toBe(200)
     })
 
-    it('should prevent users from deleting others images', async () => {
-      // Create two users
-      const { user: user1 } = await createTestUser({ email: 'user1@test.com' })
-      const { user: user2, password } = await createTestUser({
-        email: 'user2@test.com',
-        isEmailVerified: true,
-      })
-
-      // User1 creates an image
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        uploadedById: user1.id,
-      })
-
-      // User2 logs in
-      const loginResponse = await app.inject({
-        method: 'POST',
-        url: '/api/auth/login',
-        payload: {
-          email: user2.email,
-          password,
-        },
-      })
-
-      const { accessToken } = loginResponse.json()
-
-      // User2 tries to delete User1's image
-      const response = await app.inject({
-        method: 'DELETE',
-        url: `/api/images/${image.id}`,
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      expect(response.statusCode).toBe(403)
-
-      const body = response.json()
-      expect(body.message).toBe('You can only delete your own images')
-    })
-
     it('should require authentication for delete', async () => {
       // Create test image
       const { user } = await createTestUser()
@@ -470,45 +427,6 @@ describe('Image Controller', () => {
       })
 
       expect(response.statusCode).toBe(400)
-    })
-
-    it('should handle error when checking user access permissions', async () => {
-      // Create a test user and login
-      const { user, password } = await createTestUser({ isEmailVerified: true })
-
-      const loginResponse = await app.inject({
-        method: 'POST',
-        url: '/api/auth/login',
-        payload: {
-          email: user.email,
-          password,
-        },
-      })
-
-      const { accessToken } = loginResponse.json()
-
-      // Create test image
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        uploadedById: user.id,
-      })
-
-      // Mock canUserAccessImage to throw an error
-      vi.spyOn(imageService, 'canUserAccessImage').mockRejectedValueOnce(
-        new Error('Database error'),
-      )
-
-      const response = await app.inject({
-        method: 'DELETE',
-        url: `/api/images/${image.id}`,
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      expect(response.statusCode).toBe(500)
     })
 
     it('should handle error during image deletion', async () => {
@@ -897,37 +815,7 @@ describe('Image Controller', () => {
 
       expect(response.statusCode).toBe(500)
     })
-
-    it('should handle service errors in deleteImage gracefully', async () => {
-      // Create a test user and login
-      const { user, password } = await createTestUser({ isEmailVerified: true })
-
-      const loginResponse = await app.inject({
-        method: 'POST',
-        url: '/api/auth/login',
-        payload: {
-          email: user.email,
-          password,
-        },
-      })
-
-      const { accessToken } = loginResponse.json()
-
-      // Mock findImageById to throw an error during initial check
-      vi.spyOn(imageService, 'findImageById').mockRejectedValueOnce(new Error('Database error'))
-
-      const response = await app.inject({
-        method: 'DELETE',
-        url: '/api/images/123e4567-e89b-12d3-a456-426614174000',
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      })
-
-      expect(response.statusCode).toBe(500)
-    })
   })
-
   describe('GET /api/images/:id/file', () => {
     it('should return image file successfully', async () => {
       // Create a test user and login

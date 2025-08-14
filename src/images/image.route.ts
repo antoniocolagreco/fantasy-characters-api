@@ -133,14 +133,6 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
         },
         response: {
           200: deleteImageResponseSchema,
-          403: {
-            type: 'object',
-            properties: {
-              message: { type: 'string' },
-              statusCode: { type: 'number' },
-              error: { type: 'string' },
-            },
-          },
           404: imageNotFoundSchema,
         },
       },

@@ -10,9 +10,6 @@ import type {
   ImageBinaryData,
 } from './image.type.js'
 
-// Types
-// (All types are now imported from image.type.ts)
-
 // Utility functions
 const validateImageFile = (file: Buffer, mimeType: string): void => {
   if (!IMAGE.ALLOWED_TYPES.includes(mimeType as (typeof IMAGE.ALLOWED_TYPES)[number])) {
@@ -234,7 +231,7 @@ export const getImageStats = async (): Promise<ImageStatsData> => {
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-  // Get basic statistics (removed uploaderStats for performance)
+  // Get basic statistics
   const [totalImages, totalSizeResult, mimeTypeStats, recent24h, recent7d, recent30d] =
     await Promise.all([
       db.image.count(),
@@ -290,24 +287,4 @@ export const deleteImage = async (id: string): Promise<void> => {
     }
     throw error
   }
-}
-
-// Check if user can access image (for authorization)
-export const canUserAccessImage = async (imageId: string, userId: string): Promise<boolean> => {
-  const image = await db.image.findUnique({
-    where: { id: imageId },
-    select: { uploadedById: true },
-  })
-
-  if (!image) {
-    return false
-  }
-
-  // If no uploader is set, anyone can access
-  if (!image.uploadedById) {
-    return true
-  }
-
-  // Only the uploader can access their own images
-  return image.uploadedById === userId
 }

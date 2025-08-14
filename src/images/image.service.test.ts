@@ -148,56 +148,6 @@ describe('Image Service', () => {
     })
   })
 
-  describe('canUserAccessImage', () => {
-    it('should allow access to own image', async () => {
-      // Create a test user first
-      const { user } = await createTestUser()
-
-      const testImageData = {
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        uploadedById: user.id,
-      }
-
-      const createdImage = await imageService.createImage(testImageData)
-      const canAccess = await imageService.canUserAccessImage(createdImage.id, user.id)
-
-      expect(canAccess).toBe(true)
-    })
-
-    it('should deny access to other user image', async () => {
-      // Create test users first
-      const { user: owner } = await createTestUser({ email: 'owner@test.com' })
-      const { user: otherUser } = await createTestUser({ email: 'other@test.com' })
-
-      const testImageData = {
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        uploadedById: owner.id,
-      }
-
-      const createdImage = await imageService.createImage(testImageData)
-      const canAccess = await imageService.canUserAccessImage(createdImage.id, otherUser.id)
-
-      expect(canAccess).toBe(false)
-    })
-
-    it('should allow access to image with no uploader', async () => {
-      const testImageData = {
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-      }
-
-      const createdImage = await imageService.createImage(testImageData)
-      const canAccess = await imageService.canUserAccessImage(createdImage.id, 'any-user')
-
-      expect(canAccess).toBe(true)
-    })
-  })
-
   describe('getImageBinaryData', () => {
     it('should return image binary data', async () => {
       const testImageData = {
