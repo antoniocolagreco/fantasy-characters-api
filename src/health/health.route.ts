@@ -4,7 +4,7 @@
  */
 
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
-import { getHealth } from './health.controller.js'
+import { getHealth, getHealthz, getLiveness, getReadiness } from './health.controller.js'
 
 export const healthRoutes = async (
   fastify: FastifyInstance,
@@ -27,7 +27,7 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Health Check (K8s style)',
     },
-    handler: getHealth,
+    handler: getHealthz,
   })
 
   // Readiness probe endpoint
@@ -37,7 +37,7 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Readiness Check',
     },
-    handler: getHealth,
+    handler: getReadiness,
   })
 
   // Liveness probe endpoint
@@ -47,6 +47,6 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Liveness Check',
     },
-    handler: getHealth,
+    handler: getLiveness,
   })
 }

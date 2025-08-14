@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fantasy-characters-api-service
+  namespace: fantasy-characters
+  labels:
+    app: fantasy-characters-api
+spec:
+  selector:
+    app: fantasy-characters-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP
+  sessionAffinity: None
+
+---
+# Optional: Service for monitoring/health checks
+apiVersion: v1
+kind: Service
+metadata:
+  name: fantasy-characters-api-health
+  namespace: fantasy-characters
+  labels:
+    app: fantasy-characters-api
+    service-type: health
+spec:
+  selector:
+    app: fantasy-characters-api
+  ports:
+    - name: health
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP

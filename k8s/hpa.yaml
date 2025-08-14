@@ -1,0 +1,64 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fantasy-characters-api-hpa
+  namespace: fantasy-characters
+  labels:
+    app: fantasy-characters-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: fantasy-characters-api
+
+  minReplicas: 2
+  maxReplicas: 10
+
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+  # Optional: Custom metrics (requires metrics server)
+  # - type: Pods
+  #   pods:
+  #     metric:
+  #       name: http_requests_per_second
+  #     target:
+  #       type: AverageValue
+  #       averageValue: "100"
+
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # 5 minutes
+      policies:
+        - type: Percent
+          value: 10 # Scale down by max 10% of current replicas
+          periodSeconds: 60
+        - type: Pods
+          value: 1 # Scale down by max 1 pod
+          periodSeconds: 60
+      selectPolicy: Min
+
+    scaleUp:
+      stabilizationWindowSeconds: 60 # 1 minute
+      policies:
+        - type: Percent
+          value: 50 # Scale up by max 50% of current replicas
+          periodSeconds: 60
+        - type: Pods
+          value: 2 # Scale up by max 2 pods
+          periodSeconds: 60
+      selectPolicy: Max

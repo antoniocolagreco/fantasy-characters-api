@@ -153,6 +153,7 @@ const registerPlugins = async (): Promise<void> => {
         { name: 'Health', description: 'Health check endpoints' },
         { name: 'Users', description: 'User management endpoints' },
         { name: 'Auth', description: 'Authentication endpoints' },
+        { name: 'Profile', description: 'User profile management endpoints' },
         { name: 'Images', description: 'Image upload and management endpoints' },
         { name: 'Characters', description: 'Character management endpoints' },
         { name: 'Races', description: 'Race management endpoints' },
@@ -160,7 +161,6 @@ const registerPlugins = async (): Promise<void> => {
         { name: 'Skills', description: 'Skill management endpoints' },
         { name: 'Perks', description: 'Perk management endpoints' },
         { name: 'Items', description: 'Item management endpoints' },
-        { name: 'Images', description: 'Image management endpoints' },
         { name: 'Tags', description: 'Tag management endpoints' },
       ],
       components: {

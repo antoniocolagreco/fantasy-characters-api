@@ -70,9 +70,13 @@ managing fantasy characters.
 ### CI/CD & Deployment
 
 - **Docker**: Application containerization for consistency across environments
+- **Kubernetes**: Container orchestration with health checks and scaling
 - **GitHub Actions**: CI/CD pipeline automation
 - **Multi-stage Dockerfile**: Optimized container builds for dev/staging/prod
-- **Health Checks**: Container and application health monitoring
+- **Health Checks**: Kubernetes-compatible health monitoring with readiness and
+  liveness probes
+- **Horizontal Pod Autoscaler**: Automatic scaling based on CPU/memory usage
+- **ConfigMaps & Secrets**: Environment-specific configuration management
 
 ---
 
@@ -154,7 +158,7 @@ fantasy-character-api/
 │   │   ├── tag.service.ts
 │   │   └── tag.test.ts
 │   │
-│   ├── health/               # Health check feature
+│   ├── health/               # Health check feature (Kubernetes-compatible)
 │   │   ├── health.controller.ts
 │   │   ├── health.route.ts
 │   │   └── health.test.ts
@@ -172,6 +176,15 @@ fantasy-character-api/
 │   ├── schema.prisma         # Database schema
 │   ├── seed.ts               # Database seed script
 │   └── migrations/           # Migration files
+│
+├── k8s/                      # Kubernetes manifests
+│   ├── namespace.yaml        # Namespace definition
+│   ├── deployment.yaml       # Application deployment
+│   ├── service.yaml          # Service definition
+│   ├── configmap.yaml        # Configuration management
+│   ├── secrets.yaml          # Secrets management
+│   ├── ingress.yaml          # Ingress controller
+│   └── hpa.yaml              # Horizontal Pod Autoscaler
 │
 ├── .github/                  # GitHub Actions workflows
 ├── docs/                     # Additional documentation
@@ -556,6 +569,59 @@ interface Character {
 
 ---
 
+## Kubernetes Configuration
+
+### Health Check Strategy
+
+The application provides four health endpoints for Kubernetes deployment:
+
+1. **`/api/health`** - Standard health check
+2. **`/api/healthz`** - Kubernetes-style health check
+3. **`/api/ready`** - Readiness probe (checks if ready to receive traffic)
+4. **`/api/live`** - Liveness probe (checks if pod should be restarted)
+
+**Note**: Currently all endpoints use the same controller. For production,
+consider implementing different logic for liveness (lightweight) vs readiness
+(comprehensive) probes.
+
+### Kubernetes Manifests
+
+Essential files in `k8s/` directory:
+
+- `namespace.yaml` - Creates fantasy-characters namespace
+- `deployment.yaml` - Main application deployment with health checks
+- `service.yaml` - Service definition for the API
+- `configmap.yaml` - Environment configuration
+- `secrets.yaml` - Sensitive data (database, JWT secrets)
+- `hpa.yaml` - Horizontal Pod Autoscaler (2-10 replicas)
+- `ingress.yaml` - External access with SSL/TLS
+
+### Basic Deployment
+
+```bash
+# Create secrets (replace with actual values)
+kubectl create secret generic fantasy-characters-secrets \
+  --from-literal=database-url="your-db-url" \
+  --from-literal=jwt-secret="your-jwt-secret" \
+  --namespace=fantasy-characters
+
+# Deploy all manifests
+kubectl apply -f k8s/
+
+# Check status
+kubectl get all -n fantasy-characters
+```
+
+### Health Check Configuration
+
+The deployment uses:
+
+- **Liveness Probe**: `/api/live` - Restarts pod if failing
+- **Readiness Probe**: `/api/ready` - Stops traffic if failing
+- **Startup Probe**: `/api/healthz` - Extra time during startup
+
+---
+
 ## API Endpoints
 
 ### Authentication Endpoints
@@ -587,7 +653,9 @@ DELETE /api/users/:id              // Delete user (CASCADE deletes related data)
 // User Images
 GET    /api/images                 // List all images without blob
 GET    /api/images/:id             // Get image by ID
+GET    /api/images/stats           // Get image statistics
 POST   /api/images                 // Upload new image
+PUT    /api/images/:id             // Update image
 DELETE /api/images/:id             // Delete image
 ```
 
@@ -666,8 +734,11 @@ DELETE /api/tags/:id               // Delete tag
 ### Utility Endpoints
 
 ```typescript
-// Health Check
-GET / api / health // API health status
+// Health Check Endpoints (Kubernetes Compatible)
+GET / api / health // Standard health check
+GET / api / healthz // Kubernetes-style health check
+GET / api / ready // Kubernetes readiness probe
+GET / api / live // Kubernetes liveness probe
 ```
 
 ---
@@ -906,8 +977,7 @@ met.
 ### Chapter 5: Image Management Feature 🖼️
 
 **Feature Focus**: Image upload, processing, and retrieval  
-**Status**: ✅ COMPLETED (100%)
-**Estimated Duration**: 1-2 weeks
+**Status**: ✅ COMPLETED (100%) **Estimated Duration**: 1-2 weeks
 
 **Chapter 5 Deliverables:**
 
@@ -1142,8 +1212,27 @@ Each feature directory contains its own tests subdirectory with:
 
 ### Deployment Strategy
 
+#### Local Development
+
+- **Docker Compose**: Multi-container setup with database
+- **Hot Reload**: Live code reloading with tsx
+- **Development Database**: SQLite for rapid iteration
+
+#### Staging/Production Deployment
+
+- **Kubernetes**: Container orchestration with auto-scaling
 - **Continuous Integration**: Automated testing on pull requests
-- **Staging Deployment**: After successful PR merge
-- **Production Release**: After integration testing
-- **Rollback Ready**: Quick rollback capability
-- **Monitoring**: Health checks and alerts
+- **Continuous Deployment**: Automated deployment to staging
+- **Production Release**: Manual promotion from staging with approval gates
+- **Blue-Green Deployment**: Zero-downtime deployments
+- **Rollback Ready**: Quick rollback capability using Kubernetes
+- **Health Monitoring**: Comprehensive health checks and alerts
+- **Log Aggregation**: Centralized logging with structured JSON logs
+- **Metrics Collection**: Prometheus metrics and Grafana dashboards
+
+#### Database Strategy
+
+- **Development**: SQLite (file-based)
+- **Staging/Production**: PostgreSQL or MySQL with persistent volumes
+- **Migration Strategy**: Automated database migrations in init containers
+- **Backup Strategy**: Regular automated backups with point-in-time recovery

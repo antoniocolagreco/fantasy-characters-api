@@ -24,6 +24,8 @@ export type HealthResponse = {
   readonly checks: HealthCheck[]
 }
 
+export type HealthCheckLevel = 'basic' | 'liveness' | 'readiness' | 'comprehensive'
+
 // Individual health check functions
 const checkApplication = (): HealthCheck => ({
   name: 'application',
@@ -41,8 +43,13 @@ const checkMemory = (): HealthCheck => {
   const freeMemory = process.memoryUsage().heapTotal - process.memoryUsage().heapUsed
   const memoryUtilization = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100
 
-  // Consider memory unhealthy if utilization > 90%
-  const status: HealthStatus = memoryUtilization > 90 ? 'unhealthy' : 'healthy'
+  // Memory health thresholds adjusted for development: degraded > 95%, unhealthy > 98%
+  let status: HealthStatus = 'healthy'
+  if (memoryUtilization > 98) {
+    status = 'unhealthy'
+  } else if (memoryUtilization > 95) {
+    status = 'degraded'
+  }
 
   return {
     name: 'memory',
@@ -68,6 +75,21 @@ const checkUptime = (): HealthCheck => {
     details: {
       seconds: Math.round(uptimeSeconds),
       formatted: formatUptime(uptimeSeconds),
+    },
+  }
+}
+
+// Basic process health check (lightweight for liveness probe)
+const checkProcess = (): HealthCheck => {
+  const status: HealthStatus = process.uptime() > 0 ? 'healthy' : 'unhealthy'
+
+  return {
+    name: 'process',
+    status,
+    timestamp: new Date().toISOString(),
+    details: {
+      pid: process.pid,
+      uptime: Math.round(process.uptime()),
     },
   }
 }
@@ -126,20 +148,40 @@ const determineOverallStatus = (checks: HealthCheck[]): HealthStatus => {
   return 'healthy'
 }
 
-// Main health check service function
-export const getHealthStatus = async (): Promise<HealthResponse> => {
+// Get checks based on health check level
+const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]> => {
+  switch (level) {
+    case 'basic':
+      // Basic health check - minimal information for /healthz
+      return [checkProcess(), checkMemory()]
+
+    case 'liveness':
+      // Liveness probe - ONLY process check (Kubernetes best practice)
+      // This should be extremely lightweight and never fail unless the process is truly dead
+      return [checkProcess()]
+
+    case 'readiness':
+      // Readiness probe - focus on external dependencies (Kubernetes best practice)
+      // This determines if the app can serve traffic (database, external services)
+      return [await checkDatabase(), checkMemory()]
+
+    case 'comprehensive':
+    default:
+      // Full health check with all available checks for monitoring dashboards
+      return [checkApplication(), checkMemory(), checkUptime(), await checkDatabase()]
+  }
+}
+
+// Main health check service function with configurable level
+export const getHealthStatus = async (
+  level: HealthCheckLevel = 'comprehensive',
+): Promise<HealthResponse> => {
   if (!healthConfig.enabled) {
     throw new Error('Health checks are disabled')
   }
 
-  // Run all health checks
-  const checks: HealthCheck[] = [
-    checkApplication(),
-    checkMemory(),
-    checkUptime(),
-    await checkDatabase(), // This is async for future database checks
-  ]
-
+  // Run health checks based on the specified level
+  const checks = await getChecksForLevel(level)
   const overallStatus = determineOverallStatus(checks)
 
   return {
@@ -150,4 +192,17 @@ export const getHealthStatus = async (): Promise<HealthResponse> => {
     environment: process.env.NODE_ENV || 'development',
     checks,
   }
+}
+
+// Specific functions for different endpoint types
+export const getLivenessStatus = async (): Promise<HealthResponse> => {
+  return getHealthStatus('liveness')
+}
+
+export const getReadinessStatus = async (): Promise<HealthResponse> => {
+  return getHealthStatus('readiness')
+}
+
+export const getBasicHealthStatus = async (): Promise<HealthResponse> => {
+  return getHealthStatus('basic')
 }

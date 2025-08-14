@@ -36,7 +36,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
   fastify.post('/register', {
     schema: {
       description: 'Register a new user account',
-      tags: ['Authentication'],
+      tags: ['Auth'],
       body: { $ref: 'RegisterUserSchema#' },
       response: {
         201: {
@@ -59,7 +59,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
   fastify.post('/login', {
     schema: {
       description: 'Authenticate user and return access token',
-      tags: ['Authentication'],
+      tags: ['Auth'],
       body: { $ref: 'LoginUserSchema#' },
       response: {
         200: {
@@ -85,7 +85,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
     preHandler: [authenticateUser, requireActiveUser],
     schema: {
       description: 'Logout user (client-side token invalidation)',
-      tags: ['Authentication'],
+      tags: ['Auth'],
       security: [{ bearerAuth: [] }],
       response: {
         200: {
@@ -108,7 +108,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
   fastify.post('/refresh', {
     schema: {
       description: 'Refresh access token using refresh token',
-      tags: ['Authentication'],
+      tags: ['Auth'],
       body: { $ref: 'RefreshTokenSchema#' },
       response: {
         200: {
@@ -132,7 +132,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
     preHandler: [authenticateUser, requireActiveUser],
     schema: {
       description: 'Get current authenticated user profile',
-      tags: ['Authentication', 'Profile'],
+      tags: ['Auth', 'Profile'],
       security: [{ bearerAuth: [] }],
       response: {
         200: {
@@ -156,7 +156,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
     preHandler: [authenticateUser, requireActiveUser],
     schema: {
       description: 'Update current authenticated user profile',
-      tags: ['Authentication', 'Profile'],
+      tags: ['Auth', 'Profile'],
       security: [{ bearerAuth: [] }],
       body: { $ref: 'UpdateProfileSchema#' },
       response: {
@@ -181,7 +181,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
     preHandler: [authenticateUser, requireActiveUser],
     schema: {
       description: 'Change current authenticated user password',
-      tags: ['Authentication', 'Profile'],
+      tags: ['Auth', 'Profile'],
       security: [{ bearerAuth: [] }],
       body: { $ref: 'ChangePasswordSchema#' },
       response: {
@@ -206,7 +206,7 @@ export const authRoutes = async (fastify: FastifyInstance): Promise<void> => {
     preHandler: [authenticateUser, requireActiveUser],
     schema: {
       description: 'Deactivate current authenticated user account',
-      tags: ['Authentication', 'Profile'],
+      tags: ['Auth', 'Profile'],
       security: [{ bearerAuth: [] }],
       response: {
         200: {
