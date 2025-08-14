@@ -745,4 +745,124 @@ describe('User Controller', () => {
       deleteUserSpy.mockRestore()
     })
   })
+
+  describe('GET /api/users/stats', () => {
+    beforeEach(async () => {
+      // Create test users with different roles and statuses
+      const now = new Date()
+      const yesterday = new Date(now.getTime() - 23 * 60 * 60 * 1000) // 23 hours ago to ensure it's within 24h
+      const lastWeek = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000) // 6 days ago to ensure it's within 7d
+
+      await db.user.createMany({
+        data: [
+          {
+            email: 'user1@example.com',
+            passwordHash: 'hash1',
+            role: 'USER',
+            isActive: true,
+            isEmailVerified: true,
+            createdAt: now,
+          },
+          {
+            email: 'user2@example.com',
+            passwordHash: 'hash2',
+            role: 'USER',
+            isActive: true,
+            isEmailVerified: false,
+            createdAt: yesterday,
+          },
+          {
+            email: 'admin@example.com',
+            passwordHash: 'hash3',
+            role: 'ADMIN',
+            isActive: true,
+            isEmailVerified: true,
+            createdAt: lastWeek,
+          },
+          {
+            email: 'inactive@example.com',
+            passwordHash: 'hash4',
+            role: 'USER',
+            isActive: false,
+            isEmailVerified: false,
+            createdAt: lastWeek,
+          },
+        ],
+      })
+    })
+
+    it('should return user statistics successfully', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/users/stats',
+      })
+
+      expect(response.statusCode).toBe(200)
+
+      const body = response.json()
+      expect(body.success).toBe(true)
+      expect(body.data).toBeDefined()
+      expect(body.data.totalUsers).toBe(4)
+      expect(body.data.activeUsers).toBe(3)
+      expect(body.data.verifiedUsers).toBe(2)
+      expect(body.data.usersByRole).toEqual({
+        USER: 3,
+        ADMIN: 1,
+        MODERATOR: 0,
+      })
+      expect(body.data.recentSignups.last24Hours).toBe(2)
+      expect(body.data.recentSignups.last7Days).toBe(4)
+      expect(body.data.recentSignups.last30Days).toBe(4)
+      expect(body.data.lastUpdated).toBeDefined()
+      expect(body.timestamp).toBeDefined()
+    })
+
+    it('should handle empty database correctly', async () => {
+      // Clean all users first
+      await db.user.deleteMany()
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/users/stats',
+      })
+
+      expect(response.statusCode).toBe(200)
+
+      const body = response.json()
+      expect(body.success).toBe(true)
+      expect(body.data.totalUsers).toBe(0)
+      expect(body.data.activeUsers).toBe(0)
+      expect(body.data.verifiedUsers).toBe(0)
+      expect(body.data.usersByRole).toEqual({
+        USER: 0,
+        ADMIN: 0,
+        MODERATOR: 0,
+      })
+      expect(body.data.recentSignups.last24Hours).toBe(0)
+      expect(body.data.recentSignups.last7Days).toBe(0)
+      expect(body.data.recentSignups.last30Days).toBe(0)
+    })
+
+    it('should handle internal server error during stats retrieval', async () => {
+      // Mock the getUserStats service to throw a generic error
+      const getUserStatsSpy = vi.spyOn(userService, 'getUserStats').mockImplementation(() => {
+        throw new Error('Database connection failed')
+      })
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/api/users/stats',
+      })
+
+      expect(response.statusCode).toBe(500)
+      const body = response.json()
+      expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
+      expect(body.error.message).toBe('Failed to retrieve user statistics')
+      expect(body.error.timestamp).toBeDefined()
+      expect(body.error.path).toBe('/api/users/stats')
+
+      // Restore the original function
+      getUserStatsSpy.mockRestore()
+    })
+  })
 })

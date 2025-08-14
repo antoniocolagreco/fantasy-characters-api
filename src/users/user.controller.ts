@@ -4,7 +4,14 @@
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { createUser, getUserById, getUsersList, updateUser, deleteUser } from './user.service.js'
+import {
+  createUser,
+  getUserById,
+  getUsersList,
+  updateUser,
+  deleteUser,
+  getUserStats,
+} from './user.service.js'
 import { createErrorResponse, isAppError, createInternalServerError } from '../shared/errors.js'
 import { HTTP_STATUS, MESSAGES } from '../shared/constants.js'
 import type {
@@ -182,6 +189,42 @@ export const deleteUserHandler = async (
       await reply.status(error.statusCode).send(errorResponse)
     } else {
       const internalError = createInternalServerError('Failed to delete user') as Error & {
+        statusCode: number
+        code?: string
+        details?: unknown
+      }
+      const errorResponse = createErrorResponse(internalError, request.url)
+      await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
+    }
+  }
+}
+
+/**
+ * Get user statistics
+ * GET /api/users/stats
+ */
+export const getUserStatsHandler = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> => {
+  try {
+    const stats = await getUserStats()
+
+    await reply.status(HTTP_STATUS.OK).send({
+      success: true,
+      data: stats,
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    request.log.error({ error }, 'Failed to get user statistics')
+
+    if (isAppError(error)) {
+      const errorResponse = createErrorResponse(error, request.url)
+      await reply.status(error.statusCode).send(errorResponse)
+    } else {
+      const internalError = createInternalServerError(
+        'Failed to retrieve user statistics',
+      ) as Error & {
         statusCode: number
         code?: string
         details?: unknown

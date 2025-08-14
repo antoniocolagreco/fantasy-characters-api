@@ -13,6 +13,7 @@ import {
   deleteUser,
   getUserByEmail,
   userExists,
+  getUserStats,
 } from './user.service.js'
 import type { CreateUserRequest, UpdateUserRequest } from './user.schema.js'
 
@@ -434,6 +435,105 @@ describe('User Service', () => {
       const exists = await userExists('invalid-uuid')
 
       expect(exists).toBe(false)
+    })
+  })
+
+  describe('getUserStats', () => {
+    beforeEach(async () => {
+      // Create test users with different roles and statuses
+      const now = new Date()
+      const yesterday = new Date(now.getTime() - 23 * 60 * 60 * 1000) // 23 hours ago to ensure it's within 24h
+      const lastWeek = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000) // 6 days ago to ensure it's within 7d
+      const lastMonth = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000) // 29 days ago to ensure it's within 30d
+
+      // Create users with different roles
+      await db.user.createMany({
+        data: [
+          {
+            email: 'user1@example.com',
+            passwordHash: 'hash1',
+            role: 'USER',
+            isActive: true,
+            isEmailVerified: true,
+            createdAt: now,
+          },
+          {
+            email: 'user2@example.com',
+            passwordHash: 'hash2',
+            role: 'USER',
+            isActive: true,
+            isEmailVerified: false,
+            createdAt: yesterday,
+          },
+          {
+            email: 'admin@example.com',
+            passwordHash: 'hash3',
+            role: 'ADMIN',
+            isActive: true,
+            isEmailVerified: true,
+            createdAt: lastWeek,
+          },
+          {
+            email: 'mod@example.com',
+            passwordHash: 'hash4',
+            role: 'MODERATOR',
+            isActive: false,
+            isEmailVerified: true,
+            createdAt: lastMonth,
+          },
+          {
+            email: 'inactive@example.com',
+            passwordHash: 'hash5',
+            role: 'USER',
+            isActive: false,
+            isEmailVerified: false,
+            createdAt: lastMonth,
+          },
+        ],
+      })
+    })
+
+    it('should return correct user statistics', async () => {
+      const stats = await getUserStats()
+
+      expect(stats.totalUsers).toBe(5)
+      expect(stats.activeUsers).toBe(3)
+      expect(stats.verifiedUsers).toBe(3)
+      expect(stats.usersByRole).toEqual({
+        USER: 3,
+        ADMIN: 1,
+        MODERATOR: 1,
+      })
+      expect(stats.recentSignups.last24Hours).toBe(2) // today and yesterday
+      expect(stats.recentSignups.last7Days).toBe(3) // + last week
+      expect(stats.recentSignups.last30Days).toBe(5) // + last month
+      expect(stats.lastUpdated).toBeDefined()
+    })
+
+    it('should handle empty database correctly', async () => {
+      // Clean all users first
+      await db.user.deleteMany()
+
+      const stats = await getUserStats()
+
+      expect(stats.totalUsers).toBe(0)
+      expect(stats.activeUsers).toBe(0)
+      expect(stats.verifiedUsers).toBe(0)
+      expect(stats.usersByRole).toEqual({
+        USER: 0,
+        ADMIN: 0,
+        MODERATOR: 0,
+      })
+      expect(stats.recentSignups.last24Hours).toBe(0)
+      expect(stats.recentSignups.last7Days).toBe(0)
+      expect(stats.recentSignups.last30Days).toBe(0)
+      expect(stats.lastUpdated).toBeDefined()
+    })
+
+    it('should have valid timestamp format', async () => {
+      const stats = await getUserStats()
+
+      expect(new Date(stats.lastUpdated).toISOString()).toBe(stats.lastUpdated)
     })
   })
 })

@@ -19,6 +19,7 @@ import type {
   UserListQuery,
   UserResponse,
   UserListResponse,
+  UserStatsResponse,
 } from './user.schema.js'
 
 /**
@@ -365,6 +366,77 @@ export const deleteUser = async (id: string): Promise<void> => {
       throw error
     }
     throw createInternalServerError('Failed to delete user', error)
+  }
+}
+
+/**
+ * Get user statistics
+ */
+export const getUserStats = async (): Promise<UserStatsResponse> => {
+  try {
+    const now = new Date()
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+    const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+    const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+    // Execute all queries in parallel for better performance
+    const [
+      totalUsers,
+      activeUsers,
+      verifiedUsers,
+      usersByRole,
+      signupsLast24h,
+      signupsLast7d,
+      signupsLast30d,
+    ] = await Promise.all([
+      // Total users count
+      db.user.count(),
+
+      // Active users count
+      db.user.count({ where: { isActive: true } }),
+
+      // Verified users count
+      db.user.count({ where: { isEmailVerified: true } }),
+
+      // Users by role
+      db.user.groupBy({
+        by: ['role'],
+        _count: { role: true },
+      }),
+
+      // Recent signups
+      db.user.count({ where: { createdAt: { gte: last24Hours } } }),
+      db.user.count({ where: { createdAt: { gte: last7Days } } }),
+      db.user.count({ where: { createdAt: { gte: last30Days } } }),
+    ])
+
+    // Transform role counts into expected format
+    const roleStats = {
+      USER: 0,
+      ADMIN: 0,
+      MODERATOR: 0,
+    }
+
+    usersByRole.forEach(group => {
+      if (group.role in roleStats) {
+        roleStats[group.role as keyof typeof roleStats] = group._count.role
+      }
+    })
+
+    return {
+      totalUsers,
+      activeUsers,
+      verifiedUsers,
+      usersByRole: roleStats,
+      recentSignups: {
+        last24Hours: signupsLast24h,
+        last7Days: signupsLast7d,
+        last30Days: signupsLast30d,
+      },
+      lastUpdated: now.toISOString(),
+    }
+  } catch (error) {
+    throw createInternalServerError('Failed to retrieve user statistics', error)
   }
 }
 

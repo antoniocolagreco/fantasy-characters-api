@@ -10,6 +10,7 @@ import {
   getUsersListHandler,
   updateUserHandler,
   deleteUserHandler,
+  getUserStatsHandler,
 } from './user.controller.js'
 import {
   CreateUserRequestSchema,
@@ -17,6 +18,7 @@ import {
   UserResponseSchema,
   UserListQuerySchema,
   UserIdParamSchema,
+  UserStatsResponseSchema,
 } from './user.schema.js'
 
 export const userRoutes = async (
@@ -109,6 +111,42 @@ export const userRoutes = async (
       },
     },
     handler: getUsersListHandler,
+  })
+
+  // Get user statistics (must be before /:id route to avoid conflicts)
+  fastify.get('/users/stats', {
+    schema: {
+      description: 'Get user statistics and metrics',
+      tags: ['Users'],
+      summary: 'Get User Statistics',
+      response: {
+        200: {
+          description: 'User statistics retrieved successfully',
+          type: 'object',
+          properties: {
+            success: { type: 'boolean', enum: [true] },
+            data: UserStatsResponseSchema,
+            timestamp: { type: 'string', format: 'date-time' },
+          },
+        },
+        500: {
+          description: 'Internal server error',
+          type: 'object',
+          properties: {
+            error: {
+              type: 'object',
+              properties: {
+                code: { type: 'string' },
+                message: { type: 'string' },
+                timestamp: { type: 'string', format: 'date-time' },
+                path: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+    },
+    handler: getUserStatsHandler,
   })
 
   // Get user by ID

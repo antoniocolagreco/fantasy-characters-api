@@ -222,6 +222,58 @@ export const UserIdParamSchema = Type.Object(
   },
 )
 
+// User statistics schema
+export const UserStatsResponseSchema = Type.Object(
+  {
+    totalUsers: Type.Integer({
+      minimum: 0,
+      description: 'Total number of users in the system',
+      examples: [150],
+    }),
+    activeUsers: Type.Integer({
+      minimum: 0,
+      description: 'Number of active users',
+      examples: [142],
+    }),
+    verifiedUsers: Type.Integer({
+      minimum: 0,
+      description: 'Number of users with verified emails',
+      examples: [134],
+    }),
+    usersByRole: Type.Object(
+      {
+        USER: Type.Integer({ minimum: 0, description: 'Number of regular users' }),
+        ADMIN: Type.Integer({ minimum: 0, description: 'Number of admin users' }),
+        MODERATOR: Type.Integer({ minimum: 0, description: 'Number of moderator users' }),
+      },
+      {
+        description: 'Users count by role',
+        examples: [{ USER: 145, ADMIN: 3, MODERATOR: 2 }],
+      },
+    ),
+    recentSignups: Type.Object(
+      {
+        last24Hours: Type.Integer({ minimum: 0, description: 'New users in last 24 hours' }),
+        last7Days: Type.Integer({ minimum: 0, description: 'New users in last 7 days' }),
+        last30Days: Type.Integer({ minimum: 0, description: 'New users in last 30 days' }),
+      },
+      {
+        description: 'Recent user signup statistics',
+        examples: [{ last24Hours: 5, last7Days: 23, last30Days: 87 }],
+      },
+    ),
+    lastUpdated: Type.String({
+      format: 'date-time',
+      description: 'Timestamp when statistics were calculated',
+      examples: ['2023-08-13T10:30:00.000Z'],
+    }),
+  },
+  {
+    additionalProperties: false,
+    description: 'User statistics and metrics',
+  },
+)
+
 // Type exports for use in controllers and services
 export type CreateUserRequest = Static<typeof CreateUserRequestSchema>
 export type UpdateUserRequest = Static<typeof UpdateUserRequestSchema>
@@ -230,3 +282,4 @@ export type UserListQuery = Static<typeof UserListQuerySchema>
 export type UserListResponse = Static<typeof UserListResponseSchema>
 export type UserIdParam = Static<typeof UserIdParamSchema>
 export type UserRole = Static<typeof UserRoleSchema>
+export type UserStatsResponse = Static<typeof UserStatsResponseSchema>
