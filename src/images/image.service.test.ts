@@ -69,9 +69,10 @@ describe('Image Service', () => {
       expect(result).toMatchObject({
         filename: 'test.png',
         mimeType: CONTENT_TYPES.IMAGE_WEBP,
-        description: null,
-        uploadedById: null,
+        // description and uploadedById should not appear when null
       })
+      expect(result.description).toBeUndefined()
+      expect(result.uploadedById).toBeUndefined()
     })
 
     it('should throw error for invalid file type', async () => {

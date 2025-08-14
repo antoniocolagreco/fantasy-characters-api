@@ -3,28 +3,15 @@ import { Prisma } from '@prisma/client'
 import { db } from '../shared/database/index.js'
 import { createNotFoundError, createValidationError } from '../shared/errors.js'
 import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
+import type {
+  ImageCreateData,
+  ImageResponse,
+  ImageStatsData,
+  ImageBinaryData,
+} from './image.type.js'
 
 // Types
-export type ImageCreateData = {
-  file: Buffer
-  filename: string
-  mimeType: string
-  description?: string | undefined
-  uploadedById?: string | undefined
-}
-
-export type ImageResponse = {
-  id: string
-  description: string | null
-  filename: string
-  size: number
-  mimeType: string
-  width: number
-  height: number
-  uploadedById: string | null
-  createdAt: Date
-  updatedAt: Date
-}
+// (All types are now imported from image.type.ts)
 
 // Utility functions
 const validateImageFile = (file: Buffer, mimeType: string): void => {
@@ -91,18 +78,30 @@ const processImage = async (
   }
 }
 
-const transformImageToResponse = (image: Prisma.ImageGetPayload<{}>): ImageResponse => ({
-  id: image.id,
-  description: image.description,
-  filename: image.filename,
-  size: image.size,
-  mimeType: image.mimeType,
-  width: image.width,
-  height: image.height,
-  uploadedById: image.uploadedById,
-  createdAt: image.createdAt,
-  updatedAt: image.updatedAt,
-})
+const transformImageToResponse = (
+  image: Prisma.ImageGetPayload<{}> | Omit<Prisma.ImageGetPayload<{}>, 'blob'>,
+): ImageResponse => {
+  const response: ImageResponse = {
+    id: image.id,
+    filename: image.filename,
+    size: image.size,
+    mimeType: image.mimeType,
+    width: image.width,
+    height: image.height,
+    createdAt: image.createdAt.toISOString(),
+    updatedAt: image.updatedAt.toISOString(),
+  }
+
+  if (image.description !== null) {
+    response.description = image.description
+  }
+
+  if (image.uploadedById !== null) {
+    response.uploadedById = image.uploadedById
+  }
+
+  return response
+}
 
 // Service functions
 export const createImage = async (data: ImageCreateData): Promise<ImageResponse> => {
@@ -140,14 +139,7 @@ export const findImageById = async (id: string): Promise<ImageResponse> => {
   return transformImageToResponse(image)
 }
 
-export const getImageBinaryData = async (
-  id: string,
-): Promise<{
-  blob: Buffer
-  mimeType: string
-  size: number
-  filename: string
-}> => {
+export const getImageBinaryData = async (id: string): Promise<ImageBinaryData> => {
   const image = await db.image.findUnique({
     where: { id },
     select: {
@@ -226,18 +218,7 @@ export const getImagesList = async (options: {
   const totalPages = Math.ceil(total / limit)
 
   return {
-    images: images.map(image => ({
-      id: image.id,
-      description: image.description,
-      filename: image.filename,
-      size: image.size,
-      mimeType: image.mimeType,
-      width: image.width,
-      height: image.height,
-      uploadedById: image.uploadedById,
-      createdAt: image.createdAt,
-      updatedAt: image.updatedAt,
-    })),
+    images: images.map(image => transformImageToResponse(image)),
     pagination: {
       page,
       limit,
@@ -247,17 +228,7 @@ export const getImagesList = async (options: {
   }
 }
 
-export const getImageStats = async (): Promise<{
-  totalImages: number
-  totalSize: number
-  averageSize: number
-  byMimeType: Record<string, number>
-  recentUploads: {
-    last24Hours: number
-    last7Days: number
-    last30Days: number
-  }
-}> => {
+export const getImageStats = async (): Promise<ImageStatsData> => {
   const now = new Date()
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)

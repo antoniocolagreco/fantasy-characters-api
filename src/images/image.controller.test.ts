@@ -131,7 +131,7 @@ describe('Image Controller', () => {
 
       const body = response.json()
       expect(body.message).toBe('Image uploaded successfully')
-      expect(body.data.description).toBe('')
+      expect(body.data.description).toBeUndefined() // Optional field should not appear when null
     })
 
     it('should require authentication for upload', async () => {

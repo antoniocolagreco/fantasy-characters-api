@@ -11,7 +11,49 @@ export type ImageResponse = Static<typeof imageResponseSchema>
 
 export type ImageStatsResponse = Static<typeof imageStatsResponseSchema>
 
-// Helper types for testing
+// Service types for image operations
+export type ImageCreateData = {
+  file: Buffer
+  filename: string
+  mimeType: string
+  description?: string | undefined
+  uploadedById?: string | undefined
+}
+
+export type ImageBinaryData = {
+  blob: Buffer
+  mimeType: string
+  size: number
+  filename: string
+}
+
+// Database response type (matches Prisma Image model)
+export type ImageDatabaseResponse = {
+  id: string
+  description: string | null
+  filename: string
+  size: number
+  mimeType: string
+  width: number
+  height: number
+  uploadedById: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type ImageStatsData = {
+  totalImages: number
+  totalSize: number
+  averageSize: number
+  byMimeType: Record<string, number>
+  recentUploads: {
+    last24Hours: number
+    last7Days: number
+    last30Days: number
+  }
+}
+
+// Helper types for testing and API responses
 export type ImageListResponse = {
   data: ImageResponse[]
   pagination: {
