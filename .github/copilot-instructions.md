@@ -32,6 +32,157 @@ managing fantasy characters.
 - **@fastify/rate-limit**: Rate limiting to prevent abuse
 - **bcrypt**: Industry-standard password hashing with configurable rounds
 
+### Ownership & Sharing System
+
+The API implements a **Flexible Ownership** system that balances user autonomy with content sharing:
+
+#### **Core Principles**
+
+- **User Autonomy**: Users have complete control over their entities (can modify/delete freely)
+- **Content Sharing**: Users can access and use all public entities created by others
+- **Ownership Transfer**: Users can abandon ownership, making entities community-managed
+- **Cascade Protection**: Entities in use by others are preserved when owners leave
+
+#### **How It Works**
+
+1. **Public Entities**: Users can mark their entities as `isPublic: true` to share with others
+2. **Direct Usage**: Users can directly reference and use public entities created by others
+3. **Ownership Abandonment**: Users can abandon ownership by setting `createdById` to `null`
+4. **Automatic Orphaning**: When users delete their accounts, their entities become orphaned
+5. **Cascade Deletion**: Entities only used by the owner are deleted when the owner leaves
+6. **Community Management**: Orphaned entities can be managed by moderators and admins
+
+#### **Example Scenarios**
+
+```typescript
+// Scenario 1: Direct Usage
+// 1. User A creates public race "Elf"
+const elfRace = await raceService.create({
+  name: "Elf",
+  description: "Graceful forest dwellers",
+  isPublic: true,
+  createdById: "user-a-id"
+});
+
+// 2. User B creates character using "Elf" race directly
+const character = await characterService.create({
+  name: "Legolas",
+  raceId: elfRace.id, // Direct reference to User A's race
+  userId: "user-b-id"
+});
+
+// 3. User A can still modify "Elf" race
+// 4. If User A deletes account, "Elf" becomes orphaned (createdById: null)
+// 5. User B's character still works, using the orphaned race
+
+// Scenario 2: User Creates Copy
+// User B can also create their own copy if they want independence
+const myElfCopy = await raceService.create({
+  name: "High Elf", // Must be unique
+  description: "Tall, elegant elves",
+  createdById: "user-b-id"
+});
+```
+
+#### **Benefits**
+
+- ✅ **No Duplicate Content**: Users share actual entities, not copies
+- ✅ **Creative Freedom**: Users can create variations when needed
+- ✅ **Content Preservation**: Important entities survive creator departure
+- ✅ **Simple Logic**: Easy to understand and implement
+- ✅ **Flexible Governance**: Moderators can manage orphaned content
+
+### Role-Based Access Control (RBAC)
+
+The API implements a hierarchical permission system with three distinct roles following security best practices:
+
+#### **USER Role** 👤 (Basic Access)
+
+**Entity Permissions:**
+
+- **Read**: View all public entities (`isPublic: true`) and their own private entities
+- **Create**: Create new entities with themselves as owner (`createdById` / `userId`)
+- **Update**: Modify only their own entities
+- **Delete**: Delete only their own entities
+- **Reference**: Use public entities created by others directly (no copying required)
+- **Ownership Transfer**: Reassign ownership of his entities to other users
+- **Abandon**: Set `createdById` to `null` to make their entities orphaned (community-managed)
+
+**Account Permissions:**
+
+- **Profile**: View and update their own profile information
+- **Password**: Change their own password
+- **Deactivate**: Deactivate their own account
+
+**Strict Limitations:**
+
+- ❌ Cannot modify/delete entities owned by others
+- ❌ Cannot manage orphaned entities
+- ❌ Cannot access private entities of other users
+- ❌ Cannot modify other user accounts
+- ❌ Cannot access admin functions or statistics
+
+#### **MODERATOR Role** 🛡️ (Content Management)
+
+**Inherits:** All USER permissions
+
+**Enhanced Entity Permissions:**
+
+- **Orphaned Content**: Full CRUD access to orphaned entities (`createdById: null`)
+- **Public Content**: Modify/delete public entities created by USER role accounts
+- **Ownership Transfer**: Reassign ownership of orphaned entities to other users
+- **Content Moderation**: Flag, hide, or remove inappropriate content
+
+**Enhanced Account Permissions:**
+
+- **User Management**: View all user profiles and activity
+- **Content Review**: Access to moderation tools and reports
+- **Community Guidelines**: Enforce community standards and policies
+
+**Important Limitations (Peer Protection):**
+
+- ❌ Cannot modify/delete other MODERATOR accounts
+- ❌ Cannot modify/delete entities owned by other MODERATORS
+- ❌ Cannot modify/delete any ADMIN accounts
+- ❌ Cannot modify/delete entities owned by ADMIN accounts
+- ❌ Cannot access system administration functions
+- ❌ Cannot change user roles or permissions
+- ❌ Cannot access sensitive system statistics
+
+#### **ADMIN Role** 👑 (System Administration)
+
+**Inherits:** All USER and MODERATOR permissions
+
+**Full System Permissions:**
+
+- **Entity Override**: Create, read, update, delete ANY entity regardless of ownership
+- **User Management**: Manage all USER and MODERATOR accounts and roles
+- **System Access**: Full access to system statistics, logs, and monitoring
+- **Permission Override**: Bypass all content and ownership restrictions
+- **Database Access**: Direct database operations and maintenance
+- **Configuration**: Modify system settings and security policies
+
+**Account Management Powers:**
+
+- ✅ Create/modify/delete USER accounts
+- ✅ Create/modify/delete MODERATOR accounts  
+- ✅ Promote USER to MODERATOR
+- ✅ Demote MODERATOR to USER
+- ✅ Access all user data and activity logs
+
+**Critical Limitations (Admin Protection):**
+
+- ❌ Cannot modify/delete other ADMIN accounts (peer protection)
+- ❌ Cannot change other ADMIN roles or permissions
+- ❌ Cannot access credentials of other ADMIN accounts
+- ⚠️ **Note**: Admin peer protection prevents lateral privilege escalation
+
+**Emergency Protocols:**
+
+- Admin account recovery requires database-level intervention
+- Role changes between ADMINs require system owner access
+- Multiple ADMINs recommended for redundancy and coverage
+
 ### Validation & Documentation
 
 - **TypeBox**: Library for defining JSON Schema-compatible schemas with
