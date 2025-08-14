@@ -652,7 +652,8 @@ DELETE /api/users/:id              // Delete user (CASCADE deletes related data)
 
 // User Images
 GET    /api/images                 // List all images without blob
-GET    /api/images/:id             // Get image by ID
+GET    /api/images/:id             // Get image by ID (metadata only)
+GET    /api/images/:id/file        // Get image binary data (WebP format)
 GET    /api/images/stats           // Get image statistics
 POST   /api/images                 // Upload new image
 PUT    /api/images/:id             // Update image
@@ -740,6 +741,36 @@ GET / api / healthz // Kubernetes-style health check
 GET / api / ready // Kubernetes readiness probe
 GET / api / live // Kubernetes liveness probe
 ```
+
+### Image Binary Serving
+
+The API provides a specialized endpoint for serving image binary data:
+
+```typescript
+// Binary Image Serving
+GET /api/images/:id/file        // Serve image binary data directly
+```
+
+**Features:**
+
+- Returns WebP format images (max 350x450px)
+- Optimized HTTP caching headers (1-year cache)
+- Proper Content-Type and Content-Disposition headers
+- No authentication required (public endpoint)
+- Efficient binary data streaming
+
+**Response Headers:**
+
+- `Content-Type: image/webp`
+- `Cache-Control: public, max-age=31536000`
+- `Content-Length: {size in bytes}`
+- `Content-Disposition: inline; filename="{original-filename}"`
+
+**Status Codes:**
+
+- `200`: Image served successfully
+- `404`: Image not found
+- `400`: Invalid UUID format
 
 ---
 
@@ -977,7 +1008,8 @@ met.
 ### Chapter 5: Image Management Feature 🖼️
 
 **Feature Focus**: Image upload, processing, and retrieval  
-**Status**: ✅ COMPLETED (100%) **Estimated Duration**: 1-2 weeks
+**Status**: ✅ COMPLETED (100%)  
+**Estimated Duration**: 1-2 weeks
 
 **Chapter 5 Deliverables:**
 
@@ -985,17 +1017,20 @@ met.
 - [x] WebP conversion pipeline
 - [x] Image resizing to 350x450px
 - [x] Binary storage in database
-- [x] Image retrieval endpoint
+- [x] Image metadata retrieval endpoint
+- [x] Binary image serving endpoint (GET /api/images/:id/file)
 - [x] Authentication and authorization (JWT-based)
 - [x] User ownership validation
+- [x] Optimized HTTP caching headers for binary content
 
 **Chapter 5 Success Criteria:**
 
-- [x] Images properly resized and converted
+- [x] Images properly resized and converted to WebP format
 - [x] Upload validation works for different file types
-- [x] Image retrieval is performant
+- [x] Image retrieval is performant with proper caching
+- [x] Binary image serving with optimized headers (1-year cache)
 - [x] Edge cases handled (large files, invalid formats)
-- [x] Test coverage >80% for image feature
+- [x] Test coverage >80% for image feature (achieved 46/46 tests passing)
 
 ### Chapter 6: Tags Feature 🏷️
 

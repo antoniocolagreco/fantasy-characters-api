@@ -113,3 +113,45 @@ export const deleteImageResponseSchema = Type.Object(
   },
   { $id: 'DeleteImageResponse' },
 )
+
+// List images query schema
+export const listImagesQuerySchema = Type.Object(
+  {
+    page: Type.Optional(Type.Number({ minimum: 1, default: 1 })),
+    limit: Type.Optional(Type.Number({ minimum: 1, maximum: 100, default: 10 })),
+    search: Type.Optional(Type.String({ maxLength: 100 })),
+    uploadedById: Type.Optional(Type.String({ format: 'uuid' })),
+  },
+  { $id: 'ListImagesQuery' },
+)
+
+// List images response schema
+export const listImagesResponseSchema = Type.Object(
+  {
+    data: Type.Array(imageResponseSchema),
+    pagination: Type.Object({
+      page: Type.Number(),
+      limit: Type.Number(),
+      total: Type.Number(),
+      totalPages: Type.Number(),
+    }),
+  },
+  { $id: 'ListImagesResponse' },
+)
+
+// Image statistics schema
+export const imageStatsResponseSchema = Type.Object({
+  data: Type.Object({
+    totalImages: Type.Number({ description: 'Total number of images' }),
+    totalSize: Type.Number({ description: 'Total size of all images in bytes' }),
+    averageSize: Type.Number({ description: 'Average size per image in bytes' }),
+    byMimeType: Type.Record(Type.String(), Type.Number(), {
+      description: 'Images count by MIME type',
+    }),
+    recentUploads: Type.Object({
+      last24Hours: Type.Number({ description: 'Images uploaded in last 24 hours' }),
+      last7Days: Type.Number({ description: 'Images uploaded in last 7 days' }),
+      last30Days: Type.Number({ description: 'Images uploaded in last 30 days' }),
+    }),
+  }),
+})

@@ -105,3 +105,67 @@ export const deleteImage = async (request: FastifyRequest, reply: FastifyReply):
     throw error
   }
 }
+
+export const getImagesList = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> => {
+  try {
+    const query = request.query as {
+      page?: number
+      limit?: number
+      search?: string
+      uploadedById?: string
+    }
+
+    const result = await imageService.getImagesList(query)
+
+    reply.code(200)
+    return reply.send({
+      data: result.images,
+      pagination: result.pagination,
+    })
+  } catch (error) {
+    request.log.error(error, 'Error listing images')
+    throw error
+  }
+}
+
+export const getImageStats = async (
+  request: FastifyRequest,
+  reply: FastifyReply,
+): Promise<void> => {
+  try {
+    const stats = await imageService.getImageStats()
+
+    reply.code(200)
+    return reply.send({
+      data: stats,
+    })
+  } catch (error) {
+    request.log.error(error, 'Error getting image statistics')
+    throw error
+  }
+}
+
+export const getImageFile = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+  try {
+    const params = request.params as { id: string }
+    const { id } = params
+
+    // Get image with binary data
+    const imageData = await imageService.getImageBinaryData(id)
+
+    // Set proper headers for image response
+    reply.type(imageData.mimeType)
+    reply.header('Content-Length', imageData.size.toString())
+    reply.header('Cache-Control', 'public, max-age=31536000') // Cache for 1 year
+    reply.header('Content-Disposition', `inline; filename="${imageData.filename}"`)
+
+    reply.code(200)
+    return reply.send(imageData.blob)
+  } catch (error) {
+    request.log.error(error, 'Error serving image file')
+    throw error
+  }
+}

@@ -8,10 +8,44 @@ import {
   imageValidationErrorSchema,
   imageTooLargeErrorSchema,
   imageProcessingErrorSchema,
+  listImagesQuerySchema,
+  listImagesResponseSchema,
+  imageStatsResponseSchema,
 } from './image.schema.js'
 import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
 
 export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
+  // List images
+  fastify.get(
+    '/',
+    {
+      schema: {
+        description: 'List all images with pagination and filtering',
+        tags: ['Images'],
+        querystring: listImagesQuerySchema,
+        response: {
+          200: listImagesResponseSchema,
+        },
+      },
+    },
+    imageController.getImagesList,
+  )
+
+  // Get image statistics
+  fastify.get(
+    '/stats',
+    {
+      schema: {
+        description: 'Get image statistics',
+        tags: ['Images'],
+        response: {
+          200: imageStatsResponseSchema,
+        },
+      },
+    },
+    imageController.getImageStats,
+  )
+
   // Upload image
   fastify.post(
     '/',
@@ -53,6 +87,34 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
       },
     },
     imageController.getImage,
+  )
+
+  // Get image file (binary data)
+  fastify.get(
+    '/:id/file',
+    {
+      schema: {
+        description: 'Get image file by ID (returns binary data)',
+        tags: ['Images'],
+        params: {
+          type: 'object',
+          properties: {
+            id: { type: 'string', format: 'uuid' },
+          },
+          required: ['id'],
+        },
+        response: {
+          200: {
+            type: 'string',
+            format: 'binary',
+            description: 'Image file in WebP format',
+          },
+          404: imageNotFoundSchema,
+        },
+        produces: ['image/webp'],
+      },
+    },
+    imageController.getImageFile,
   )
 
   // Delete image

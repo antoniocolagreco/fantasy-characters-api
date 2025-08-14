@@ -140,6 +140,174 @@ export const findImageById = async (id: string): Promise<ImageResponse> => {
   return transformImageToResponse(image)
 }
 
+export const getImageBinaryData = async (
+  id: string,
+): Promise<{
+  blob: Buffer
+  mimeType: string
+  size: number
+  filename: string
+}> => {
+  const image = await db.image.findUnique({
+    where: { id },
+    select: {
+      blob: true,
+      mimeType: true,
+      size: true,
+      filename: true,
+    },
+  })
+
+  if (!image) {
+    throw createNotFoundError('Image')
+  }
+
+  return {
+    blob: Buffer.from(image.blob),
+    mimeType: image.mimeType,
+    size: image.size,
+    filename: image.filename,
+  }
+}
+
+export const getImagesList = async (options: {
+  page?: number
+  limit?: number
+  search?: string
+  uploadedById?: string
+}): Promise<{
+  images: ImageResponse[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}> => {
+  const { page = 1, limit = 10, search, uploadedById } = options
+
+  const skip = (page - 1) * limit
+
+  // Build where clause
+  const where: Prisma.ImageWhereInput = {}
+
+  if (search) {
+    where.OR = [{ filename: { contains: search } }, { description: { contains: search } }]
+  }
+
+  if (uploadedById) {
+    where.uploadedById = uploadedById
+  }
+
+  // Get total count and images
+  const [total, images] = await Promise.all([
+    db.image.count({ where }),
+    db.image.findMany({
+      where,
+      skip,
+      take: limit,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        description: true,
+        filename: true,
+        size: true,
+        mimeType: true,
+        width: true,
+        height: true,
+        uploadedById: true,
+        createdAt: true,
+        updatedAt: true,
+        // Exclude blob data for performance
+      },
+    }),
+  ])
+
+  const totalPages = Math.ceil(total / limit)
+
+  return {
+    images: images.map(image => ({
+      id: image.id,
+      description: image.description,
+      filename: image.filename,
+      size: image.size,
+      mimeType: image.mimeType,
+      width: image.width,
+      height: image.height,
+      uploadedById: image.uploadedById,
+      createdAt: image.createdAt,
+      updatedAt: image.updatedAt,
+    })),
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  }
+}
+
+export const getImageStats = async (): Promise<{
+  totalImages: number
+  totalSize: number
+  averageSize: number
+  byMimeType: Record<string, number>
+  recentUploads: {
+    last24Hours: number
+    last7Days: number
+    last30Days: number
+  }
+}> => {
+  const now = new Date()
+  const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+  const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+  const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+
+  // Get basic statistics (removed uploaderStats for performance)
+  const [totalImages, totalSizeResult, mimeTypeStats, recent24h, recent7d, recent30d] =
+    await Promise.all([
+      db.image.count(),
+      db.image.aggregate({
+        _sum: { size: true },
+        _avg: { size: true },
+      }),
+      db.image.groupBy({
+        by: ['mimeType'],
+        _count: { _all: true },
+      }),
+      db.image.count({
+        where: { createdAt: { gte: last24Hours } },
+      }),
+      db.image.count({
+        where: { createdAt: { gte: last7Days } },
+      }),
+      db.image.count({
+        where: { createdAt: { gte: last30Days } },
+      }),
+    ])
+
+  const totalSize = totalSizeResult._sum.size || 0
+  const averageSize = totalSizeResult._avg.size || 0
+
+  // Transform mime type stats
+  const byMimeType: Record<string, number> = {}
+  mimeTypeStats.forEach(stat => {
+    byMimeType[stat.mimeType] = stat._count._all
+  })
+
+  return {
+    totalImages,
+    totalSize,
+    averageSize,
+    byMimeType,
+    recentUploads: {
+      last24Hours: recent24h,
+      last7Days: recent7d,
+      last30Days: recent30d,
+    },
+  }
+}
+
 export const deleteImage = async (id: string): Promise<void> => {
   try {
     await db.image.delete({

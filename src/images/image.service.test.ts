@@ -196,4 +196,31 @@ describe('Image Service', () => {
       expect(canAccess).toBe(true)
     })
   })
+
+  describe('getImageBinaryData', () => {
+    it('should return image binary data', async () => {
+      const testImageData = {
+        file: Buffer.from('test-image-data'),
+        filename: 'test.jpg',
+        mimeType: 'image/jpeg',
+      }
+
+      const createdImage = await imageService.createImage(testImageData)
+      const binaryData = await imageService.getImageBinaryData(createdImage.id)
+
+      expect(binaryData).toEqual({
+        blob: expect.any(Buffer),
+        mimeType: 'image/webp',
+        size: expect.any(Number),
+        filename: 'test.jpg',
+      })
+      expect(binaryData.blob.length).toBeGreaterThan(0)
+    })
+
+    it('should throw NotFoundError for non-existent image', async () => {
+      await expect(
+        imageService.getImageBinaryData('123e4567-e89b-12d3-a456-426614174000'),
+      ).rejects.toThrow('Image not found')
+    })
+  })
 })

@@ -4,8 +4,54 @@
  */
 
 import { PrismaClient, Role, Rarity, Slot } from '@prisma/client'
+import { readFileSync } from 'fs'
+import { join } from 'path'
+import sharp from 'sharp'
 
 const prisma = new PrismaClient()
+
+/**
+ * Helper function to process and create an image from file
+ */
+async function createImageFromFile(
+  filePath: string,
+  description: string,
+  uploadedById: string,
+): Promise<{ id: string }> {
+  try {
+    const imagePath = join(process.cwd(), 'assets', filePath)
+    const fileBuffer = readFileSync(imagePath)
+
+    // Process the image with Sharp (same as in image service)
+    const processedBuffer = await sharp(fileBuffer)
+      .resize(350, 450, {
+        fit: 'inside',
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 85 })
+      .toBuffer()
+
+    const metadata = await sharp(processedBuffer).metadata()
+
+    const image = await prisma.image.create({
+      data: {
+        blob: processedBuffer,
+        filename: filePath.replace(/\.[^/.]+$/, '.webp'), // Change extension to .webp
+        description,
+        size: processedBuffer.length,
+        mimeType: 'image/webp',
+        width: metadata.width || 0,
+        height: metadata.height || 0,
+        uploadedById,
+      },
+    })
+
+    return image
+  } catch (error) {
+    console.warn(`⚠️ Failed to process image ${filePath}:`, error)
+    throw error
+  }
+}
 
 async function main() {
   console.log('🌱 Starting database seeding...')
@@ -41,6 +87,38 @@ async function main() {
     },
   })
   console.log('👤 Created demo user')
+
+  // Create sample images
+  const elfImage = await createImageFromFile(
+    'elf.webp',
+    'Portrait of an elegant elf character',
+    adminUser.id,
+  )
+
+  const dwarfImage = await createImageFromFile(
+    'dwarf.webp',
+    'Portrait of a sturdy dwarf character',
+    adminUser.id,
+  )
+
+  const warriorImage = await createImageFromFile(
+    'warrior.webp',
+    'Portrait of a brave warrior character',
+    demoUser.id,
+  )
+
+  const wizardImage = await createImageFromFile(
+    'wizard.webp',
+    'Portrait of a wise wizard character',
+    demoUser.id,
+  )
+
+  const clericImage = await createImageFromFile(
+    'cleric.webp',
+    'Portrait of a holy cleric character',
+    adminUser.id,
+  )
+  console.log('🖼️ Created sample images')
 
   // Create basic tags
   const combatTag = await prisma.tag.upsert({
@@ -109,6 +187,7 @@ async function main() {
       intelligenceModifier: 11,
       wisdomModifier: 11,
       charismaModifier: 10,
+      imageId: elfImage.id,
       createdById: adminUser.id,
     },
   })
@@ -129,6 +208,7 @@ async function main() {
       intelligenceModifier: 10,
       wisdomModifier: 11,
       charismaModifier: 8,
+      imageId: dwarfImage.id,
       createdById: adminUser.id,
     },
   })
@@ -141,6 +221,7 @@ async function main() {
     create: {
       name: 'Warrior',
       description: 'A melee fighter skilled in combat and physical prowess.',
+      imageId: warriorImage.id,
       createdById: adminUser.id,
     },
   })
@@ -151,6 +232,7 @@ async function main() {
     create: {
       name: 'Wizard',
       description: 'A spellcaster who studies magic and wields powerful spells.',
+      imageId: wizardImage.id,
       createdById: adminUser.id,
     },
   })
@@ -161,6 +243,7 @@ async function main() {
     create: {
       name: 'Cleric',
       description: 'A divine spellcaster who heals allies and smites enemies.',
+      imageId: clericImage.id,
       createdById: adminUser.id,
     },
   })
@@ -384,6 +467,7 @@ async function main() {
   console.log(`
 📊 Seeded data summary:
 - 👤 Users: 2 (admin, demo)
+- 🖼️ Images: 5 (elf, dwarf, warrior, wizard, cleric)
 - 🏷️ Tags: 3 (combat, magic, support)
 - 🧙 Races: 3 (human, elf, dwarf)
 - ⚔️ Archetypes: 3 (warrior, wizard, cleric)
