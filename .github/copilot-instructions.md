@@ -34,23 +34,34 @@ managing fantasy characters.
 
 ### Ownership & Sharing System
 
-The API implements a **Flexible Ownership** system that balances user autonomy with content sharing:
+The API implements a **Flexible Ownership** system that balances user autonomy
+with content sharing:
 
 #### **Core Principles**
 
-- **User Autonomy**: Users have complete control over their entities (can modify/delete freely)
-- **Content Sharing**: Users can access and use all public entities created by others
-- **Ownership Transfer**: Users can abandon ownership, making entities community-managed
-- **Cascade Protection**: Entities in use by others are preserved when owners leave
+- **User Autonomy**: Users have complete control over their entities (can
+  modify/delete freely)
+- **Content Sharing**: Users can access and use all public entities created by
+  others
+- **Ownership Transfer**: Users can abandon ownership, making entities
+  community-managed
+- **Cascade Protection**: Entities in use by others are preserved when owners
+  leave
 
 #### **How It Works**
 
-1. **Public Entities**: Users can mark their entities as `isPublic: true` to share with others
-2. **Direct Usage**: Users can directly reference and use public entities created by others
-3. **Ownership Abandonment**: Users can abandon ownership by setting `createdById` to `null`
-4. **Automatic Orphaning**: When users delete their accounts, their entities become orphaned
-5. **Cascade Deletion**: Entities only used by the owner are deleted when the owner leaves
-6. **Community Management**: Orphaned entities can be managed by moderators and admins
+1. **Public Entities**: Users can mark their entities as `isPublic: true` to
+   share with others
+2. **Direct Usage**: Users can directly reference and use public entities
+   created by others
+3. **Ownership Abandonment**: Users can abandon ownership by setting
+   `createdById` to `null`
+4. **Automatic Orphaning**: When users delete their accounts, their entities
+   become orphaned
+5. **Cascade Deletion**: Entities only used by the owner are deleted when the
+   owner leaves
+6. **Community Management**: Orphaned entities can be managed by moderators and
+   admins
 
 #### **Example Scenarios**
 
@@ -58,18 +69,18 @@ The API implements a **Flexible Ownership** system that balances user autonomy w
 // Scenario 1: Direct Usage
 // 1. User A creates public race "Elf"
 const elfRace = await raceService.create({
-  name: "Elf",
-  description: "Graceful forest dwellers",
+  name: 'Elf',
+  description: 'Graceful forest dwellers',
   isPublic: true,
-  createdById: "user-a-id"
-});
+  createdById: 'user-a-id',
+})
 
 // 2. User B creates character using "Elf" race directly
 const character = await characterService.create({
-  name: "Legolas",
+  name: 'Legolas',
   raceId: elfRace.id, // Direct reference to User A's race
-  userId: "user-b-id"
-});
+  userId: 'user-b-id',
+})
 
 // 3. User A can still modify "Elf" race
 // 4. If User A deletes account, "Elf" becomes orphaned (createdById: null)
@@ -78,10 +89,10 @@ const character = await characterService.create({
 // Scenario 2: User Creates Copy
 // User B can also create their own copy if they want independence
 const myElfCopy = await raceService.create({
-  name: "High Elf", // Must be unique
-  description: "Tall, elegant elves",
-  createdById: "user-b-id"
-});
+  name: 'High Elf', // Must be unique
+  description: 'Tall, elegant elves',
+  createdById: 'user-b-id',
+})
 ```
 
 #### **Benefits**
@@ -94,27 +105,25 @@ const myElfCopy = await raceService.create({
 
 ### Role-Based Access Control (RBAC)
 
-The API implements a hierarchical permission system with three distinct roles following security best practices:
+The API implements a hierarchical permission system with three distinct roles
+following security best practices:
 
 #### **USER Role** 👤 (Basic Access)
 
-**Entity Permissions:**
+**Permissions:**
 
-- **Read**: View all public entities (`isPublic: true`) and their own private entities
-- **Create**: Create new entities with themselves as owner (`createdById` / `userId`)
-- **Update**: Modify only their own entities
-- **Delete**: Delete only their own entities
-- **Reference**: Use public entities created by others directly (no copying required)
-- **Ownership Transfer**: Reassign ownership of his entities to other users
-- **Abandon**: Set `createdById` to `null` to make their entities orphaned (community-managed)
+- ✅ View all public entities (`isPublic: true`) and their own private entities
+- ✅ Create new entities with themselves as owner (`createdById` / `userId`)
+- ✅ Update only their own entities
+- ✅ Delete only their own entities
+- ✅ Use public entities created by others directly (no copying required)
+- ✅ Reassign ownership of their entities to other users
+- ✅ Abandon ownership by setting `createdById` to `null` (make entities orphaned)
+- ✅ View and update their own profile information
+- ✅ Change their own password
+- ✅ Deactivate their own account
 
-**Account Permissions:**
-
-- **Profile**: View and update their own profile information
-- **Password**: Change their own password
-- **Deactivate**: Deactivate their own account
-
-**Strict Limitations:**
+**Limitations:**
 
 - ❌ Cannot modify/delete entities owned by others
 - ❌ Cannot manage orphaned entities
@@ -126,20 +135,18 @@ The API implements a hierarchical permission system with three distinct roles fo
 
 **Inherits:** All USER permissions
 
-**Enhanced Entity Permissions:**
+**Permissions:**
 
-- **Orphaned Content**: Full CRUD access to orphaned entities (`createdById: null`)
-- **Public Content**: Modify/delete public entities created by USER role accounts
-- **Ownership Transfer**: Reassign ownership of orphaned entities to other users
-- **Content Moderation**: Flag, hide, or remove inappropriate content
+- ✅ All USER permissions (listed above)
+- ✅ Full CRUD access to orphaned entities (`createdById: null`)
+- ✅ Modify/delete public entities created by USER role accounts
+- ✅ Reassign ownership of orphaned entities to other users
+- ✅ Flag, hide, or remove inappropriate content
+- ✅ View all user profiles and activity
+- ✅ Access to moderation tools and reports
+- ✅ Enforce community standards and policies
 
-**Enhanced Account Permissions:**
-
-- **User Management**: View all user profiles and activity
-- **Content Review**: Access to moderation tools and reports
-- **Community Guidelines**: Enforce community standards and policies
-
-**Important Limitations (Peer Protection):**
+**Limitations:**
 
 - ❌ Cannot modify/delete other MODERATOR accounts
 - ❌ Cannot modify/delete entities owned by other MODERATORS
@@ -147,41 +154,32 @@ The API implements a hierarchical permission system with three distinct roles fo
 - ❌ Cannot modify/delete entities owned by ADMIN accounts
 - ❌ Cannot access system administration functions
 - ❌ Cannot change user roles or permissions
-- ❌ Cannot access sensitive system statistics
+- ❌ Cannot access system statistics
 
 #### **ADMIN Role** 👑 (System Administration)
 
 **Inherits:** All USER and MODERATOR permissions
 
-**Full System Permissions:**
+**Permissions:**
 
-- **Entity Override**: Create, read, update, delete ANY entity regardless of ownership
-- **User Management**: Manage all USER and MODERATOR accounts and roles
-- **System Access**: Full access to system statistics, logs, and monitoring
-- **Permission Override**: Bypass all content and ownership restrictions
-- **Database Access**: Direct database operations and maintenance
-- **Configuration**: Modify system settings and security policies
-
-**Account Management Powers:**
-
+- ✅ All USER and MODERATOR permissions (listed above)
+- ✅ Create, read, update, delete ANY entity regardless of ownership
+- ✅ Manage all USER and MODERATOR accounts and roles
+- ✅ Full access to system statistics, logs, and monitoring
+- ✅ Bypass all content and ownership restrictions
+- ✅ Direct database operations and maintenance
+- ✅ Modify system settings and security policies
 - ✅ Create/modify/delete USER accounts
-- ✅ Create/modify/delete MODERATOR accounts  
+- ✅ Create/modify/delete MODERATOR accounts
 - ✅ Promote USER to MODERATOR
 - ✅ Demote MODERATOR to USER
 - ✅ Access all user data and activity logs
 
-**Critical Limitations (Admin Protection):**
+**Limitations:**
 
-- ❌ Cannot modify/delete other ADMIN accounts (peer protection)
+- ❌ Cannot modify/delete other ADMIN accounts
 - ❌ Cannot change other ADMIN roles or permissions
 - ❌ Cannot access credentials of other ADMIN accounts
-- ⚠️ **Note**: Admin peer protection prevents lateral privilege escalation
-
-**Emergency Protocols:**
-
-- Admin account recovery requires database-level intervention
-- Role changes between ADMINs require system owner access
-- Multiple ADMINs recommended for redundancy and coverage
 
 ### Validation & Documentation
 
@@ -1097,7 +1095,7 @@ met.
 ### Chapter 3: User Management Feature 👥
 
 **Feature Focus**: User CRUD operations and validation  
-**Status**: ✅ COMPLETED  
+**Status**: ✅ COMPLETED (RBAC PENDING)  
 **Estimated Duration**: 1 week
 
 **Chapter 3 Deliverables:**
@@ -1106,6 +1104,9 @@ met.
 - [x] User validation schemas with TypeBox
 - [x] User controller and routes implemented
 - [x] Comprehensive test suite for user feature
+- [ ] RBAC Implementation: Role-based access control for user management
+- [ ] RBAC Middleware: Self-or-admin access patterns for user endpoints
+- [ ] RBAC Testing: Update tests to verify role-based permissions
 
 **Chapter 3 Success Criteria:**
 
@@ -1113,6 +1114,8 @@ met.
 - [x] Input validation handles edge cases correctly
 - [x] Database constraints for users enforced
 - [x] Test coverage >96% for user feature (exceeded target)
+- [ ] RBAC: Users can only access/modify their own data or admin override
+- [ ] RBAC: MODERATOR+ can view all users, ADMIN can modify all users
 
 ### Chapter 4: Authentication Feature 🔐
 
@@ -1159,7 +1162,7 @@ met.
 ### Chapter 5: Image Management Feature 🖼️
 
 **Feature Focus**: Image upload, processing, and retrieval  
-**Status**: ✅ COMPLETED (100%)  
+**Status**: ✅ COMPLETED (RBAC PENDING)  
 **Estimated Duration**: 1-2 weeks
 
 **Chapter 5 Deliverables:**
@@ -1170,9 +1173,10 @@ met.
 - [x] Binary storage in database
 - [x] Image metadata retrieval endpoint
 - [x] Binary image serving endpoint (GET /api/images/:id/file)
-- [x] Authentication and authorization (JWT-based)
-- [x] User ownership validation
 - [x] Optimized HTTP caching headers for binary content
+- [ ] RBAC Implementation: Ownership-based access control for images
+- [ ] RBAC Middleware: Owner-only access for update/delete operations
+- [ ] RBAC Testing: Update tests to verify ownership permissions
 
 **Chapter 5 Success Criteria:**
 
@@ -1182,6 +1186,8 @@ met.
 - [x] Binary image serving with optimized headers (1-year cache)
 - [x] Edge cases handled (large files, invalid formats)
 - [x] Test coverage >80% for image feature (achieved 46/46 tests passing)
+- [ ] RBAC: Users can only modify/delete their own images
+- [ ] RBAC: ADMIN can modify/delete any image
 
 ### Chapter 6: Tags Feature 🏷️
 
@@ -1195,6 +1201,9 @@ met.
 - [ ] Tag validation and uniqueness constraints
 - [ ] Tag controller and routes
 - [ ] Relationship management with other entities
+- [ ] RBAC Implementation: Ownership + public + orphaned access control
+- [ ] RBAC Middleware: Owner/MODERATOR+/ADMIN access patterns
+- [ ] RBAC Testing: Comprehensive role-based permission tests
 
 **Chapter 6 Success Criteria:**
 
@@ -1203,6 +1212,8 @@ met.
 - [ ] Relationship management works correctly
 - [ ] Tests cover all tag operations
 - [ ] Test coverage >80% for tags feature
+- [ ] RBAC: Users can create/modify own tags, MODERATOR+ can manage orphaned/public tags
+- [ ] RBAC: ADMIN can manage all tags regardless of ownership
 
 ### Chapter 7: Skills Feature ⚡
 
@@ -1216,6 +1227,9 @@ met.
 - [ ] Skill validation and constraints
 - [ ] Skill controller and routes
 - [ ] Image association for skills
+- [ ] RBAC Implementation: Ownership + public + orphaned access control
+- [ ] RBAC Middleware: Owner/MODERATOR+/ADMIN access patterns
+- [ ] RBAC Testing: Comprehensive role-based permission tests
 
 **Chapter 7 Success Criteria:**
 
@@ -1224,6 +1238,8 @@ met.
 - [ ] Image association working
 - [ ] Tests cover all skill operations
 - [ ] Test coverage >80% for skills feature
+- [ ] RBAC: Users can create/modify own skills, MODERATOR+ can manage orphaned/public skills
+- [ ] RBAC: ADMIN can manage all skills regardless of ownership
 
 ### Chapter 8: Perks Feature 🌟
 
@@ -1237,14 +1253,19 @@ met.
 - [ ] Perk validation and level requirements
 - [ ] Perk controller and routes
 - [ ] Relationship management
+- [ ] RBAC Implementation: Ownership + public + orphaned access control
+- [ ] RBAC Middleware: Owner/MODERATOR+/ADMIN access patterns
+- [ ] RBAC Testing: Comprehensive role-based permission tests
 
 **Chapter 8 Success Criteria:**
 
 - [ ] Perk creation with requirements
 - [ ] Validation rules enforced
 - [ ] Relationship management working
-- [ ] Admin-only endpoints secured
 - [ ] Tests cover all perk operations
+- [ ] Test coverage >80% for perks feature
+- [ ] RBAC: Users can create/modify own perks, MODERATOR+ can manage orphaned/public perks
+- [ ] RBAC: ADMIN can manage all perks regardless of ownership
 
 ### Chapter 9: Races Feature 🧝
 
@@ -1258,14 +1279,18 @@ met.
 - [ ] Race validation and constraints
 - [ ] Race controller and routes
 - [ ] Image association for races
+- [ ] RBAC Implementation: Ownership + public + orphaned access control
+- [ ] RBAC Middleware: Owner/MODERATOR+/ADMIN access patterns
+- [ ] RBAC Testing: Comprehensive role-based permission tests
 
 **Chapter 9 Success Criteria:**
 
 - [ ] Race creation with attribute modifiers
 - [ ] Image association working
 - [ ] Race relationships with other entities
-- [ ] Admin-only access controls working
 - [ ] Test coverage >80% for races feature
+- [ ] RBAC: Users can create/modify own races, MODERATOR+ can manage orphaned/public races
+- [ ] RBAC: ADMIN can manage all races regardless of ownership
 
 ### Chapter 10: Archetypes Feature 🛡️
 
@@ -1279,14 +1304,18 @@ met.
 - [ ] Archetype-race compatibility rules
 - [ ] Archetype controller and routes
 - [ ] Required race validation
+- [ ] RBAC Implementation: Ownership + public + orphaned access control
+- [ ] RBAC Middleware: Owner/MODERATOR+/ADMIN access patterns
+- [ ] RBAC Testing: Comprehensive role-based permission tests
 
 **Chapter 10 Success Criteria:**
 
 - [ ] Archetype creation with race requirements
 - [ ] Validation rules enforced
 - [ ] Relationship management working
-- [ ] Admin-only endpoints secured
 - [ ] Test coverage >80% for archetypes feature
+- [ ] RBAC: Users can create/modify own archetypes, MODERATOR+ can manage orphaned/public archetypes
+- [ ] RBAC: ADMIN can manage all archetypes regardless of ownership
 
 ### Chapter 11: Items Feature ⚔️
 
@@ -1301,6 +1330,9 @@ met.
 - [ ] Item rarity and bonus attributes
 - [ ] Item controller and routes
 - [ ] Image association for items
+- [ ] RBAC Implementation: Ownership-based access control for items
+- [ ] RBAC Middleware: Owner-only access for update/delete operations
+- [ ] RBAC Testing: Update tests to verify ownership permissions
 
 **Chapter 11 Success Criteria:**
 
@@ -1309,6 +1341,8 @@ met.
 - [ ] Bonus attributes calculation
 - [ ] Image association working
 - [ ] Test coverage >80% for items feature
+- [ ] RBAC: Users can only modify/delete their own items
+- [ ] RBAC: ADMIN can modify/delete any item
 
 ### Chapter 12: Characters Feature 👤
 
@@ -1324,6 +1358,9 @@ met.
 - [ ] Skills and perks assignment
 - [ ] Character controller and routes
 - [ ] Image association for characters
+- [ ] RBAC Implementation: Ownership-based access control for characters
+- [ ] RBAC Middleware: Owner-only access for update/delete operations
+- [ ] RBAC Testing: Update tests to verify ownership permissions
 
 **Chapter 12 Success Criteria:**
 
@@ -1333,6 +1370,8 @@ met.
 - [ ] Attribute calculation based on gear/race
 - [ ] All relationships properly managed
 - [ ] Test coverage >80% for characters feature
+- [ ] RBAC: Users can only modify/delete their own characters
+- [ ] RBAC: ADMIN can view/modify any character
 
 ### Chapter 13: Performance & Security Hardening 🛠️
 
@@ -1346,6 +1385,9 @@ met.
 - [ ] Complete API documentation
 - [ ] Security headers and protections
 - [ ] Final testing and bug fixes
+- [ ] **RBAC Audit**: Complete review of all role-based access controls
+- [ ] **RBAC Security**: Validate all permission boundaries and edge cases
+- [ ] **RBAC Documentation**: Final RBAC implementation documentation
 
 **Chapter 13 Success Criteria:**
 
@@ -1353,6 +1395,8 @@ met.
 - [ ] Zero security vulnerabilities
 - [ ] Complete documentation
 - [ ] All tests passing with >80% coverage
+- [ ] RBAC: All role-based access controls audited and validated
+- [ ] RBAC: Security review confirms proper permission boundaries
 
 ---
 

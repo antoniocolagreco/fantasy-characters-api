@@ -29,7 +29,7 @@ const prettierOptions = {
   bracketSpacing: true,
   bracketSameLine: false,
   arrowParens: 'avoid',
-  endOfLine: 'lf',
+  // endOfLine: 'lf',
   embeddedLanguageFormatting: 'auto',
   insertPragma: false,
   proseWrap: 'preserve',
