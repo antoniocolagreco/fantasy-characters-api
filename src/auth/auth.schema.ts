@@ -11,7 +11,7 @@ export const RegisterUserSchema = Type.Object(
       maxLength: 128,
       description: 'User password (minimum 8 characters)',
     }),
-    displayName: Type.Optional(
+    name: Type.Optional(
       Type.String({
         minLength: 2,
         maxLength: 50,
@@ -62,7 +62,7 @@ export const ChangePasswordSchema = Type.Object(
 // Profile Update Schema
 export const UpdateProfileSchema = Type.Object(
   {
-    displayName: Type.Optional(
+    name: Type.Optional(
       Type.String({
         minLength: 2,
         maxLength: 50,
@@ -103,7 +103,7 @@ export const TokenResponseSchema = Type.Object(
     user: Type.Object({
       id: Type.String({ description: 'User ID' }),
       email: Type.String({ description: 'User email' }),
-      displayName: Type.Union([Type.String(), Type.Null()], {
+      name: Type.Union([Type.String(), Type.Null()], {
         description: 'User display name',
       }),
       role: Type.String({ description: 'User role' }),
@@ -124,7 +124,7 @@ export const UserProfileSchema = Type.Object(
   {
     id: Type.String({ description: 'User ID' }),
     email: Type.String({ description: 'User email' }),
-    displayName: Type.Union([Type.String(), Type.Null()], {
+    name: Type.Union([Type.String(), Type.Null()], {
       description: 'User display name',
     }),
     bio: Type.Union([Type.String(), Type.Null()], { description: 'User bio' }),

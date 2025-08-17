@@ -26,7 +26,7 @@ describe('JWT Utils', () => {
   const mockUser = {
     id: '123',
     email: 'test@example.com',
-    displayName: 'Test User',
+    name: 'Test User',
     bio: null,
     role: Role.USER,
     isEmailVerified: true,
@@ -148,7 +148,7 @@ describe('JWT Utils', () => {
         user: {
           id: mockUser.id,
           email: mockUser.email,
-          displayName: mockUser.displayName,
+          name: mockUser.name,
           role: mockUser.role,
           isEmailVerified: mockUser.isEmailVerified,
           isActive: mockUser.isActive,

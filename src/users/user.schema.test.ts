@@ -26,7 +26,7 @@ describe('User Schemas', () => {
       const validData = {
         email: 'test@example.com',
         passwordHash: 'securepassword123',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'This is a test bio',
         role: 'USER',
       }
@@ -91,7 +91,7 @@ describe('User Schemas', () => {
       const invalidData = {
         email: 'test@example.com',
         passwordHash: 'securepassword123',
-        displayName: 'a', // Too short
+        name: 'a', // Too short
       }
 
       const isValid = validate(invalidData)
@@ -102,7 +102,7 @@ describe('User Schemas', () => {
       const invalidData = {
         email: 'test@example.com',
         passwordHash: 'securepassword123',
-        displayName: 'a'.repeat(101), // Too long
+        name: 'a'.repeat(101), // Too long
       }
 
       const isValid = validate(invalidData)
@@ -149,7 +149,7 @@ describe('User Schemas', () => {
     it('should validate correct update data', () => {
       const validData = {
         email: 'newemail@example.com',
-        displayName: 'New Name',
+        name: 'New Name',
         bio: 'New bio',
         role: 'ADMIN',
         isActive: false,
@@ -169,7 +169,7 @@ describe('User Schemas', () => {
 
     it('should validate partial update data', () => {
       const validData = {
-        displayName: 'Only Name Update',
+        name: 'Only Name Update',
       }
 
       const isValid = validate(validData)
@@ -187,7 +187,7 @@ describe('User Schemas', () => {
 
     it('should reject too short display name', () => {
       const invalidData = {
-        displayName: 'a', // Too short
+        name: 'a', // Too short
       }
 
       const isValid = validate(invalidData)
@@ -196,7 +196,7 @@ describe('User Schemas', () => {
 
     it('should reject additional properties', () => {
       const invalidData = {
-        displayName: 'Valid Name',
+        name: 'Valid Name',
         extraField: 'not allowed',
       }
 
@@ -212,7 +212,7 @@ describe('User Schemas', () => {
       const validData = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'Test bio',
         role: 'USER',
         isEmailVerified: true,
@@ -231,7 +231,7 @@ describe('User Schemas', () => {
       const validData = {
         id: '123e4567-e89b-12d3-a456-426614174000',
         email: 'test@example.com',
-        displayName: null,
+        name: null,
         bio: null,
         role: 'USER',
         isEmailVerified: false,
@@ -250,7 +250,7 @@ describe('User Schemas', () => {
       const invalidData = {
         id: 'invalid-uuid',
         email: 'test@example.com',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'Test bio',
         role: 'USER',
         isEmailVerified: true,

@@ -3,13 +3,13 @@
  * Integration tests for image HTTP endpoints
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { setTimeout } from 'node:timers/promises'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { app } from '../app.js'
 import { db } from '../shared/database/index.js'
-import { createTestUser, createTestAdminUser, cleanupTestData } from '../shared/test-helpers.js'
+import { cleanupTestData, createTestAdminUser, createTestUser } from '../shared/test-helpers.js'
 import * as imageService from './image.service.js'
 import type { ImageResponse } from './image.type.js'
-import { setTimeout } from 'node:timers/promises'
 
 // Mock Sharp
 vi.mock('sharp', () => ({
@@ -49,7 +49,9 @@ describe('Image Controller', () => {
         },
       })
 
-      const { accessToken } = loginResponse.json()
+      const loginResponseBody = loginResponse.json()
+      const { accessToken } = loginResponseBody
+      const loggedInUser = loginResponseBody.user
 
       // Create multipart form data
       const boundary = '----formdata-test-boundary'
@@ -85,7 +87,7 @@ describe('Image Controller', () => {
       expect(body.data).toBeDefined()
       expect(body.data.id).toBeDefined()
       expect(body.data.filename).toBe('test.jpg')
-      expect(body.data.uploadedById).toBe(user.id)
+      expect(body.data.ownerId).toBe(loggedInUser.id)
       // expect(body.data.description).toBe('Test image description') // Skip description for now
     })
 
@@ -248,7 +250,7 @@ describe('Image Controller', () => {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: user.id,
+        ownerId: user.id,
       })
 
       const response = await app.inject({
@@ -262,7 +264,7 @@ describe('Image Controller', () => {
       expect(body.data).toBeDefined()
       expect(body.data.id).toBe(image.id)
       expect(body.data.filename).toBe('test.jpg')
-      expect(body.data.uploadedById).toBe(user.id)
+      expect(body.data.ownerId).toBe(user.id)
     })
 
     it('should return 404 for non-existent image', async () => {
@@ -305,7 +307,7 @@ describe('Image Controller', () => {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: user.id,
+        ownerId: user.id,
       })
 
       const response = await app.inject({
@@ -330,7 +332,7 @@ describe('Image Controller', () => {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: regularUser.id,
+        ownerId: regularUser.id,
       })
 
       // Create admin user and login
@@ -366,7 +368,7 @@ describe('Image Controller', () => {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: user.id,
+        ownerId: user.id,
       })
 
       const response = await app.inject({
@@ -449,7 +451,7 @@ describe('Image Controller', () => {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: user.id,
+        ownerId: user.id,
       })
 
       // Mock deleteImage to throw an error
@@ -478,7 +480,7 @@ describe('Image Controller', () => {
         file: Buffer.from('image1'),
         filename: 'image1.jpg',
         mimeType: 'image/jpeg',
-        uploadedById: user1.id,
+        ownerId: user1.id,
         description: 'First test image',
       })
 
@@ -489,7 +491,7 @@ describe('Image Controller', () => {
         file: Buffer.from('image2'),
         filename: 'image2.png',
         mimeType: 'image/png',
-        uploadedById: user2.id,
+        ownerId: user2.id,
         description: 'Second test image',
       })
 
@@ -500,7 +502,7 @@ describe('Image Controller', () => {
         file: Buffer.from('image3'),
         filename: 'image3.webp',
         mimeType: 'image/webp',
-        uploadedById: user1.id,
+        ownerId: user1.id,
       })
 
       const response = await app.inject({
@@ -534,19 +536,19 @@ describe('Image Controller', () => {
           file: Buffer.from('image1'),
           filename: 'image1.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
         imageService.createImage({
           file: Buffer.from('image2'),
           filename: 'image2.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
         imageService.createImage({
           file: Buffer.from('image3'),
           filename: 'image3.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
       ])
 
@@ -574,19 +576,19 @@ describe('Image Controller', () => {
           file: Buffer.from('image1'),
           filename: 'avatar.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
         imageService.createImage({
           file: Buffer.from('image2'),
           filename: 'background.png',
           mimeType: 'image/png',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
         imageService.createImage({
           file: Buffer.from('image3'),
           filename: 'avatar-small.webp',
           mimeType: 'image/webp',
-          uploadedById: user.id,
+          ownerId: user.id,
         }),
       ])
 
@@ -611,21 +613,21 @@ describe('Image Controller', () => {
           file: Buffer.from('image1'),
           filename: 'test1.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user.id,
+          ownerId: user.id,
           description: 'Profile picture for user',
         }),
         imageService.createImage({
           file: Buffer.from('image2'),
           filename: 'test2.png',
           mimeType: 'image/png',
-          uploadedById: user.id,
+          ownerId: user.id,
           description: 'Game background image',
         }),
         imageService.createImage({
           file: Buffer.from('image3'),
           filename: 'test3.webp',
           mimeType: 'image/webp',
-          uploadedById: user.id,
+          ownerId: user.id,
           description: 'User avatar picture',
         }),
       ])
@@ -644,7 +646,7 @@ describe('Image Controller', () => {
       )
     })
 
-    it('should filter by uploadedById', async () => {
+    it('should filter by ownerId', async () => {
       // Create test users and images
       const { user: user1 } = await createTestUser({ email: 'user1@test.com' })
       const { user: user2 } = await createTestUser({ email: 'user2@test.com' })
@@ -654,32 +656,32 @@ describe('Image Controller', () => {
           file: Buffer.from('image1'),
           filename: 'user1-image1.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user1.id,
+          ownerId: user1.id,
         }),
         imageService.createImage({
           file: Buffer.from('image2'),
           filename: 'user2-image1.png',
           mimeType: 'image/png',
-          uploadedById: user2.id,
+          ownerId: user2.id,
         }),
         imageService.createImage({
           file: Buffer.from('image3'),
           filename: 'user1-image2.webp',
           mimeType: 'image/webp',
-          uploadedById: user1.id,
+          ownerId: user1.id,
         }),
       ])
 
       const response = await app.inject({
         method: 'GET',
-        url: `/api/images?uploadedById=${user1.id}`,
+        url: `/api/images?ownerId=${user1.id}`,
       })
 
       expect(response.statusCode).toBe(200)
 
       const body = response.json()
       expect(body.data).toHaveLength(2)
-      expect(body.data.every((img: ImageResponse) => img.uploadedById === user1.id)).toBe(true)
+      expect(body.data.every((img: ImageResponse) => img.ownerId === user1.id)).toBe(true)
     })
 
     it('should return empty list when no images found', async () => {
@@ -730,19 +732,19 @@ describe('Image Controller', () => {
           file: Buffer.from('small-image'),
           filename: 'image1.jpg',
           mimeType: 'image/jpeg',
-          uploadedById: user1.id,
+          ownerId: user1.id,
         }),
         imageService.createImage({
           file: Buffer.from('large-image-data'),
           filename: 'image2.png',
           mimeType: 'image/png',
-          uploadedById: user2.id,
+          ownerId: user2.id,
         }),
         imageService.createImage({
           file: Buffer.from('medium'),
           filename: 'image3.webp',
           mimeType: 'image/webp',
-          uploadedById: user1.id,
+          ownerId: user1.id,
         }),
       ])
 

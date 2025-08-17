@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { Prisma } from '@prisma/client'
+import { Prisma, Visibility } from '@prisma/client'
 import { db } from '../shared/database/index.js'
 import { createNotFoundError, createValidationError } from '../shared/errors.js'
 import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
@@ -75,8 +75,23 @@ const processImage = async (
   }
 }
 
+// Type for selected image fields (without blob for performance)
+type ImageWithoutBlob = {
+  id: string
+  description: string | null
+  filename: string
+  size: number
+  mimeType: string
+  width: number
+  height: number
+  ownerId: string | null
+  visibility: Visibility
+  createdAt: Date
+  updatedAt: Date
+}
+
 const transformImageToResponse = (
-  image: Prisma.ImageGetPayload<{}> | Omit<Prisma.ImageGetPayload<{}>, 'blob'>,
+  image: Prisma.ImageGetPayload<{}> | ImageWithoutBlob,
 ): ImageResponse => {
   const response: ImageResponse = {
     id: image.id,
@@ -93,8 +108,8 @@ const transformImageToResponse = (
     response.description = image.description
   }
 
-  if (image.uploadedById !== null) {
-    response.uploadedById = image.uploadedById
+  if (image.ownerId !== null) {
+    response.ownerId = image.ownerId
   }
 
   return response
@@ -102,7 +117,7 @@ const transformImageToResponse = (
 
 // Service functions
 export const createImage = async (data: ImageCreateData): Promise<ImageResponse> => {
-  const { file, filename, mimeType, description, uploadedById } = data
+  const { file, filename, mimeType, description, ownerId } = data
 
   // Process the image
   const { buffer, width, height } = await processImage(file, mimeType)
@@ -117,7 +132,7 @@ export const createImage = async (data: ImageCreateData): Promise<ImageResponse>
       mimeType: CONTENT_TYPES.IMAGE_WEBP,
       width,
       height,
-      ...(uploadedById && { uploadedById }),
+      ...(ownerId && { ownerId: ownerId }),
     },
   })
 
@@ -163,7 +178,7 @@ export const getImagesList = async (options: {
   page?: number
   limit?: number
   search?: string
-  uploadedById?: string
+  ownerId?: string
 }): Promise<{
   images: ImageResponse[]
   pagination: {
@@ -173,7 +188,7 @@ export const getImagesList = async (options: {
     totalPages: number
   }
 }> => {
-  const { page = 1, limit = 10, search, uploadedById } = options
+  const { page = 1, limit = 10, search, ownerId } = options
 
   const skip = (page - 1) * limit
 
@@ -184,8 +199,8 @@ export const getImagesList = async (options: {
     where.OR = [{ filename: { contains: search } }, { description: { contains: search } }]
   }
 
-  if (uploadedById) {
-    where.uploadedById = uploadedById
+  if (ownerId) {
+    where.ownerId = ownerId
   }
 
   // Get total count and images
@@ -204,7 +219,8 @@ export const getImagesList = async (options: {
         mimeType: true,
         width: true,
         height: true,
-        uploadedById: true,
+        ownerId: true,
+        visibility: true,
         createdAt: true,
         updatedAt: true,
         // Exclude blob data for performance

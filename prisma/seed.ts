@@ -1,164 +1,267 @@
-/**
- * Database seeding script
- * Populates the database with initial data for development and testing
- */
-
-import { PrismaClient, Role, Rarity, Slot } from '@prisma/client'
-import { readFileSync } from 'fs'
-import { join } from 'path'
-import sharp from 'sharp'
+import { PrismaClient, Role, Rarity, Slot, Sex, Visibility } from '@prisma/client'
+import * as fs from 'fs'
+import * as path from 'path'
+import bcrypt from 'bcrypt'
 
 const prisma = new PrismaClient()
 
-/**
- * Helper function to process and create an image from file
- */
-async function createImageFromFile(
-  filePath: string,
-  description: string,
-  uploadedById: string,
-): Promise<{ id: string }> {
-  try {
-    const imagePath = join(process.cwd(), 'assets', filePath)
-    const fileBuffer = readFileSync(imagePath)
-
-    // Process the image with Sharp (same as in image service)
-    const processedBuffer = await sharp(fileBuffer)
-      .resize(350, 450, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .webp({ quality: 85 })
-      .toBuffer()
-
-    const metadata = await sharp(processedBuffer).metadata()
-
-    const image = await prisma.image.create({
-      data: {
-        blob: processedBuffer,
-        filename: filePath.replace(/\.[^/.]+$/, '.webp'), // Change extension to .webp
-        description,
-        size: processedBuffer.length,
-        mimeType: 'image/webp',
-        width: metadata.width || 0,
-        height: metadata.height || 0,
-        uploadedById,
-      },
-    })
-
-    return image
-  } catch (error) {
-    console.warn(`⚠️ Failed to process image ${filePath}:`, error)
-    throw error
+// Utility function to read image files
+const readImageFile = (filename: string): Buffer => {
+  const filePath = path.join(process.cwd(), 'assets', filename)
+  if (fs.existsSync(filePath)) {
+    return fs.readFileSync(filePath)
   }
+  throw new Error(`Image file not found: ${filePath}`)
+}
+
+// Utility function to get image dimensions (simple approximation)
+const getImageDimensions = (filename: string): { width: number; height: number } => {
+  // Default dimensions - in a real app you'd use an image library to get actual dimensions
+  const defaults = { width: 300, height: 400 }
+
+  // For WebP files, assume they are properly sized
+  if (filename.endsWith('.webp')) {
+    return { width: 350, height: 450 }
+  }
+
+  return defaults
 }
 
 async function main() {
-  console.log('🌱 Starting database seeding...')
+  console.log('🌱 Starting database seed...')
+
+  // Clean existing data in correct order (respecting foreign key constraints)
+  console.log('🧹 Cleaning existing data...')
+  await prisma.equipment.deleteMany()
+  await prisma.character.deleteMany()
+  await prisma.item.deleteMany()
+  await prisma.archetype.deleteMany()
+  await prisma.skill.deleteMany()
+  await prisma.perk.deleteMany()
+  await prisma.race.deleteMany()
+  await prisma.tag.deleteMany()
+  await prisma.image.deleteMany()
+  await prisma.refreshToken.deleteMany()
+  await prisma.user.deleteMany()
+  console.log('✅ Existing data cleaned')
 
   // Create admin user
-  const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@fantasy-api.com' },
-    update: {},
-    create: {
+  const adminUser = await prisma.user.create({
+    data: {
       email: 'admin@fantasy-api.com',
-      passwordHash: '$2b$10$placeholder-hash-for-development', // This would be properly hashed in real app
+      passwordHash: await bcrypt.hash('admin123', 10),
       role: Role.ADMIN,
-      displayName: 'Admin User',
-      bio: 'System administrator',
+      name: 'System Administrator',
+      bio: 'System administrator with full access',
       isEmailVerified: true,
       isActive: true,
     },
   })
-  console.log('👤 Created admin user')
 
-  // Create demo user
-  const demoUser = await prisma.user.upsert({
-    where: { email: 'demo@fantasy-api.com' },
-    update: {},
-    create: {
-      email: 'demo@fantasy-api.com',
-      passwordHash: '$2b$10$placeholder-hash-for-development',
+  // Create moderator user
+  const moderatorUser = await prisma.user.create({
+    data: {
+      email: 'moderator@fantasy-api.com',
+      passwordHash: await bcrypt.hash('mod123', 10),
+      role: Role.MODERATOR,
+      name: 'Content Moderator',
+      bio: 'Moderator responsible for content quality',
+      isEmailVerified: true,
+      isActive: true,
+    },
+  })
+
+  // Create regular users
+  const regularUser = await prisma.user.create({
+    data: {
+      email: 'user@fantasy-api.com',
+      passwordHash: await bcrypt.hash('user123', 10),
       role: Role.USER,
-      displayName: 'Demo User',
-      bio: 'Demonstration user account',
+      name: 'Fantasy Player',
+      bio: 'Enthusiastic fantasy game player',
       isEmailVerified: true,
       isActive: true,
     },
   })
-  console.log('👤 Created demo user')
 
-  // Create sample images
-  const elfImage = await createImageFromFile(
-    'elf.webp',
-    'Portrait of an elegant elf character',
-    adminUser.id,
-  )
+  const gameDesigner = await prisma.user.create({
+    data: {
+      email: 'designer@fantasy-api.com',
+      passwordHash: await bcrypt.hash('design123', 10),
+      role: Role.USER,
+      name: 'Game Designer',
+      bio: 'Creative game designer and world builder',
+      isEmailVerified: true,
+      isActive: true,
+    },
+  })
 
-  const dwarfImage = await createImageFromFile(
-    'dwarf.webp',
-    'Portrait of a sturdy dwarf character',
-    adminUser.id,
-  )
+  console.log('✅ Users created')
 
-  const warriorImage = await createImageFromFile(
-    'warrior.webp',
-    'Portrait of a brave warrior character',
-    demoUser.id,
-  )
+  // Create images for races and archetypes
+  const images = {}
 
-  const wizardImage = await createImageFromFile(
-    'wizard.webp',
-    'Portrait of a wise wizard character',
-    demoUser.id,
-  )
+  try {
+    // Dwarf image
+    const dwarfImageData = readImageFile('dwarf.webp')
+    const dwarfDimensions = getImageDimensions('dwarf.webp')
+    images['dwarf'] = await prisma.image.create({
+      data: {
+        blob: dwarfImageData,
+        filename: 'dwarf.webp',
+        description: 'Sturdy dwarf warrior',
+        size: dwarfImageData.length,
+        mimeType: 'image/webp',
+        width: dwarfDimensions.width,
+        height: dwarfDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
 
-  const clericImage = await createImageFromFile(
-    'cleric.webp',
-    'Portrait of a holy cleric character',
-    adminUser.id,
-  )
-  console.log('🖼️ Created sample images')
+    // Elf image
+    const elfImageData = readImageFile('elf.webp')
+    const elfDimensions = getImageDimensions('elf.webp')
+    images['elf'] = await prisma.image.create({
+      data: {
+        blob: elfImageData,
+        filename: 'elf.webp',
+        description: 'Graceful elven archer',
+        size: elfImageData.length,
+        mimeType: 'image/webp',
+        width: elfDimensions.width,
+        height: elfDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
+
+    // Halfling image
+    const halflingImageData = readImageFile('halfling.webp')
+    const halflingDimensions = getImageDimensions('halfling.webp')
+    images['halfling'] = await prisma.image.create({
+      data: {
+        blob: halflingImageData,
+        filename: 'halfling.webp',
+        description: 'Nimble halfling rogue',
+        size: halflingImageData.length,
+        mimeType: 'image/webp',
+        width: halflingDimensions.width,
+        height: halflingDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
+
+    // Warrior archetype image
+    const warriorImageData = readImageFile('warrior.webp')
+    const warriorDimensions = getImageDimensions('warrior.webp')
+    images['warrior'] = await prisma.image.create({
+      data: {
+        blob: warriorImageData,
+        filename: 'warrior.webp',
+        description: 'Mighty warrior in battle armor',
+        size: warriorImageData.length,
+        mimeType: 'image/webp',
+        width: warriorDimensions.width,
+        height: warriorDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
+
+    // Wizard archetype image
+    const wizardImageData = readImageFile('wizard.webp')
+    const wizardDimensions = getImageDimensions('wizard.webp')
+    images['wizard'] = await prisma.image.create({
+      data: {
+        blob: wizardImageData,
+        filename: 'wizard.webp',
+        description: 'Wise wizard with magical staff',
+        size: wizardImageData.length,
+        mimeType: 'image/webp',
+        width: wizardDimensions.width,
+        height: wizardDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
+
+    // Cleric archetype image
+    const clericImageData = readImageFile('cleric.webp')
+    const clericDimensions = getImageDimensions('cleric.webp')
+    images['cleric'] = await prisma.image.create({
+      data: {
+        blob: clericImageData,
+        filename: 'cleric.webp',
+        description: 'Holy cleric with divine blessing',
+        size: clericImageData.length,
+        mimeType: 'image/webp',
+        width: clericDimensions.width,
+        height: clericDimensions.height,
+        ownerId: adminUser.id,
+        visibility: Visibility.PUBLIC,
+      },
+    })
+
+    console.log('✅ Images created')
+  } catch (error) {
+    console.warn('⚠️  Some images could not be loaded:', error.message)
+  }
 
   // Create basic tags
-  const combatTag = await prisma.tag.upsert({
-    where: { name: 'Combat' },
-    update: {},
-    create: {
+  const combatTag = await prisma.tag.create({
+    data: {
       name: 'Combat',
-      description: 'Skills and abilities related to fighting and warfare',
-      createdById: adminUser.id,
+      description: 'Related to fighting and warfare',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
     },
   })
 
-  const magicTag = await prisma.tag.upsert({
-    where: { name: 'Magic' },
-    update: {},
-    create: {
+  const magicTag = await prisma.tag.create({
+    data: {
       name: 'Magic',
-      description: 'Magical abilities and spellcasting',
-      createdById: adminUser.id,
+      description: 'Related to magical abilities and spells',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
     },
   })
 
-  const supportTag = await prisma.tag.upsert({
-    where: { name: 'Support' },
-    update: {},
-    create: {
-      name: 'Support',
-      description: 'Abilities that help allies or provide utility',
-      createdById: adminUser.id,
+  const stealthTag = await prisma.tag.create({
+    data: {
+      name: 'Stealth',
+      description: 'Related to sneaking and hiding',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
     },
   })
-  console.log('🏷️ Created basic tags')
+
+  const socialTag = await prisma.tag.create({
+    data: {
+      name: 'Social',
+      description: 'Related to interaction with others',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+    },
+  })
+
+  const healingTag = await prisma.tag.create({
+    data: {
+      name: 'Healing',
+      description: 'Related to restoration and healing',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+    },
+  })
+
+  console.log('✅ Tags created')
 
   // Create races
-  const humanRace = await prisma.race.upsert({
-    where: { name: 'Human' },
-    update: {},
-    create: {
+  const humanRace = await prisma.race.create({
+    data: {
       name: 'Human',
-      description: 'Versatile and adaptable, humans are the most common race in fantasy worlds.',
+      description: 'Versatile and ambitious, humans are the most common race',
       healthModifier: 100,
       manaModifier: 100,
       staminaModifier: 100,
@@ -168,322 +271,550 @@ async function main() {
       intelligenceModifier: 10,
       wisdomModifier: 10,
       charismaModifier: 10,
-      createdById: adminUser.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: socialTag.id }],
+      },
     },
   })
 
-  const elfRace = await prisma.race.upsert({
-    where: { name: 'Elf' },
-    update: {},
-    create: {
+  const elfRace = await prisma.race.create({
+    data: {
       name: 'Elf',
-      description: 'Graceful and long-lived, elves are naturally attuned to magic and nature.',
+      description: 'Graceful and long-lived, elves are masters of magic and archery',
       healthModifier: 90,
-      manaModifier: 120,
-      staminaModifier: 100,
+      manaModifier: 130,
+      staminaModifier: 110,
       strengthModifier: 8,
-      constitutionModifier: 9,
-      dexterityModifier: 12,
-      intelligenceModifier: 11,
-      wisdomModifier: 11,
-      charismaModifier: 10,
-      imageId: elfImage.id,
-      createdById: adminUser.id,
+      constitutionModifier: 8,
+      dexterityModifier: 14,
+      intelligenceModifier: 12,
+      wisdomModifier: 12,
+      charismaModifier: 11,
+      imageId: images['elf']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: magicTag.id }, { id: stealthTag.id }],
+      },
     },
   })
 
-  const dwarfRace = await prisma.race.upsert({
-    where: { name: 'Dwarf' },
-    update: {},
-    create: {
+  const dwarfRace = await prisma.race.create({
+    data: {
       name: 'Dwarf',
-      description:
-        'Sturdy and resilient, dwarfs are known for their craftsmanship and constitution.',
-      healthModifier: 110,
+      description: 'Hardy and resilient, dwarves are excellent craftsmen and warriors',
+      healthModifier: 120,
       manaModifier: 80,
       staminaModifier: 110,
-      strengthModifier: 11,
-      constitutionModifier: 12,
-      dexterityModifier: 9,
+      strengthModifier: 12,
+      constitutionModifier: 14,
+      dexterityModifier: 8,
       intelligenceModifier: 10,
       wisdomModifier: 11,
       charismaModifier: 8,
-      imageId: dwarfImage.id,
-      createdById: adminUser.id,
-    },
-  })
-  console.log('🧙 Created races')
-
-  // Create archetypes
-  const warriorArchetype = await prisma.archetype.upsert({
-    where: { name: 'Warrior' },
-    update: {},
-    create: {
-      name: 'Warrior',
-      description: 'A melee fighter skilled in combat and physical prowess.',
-      imageId: warriorImage.id,
-      createdById: adminUser.id,
+      imageId: images['dwarf']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
     },
   })
 
-  const wizardArchetype = await prisma.archetype.upsert({
-    where: { name: 'Wizard' },
-    update: {},
-    create: {
-      name: 'Wizard',
-      description: 'A spellcaster who studies magic and wields powerful spells.',
-      imageId: wizardImage.id,
-      createdById: adminUser.id,
+  const halflingRace = await prisma.race.create({
+    data: {
+      name: 'Halfling',
+      description: 'Small and nimble, halflings are natural rogues and scouts',
+      healthModifier: 85,
+      manaModifier: 90,
+      staminaModifier: 120,
+      strengthModifier: 7,
+      constitutionModifier: 9,
+      dexterityModifier: 15,
+      intelligenceModifier: 10,
+      wisdomModifier: 12,
+      charismaModifier: 12,
+      imageId: images['halfling']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: stealthTag.id }, { id: socialTag.id }],
+      },
     },
   })
 
-  const clericArchetype = await prisma.archetype.upsert({
-    where: { name: 'Cleric' },
-    update: {},
-    create: {
-      name: 'Cleric',
-      description: 'A divine spellcaster who heals allies and smites enemies.',
-      imageId: clericImage.id,
-      createdById: adminUser.id,
-    },
-  })
-  console.log('⚔️ Created archetypes')
+  console.log('✅ Races created')
 
   // Create skills
-  const swordSkill = await prisma.skill.upsert({
-    where: { name: 'Sword Fighting' },
-    update: {},
-    create: {
+  const swordSkill = await prisma.skill.create({
+    data: {
       name: 'Sword Fighting',
-      description: 'Proficiency with sword weapons in combat.',
+      description: 'Mastery of blade combat techniques',
       requiredLevel: 1,
-      createdById: adminUser.id,
-      races: { connect: [{ id: humanRace.id }, { id: elfRace.id }, { id: dwarfRace.id }] },
-      archetypes: { connect: [{ id: warriorArchetype.id }] },
-      tags: { connect: [{ id: combatTag.id }] },
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
     },
   })
 
-  const fireballSkill = await prisma.skill.upsert({
-    where: { name: 'Fireball' },
-    update: {},
-    create: {
-      name: 'Fireball',
-      description: 'Launch a ball of fire at enemies.',
-      requiredLevel: 3,
-      createdById: adminUser.id,
-      races: { connect: [{ id: humanRace.id }, { id: elfRace.id }] },
-      archetypes: { connect: [{ id: wizardArchetype.id }] },
-      tags: { connect: [{ id: magicTag.id }, { id: combatTag.id }] },
+  const magicMissileSkill = await prisma.skill.create({
+    data: {
+      name: 'Magic Missile',
+      description: 'Basic offensive spell that never misses',
+      requiredLevel: 1,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: magicTag.id }],
+      },
     },
   })
 
-  const healSkill = await prisma.skill.upsert({
-    where: { name: 'Heal' },
-    update: {},
-    create: {
-      name: 'Heal',
-      description: 'Restore health to an ally.',
+  const stealthSkill = await prisma.skill.create({
+    data: {
+      name: 'Stealth',
+      description: 'Move silently and remain hidden from enemies',
       requiredLevel: 1,
-      createdById: adminUser.id,
-      races: { connect: [{ id: humanRace.id }, { id: elfRace.id }] },
-      archetypes: { connect: [{ id: clericArchetype.id }] },
-      tags: { connect: [{ id: magicTag.id }, { id: supportTag.id }] },
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: stealthTag.id }],
+      },
     },
   })
-  console.log('🎯 Created skills')
+
+  const healingSkill = await prisma.skill.create({
+    data: {
+      name: 'Healing Touch',
+      description: 'Restore health to yourself or allies',
+      requiredLevel: 2,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: healingTag.id }, { id: magicTag.id }],
+      },
+    },
+  })
+
+  const persuasionSkill = await prisma.skill.create({
+    data: {
+      name: 'Persuasion',
+      description: 'Convince others through charismatic speech',
+      requiredLevel: 1,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: socialTag.id }],
+      },
+    },
+  })
+
+  console.log('✅ Skills created')
 
   // Create perks
-  const toughPerk = await prisma.perk.upsert({
-    where: { name: 'Tough' },
-    update: {},
-    create: {
-      name: 'Tough',
-      description: 'Increases maximum health by 20 points.',
-      requiredLevel: 5,
-      createdById: adminUser.id,
-      tags: { connect: [{ id: combatTag.id }] },
+  const toughnessPerk = await prisma.perk.create({
+    data: {
+      name: 'Toughness',
+      description: 'Increases maximum health by 20%',
+      requiredLevel: 3,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
     },
   })
 
-  const scholarPerk = await prisma.perk.upsert({
-    where: { name: 'Scholar' },
-    update: {},
-    create: {
-      name: 'Scholar',
-      description: 'Increases maximum mana by 30 points.',
-      requiredLevel: 3,
-      createdById: adminUser.id,
-      tags: { connect: [{ id: magicTag.id }] },
+  const magicAffinityPerk = await prisma.perk.create({
+    data: {
+      name: 'Magic Affinity',
+      description: 'Increases maximum mana by 25%',
+      requiredLevel: 2,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: magicTag.id }],
+      },
     },
   })
-  console.log('💪 Created perks')
+
+  const nimblePerk = await prisma.perk.create({
+    data: {
+      name: 'Nimble',
+      description: 'Increases movement speed and dodge chance',
+      requiredLevel: 4,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: stealthTag.id }],
+      },
+    },
+  })
+
+  const charismaticPerk = await prisma.perk.create({
+    data: {
+      name: 'Charismatic',
+      description: 'Improves all social interactions',
+      requiredLevel: 2,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: socialTag.id }],
+      },
+    },
+  })
+
+  console.log('✅ Perks created')
+
+  // Create archetypes
+  const warriorArchetype = await prisma.archetype.create({
+    data: {
+      name: 'Warrior',
+      description: 'A master of melee combat, skilled with weapons and armor',
+      imageId: images['warrior']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: swordSkill.id }],
+      },
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
+      requiredRaces: {
+        connect: [{ id: humanRace.id }, { id: dwarfRace.id }],
+      },
+    },
+  })
+
+  const wizardArchetype = await prisma.archetype.create({
+    data: {
+      name: 'Wizard',
+      description: 'A scholar of the arcane arts, wielding powerful spells',
+      imageId: images['wizard']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: magicMissileSkill.id }],
+      },
+      tags: {
+        connect: [{ id: magicTag.id }],
+      },
+      requiredRaces: {
+        connect: [{ id: humanRace.id }, { id: elfRace.id }],
+      },
+    },
+  })
+
+  const rogueArchetype = await prisma.archetype.create({
+    data: {
+      name: 'Rogue',
+      description: 'A stealthy infiltrator skilled in subterfuge and precision strikes',
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: stealthSkill.id }],
+      },
+      tags: {
+        connect: [{ id: stealthTag.id }, { id: combatTag.id }],
+      },
+      requiredRaces: {
+        connect: [{ id: humanRace.id }, { id: halflingRace.id }, { id: elfRace.id }],
+      },
+    },
+  })
+
+  const clericArchetype = await prisma.archetype.create({
+    data: {
+      name: 'Cleric',
+      description: 'A divine spellcaster devoted to healing and supporting allies',
+      imageId: images['cleric']?.id,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: healingSkill.id }],
+      },
+      tags: {
+        connect: [{ id: healingTag.id }, { id: magicTag.id }],
+      },
+      requiredRaces: {
+        connect: [{ id: humanRace.id }, { id: dwarfRace.id }],
+      },
+    },
+  })
+
+  console.log('✅ Archetypes created')
 
   // Create items
-  const ironSword = await prisma.item.upsert({
-    where: { name: 'Iron Sword' },
-    update: {},
-    create: {
+  const ironSword = await prisma.item.create({
+    data: {
       name: 'Iron Sword',
-      description: 'A sturdy sword made of iron. Reliable and effective.',
+      description: 'A well-crafted iron blade',
       damage: 15,
       rarity: Rarity.COMMON,
-      slot: Slot.MAIN_HAND,
+      slot: Slot.ONE_HAND,
       requiredLevel: 1,
       weight: 3.5,
-      durability: 100,
-      maxDurability: 100,
       value: 50,
-      isArmor: false,
-      isWeapon: true,
-      is2Handed: false,
-      isShield: false,
-      isThrowable: false,
-      isConsumable: false,
-      isQuestItem: false,
-      isTradeable: true,
-      userId: adminUser.id,
-      tags: { connect: [{ id: combatTag.id }] },
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
+      bonusSkills: {
+        connect: [{ id: swordSkill.id }],
+      },
     },
   })
 
-  const wizardRobe = await prisma.item.upsert({
-    where: { name: 'Wizard Robe' },
-    update: {},
-    create: {
-      name: 'Wizard Robe',
-      description: 'A flowing robe that enhances magical abilities.',
-      bonusMana: 25,
-      bonusIntelligence: 2,
-      defense: 5,
-      rarity: Rarity.UNCOMMON,
+  const leatherArmor = await prisma.item.create({
+    data: {
+      name: 'Leather Armor',
+      description: 'Light protection made from treated leather',
+      defense: 8,
+      rarity: Rarity.COMMON,
       slot: Slot.CHEST,
-      requiredLevel: 3,
-      weight: 2.0,
-      durability: 80,
-      maxDurability: 80,
-      value: 150,
-      isArmor: true,
-      isWeapon: false,
-      is2Handed: false,
-      isShield: false,
-      isThrowable: false,
-      isConsumable: false,
-      isQuestItem: false,
-      isTradeable: true,
-      userId: adminUser.id,
-      tags: { connect: [{ id: magicTag.id }] },
+      requiredLevel: 1,
+      weight: 5.0,
+      value: 40,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
     },
   })
 
-  const healthPotion = await prisma.item.upsert({
-    where: { name: 'Health Potion' },
-    update: {},
-    create: {
-      name: 'Health Potion',
-      description: 'A red potion that restores 50 health when consumed.',
+  const wizardStaff = await prisma.item.create({
+    data: {
+      name: 'Wizard Staff',
+      description: 'A wooden staff imbued with magical energy',
+      damage: 8,
+      bonusMana: 20,
+      bonusIntelligence: 2,
+      rarity: Rarity.UNCOMMON,
+      slot: Slot.TWO_HANDS,
+      requiredLevel: 2,
+      weight: 2.0,
+      value: 120,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: magicTag.id }],
+      },
+      bonusSkills: {
+        connect: [{ id: magicMissileSkill.id }],
+      },
+    },
+  })
+
+  const healingPotion = await prisma.item.create({
+    data: {
+      name: 'Healing Potion',
+      description: 'A red potion that restores health when consumed',
       bonusHealth: 50,
       rarity: Rarity.COMMON,
       slot: Slot.NONE,
       requiredLevel: 1,
       weight: 0.5,
-      durability: 1,
-      maxDurability: 1,
       value: 25,
-      isArmor: false,
-      isWeapon: false,
-      is2Handed: false,
-      isShield: false,
-      isThrowable: false,
       isConsumable: true,
-      isQuestItem: false,
-      isTradeable: true,
-      userId: adminUser.id,
-      tags: { connect: [{ id: supportTag.id }] },
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: healingTag.id }],
+      },
     },
   })
-  console.log('⚔️ Created items')
 
-  // Create sample characters
-  const demoCharacter = await prisma.character.upsert({
-    where: { name: 'Sir Galahad' },
-    update: {},
-    create: {
-      name: 'Sir Galahad',
-      description: 'A noble human warrior dedicated to justice and righteousness.',
+  const thiefDagger = await prisma.item.create({
+    data: {
+      name: 'Thief Dagger',
+      description: 'A lightweight blade perfect for stealth attacks',
+      damage: 12,
+      bonusDexterity: 1,
+      rarity: Rarity.COMMON,
+      slot: Slot.ONE_HAND,
+      requiredLevel: 1,
+      weight: 1.0,
+      value: 35,
+      ownerId: adminUser.id,
+      visibility: Visibility.PUBLIC,
+      tags: {
+        connect: [{ id: combatTag.id }, { id: stealthTag.id }],
+      },
+      bonusSkills: {
+        connect: [{ id: stealthSkill.id }],
+      },
+    },
+  })
+
+  console.log('✅ Items created')
+
+  // Create example characters
+  const warriorCharacter = await prisma.character.create({
+    data: {
+      name: 'Thorin Ironbeard',
+      sex: Sex.MALE,
+      age: 85,
+      description: 'A seasoned dwarf warrior with countless battles behind him',
       level: 5,
       experience: 1250,
-      health: 120,
-      mana: 50,
-      stamina: 100,
-      strength: 15,
-      constitution: 14,
-      dexterity: 12,
+      health: 140,
+      mana: 60,
+      stamina: 110,
+      strength: 16,
+      constitution: 18,
+      dexterity: 8,
       intelligence: 10,
-      wisdom: 13,
-      charisma: 14,
-      userId: demoUser.id,
-      raceId: humanRace.id,
+      wisdom: 12,
+      charisma: 9,
+      raceId: dwarfRace.id,
       archetypeId: warriorArchetype.id,
-      mainHandItemId: ironSword.id,
-      isPublic: true,
-      skills: { connect: [{ id: swordSkill.id }] },
-      perks: { connect: [{ id: toughPerk.id }] },
-      tags: { connect: [{ id: combatTag.id }] },
-      inventory: { connect: [{ id: healthPotion.id }] },
+      ownerId: regularUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: swordSkill.id }],
+      },
+      perks: {
+        connect: [{ id: toughnessPerk.id }],
+      },
+      tags: {
+        connect: [{ id: combatTag.id }],
+      },
+      inventory: {
+        connect: [{ id: ironSword.id }, { id: leatherArmor.id }, { id: healingPotion.id }],
+      },
     },
   })
 
-  const wizardCharacter = await prisma.character.upsert({
-    where: { name: 'Eldara the Wise' },
-    update: {},
-    create: {
-      name: 'Eldara the Wise',
-      description: 'An ancient elf wizard with vast knowledge of the arcane arts.',
-      level: 8,
-      experience: 3200,
-      health: 90,
-      mana: 150,
-      stamina: 80,
-      strength: 8,
-      constitution: 10,
-      dexterity: 14,
-      intelligence: 18,
-      wisdom: 16,
+  const wizardCharacter = await prisma.character.create({
+    data: {
+      name: 'Elara Moonwhisper',
+      sex: Sex.FEMALE,
+      age: 150,
+      description: 'An elven wizard devoted to the study of ancient magics',
+      level: 4,
+      experience: 800,
+      health: 75,
+      mana: 160,
+      stamina: 95,
+      strength: 7,
+      constitution: 8,
+      dexterity: 13,
+      intelligence: 16,
+      wisdom: 14,
       charisma: 12,
-      userId: demoUser.id,
+      imageId: images['elf']?.id,
       raceId: elfRace.id,
       archetypeId: wizardArchetype.id,
-      chestItemId: wizardRobe.id,
-      isPublic: true,
-      skills: { connect: [{ id: fireballSkill.id }] },
-      perks: { connect: [{ id: scholarPerk.id }] },
-      tags: { connect: [{ id: magicTag.id }] },
+      ownerId: gameDesigner.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: magicMissileSkill.id }],
+      },
+      perks: {
+        connect: [{ id: magicAffinityPerk.id }],
+      },
+      tags: {
+        connect: [{ id: magicTag.id }],
+      },
+      inventory: {
+        connect: [{ id: wizardStaff.id }, { id: healingPotion.id }],
+      },
     },
   })
-  console.log('🧝 Created sample characters')
 
-  console.log('🌱 Database seeding completed successfully!')
-  console.log(`
-📊 Seeded data summary:
-- 👤 Users: 2 (admin, demo)
-- 🖼️ Images: 5 (elf, dwarf, warrior, wizard, cleric)
-- 🏷️ Tags: 3 (combat, magic, support)
-- 🧙 Races: 3 (human, elf, dwarf)
-- ⚔️ Archetypes: 3 (warrior, wizard, cleric)
-- 🎯 Skills: 3 (sword fighting, fireball, heal)
-- 💪 Perks: 2 (tough, scholar)
-- ⚔️ Items: 3 (iron sword, wizard robe, health potion)
-- 🧝 Characters: 2 (Sir Galahad, Eldara the Wise)
-  `)
+  const rogueCharacter = await prisma.character.create({
+    data: {
+      name: 'Pip Lightfingers',
+      sex: Sex.MALE,
+      age: 28,
+      description: 'A quick-witted halfling rogue with nimble fingers',
+      level: 3,
+      experience: 450,
+      health: 70,
+      mana: 65,
+      stamina: 130,
+      strength: 8,
+      constitution: 9,
+      dexterity: 17,
+      intelligence: 11,
+      wisdom: 13,
+      charisma: 14,
+      imageId: images['halfling']?.id,
+      raceId: halflingRace.id,
+      archetypeId: rogueArchetype.id,
+      ownerId: regularUser.id,
+      visibility: Visibility.PUBLIC,
+      skills: {
+        connect: [{ id: stealthSkill.id }, { id: persuasionSkill.id }],
+      },
+      perks: {
+        connect: [{ id: nimblePerk.id }, { id: charismaticPerk.id }],
+      },
+      tags: {
+        connect: [{ id: stealthTag.id }, { id: socialTag.id }],
+      },
+      inventory: {
+        connect: [{ id: thiefDagger.id }, { id: healingPotion.id }],
+      },
+    },
+  })
+
+  // Create equipment for warrior character
+  await prisma.equipment.create({
+    data: {
+      characterId: warriorCharacter.id,
+      chestId: leatherArmor.id,
+      rightHandId: ironSword.id,
+    },
+  })
+
+  // Create equipment for wizard character
+  await prisma.equipment.create({
+    data: {
+      characterId: wizardCharacter.id,
+      rightHandId: wizardStaff.id,
+    },
+  })
+
+  // Create equipment for rogue character
+  await prisma.equipment.create({
+    data: {
+      characterId: rogueCharacter.id,
+      rightHandId: thiefDagger.id,
+    },
+  })
+
+  console.log('✅ Characters and equipment created')
+
+  console.log('\n🎉 Database seed completed successfully!')
+  console.log('\n📊 Seed Summary:')
+  console.log(`• Users: 4 (1 admin, 1 moderator, 2 regular users)`)
+  console.log(`• Images: ${Object.keys(images).length} race/archetype images`)
+  console.log(`• Tags: 5 category tags`)
+  console.log(`• Races: 4 fantasy races`)
+  console.log(`• Archetypes: 4 character classes`)
+  console.log(`• Skills: 5 basic skills`)
+  console.log(`• Perks: 4 character perks`)
+  console.log(`• Items: 5 example items`)
+  console.log(`• Characters: 3 example characters with equipment`)
+  console.log('\n🔑 Test Accounts:')
+  console.log('• Admin: admin@fantasy-api.com / admin123')
+  console.log('• Moderator: moderator@fantasy-api.com / mod123')
+  console.log('• User: user@fantasy-api.com / user123')
+  console.log('• Designer: designer@fantasy-api.com / design123')
 }
 
 main()
-  .then(async () => {
-    await prisma.$disconnect()
-  })
-  .catch(async e => {
-    console.error('❌ Error during seeding:', e)
-    await prisma.$disconnect()
+  .catch(e => {
+    console.error('❌ Error during seed:', e)
     process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
   })

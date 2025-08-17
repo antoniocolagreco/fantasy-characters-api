@@ -6,7 +6,6 @@ import { environment } from '../../config/environment.js'
  */
 const createPrismaClient = (): PrismaClient => {
   const isDevelopment = environment.NODE_ENV === 'development'
-  const isTest = environment.NODE_ENV === 'test'
 
   return new PrismaClient({
     // log: isDevelopment ? ['query', 'info', 'warn', 'error'] : ['error'],
@@ -14,7 +13,7 @@ const createPrismaClient = (): PrismaClient => {
     errorFormat: isDevelopment ? 'pretty' : 'minimal',
     datasources: {
       db: {
-        url: isTest ? 'file:./test.db' : environment.DATABASE_URL,
+        url: environment.DATABASE_URL,
       },
     },
   })

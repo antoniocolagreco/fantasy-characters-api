@@ -25,7 +25,7 @@ describe('Auth Controller', () => {
   const mockUser = {
     id: '123',
     email: 'test@example.com',
-    displayName: 'Test User',
+    name: 'Test User',
     bio: null,
     role: Role.USER,
     isEmailVerified: false,
@@ -43,7 +43,7 @@ describe('Auth Controller', () => {
     user: {
       id: mockUser.id,
       email: mockUser.email,
-      displayName: mockUser.displayName,
+      name: mockUser.name,
       role: mockUser.role,
       isEmailVerified: mockUser.isEmailVerified,
       isActive: mockUser.isActive,
@@ -74,7 +74,7 @@ describe('Auth Controller', () => {
       const userData = {
         email: 'test@example.com',
         password: 'Password123!',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
       mockRequest.body = userData
@@ -157,12 +157,12 @@ describe('Auth Controller', () => {
 
   describe('updateProfile', () => {
     it('should update current user profile successfully', async () => {
-      const profileData = { displayName: 'Updated Name' }
+      const profileData = { name: 'Updated Name' }
       mockRequest.body = profileData
       mockRequest.authUser = mockUser
       vi.mocked(authService.updateUserProfile).mockResolvedValue({
         ...mockUser,
-        displayName: 'Updated Name',
+        name: 'Updated Name',
       })
 
       const result = await updateProfile(
@@ -170,11 +170,11 @@ describe('Auth Controller', () => {
       )
 
       expect(authService.updateUserProfile).toHaveBeenCalledWith(mockUser.id, profileData)
-      expect(result).toEqual({ ...mockUser, displayName: 'Updated Name' })
+      expect(result).toEqual({ ...mockUser, name: 'Updated Name' })
     })
 
     it('should throw error when user not authenticated', async () => {
-      const profileData = { displayName: 'Updated Name' }
+      const profileData = { name: 'Updated Name' }
       mockRequest.body = profileData
       mockRequest.authUser = undefined
 
@@ -186,12 +186,12 @@ describe('Auth Controller', () => {
 
   describe('updateProfileById', () => {
     it('should update user profile by ID successfully', async () => {
-      const profileData = { displayName: 'Updated Name' }
+      const profileData = { name: 'Updated Name' }
       mockRequest.params = { id: '123' }
       mockRequest.body = profileData
       vi.mocked(authService.updateUserProfile).mockResolvedValue({
         ...mockUser,
-        displayName: 'Updated Name',
+        name: 'Updated Name',
       })
 
       const result = await updateProfileById(
@@ -199,7 +199,7 @@ describe('Auth Controller', () => {
       )
 
       expect(authService.updateUserProfile).toHaveBeenCalledWith('123', profileData)
-      expect(result).toEqual({ ...mockUser, displayName: 'Updated Name' })
+      expect(result).toEqual({ ...mockUser, name: 'Updated Name' })
     })
   })
 

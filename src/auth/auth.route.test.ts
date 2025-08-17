@@ -18,7 +18,7 @@ describe('Auth Routes Integration Tests', () => {
       const userData = {
         email: 'newuser@example.com',
         password: 'Password123!',
-        displayName: 'New User',
+        name: 'New User',
         bio: 'Test bio',
       }
 
@@ -37,7 +37,7 @@ describe('Auth Routes Integration Tests', () => {
       expect(body).toHaveProperty('user')
       expect(body.user).toMatchObject({
         email: userData.email,
-        displayName: userData.displayName,
+        name: userData.name,
         role: Role.USER,
         isActive: true,
         isEmailVerified: false,
@@ -48,7 +48,7 @@ describe('Auth Routes Integration Tests', () => {
       const userData = {
         email: 'invalid-email',
         password: 'Password123!',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
       const response = await app.inject({
@@ -66,7 +66,7 @@ describe('Auth Routes Integration Tests', () => {
       const userData = {
         email: 'test@example.com',
         password: 'weak',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
       const response = await app.inject({
@@ -89,7 +89,7 @@ describe('Auth Routes Integration Tests', () => {
       const userData = {
         email: testUser.user.email,
         password: 'Password123!',
-        displayName: 'Test User 2',
+        name: 'Test User 2',
       }
 
       const response = await app.inject({
@@ -274,7 +274,7 @@ describe('Auth Routes Integration Tests', () => {
 
       // Update profile
       const updateData = {
-        displayName: 'Updated Name',
+        name: 'Updated Name',
         bio: 'Updated bio',
       }
 
@@ -289,7 +289,7 @@ describe('Auth Routes Integration Tests', () => {
 
       expect(response.statusCode).toBe(200)
       const body = response.json()
-      expect(body.displayName).toBe(updateData.displayName)
+      expect(body.name).toBe(updateData.name)
       expect(body.bio).toBe(updateData.bio)
     })
   })

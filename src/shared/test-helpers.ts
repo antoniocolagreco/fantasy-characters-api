@@ -9,7 +9,7 @@ import { Role } from '@prisma/client'
 export type TestUserData = {
   email?: string
   password?: string
-  displayName?: string
+  name?: string
   bio?: string
   role?: Role
   isActive?: boolean
@@ -20,7 +20,7 @@ export type CreateTestUserResult = {
   user: {
     id: string
     email: string
-    displayName: string | null
+    name: string | null
     bio: string | null
     role: Role
     isActive: boolean
@@ -61,7 +61,7 @@ export const createTestUser = async (
     data: {
       email: userData.email || `test-${Date.now()}@example.com`,
       passwordHash: await hashPassword(password),
-      displayName: userData.displayName || 'Test User',
+      name: userData.name || 'Test User',
       bio: userData.bio || 'Test user bio',
       role: userData.role || Role.USER,
       isActive: userData.isActive !== undefined ? userData.isActive : true,
@@ -74,7 +74,7 @@ export const createTestUser = async (
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      name: user.name,
       bio: user.bio,
       role: user.role,
       isActive: user.isActive,
@@ -97,7 +97,7 @@ export const createTestAdminUser = async (
     ...userData,
     role: Role.ADMIN,
     email: userData.email || `admin-${Date.now()}@example.com`,
-    displayName: userData.displayName || 'Test Admin',
+    name: userData.name || 'Test Admin',
   })
 }
 
@@ -114,7 +114,7 @@ export const createTestUsers = async (
     const user = await createTestUser({
       ...userData,
       email: userData.email || `test-${Date.now()}-${i}@example.com`,
-      displayName: userData.displayName || `Test User ${i + 1}`,
+      name: userData.name || `Test User ${i + 1}`,
     })
     users.push(user)
   }

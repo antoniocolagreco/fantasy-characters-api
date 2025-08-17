@@ -33,14 +33,14 @@ describe('User Service', () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'hashedpassword123',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'Test bio',
       }
 
       const user = await createUser(userData)
 
       expect(user.email).toBe('test@example.com')
-      expect(user.displayName).toBe('Test User')
+      expect(user.name).toBe('Test User')
       expect(user.bio).toBe('Test bio')
       expect(user.role).toBe('USER')
       expect(user.isActive).toBe(true)
@@ -59,7 +59,7 @@ describe('User Service', () => {
       const user = await createUser(userData)
 
       expect(user.email).toBe('minimal@example.com')
-      expect(user.displayName).toBeNull()
+      expect(user.name).toBeNull()
       expect(user.bio).toBeNull()
       expect(user.role).toBe('USER')
     })
@@ -115,11 +115,11 @@ describe('User Service', () => {
       })
     })
 
-    it('should throw validation error for too long display name', async () => {
+    it('should throw validation error for too long name', async () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'hashedpassword123',
-        displayName: 'a'.repeat(101), // Too long
+        name: 'a'.repeat(101), // Too long
       }
 
       await expect(createUser(userData)).rejects.toMatchObject({
@@ -147,7 +147,7 @@ describe('User Service', () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'hashedpassword123',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
       const createdUser = await createUser(userData)
@@ -182,19 +182,19 @@ describe('User Service', () => {
       await createUser({
         email: 'user1@example.com',
         passwordHash: 'password123',
-        displayName: 'User One',
+        name: 'User One',
         role: 'USER',
       })
       await createUser({
         email: 'admin@example.com',
         passwordHash: 'password123',
-        displayName: 'Admin User',
+        name: 'Admin User',
         role: 'ADMIN',
       })
       await createUser({
         email: 'inactive@example.com',
         passwordHash: 'password123',
-        displayName: 'Inactive User',
+        name: 'Inactive User',
       })
 
       // Update last user to be inactive
@@ -263,20 +263,20 @@ describe('User Service', () => {
       const user = await createUser({
         email: 'test@example.com',
         passwordHash: 'password123',
-        displayName: 'Original Name',
+        name: 'Original Name',
       })
       userId = user.id
     })
 
     it('should update user with valid data', async () => {
       const updateData: UpdateUserRequest = {
-        displayName: 'Updated Name',
+        name: 'Updated Name',
         bio: 'Updated bio',
       }
 
       const updatedUser = await updateUser(userId, updateData)
 
-      expect(updatedUser.displayName).toBe('Updated Name')
+      expect(updatedUser.name).toBe('Updated Name')
       expect(updatedUser.bio).toBe('Updated bio')
       expect(updatedUser.email).toBe('test@example.com') // Should remain unchanged
     })
@@ -294,7 +294,7 @@ describe('User Service', () => {
     it('should throw not found error for non-existent user', async () => {
       const nonExistentId = '123e4567-e89b-12d3-a456-426614174000'
       const updateData: UpdateUserRequest = {
-        displayName: 'New Name',
+        name: 'New Name',
       }
 
       await expect(updateUser(nonExistentId, updateData)).rejects.toMatchObject({
@@ -306,7 +306,7 @@ describe('User Service', () => {
     it('should throw validation error for invalid UUID', async () => {
       const invalidId = 'invalid-uuid'
       const updateData: UpdateUserRequest = {
-        displayName: 'New Name',
+        name: 'New Name',
       }
 
       await expect(updateUser(invalidId, updateData)).rejects.toMatchObject({
@@ -381,7 +381,7 @@ describe('User Service', () => {
       await createUser({
         email: 'test@example.com',
         passwordHash: 'password123',
-        displayName: 'Test User',
+        name: 'Test User',
       })
     })
 
@@ -390,7 +390,7 @@ describe('User Service', () => {
 
       expect(user).toBeDefined()
       expect(user?.email).toBe('test@example.com')
-      expect(user?.displayName).toBe('Test User')
+      expect(user?.name).toBe('Test User')
     })
 
     it('should return null for non-existent email', async () => {

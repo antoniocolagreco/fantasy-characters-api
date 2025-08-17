@@ -123,7 +123,7 @@ export const createTokenResponse = (user: UserProfileType): TokenResponseType =>
     user: {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      name: user.name,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
       isActive: user.isActive,

@@ -69,7 +69,7 @@ export const validatePasswordStrength = (password: string): void => {
  * Register a new user
  */
 export const registerUser = async (userData: RegisterUserType): Promise<UserProfileType> => {
-  const { email, password, displayName, bio } = userData
+  const { email, password, name, bio } = userData
 
   // Validate password strength
   validatePasswordStrength(password)
@@ -92,7 +92,7 @@ export const registerUser = async (userData: RegisterUserType): Promise<UserProf
       data: {
         email: email.toLowerCase(),
         passwordHash,
-        displayName: displayName?.trim() || null,
+        name: name?.trim() || null,
         bio: bio?.trim() || null,
         role: Role.USER,
         lastLogin: new Date(),
@@ -103,7 +103,7 @@ export const registerUser = async (userData: RegisterUserType): Promise<UserProf
     return {
       id: user.id,
       email: user.email,
-      displayName: user.displayName,
+      name: user.name,
       bio: user.bio,
       role: user.role,
       isEmailVerified: user.isEmailVerified,
@@ -158,7 +158,7 @@ export const loginUser = async (loginData: LoginUserType): Promise<UserProfileTy
     return {
       id: updatedUser.id,
       email: updatedUser.email,
-      displayName: updatedUser.displayName,
+      name: updatedUser.name,
       bio: updatedUser.bio,
       role: updatedUser.role,
       isEmailVerified: updatedUser.isEmailVerified,
@@ -191,7 +191,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfileType> =
   return {
     id: user.id,
     email: user.email,
-    displayName: user.displayName,
+    name: user.name,
     bio: user.bio,
     role: user.role,
     isEmailVerified: user.isEmailVerified,
@@ -209,7 +209,7 @@ export const updateUserProfile = async (
   userId: string,
   profileData: UpdateProfileType,
 ): Promise<UserProfileType> => {
-  const { displayName, bio } = profileData
+  const { name, bio } = profileData
 
   // Check if user exists and is active
   const existingUser = await db.user.findUnique({
@@ -228,7 +228,7 @@ export const updateUserProfile = async (
     const updatedUser = await db.user.update({
       where: { id: userId },
       data: {
-        displayName: displayName?.trim() || null,
+        name: name?.trim() || null,
         bio: bio?.trim() || null,
       },
     })
@@ -236,7 +236,7 @@ export const updateUserProfile = async (
     return {
       id: updatedUser.id,
       email: updatedUser.email,
-      displayName: updatedUser.displayName,
+      name: updatedUser.name,
       bio: updatedUser.bio,
       role: updatedUser.role,
       isEmailVerified: updatedUser.isEmailVerified,
@@ -424,7 +424,7 @@ export const validateRefreshToken = async (
   return {
     id: storedToken.user.id,
     email: storedToken.user.email,
-    displayName: storedToken.user.displayName,
+    name: storedToken.user.name,
     bio: storedToken.user.bio,
     role: storedToken.user.role,
     isEmailVerified: storedToken.user.isEmailVerified,

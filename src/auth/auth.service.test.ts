@@ -41,6 +41,30 @@ import {
 import { db } from '../shared/database/index.js'
 
 describe('Auth Service', () => {
+  // Helper function to create complete mock user with all required fields
+  const createMockUser = (overrides: Partial<any> = {}) => ({
+    id: '123',
+    email: 'test@example.com',
+    passwordHash: 'hashedPassword',
+    role: Role.USER,
+    isEmailVerified: false,
+    isActive: true,
+    name: 'Test User',
+    bio: null,
+    oauthProvider: null,
+    oauthId: null,
+    lastPasswordChange: null,
+    lastLogin: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    profilePictureId: null,
+    isBanned: false,
+    banReason: null,
+    bannedUntil: null,
+    bannedById: null,
+    ...overrides,
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -144,30 +168,14 @@ describe('Auth Service', () => {
   })
 
   describe('registerUser', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should register user successfully', async () => {
       const userData = {
         email: 'test@example.com',
         password: 'Password123!',
-        displayName: 'Test User',
+        name: 'Test User',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(null)
       ;(bcrypt.hash as any).mockResolvedValue('hashedPassword')
@@ -181,7 +189,7 @@ describe('Auth Service', () => {
       expect(result).toEqual({
         id: mockUser.id,
         email: mockUser.email,
-        displayName: mockUser.displayName,
+        name: mockUser.name,
         bio: mockUser.bio,
         role: mockUser.role,
         isEmailVerified: mockUser.isEmailVerified,
@@ -196,11 +204,11 @@ describe('Auth Service', () => {
       const userData = {
         email: 'test@example.com',
         password: 'Password123!',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'Test bio',
       }
 
-      const userWithBio = { ...mockUser, bio: 'Test bio' }
+      const userWithBio = createMockUser({ bio: 'Test bio' })
 
       vi.mocked(db.user.findUnique).mockResolvedValue(null)
       ;(bcrypt.hash as any).mockResolvedValue('hashedPassword')
@@ -211,13 +219,15 @@ describe('Auth Service', () => {
       expect(result.bio).toBe('Test bio')
     })
 
-    it('should register user with trimmed displayName and bio', async () => {
+    it('should register user with trimmed name and bio', async () => {
       const userData = {
         email: 'test@example.com',
         password: 'Password123!',
-        displayName: '  Test User  ',
+        name: '  Test User  ',
         bio: '  Test bio  ',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(null)
       ;(bcrypt.hash as any).mockResolvedValue('hashedPassword')
@@ -229,7 +239,7 @@ describe('Auth Service', () => {
         data: {
           email: userData.email,
           passwordHash: 'hashedPassword',
-          displayName: 'Test User',
+          name: 'Test User',
           bio: 'Test bio',
           role: Role.USER,
           lastLogin: expect.any(Date),
@@ -241,10 +251,12 @@ describe('Auth Service', () => {
       const userData = {
         email: 'test@example.com',
         password: 'Password123!',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
-      vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
+      const existingUser = createMockUser()
+
+      vi.mocked(db.user.findUnique).mockResolvedValue(existingUser)
 
       await expect(registerUser(userData)).rejects.toThrow('User with this email already exists')
     })
@@ -291,29 +303,13 @@ describe('Auth Service', () => {
   })
 
   describe('loginUser', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should authenticate user successfully', async () => {
       const credentials = {
         email: 'test@example.com',
         password: 'Password123!',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockResolvedValue(mockUser)
@@ -327,7 +323,7 @@ describe('Auth Service', () => {
       expect(result).toEqual({
         id: mockUser.id,
         email: mockUser.email,
-        displayName: mockUser.displayName,
+        name: mockUser.name,
         bio: mockUser.bio,
         role: mockUser.role,
         isEmailVerified: mockUser.isEmailVerified,
@@ -355,7 +351,7 @@ describe('Auth Service', () => {
         password: 'Password123!',
       }
 
-      const inactiveUser = { ...mockUser, isActive: false }
+      const inactiveUser = createMockUser({ isActive: false })
       vi.mocked(db.user.findUnique).mockResolvedValue(inactiveUser)
 
       await expect(loginUser(credentials)).rejects.toThrow('Account is deactivated')
@@ -366,6 +362,8 @@ describe('Auth Service', () => {
         email: 'test@example.com',
         password: 'wrongpassword',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockResolvedValue(false)
@@ -379,6 +377,8 @@ describe('Auth Service', () => {
         password: 'Password123!',
       }
 
+      const mockUser = createMockUser()
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockResolvedValue(true)
       vi.mocked(db.user.update).mockRejectedValue(new Error('Database error'))
@@ -388,25 +388,8 @@ describe('Auth Service', () => {
   })
 
   describe('getUserProfile', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should get user profile successfully', async () => {
+      const mockUser = createMockUser()
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
 
       const result = await getUserProfile('123')
@@ -417,7 +400,7 @@ describe('Auth Service', () => {
       expect(result).toEqual({
         id: mockUser.id,
         email: mockUser.email,
-        displayName: mockUser.displayName,
+        name: mockUser.name,
         bio: mockUser.bio,
         role: mockUser.role,
         isEmailVerified: mockUser.isEmailVerified,
@@ -435,7 +418,7 @@ describe('Auth Service', () => {
     })
 
     it('should throw error for inactive user', async () => {
-      const inactiveUser = { ...mockUser, isActive: false }
+      const inactiveUser = createMockUser({ isActive: false })
       vi.mocked(db.user.findUnique).mockResolvedValue(inactiveUser)
 
       await expect(getUserProfile('123')).rejects.toThrow('Account is deactivated')
@@ -443,31 +426,14 @@ describe('Auth Service', () => {
   })
 
   describe('updateUserProfile', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: 'Test bio',
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should update user profile successfully', async () => {
       const profileData = {
-        displayName: 'Updated User',
+        name: 'Updated User',
         bio: 'Updated bio',
       }
 
-      const updatedUser = { ...mockUser, ...profileData }
+      const mockUser = createMockUser()
+      const updatedUser = createMockUser({ name: 'Updated User', bio: 'Updated bio' })
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockResolvedValue(updatedUser)
@@ -480,19 +446,21 @@ describe('Auth Service', () => {
       expect(db.user.update).toHaveBeenCalledWith({
         where: { id: '123' },
         data: {
-          displayName: 'Updated User',
+          name: 'Updated User',
           bio: 'Updated bio',
         },
       })
-      expect(result.displayName).toBe('Updated User')
+      expect(result.name).toBe('Updated User')
       expect(result.bio).toBe('Updated bio')
     })
 
     it('should trim display name and bio', async () => {
       const profileData = {
-        displayName: '  Updated User  ',
+        name: '  Updated User  ',
         bio: '  Updated bio  ',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockResolvedValue(mockUser)
@@ -502,7 +470,7 @@ describe('Auth Service', () => {
       expect(db.user.update).toHaveBeenCalledWith({
         where: { id: '123' },
         data: {
-          displayName: 'Updated User',
+          name: 'Updated User',
           bio: 'Updated bio',
         },
       })
@@ -510,9 +478,11 @@ describe('Auth Service', () => {
 
     it('should handle empty values', async () => {
       const profileData = {
-        displayName: '',
+        name: '',
         bio: '',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockResolvedValue(mockUser)
@@ -522,7 +492,7 @@ describe('Auth Service', () => {
       expect(db.user.update).toHaveBeenCalledWith({
         where: { id: '123' },
         data: {
-          displayName: null,
+          name: null,
           bio: null,
         },
       })
@@ -530,7 +500,7 @@ describe('Auth Service', () => {
 
     it('should throw error for non-existent user', async () => {
       const profileData = {
-        displayName: 'Updated User',
+        name: 'Updated User',
         bio: 'Updated bio',
       }
 
@@ -541,11 +511,11 @@ describe('Auth Service', () => {
 
     it('should throw error for inactive user', async () => {
       const profileData = {
-        displayName: 'Updated User',
+        name: 'Updated User',
         bio: 'Updated bio',
       }
 
-      const inactiveUser = { ...mockUser, isActive: false }
+      const inactiveUser = createMockUser({ isActive: false })
       vi.mocked(db.user.findUnique).mockResolvedValue(inactiveUser)
 
       await expect(updateUserProfile('123', profileData)).rejects.toThrow('Account is deactivated')
@@ -553,9 +523,11 @@ describe('Auth Service', () => {
 
     it('should handle database update error', async () => {
       const profileData = {
-        displayName: 'Updated User',
+        name: 'Updated User',
         bio: 'Updated bio',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockRejectedValue(new Error('Database error'))
@@ -567,29 +539,13 @@ describe('Auth Service', () => {
   })
 
   describe('changeUserPassword', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should change password successfully', async () => {
       const passwordData = {
         currentPassword: 'oldPassword123',
         newPassword: 'newPassword123',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockImplementation((password: string) => {
@@ -628,7 +584,7 @@ describe('Auth Service', () => {
         newPassword: 'newPassword123',
       }
 
-      const inactiveUser = { ...mockUser, isActive: false }
+      const inactiveUser = createMockUser({ isActive: false })
       vi.mocked(db.user.findUnique).mockResolvedValue(inactiveUser)
 
       await expect(changeUserPassword('123', passwordData)).rejects.toThrow(
@@ -641,6 +597,8 @@ describe('Auth Service', () => {
         currentPassword: 'wrongPassword',
         newPassword: 'newPassword123',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockResolvedValue(false)
@@ -656,6 +614,8 @@ describe('Auth Service', () => {
         newPassword: 'weak',
       }
 
+      const mockUser = createMockUser()
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockResolvedValue(true)
 
@@ -670,6 +630,8 @@ describe('Auth Service', () => {
         newPassword: 'samePassword123',
       }
 
+      const mockUser = createMockUser()
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockResolvedValue(true)
 
@@ -683,6 +645,8 @@ describe('Auth Service', () => {
         currentPassword: 'oldPassword123',
         newPassword: 'newPassword123',
       }
+
+      const mockUser = createMockUser()
 
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       ;(bcrypt.compare as any).mockImplementation((password: string) => {
@@ -700,27 +664,11 @@ describe('Auth Service', () => {
   })
 
   describe('deactivateUser', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: true,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should deactivate user successfully', async () => {
+      const mockUser = createMockUser()
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
-      vi.mocked(db.user.update).mockResolvedValue({ ...mockUser, isActive: false })
+      vi.mocked(db.user.update).mockResolvedValue(createMockUser({ isActive: false }))
 
       await deactivateUser('123')
 
@@ -737,13 +685,15 @@ describe('Auth Service', () => {
     })
 
     it('should throw error for already inactive user', async () => {
-      const inactiveUser = { ...mockUser, isActive: false }
+      const inactiveUser = createMockUser({ isActive: false })
       vi.mocked(db.user.findUnique).mockResolvedValue(inactiveUser)
 
       await expect(deactivateUser('123')).rejects.toThrow('Account is already deactivated')
     })
 
     it('should handle database update error', async () => {
+      const mockUser = createMockUser()
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockRejectedValue(new Error('Database error'))
 
@@ -752,27 +702,11 @@ describe('Auth Service', () => {
   })
 
   describe('reactivateUser', () => {
-    const mockUser = {
-      id: '123',
-      email: 'test@example.com',
-      passwordHash: 'hashedPassword',
-      role: Role.USER,
-      isEmailVerified: false,
-      isActive: false,
-      displayName: 'Test User',
-      bio: null,
-      oauthProvider: null,
-      oauthId: null,
-      lastPasswordChange: null,
-      lastLogin: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      profilePictureId: null,
-    }
-
     it('should reactivate user successfully', async () => {
+      const mockUser = createMockUser({ isActive: false })
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
-      vi.mocked(db.user.update).mockResolvedValue({ ...mockUser, isActive: true })
+      vi.mocked(db.user.update).mockResolvedValue(createMockUser({ isActive: true }))
 
       await reactivateUser('123')
 
@@ -789,13 +723,15 @@ describe('Auth Service', () => {
     })
 
     it('should throw error for already active user', async () => {
-      const activeUser = { ...mockUser, isActive: true }
+      const activeUser = createMockUser({ isActive: true })
       vi.mocked(db.user.findUnique).mockResolvedValue(activeUser)
 
       await expect(reactivateUser('123')).rejects.toThrow('Account is already active')
     })
 
     it('should handle database update error', async () => {
+      const mockUser = createMockUser({ isActive: false })
+
       vi.mocked(db.user.findUnique).mockResolvedValue(mockUser)
       vi.mocked(db.user.update).mockRejectedValue(new Error('Database error'))
 

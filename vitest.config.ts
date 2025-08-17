@@ -8,6 +8,7 @@ export default defineConfig({
     exclude: ['node_modules', 'dist', 'coverage'],
     env: {
       NODE_ENV: 'test',
+      DATABASE_URL: 'file:./test.db',
     },
     coverage: {
       provider: 'v8',

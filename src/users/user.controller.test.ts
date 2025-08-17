@@ -25,7 +25,7 @@ describe('User Controller', () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'securepassword123',
-        displayName: 'Test User',
+        name: 'Test User',
         bio: 'Test bio',
       }
 
@@ -40,7 +40,7 @@ describe('User Controller', () => {
       const body = response.json()
       expect(body.success).toBe(true)
       expect(body.data.email).toBe('test@example.com')
-      expect(body.data.displayName).toBe('Test User')
+      expect(body.data.name).toBe('Test User')
       expect(body.data.bio).toBe('Test bio')
       expect(body.data.role).toBe('USER')
       expect(body.data.id).toBeDefined()
@@ -64,7 +64,7 @@ describe('User Controller', () => {
 
       const body = response.json()
       expect(body.data.email).toBe('minimal@example.com')
-      expect(body.data.displayName).toBeNull()
+      expect(body.data.name).toBeNull()
       expect(body.data.bio).toBeNull()
     })
 
@@ -72,7 +72,7 @@ describe('User Controller', () => {
       const userData: CreateUserRequest = {
         email: 'complete@example.com',
         passwordHash: 'securepassword123',
-        displayName: 'Complete User',
+        name: 'Complete User',
         bio: 'This is a complete user profile with all fields',
         role: 'ADMIN',
       }
@@ -87,7 +87,7 @@ describe('User Controller', () => {
 
       const body = response.json()
       expect(body.data.email).toBe('complete@example.com')
-      expect(body.data.displayName).toBe('Complete User')
+      expect(body.data.name).toBe('Complete User')
       expect(body.data.bio).toBe('This is a complete user profile with all fields')
       expect(body.data.role).toBe('ADMIN')
       expect(body.data.isEmailVerified).toBe(false) // Default value
@@ -203,19 +203,19 @@ describe('User Controller', () => {
         {
           email: 'user1@example.com',
           passwordHash: 'password123',
-          displayName: 'User One',
+          name: 'User One',
           role: 'USER' as const,
         },
         {
           email: 'admin@example.com',
           passwordHash: 'password123',
-          displayName: 'Admin User',
+          name: 'Admin User',
           role: 'ADMIN' as const,
         },
         {
           email: 'user2@example.com',
           passwordHash: 'password123',
-          displayName: 'User Two',
+          name: 'User Two',
           role: 'USER' as const,
         },
       ]
@@ -407,7 +407,7 @@ describe('User Controller', () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'password123',
-        displayName: 'Test User',
+        name: 'Test User',
       }
 
       const createResponse = await app.inject({
@@ -431,7 +431,7 @@ describe('User Controller', () => {
       expect(body.success).toBe(true)
       expect(body.data.id).toBe(userId)
       expect(body.data.email).toBe('test@example.com')
-      expect(body.data.displayName).toBe('Test User')
+      expect(body.data.name).toBe('Test User')
     })
 
     it('should return 404 for non-existent user', async () => {
@@ -488,7 +488,7 @@ describe('User Controller', () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'password123',
-        displayName: 'Original Name',
+        name: 'Original Name',
       }
 
       const createResponse = await app.inject({
@@ -502,7 +502,7 @@ describe('User Controller', () => {
 
     it('should update user successfully', async () => {
       const updateData: UpdateUserRequest = {
-        displayName: 'Updated Name',
+        name: 'Updated Name',
         bio: 'Updated bio',
       }
 
@@ -516,7 +516,7 @@ describe('User Controller', () => {
 
       const body = response.json()
       expect(body.success).toBe(true)
-      expect(body.data.displayName).toBe('Updated Name')
+      expect(body.data.name).toBe('Updated Name')
       expect(body.data.bio).toBe('Updated bio')
       expect(body.data.email).toBe('test@example.com') // Should remain unchanged
     })
@@ -573,14 +573,14 @@ describe('User Controller', () => {
       const body = response.json()
       expect(body.success).toBe(true)
       // Original data should remain unchanged
-      expect(body.data.displayName).toBe('Original Name')
+      expect(body.data.name).toBe('Original Name')
       expect(body.data.email).toBe('test@example.com')
     })
 
     it('should return 404 for non-existent user', async () => {
       const nonExistentId = '123e4567-e89b-12d3-a456-426614174000'
       const updateData: UpdateUserRequest = {
-        displayName: 'New Name',
+        name: 'New Name',
       }
 
       const response = await app.inject({
@@ -597,7 +597,7 @@ describe('User Controller', () => {
 
     it('should return 400 for invalid UUID format', async () => {
       const updateData: UpdateUserRequest = {
-        displayName: 'New Name',
+        name: 'New Name',
       }
 
       const response = await app.inject({
@@ -643,7 +643,7 @@ describe('User Controller', () => {
       })
 
       const updateData: UpdateUserRequest = {
-        displayName: 'New Name',
+        name: 'New Name',
       }
 
       const response = await app.inject({

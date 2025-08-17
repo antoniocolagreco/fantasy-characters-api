@@ -22,7 +22,7 @@ describe('Auth Middleware', () => {
   const mockUser = {
     id: '123',
     email: 'test@example.com',
-    displayName: 'Test User',
+    name: 'Test User',
     bio: null,
     role: Role.USER,
     isEmailVerified: true,

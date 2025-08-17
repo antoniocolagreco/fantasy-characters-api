@@ -17,7 +17,7 @@ export type ImageCreateData = {
   filename: string
   mimeType: string
   description?: string | undefined
-  uploadedById?: string | undefined
+  ownerId?: string | undefined
 }
 
 export type ImageBinaryData = {
@@ -36,7 +36,7 @@ export type ImageDatabaseResponse = {
   mimeType: string
   width: number
   height: number
-  uploadedById: string | null
+  ownerId: string | null
   createdAt: Date
   updatedAt: Date
 }

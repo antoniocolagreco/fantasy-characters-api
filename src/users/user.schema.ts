@@ -20,7 +20,7 @@ export const BaseUserSchema = Type.Object(
       description: 'User email address (unique)',
       examples: ['user@example.com'],
     }),
-    displayName: Type.Optional(
+    name: Type.Optional(
       Type.String({
         minLength: 2,
         maxLength: 100,
@@ -69,7 +69,7 @@ export const UpdateUserRequestSchema = Type.Object(
         examples: ['newemail@example.com'],
       }),
     ),
-    displayName: Type.Optional(
+    name: Type.Optional(
       Type.String({
         minLength: 2,
         maxLength: 100,
@@ -117,7 +117,7 @@ export const UserResponseSchema = Type.Object(
       description: 'User email address',
       examples: ['user@example.com'],
     }),
-    displayName: Type.Union([Type.String(), Type.Null()], {
+    name: Type.Union([Type.String(), Type.Null()], {
       description: 'Display name for the user',
       examples: ['John Doe', null],
     }),

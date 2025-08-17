@@ -27,7 +27,7 @@ export const uploadImage = async (request: FastifyRequest, reply: FastifyReply):
       file: buffer,
       filename: file.filename,
       mimeType: file.mimetype,
-      uploadedById: userId,
+      ownerId: userId,
     })
 
     reply.code(201)

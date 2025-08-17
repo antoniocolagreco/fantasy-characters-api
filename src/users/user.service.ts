@@ -28,7 +28,7 @@ import type {
 const transformUserToResponse = (user: User): UserResponse => ({
   id: user.id,
   email: user.email,
-  displayName: user.displayName,
+  name: user.name,
   bio: user.bio,
   role: user.role,
   isEmailVerified: user.isEmailVerified,
@@ -90,10 +90,10 @@ export const createUser = async (userData: CreateUserRequest): Promise<UserRespo
   }
 
   // Validate display name if provided
-  if (userData.displayName) {
+  if (userData.name) {
     if (
-      userData.displayName.length < VALIDATION.NAME_MIN_LENGTH ||
-      userData.displayName.length > VALIDATION.NAME_MAX_LENGTH
+      userData.name.length < VALIDATION.NAME_MIN_LENGTH ||
+      userData.name.length > VALIDATION.NAME_MAX_LENGTH
     ) {
       throw createValidationError(
         `Display name must be between ${VALIDATION.NAME_MIN_LENGTH} and ${VALIDATION.NAME_MAX_LENGTH} characters`,
@@ -113,7 +113,7 @@ export const createUser = async (userData: CreateUserRequest): Promise<UserRespo
       data: {
         email: userData.email.toLowerCase().trim(),
         passwordHash: userData.passwordHash,
-        displayName: userData.displayName?.trim() || null,
+        name: userData.name?.trim() || null,
         bio: userData.bio?.trim() || null,
         role: (userData.role as Role) || 'USER',
       },
@@ -185,7 +185,7 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
     // Search in email and display name
     if (query.search) {
       const searchTerm = query.search.trim()
-      where.OR = [{ email: { contains: searchTerm } }, { displayName: { contains: searchTerm } }]
+      where.OR = [{ email: { contains: searchTerm } }, { name: { contains: searchTerm } }]
     }
 
     // Build orderBy clause
@@ -198,7 +198,7 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
       // Validate sort field (only allow safe fields)
       const allowedSortFields = [
         'email',
-        'displayName',
+        'name',
         'role',
         'isActive',
         'isEmailVerified',
@@ -262,11 +262,11 @@ export const updateUser = async (
   }
 
   // Validate display name if provided
-  if (updateData.displayName !== undefined) {
-    if (updateData.displayName !== null) {
+  if (updateData.name !== undefined) {
+    if (updateData.name !== null) {
       if (
-        updateData.displayName.length < VALIDATION.NAME_MIN_LENGTH ||
-        updateData.displayName.length > VALIDATION.NAME_MAX_LENGTH
+        updateData.name.length < VALIDATION.NAME_MIN_LENGTH ||
+        updateData.name.length > VALIDATION.NAME_MAX_LENGTH
       ) {
         throw createValidationError(
           `Display name must be between ${VALIDATION.NAME_MIN_LENGTH} and ${VALIDATION.NAME_MAX_LENGTH} characters`,
@@ -302,8 +302,8 @@ export const updateUser = async (
       updatePayload.email = updateData.email.toLowerCase().trim()
     }
 
-    if (updateData.displayName !== undefined) {
-      updatePayload.displayName = updateData.displayName?.trim() || null
+    if (updateData.name !== undefined) {
+      updatePayload.name = updateData.name?.trim() || null
     }
 
     if (updateData.bio !== undefined) {
