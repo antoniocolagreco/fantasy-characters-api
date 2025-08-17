@@ -50,7 +50,7 @@ const prettierOptions = {
       files: ['*.md', '*.mdx'],
       options: {
         proseWrap: 'always',
-        printWidth: 80,
+        printWidth: 100,
         tabWidth: 2,
       },
     },

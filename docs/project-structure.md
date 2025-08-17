@@ -1,0 +1,215 @@
+# Project Structure
+
+## Directory Structure (Feature-Based)
+
+```text
+fantasy-character-api/
+├── src/
+│   ├── app.ts                # Fastify app setup
+│   ├── index.ts              # Application entry point
+│   │
+│   ├── auth/                 # Authentication feature
+│   │   ├── auth.controller.ts
+│   │   ├── auth.route.ts
+│   │   ├── auth.schema.ts
+│   │   ├── auth.service.ts
+│   │   ├── auth.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── auth.controller.test.ts
+│   │       ├── auth.service.test.ts
+│   │       ├── auth.route.test.ts
+│   │       ├── auth.schema.test.ts
+│   │       └── auth.e2e.test.ts
+│   │
+│   ├── users/                # Users feature
+│   │   ├── user.controller.ts
+│   │   ├── user.route.ts
+│   │   ├── user.schema.ts
+│   │   ├── user.service.ts
+│   │   ├── user.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── user.controller.test.ts
+│   │       ├── user.service.test.ts
+│   │       ├── user.route.test.ts
+│   │       ├── user.schema.test.ts
+│   │       └── user.e2e.test.ts
+│   │
+│   ├── characters/           # Characters feature
+│   │   ├── character.controller.ts
+│   │   ├── character.route.ts
+│   │   ├── character.schema.ts
+│   │   ├── character.service.ts
+│   │   ├── character.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── character.controller.test.ts
+│   │       ├── character.service.test.ts
+│   │       ├── character.route.test.ts
+│   │       ├── character.schema.test.ts
+│   │       └── character.e2e.test.ts
+│   │
+│   ├── races/                # Races feature
+│   │   ├── race.controller.ts
+│   │   ├── race.route.ts
+│   │   ├── race.schema.ts
+│   │   ├── race.service.ts
+│   │   ├── race.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── race.controller.test.ts
+│   │       ├── race.service.test.ts
+│   │       ├── race.route.test.ts
+│   │       ├── race.schema.test.ts
+│   │       └── race.e2e.test.ts
+│   │
+│   ├── archetypes/           # Archetypes feature
+│   │   ├── archetype.controller.ts
+│   │   ├── archetype.route.ts
+│   │   ├── archetype.schema.ts
+│   │   ├── archetype.service.ts
+│   │   ├── archetype.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── archetype.controller.test.ts
+│   │       ├── archetype.service.test.ts
+│   │       ├── archetype.route.test.ts
+│   │       ├── archetype.schema.test.ts
+│   │       └── archetype.e2e.test.ts
+│   │
+│   ├── skills/               # Skills feature
+│   │   ├── skill.controller.ts
+│   │   ├── skill.route.ts
+│   │   ├── skill.schema.ts
+│   │   ├── skill.service.ts
+│   │   ├── skill.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── skill.controller.test.ts
+│   │       ├── skill.service.test.ts
+│   │       ├── skill.route.test.ts
+│   │       ├── skill.schema.test.ts
+│   │       └── skill.e2e.test.ts
+│   │
+│   ├── perks/                # Perks feature
+│   │   ├── perk.controller.ts
+│   │   ├── perk.route.ts
+│   │   ├── perk.schema.ts
+│   │   ├── perk.service.ts
+│   │   ├── perk.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── perk.controller.test.ts
+│   │       ├── perk.service.test.ts
+│   │       ├── perk.route.test.ts
+│   │       ├── perk.schema.test.ts
+│   │       └── perk.e2e.test.ts
+│   │
+│   ├── items/                # Items feature
+│   │   ├── item.controller.ts
+│   │   ├── item.route.ts
+│   │   ├── item.schema.ts
+│   │   ├── item.service.ts
+│   │   ├── item.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── item.controller.test.ts
+│   │       ├── item.service.test.ts
+│   │       ├── item.route.test.ts
+│   │       ├── item.schema.test.ts
+│   │       └── item.e2e.test.ts
+│   │
+│   ├── images/               # Images feature
+│   │   ├── image.controller.ts
+│   │   ├── image.route.ts
+│   │   ├── image.schema.ts
+│   │   ├── image.service.ts
+│   │   ├── image.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── image.controller.test.ts
+│   │       ├── image.service.test.ts
+│   │       ├── image.route.test.ts
+│   │       ├── image.schema.test.ts
+│   │       └── image.e2e.test.ts
+│   │
+│   ├── tags/                 # Tags feature
+│   │   ├── tag.controller.ts
+│   │   ├── tag.route.ts
+│   │   ├── tag.schema.ts
+│   │   ├── tag.service.ts
+│   │   ├── tag.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── tag.controller.test.ts
+│   │       ├── tag.service.test.ts
+│   │       ├── tag.route.test.ts
+│   │       ├── tag.schema.test.ts
+│   │       └── tag.e2e.test.ts
+│   │
+│   ├── health/               # Health check feature (Kubernetes-compatible)
+│   │   ├── health.controller.ts
+│   │   ├── health.route.ts
+│   │   ├── health.types.ts
+│   │   ├── index.ts
+│   │   └── tests/
+│   │       ├── health.controller.test.ts
+│   │       ├── health.service.test.ts
+│   │       └── health.e2e.test.ts
+│   │
+│   └── shared/               # Shared utilities and code
+│       ├── config.ts         # Configuration and environment
+│       ├── constants.ts      # Application constants and enums
+│       ├── errors.ts         # Error classes and handlers
+│       ├── middleware.ts     # Shared middleware
+│       ├── types.ts          # Shared TypeScript definitions
+│       ├── utils.ts          # Shared utility functions
+│       └── shared.test.ts    # Tests for shared code
+│
+├── prisma/                   # Prisma ORM files
+│   ├── schema.prisma         # Database schema
+│   ├── seed.ts               # Database seed script
+│   └── migrations/           # Migration files
+│
+├── k8s/                      # Kubernetes manifests
+│   ├── namespace.yaml        # Namespace definition
+│   ├── deployment.yaml       # Application deployment
+│   ├── service.yaml          # Service definition
+│   ├── configmap.yaml        # Configuration management
+│   ├── secrets.yaml          # Secrets management
+│   ├── ingress.yaml          # Ingress controller
+│   └── hpa.yaml              # Horizontal Pod Autoscaler
+│
+├── .github/                  # GitHub Actions workflows
+├── docs/                     # Additional documentation
+└── assets/                   # Static assets (images, fonts, etc.)
+```
+
+## Feature Organization
+
+Each feature follows a consistent structure:
+
+- **controller.ts**: HTTP request/response handling
+- **route.ts**: Endpoint definitions and routing
+- **schema.ts**: Input validation schemas with TypeBox
+- **service.ts**: Business logic and data access
+- **types.ts**: TypeScript type definitions and interfaces specific to the feature
+- **index.ts**: Barrel export file that exposes the public API of the feature
+- **tests/**: Directory containing all test files organized by type:
+  - **\*.controller.test.ts**: Unit tests for HTTP request/response handling
+  - **\*.service.test.ts**: Unit tests for business logic and data access
+  - **\*.route.test.ts**: Integration tests for API endpoints
+  - **\*.schema.test.ts**: Unit tests for input validation schemas
+  - **\*.e2e.test.ts**: End-to-end tests for complete feature workflows
+
+## Shared Resources
+
+The `shared/` directory contains:
+
+- **config.ts**: Environment configuration
+- **constants.ts**: Application-wide constants
+- **errors.ts**: Custom error classes
+- **middleware.ts**: Reusable middleware functions
+- **types.ts**: Common TypeScript interfaces
+- **utils.ts**: Utility functions

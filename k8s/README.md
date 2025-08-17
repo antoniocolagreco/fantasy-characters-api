@@ -1,7 +1,6 @@
 # Kubernetes Deployment Guide
 
-This directory contains Kubernetes manifests for deploying the Fantasy
-Characters API.
+This directory contains Kubernetes manifests for deploying the Fantasy Characters API.
 
 ## Prerequisites
 
