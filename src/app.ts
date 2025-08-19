@@ -20,6 +20,7 @@ import { healthRoutes } from './health/health.route.js'
 import { userRoutes } from './users/user.route.js'
 import { authRoutes } from './auth/auth.route.js'
 import { imageRoutes } from './images/image.route.js'
+import { tagRoutes } from './tags/tag.route.js'
 
 // Create Fastify instance with configuration
 export const app = Fastify({
@@ -223,8 +224,10 @@ const registerRoutes = async (): Promise<void> => {
       // Image routes (Chapter 5)
       await fastify.register(imageRoutes, { prefix: '/images' })
 
+      // Tag routes (Chapter 6)
+      await fastify.register(tagRoutes, { prefix: '/tags' })
+
       // Future routes will be added here in subsequent chapters:
-      // - Tags routes (Chapter 6)
       // - Skills routes (Chapter 7)
       // - Perks routes (Chapter 8)
       // - Races routes (Chapter 9)

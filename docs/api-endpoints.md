@@ -160,6 +160,16 @@ PUT    /api/tags/:id               // Update tag
 DELETE /api/tags/:id               // Delete tag
 ```
 
+## Equipment Management Endpoints
+
+### Character Equipment
+
+```typescript
+GET    /api/characters/:id/equipment      // Get character equipment
+PUT    /api/characters/:id/equipment      // Update character equipment (equip/unequip items)
+GET    /api/equipment/stats               // Get equipment statistics
+```
+
 ## Utility Endpoints
 
 ### Health Check Endpoints (Kubernetes Compatible)
