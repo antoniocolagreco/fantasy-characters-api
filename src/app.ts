@@ -13,7 +13,7 @@ import cors from '@fastify/cors'
 import fastifyJwt from '@fastify/jwt'
 import multipart from '@fastify/multipart'
 
-import { environment, logConfig, securityConfig, apiConfig } from './config/environment.js'
+import { environment, logConfig, securityConfig, apiConfig } from '@/shared/config.js'
 import { errorHandler, notFoundHandler } from './shared/errors.js'
 import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { healthRoutes } from './health/health.route.js'

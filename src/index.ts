@@ -4,7 +4,7 @@
  */
 
 import { app } from './app.js'
-import { environment } from './config/environment.js'
+import { environment } from '@/shared/config.js'
 
 const start = async (): Promise<void> => {
   try {

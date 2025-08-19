@@ -35,7 +35,6 @@
       "@/users/*": ["src/users/*"],
       "@/health/*": ["src/health/*"],
       "@/shared/*": ["src/shared/*"],
-      "@/config/*": ["src/config/*"],
       "@/images/*": ["src/images/*"]
     }
   },

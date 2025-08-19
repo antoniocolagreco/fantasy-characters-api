@@ -10,13 +10,13 @@ import {
   requireSelfOrAdmin,
   requireActiveUser,
   requireVerifiedEmail,
-} from './auth.middleware.js'
-import * as jwtUtils from './jwt.utils.js'
-import * as authService from './auth.service.js'
+} from '@/auth/auth.middleware.js'
+import * as jwtUtils from '@/auth/jwt.utils.js'
+import * as authService from '@/auth/auth.service.js'
 
 // Mock the dependencies
-vi.mock('./jwt.utils.js')
-vi.mock('./auth.service.js')
+vi.mock('@/auth/jwt.utils.js')
+vi.mock('@/auth/auth.service.js')
 
 describe('Auth Middleware', () => {
   const mockUser = {

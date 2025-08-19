@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import * as imageService from './image.service.js'
-import { db } from '../shared/database/index.js'
-import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
-import { createTestUser, cleanupTestData } from '../shared/test-helpers.js'
+import * as imageService from '@/images/image.service.js'
+import { db } from '@/shared/database/index.js'
+import { IMAGE, CONTENT_TYPES } from '@/shared/constants.js'
+import { createTestUser, cleanupTestData } from '@/shared/test-helpers.js'
 
 // Mock Sharp
 vi.mock('sharp', () => ({

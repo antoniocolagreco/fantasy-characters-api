@@ -16,6 +16,7 @@ export default defineConfig({
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
+        'src/**/tests/**/*.*',
         'src/**/*.d.ts',
         'src/**/*.type.ts',
         'src/**/index.ts',
@@ -23,8 +24,7 @@ export default defineConfig({
         'src/**/*.spec.ts',
         'src/**/test.ts',
         'src/shared/test-helpers.ts',
-        'src/config/environment.ts',
-        'src/**/*.schema.ts',
+        'src/shared/config.ts',
         'src/shared/constants.ts',
       ],
       thresholds: {
@@ -54,7 +54,6 @@ export default defineConfig({
       '@/users': new URL('./src/users', import.meta.url).pathname,
       '@/health': new URL('./src/health', import.meta.url).pathname,
       '@/shared': new URL('./src/shared', import.meta.url).pathname,
-      '@/config': new URL('./src/config', import.meta.url).pathname,
       '@/images': new URL('./src/images', import.meta.url).pathname,
     },
   },

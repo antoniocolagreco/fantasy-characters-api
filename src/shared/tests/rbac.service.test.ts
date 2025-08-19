@@ -24,7 +24,7 @@ import {
   getOwnershipFilter,
   type AuthUser,
   type ResourceOwnership,
-} from './rbac.service.js'
+} from '@/shared/rbac.service.js'
 
 // Mock users for testing
 const mockUser: AuthUser = {

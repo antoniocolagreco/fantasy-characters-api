@@ -9,7 +9,7 @@ import {
   HealthCheckSchema,
   HealthResponseSchema,
   HealthErrorSchema,
-} from './health.schema.js'
+} from '@/health/health.schema.js'
 
 // Helper type for schema property access
 type SchemaProperty = {

@@ -14,7 +14,7 @@ import type {
   ImageResponse,
   ImageStatsData,
   ImageBinaryData,
-} from './image.type.js'
+} from './image.types.js'
 
 // Utility functions
 const validateImageFile = (file: Buffer, mimeType: string): void => {

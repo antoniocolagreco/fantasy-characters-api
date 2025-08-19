@@ -7,6 +7,8 @@ Every feature should encapsulate all related files, including controllers, servi
 tests. The folder `shared` contains code that is shared across multiple features, such as utility
 functions, middleware, and common types.
 
+**IMPORTANT**: DO NOT CREATE FILES OR FOLDERS BEFORE THEY ARE NEEDED.
+
 ```text
 fantasy-character-api/
 ├── src/

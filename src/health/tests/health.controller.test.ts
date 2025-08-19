@@ -7,14 +7,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { FastifyRequest, FastifyReply } from 'fastify'
 
 // Mock the health service before importing the controller
-vi.mock('./health.service.js', () => ({
+vi.mock('@/health/health.service.js', () => ({
   getHealthStatus: vi.fn(),
   getLivenessStatus: vi.fn(),
   getReadinessStatus: vi.fn(),
 }))
 
-import { getHealth, getHealthz, getLiveness, getReadiness } from './health.controller.js'
-import { getHealthStatus, getLivenessStatus, getReadinessStatus } from './health.service.js'
+import { getHealth, getHealthz, getLiveness, getReadiness } from '@/health/health.controller.js'
+import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '@/health/health.service.js'
 
 describe('Health Controller', () => {
   beforeEach(() => {

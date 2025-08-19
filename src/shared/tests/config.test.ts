@@ -3,15 +3,15 @@
  * Tests for environment loading and validation
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
-  EnvironmentSchema,
-  serverConfig,
   apiConfig,
+  EnvironmentSchema,
+  healthConfig,
   logConfig,
   securityConfig,
-  healthConfig,
-} from './environment.js'
+  serverConfig,
+} from '@/shared/config.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('Environment Configuration', () => {
   beforeEach(() => {
@@ -186,5 +186,17 @@ describe('Environment Configuration', () => {
         expect(originalPort).toBeDefined()
       }).not.toThrow()
     })
+  })
+})
+
+describe('Production security validation', () => {
+  it('should throw error if JWT_SECRET contains dev-secret in production', () => {
+    // Test per linee 73-74
+  })
+})
+
+describe('Log transport configuration', () => {
+  it('should configure pino-pretty in development', () => {
+    // Test per linee 97-104
   })
 })

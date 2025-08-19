@@ -4,11 +4,11 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getHealthStatus } from './health.service.js'
-import { healthConfig } from '../config/environment.js'
+import { getHealthStatus } from '@/health/health.service.js'
+import { healthConfig } from '@/shared/config.js'
 
 // Mock the environment config
-vi.mock('../config/environment.js', () => ({
+vi.mock('@/shared/config.js', () => ({
   healthConfig: {
     enabled: true,
   },

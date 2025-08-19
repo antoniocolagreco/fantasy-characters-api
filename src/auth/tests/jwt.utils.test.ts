@@ -9,13 +9,13 @@ import {
   extractTokenFromHeader,
   getTokenExpiration,
   isTokenExpired,
-} from './jwt.utils.js'
+} from '@/auth/jwt.utils.js'
 
 // Mock jwt library
 vi.mock('jsonwebtoken')
 
 // Mock environment config
-vi.mock('../config/environment.js', () => ({
+vi.mock('@/shared/config.js', () => ({
   securityConfig: {
     jwtSecret: 'test-secret',
     jwtExpiresIn: '7d',

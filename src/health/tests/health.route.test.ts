@@ -5,7 +5,7 @@
 
 import { describe, it, expect } from 'vitest'
 import Fastify from 'fastify'
-import { healthRoutes } from './health.route.js'
+import { healthRoutes } from '@/health/health.route.js'
 
 describe('Health Routes', () => {
   const createTestApp = async () => {
