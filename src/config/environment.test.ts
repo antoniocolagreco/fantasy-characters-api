@@ -79,7 +79,8 @@ describe('Environment Configuration', () => {
 
   describe('logConfig', () => {
     it('should have default level', () => {
-      expect(logConfig.level).toBe('info')
+      // In test environment, log level should be 'error' for cleaner output
+      expect(logConfig.level).toBe('error')
     })
 
     it('should have transport in development', () => {

@@ -5,6 +5,8 @@
 
 import { User, Role, Prisma } from '@prisma/client'
 import { db } from '../shared/database/index.js'
+import { rbacService, enforcePermission } from '../shared/rbac.service.js'
+import type { UserProfileType } from '../auth/auth.schema.js'
 import {
   createNotFoundError,
   createConflictError,
@@ -128,11 +130,21 @@ export const createUser = async (userData: CreateUserRequest): Promise<UserRespo
 /**
  * Get user by ID
  */
-export const getUserById = async (id: string): Promise<UserResponse> => {
+export const getUserById = async (
+  id: string,
+  currentUser?: UserProfileType,
+): Promise<UserResponse> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
     throw createValidationError('Invalid user ID format')
   }
+
+  // RBAC: Check if user can access this profile (self or admin)
+  const canAccess =
+    currentUser?.id === id || // Own profile
+    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN) // Admin access
+
+  enforcePermission(canAccess, 'You do not have permission to access this user profile')
 
   try {
     const user = await db.user.findUnique({
@@ -155,7 +167,16 @@ export const getUserById = async (id: string): Promise<UserResponse> => {
 /**
  * Get users list with pagination and filtering
  */
-export const getUsersList = async (query: UserListQuery): Promise<UserListResponse> => {
+export const getUsersList = async (
+  query: UserListQuery,
+  currentUser?: UserProfileType,
+): Promise<UserListResponse> => {
+  // RBAC: Only moderators and admins can list users
+  enforcePermission(
+    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.MODERATOR),
+    'You do not have permission to list users',
+  )
+
   try {
     const page = Math.max(1, query.page || PAGINATION.DEFAULT_PAGE)
     const pageSize = Math.min(
@@ -245,11 +266,19 @@ export const getUsersList = async (query: UserListQuery): Promise<UserListRespon
 export const updateUser = async (
   id: string,
   updateData: UpdateUserRequest,
+  currentUser?: UserProfileType,
 ): Promise<UserResponse> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
     throw createValidationError('Invalid user ID format')
   }
+
+  // RBAC: Check if user can update this profile (self or admin)
+  const canUpdate =
+    currentUser?.id === id || // Own profile
+    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN) // Admin access
+
+  enforcePermission(canUpdate, 'You do not have permission to update this user profile')
 
   // Validate email format if provided
   if (updateData.email && !validateEmail(updateData.email)) {
@@ -340,11 +369,17 @@ export const updateUser = async (
 /**
  * Delete user by ID
  */
-export const deleteUser = async (id: string): Promise<void> => {
+export const deleteUser = async (id: string, currentUser?: UserProfileType): Promise<void> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
     throw createValidationError('Invalid user ID format')
   }
+
+  // RBAC: Only admins can delete users (not even self-deletion for safety)
+  enforcePermission(
+    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN),
+    'You do not have permission to delete users',
+  )
 
   try {
     // Check if user exists
@@ -372,7 +407,13 @@ export const deleteUser = async (id: string): Promise<void> => {
 /**
  * Get user statistics
  */
-export const getUserStats = async (): Promise<UserStatsResponse> => {
+export const getUserStats = async (currentUser?: UserProfileType): Promise<UserStatsResponse> => {
+  // RBAC: Only admins can view user statistics
+  enforcePermission(
+    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN),
+    'You do not have permission to view user statistics',
+  )
+
   try {
     const now = new Date()
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)

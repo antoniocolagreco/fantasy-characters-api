@@ -67,7 +67,7 @@ export const getUserByIdHandler = async (
 ): Promise<void> => {
   try {
     const { id } = request.params
-    const user = await getUserById(id)
+    const user = await getUserById(id, request.authUser)
 
     await reply.status(HTTP_STATUS.OK).send({
       success: true,
@@ -102,7 +102,7 @@ export const getUsersListHandler = async (
 ): Promise<void> => {
   try {
     const query = request.query
-    const result = await getUsersList(query)
+    const result = await getUsersList(query, request.authUser)
 
     await reply.status(HTTP_STATUS.OK).send({
       success: true,
@@ -139,7 +139,7 @@ export const updateUserHandler = async (
   try {
     const { id } = request.params
     const updateData = request.body
-    const updatedUser = await updateUser(id, updateData)
+    const updatedUser = await updateUser(id, updateData, request.authUser)
 
     await reply.status(HTTP_STATUS.OK).send({
       success: true,
@@ -178,7 +178,7 @@ export const deleteUserHandler = async (
 ): Promise<void> => {
   try {
     const { id } = request.params
-    await deleteUser(id)
+    await deleteUser(id, request.authUser)
 
     await reply.status(HTTP_STATUS.NO_CONTENT).send()
   } catch (error) {
@@ -208,7 +208,7 @@ export const getUserStatsHandler = async (
   reply: FastifyReply,
 ): Promise<void> => {
   try {
-    const stats = await getUserStats()
+    const stats = await getUserStats(request.authUser)
 
     await reply.status(HTTP_STATUS.OK).send({
       success: true,

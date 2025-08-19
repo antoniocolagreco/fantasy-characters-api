@@ -36,16 +36,8 @@ export type CreateTestUserResult = {
  * Clean up test data from database
  */
 export const cleanupTestData = async (): Promise<void> => {
-  // Delete in reverse order of dependencies
-  await db.user.deleteMany({
-    where: {
-      OR: [
-        { email: { contains: 'test' } },
-        { email: { contains: 'example.com' } },
-        { email: 'newuser@example.com' },
-      ],
-    },
-  })
+  // Delete all users to ensure clean state
+  await db.user.deleteMany({})
 }
 
 /**
@@ -121,3 +113,5 @@ export const createTestUsers = async (
 
   return users
 }
+
+// RBAC is always enabled - no configuration helpers needed

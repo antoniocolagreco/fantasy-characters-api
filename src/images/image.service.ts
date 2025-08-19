@@ -3,6 +3,12 @@ import { Prisma, Visibility } from '@prisma/client'
 import { db } from '../shared/database/index.js'
 import { createNotFoundError, createValidationError } from '../shared/errors.js'
 import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
+import {
+  rbacService,
+  type AuthUser,
+  enforceAuthentication,
+  enforcePermission,
+} from '../shared/rbac.service.js'
 import type {
   ImageCreateData,
   ImageResponse,
@@ -116,8 +122,22 @@ const transformImageToResponse = (
 }
 
 // Service functions
-export const createImage = async (data: ImageCreateData): Promise<ImageResponse> => {
+export const createImage = async (
+  data: ImageCreateData,
+  currentUser?: AuthUser,
+): Promise<ImageResponse> => {
   const { file, filename, mimeType, description, ownerId } = data
+
+  // RBAC: Enforce authentication
+  enforceAuthentication(currentUser ?? null)
+
+  // RBAC: Check if user can create for the target owner
+  if (ownerId && currentUser) {
+    enforcePermission(
+      rbacService.canCreateForUser(currentUser, ownerId),
+      'You can only create images for yourself',
+    )
+  }
 
   // Process the image
   const { buffer, width, height } = await processImage(file, mimeType)
@@ -139,7 +159,7 @@ export const createImage = async (data: ImageCreateData): Promise<ImageResponse>
   return transformImageToResponse(image)
 }
 
-export const findImageById = async (id: string): Promise<ImageResponse> => {
+export const findImageById = async (id: string, currentUser?: AuthUser): Promise<ImageResponse> => {
   const image = await db.image.findUnique({
     where: { id },
   })
@@ -148,10 +168,19 @@ export const findImageById = async (id: string): Promise<ImageResponse> => {
     throw createNotFoundError('Image')
   }
 
+  // RBAC: Check if user can access this image based on visibility
+  enforcePermission(
+    rbacService.canAccessByVisibility(currentUser ?? null, image),
+    'You do not have permission to access this image',
+  )
+
   return transformImageToResponse(image)
 }
 
-export const getImageBinaryData = async (id: string): Promise<ImageBinaryData> => {
+export const getImageBinaryData = async (
+  id: string,
+  currentUser?: AuthUser,
+): Promise<ImageBinaryData> => {
   const image = await db.image.findUnique({
     where: { id },
     select: {
@@ -159,12 +188,20 @@ export const getImageBinaryData = async (id: string): Promise<ImageBinaryData> =
       mimeType: true,
       size: true,
       filename: true,
+      ownerId: true,
+      visibility: true,
     },
   })
 
   if (!image) {
     throw createNotFoundError('Image')
   }
+
+  // RBAC: Check if user can access this image based on visibility
+  enforcePermission(
+    rbacService.canAccessByVisibility(currentUser ?? null, image),
+    'You do not have permission to access this image',
+  )
 
   return {
     blob: Buffer.from(image.blob),
@@ -174,12 +211,15 @@ export const getImageBinaryData = async (id: string): Promise<ImageBinaryData> =
   }
 }
 
-export const getImagesList = async (options: {
-  page?: number
-  limit?: number
-  search?: string
-  ownerId?: string
-}): Promise<{
+export const getImagesList = async (
+  options: {
+    page?: number
+    limit?: number
+    search?: string
+    ownerId?: string
+  },
+  currentUser?: AuthUser,
+): Promise<{
   images: ImageResponse[]
   pagination: {
     page: number
@@ -192,15 +232,33 @@ export const getImagesList = async (options: {
 
   const skip = (page - 1) * limit
 
-  // Build where clause
-  const where: Prisma.ImageWhereInput = {}
+  // Build where clause with RBAC filtering
+  const baseFilter = rbacService.getOwnershipFilter(currentUser ?? null)
+  const where: Prisma.ImageWhereInput = {
+    ...baseFilter,
+  }
+
+  const andConditions: Prisma.ImageWhereInput[] = []
 
   if (search) {
-    where.OR = [{ filename: { contains: search } }, { description: { contains: search } }]
+    andConditions.push({
+      OR: [{ filename: { contains: search } }, { description: { contains: search } }],
+    })
   }
 
   if (ownerId) {
-    where.ownerId = ownerId
+    // RBAC: Check if user can access other user's images
+    if (currentUser) {
+      enforcePermission(
+        rbacService.canAccessUserProfile(currentUser, ownerId),
+        'You cannot access images from this user',
+      )
+    }
+    andConditions.push({ ownerId })
+  }
+
+  if (andConditions.length > 0) {
+    where.AND = andConditions
   }
 
   // Get total count and images
@@ -241,32 +299,43 @@ export const getImagesList = async (options: {
   }
 }
 
-export const getImageStats = async (): Promise<ImageStatsData> => {
+export const getImageStats = async (currentUser?: AuthUser): Promise<ImageStatsData> => {
+  // RBAC: Only moderators and admins can view statistics
+  enforcePermission(
+    rbacService.canViewStatistics(currentUser ?? null),
+    'You do not have permission to view image statistics',
+  )
+
   const now = new Date()
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000)
   const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
+  // Apply RBAC filtering to statistics
+  const baseFilter = rbacService.getOwnershipFilter(currentUser ?? null)
+
   // Get basic statistics
   const [totalImages, totalSizeResult, mimeTypeStats, recent24h, recent7d, recent30d] =
     await Promise.all([
-      db.image.count(),
+      db.image.count({ where: baseFilter }),
       db.image.aggregate({
+        where: baseFilter,
         _sum: { size: true },
         _avg: { size: true },
       }),
       db.image.groupBy({
+        where: baseFilter,
         by: ['mimeType'],
         _count: { _all: true },
       }),
       db.image.count({
-        where: { createdAt: { gte: last24Hours } },
+        where: { ...baseFilter, createdAt: { gte: last24Hours } },
       }),
       db.image.count({
-        where: { createdAt: { gte: last7Days } },
+        where: { ...baseFilter, createdAt: { gte: last7Days } },
       }),
       db.image.count({
-        where: { createdAt: { gte: last30Days } },
+        where: { ...baseFilter, createdAt: { gte: last30Days } },
       }),
     ])
 
@@ -292,11 +361,93 @@ export const getImageStats = async (): Promise<ImageStatsData> => {
   }
 }
 
-export const deleteImage = async (id: string): Promise<void> => {
+export const deleteImage = async (id: string, currentUser?: AuthUser): Promise<void> => {
+  // First, get the image to check ownership and permissions
+  const image = await db.image.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      ownerId: true,
+      visibility: true,
+    },
+  })
+
+  if (!image) {
+    throw createNotFoundError('Image')
+  }
+
+  // RBAC: Check if user can delete this image
+  enforcePermission(
+    rbacService.canDeleteResource(currentUser ?? null, image),
+    'You do not have permission to delete this image',
+  )
+
   try {
     await db.image.delete({
       where: { id },
     })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
+      throw createNotFoundError('Image')
+    }
+    throw error
+  }
+}
+
+export const updateImage = async (
+  id: string,
+  updateData: Partial<{
+    description: string
+    visibility: 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
+  }>,
+  currentUser?: AuthUser,
+): Promise<ImageResponse | null> => {
+  // First, get the image to check ownership and permissions
+  const image = await db.image.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      ownerId: true,
+      visibility: true,
+    },
+  })
+
+  if (!image) {
+    throw createNotFoundError('Image')
+  }
+
+  // RBAC: Check if user can modify this image
+  enforcePermission(
+    rbacService.canModifyResource(currentUser ?? null, image),
+    'You do not have permission to modify this image',
+  )
+
+  try {
+    const updatedImage = await db.image.update({
+      where: { id },
+      data: updateData,
+      select: {
+        id: true,
+        description: true,
+        filename: true,
+        mimeType: true,
+        size: true,
+        width: true,
+        height: true,
+        visibility: true,
+        createdAt: true,
+        updatedAt: true,
+        ownerId: true,
+        owner: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    return transformImageToResponse(updatedImage)
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       throw createNotFoundError('Image')

@@ -12,7 +12,9 @@ Each feature directory contains its own tests organized by type in a dedicated `
 ## Testing Principles
 
 - **Test-Driven Development**: Write tests first when possible
-- **High Coverage**: Aim for >80% test coverage per feature
+- **High Coverage Standards**:
+  - **Security/Auth Features**: Minimum 90% coverage
+  - **General Features**: Minimum 80% coverage
 - **Realistic Test Data**: Use representative test data
 - **Isolated Tests**: Tests should not depend on external systems
 - **Fast Execution**: Tests should run quickly for developer feedback
@@ -74,10 +76,22 @@ src/
 
 ### Coverage Requirements
 
-- **Minimum Coverage**: 80% for each feature
-- **Critical Paths**: 95%+ coverage for authentication and security
-- **Edge Cases**: Comprehensive error condition testing
-- **Performance**: Response times under 200ms
+**Critical Security Features (Minimum 90% coverage):**
+
+- Authentication services and controllers
+- Authorization and RBAC functionality
+- Security middleware and validation
+- JWT token management
+- Password hashing and validation
+- Session management
+- Security error handling
+
+**General Features (Minimum 80% coverage):**
+
+- Standard CRUD operations
+- Non-critical business logic
+- Utility functions
+- Configuration management
 
 ### Test Quality Standards
 

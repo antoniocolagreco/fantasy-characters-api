@@ -5,11 +5,11 @@ chapter is self-contained and can be completed independently.
 
 ## 🎯 Current Status (Aggiornato: Agosto 2025)
 
-**Chapters Completati**: 1-5 (Foundation → Images)  
+**Chapters Completati**: 1-5 (Foundation → Images) + RBAC Security  
 **Test Coverage**: 95.55%  
 **Database**: Prisma ORM con SQLite, schema completo implementato  
-**Security**: RBAC implementato con JWT + Refresh Tokens  
-**Features Ready**: User Management, Authentication, Image Upload System
+**Security**: RBAC implementato con JWT + Refresh Tokens, controllo accessi granulare  
+**Features Ready**: User Management, Authentication, Image Upload System, Role-Based Security
 
 **Prossimo Capitolo**: Chapter 6 - Tags System 🏷️
 
@@ -52,7 +52,7 @@ chapter is self-contained and can be completed independently.
 - Swagger documentation updated
 - Structured logging with Pino implemented
 
-**Status**: ✅ Tutti i Quality Gates soddisfatti fino al Chapter 5 (Images)
+**Status**: ✅ Tutti i Quality Gates soddisfatti fino al Chapter 5 (Images + RBAC Security)
 
 ---
 
@@ -148,9 +148,9 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 5: File Upload System 📁 ✅
+## Chapter 5: File Upload System 📁 ✅ **+ RBAC SECURITY**
 
-**Objective**: File and image upload management system
+**Objective**: File and image upload management system with comprehensive security
 
 ### Tasks
 
@@ -163,6 +163,11 @@ chapter is self-contained and can be completed independently.
 - [x] Image optimization with Sharp
 - [x] Binary data serving with HTTP caching
 - [x] Profile picture management
+- [x] **RBAC Integration**: Role-based upload/delete controls
+- [x] **Visibility System**: PUBLIC/PRIVATE/HIDDEN image controls
+- [x] **Permission Enforcement**: Service-layer security checks
+- [x] **Environment Flag Control**: RBAC_ENABLED for deployment flexibility
+- [x] **User Context Propagation**: Authentication context in all service calls
 
 ### Deliverables
 
@@ -170,6 +175,9 @@ chapter is self-contained and can be completed independently.
 - ✅ Image processing pipeline with Sharp
 - ✅ Optimized file serving with WebP conversion
 - ✅ Binary blob storage in database
+- ✅ **Role-Based Access Control**: Comprehensive security implementation
+- ✅ **Production-Ready**: RBAC system with environment flag control
+- ✅ **Test Coverage**: 30/30 image tests + 34/34 user tests passing
 
 ---
 

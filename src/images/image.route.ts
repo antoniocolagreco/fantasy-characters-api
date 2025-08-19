@@ -42,6 +42,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           200: imageStatsResponseSchema,
         },
       },
+      preHandler: [authenticateUser, requireActiveUser],
     },
     imageController.getImageStats,
   )
@@ -86,7 +87,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
         },
       },
     },
-    imageController.getImage,
+    imageController.getImageById,
   )
 
   // Get image file (binary data)

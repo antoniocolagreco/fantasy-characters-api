@@ -3,7 +3,7 @@
  * Comprehensive tests for all utility functions
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import {
   // String utilities
   isValidEmail,
@@ -286,6 +286,10 @@ describe('Utility Functions', () => {
 
   describe('Environment utilities', () => {
     beforeEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    afterEach(() => {
       vi.unstubAllEnvs()
     })
 

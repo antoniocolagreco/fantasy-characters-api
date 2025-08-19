@@ -91,7 +91,7 @@ export const apiConfig = {
 }
 
 export const logConfig = {
-  level: environment.LOG_LEVEL,
+  level: environment.NODE_ENV === 'test' ? 'error' : environment.LOG_LEVEL,
   transport:
     environment.NODE_ENV === 'development'
       ? {
@@ -116,3 +116,5 @@ export const securityConfig = {
 export const healthConfig = {
   enabled: environment.HEALTH_CHECK_ENABLED,
 }
+
+// RBAC is always enabled - no configuration needed

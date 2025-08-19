@@ -136,7 +136,7 @@ fantasy-character-api/
 │   │
 │   ├── tags/                 # Tags feature
 │   │   ├── tag.controller.ts
-│   │   ├── tag.route.ts
+│   │   ├── tag.route.tscls
 │   │   ├── tag.schema.ts
 │   │   ├── tag.service.ts
 │   │   ├── tag.types.ts
@@ -165,7 +165,10 @@ fantasy-character-api/
 │       ├── middleware.ts     # Shared middleware
 │       ├── types.ts          # Shared TypeScript definitions
 │       ├── utils.ts          # Shared utility functions
-│       └── shared.test.ts    # Tests for shared code
+│       ├── utils.ts          # Shared utility functions
+│       └── tests/
+│           ├── rbac.service.test.ts
+│           └── utils.test.ts
 │
 ├── prisma/                   # Prisma ORM files
 │   ├── schema.prisma         # Database schema

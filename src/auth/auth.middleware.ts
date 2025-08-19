@@ -6,6 +6,7 @@ import { createUnauthorizedError, createForbiddenError } from '../shared/errors.
 /**
  * Authentication middleware to verify JWT tokens
  * This middleware extracts and verifies the JWT token from the Authorization header
+ * ALWAYS ACTIVE - authentication is separate from RBAC authorization
  */
 export const authenticateUser = async (request: FastifyRequest): Promise<void> => {
   // Extract token from Authorization header

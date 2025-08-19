@@ -22,13 +22,16 @@ export const uploadImage = async (request: FastifyRequest, reply: FastifyReply):
     // Get user ID from JWT
     const userId = request.authUser?.id
 
-    // Create image
-    const image = await imageService.createImage({
-      file: buffer,
-      filename: file.filename,
-      mimeType: file.mimetype,
-      ownerId: userId,
-    })
+    // Create image with RBAC
+    const image = await imageService.createImage(
+      {
+        file: buffer,
+        filename: file.filename,
+        mimeType: file.mimetype,
+        ownerId: userId,
+      },
+      request.authUser,
+    )
 
     reply.code(201)
     return reply.send({
@@ -41,20 +44,29 @@ export const uploadImage = async (request: FastifyRequest, reply: FastifyReply):
   }
 }
 
-export const getImage = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+export const getImageById = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
   try {
-    const params = request.params as { id: string }
-    const { id } = params
+    const { id } = request.params as { id: string }
 
-    // Get image metadata
-    const image = await imageService.findImageById(id)
+    // Find image with RBAC
+    const image = await imageService.findImageById(id, request.authUser)
+
+    if (!image) {
+      reply.code(404)
+      return reply.send({
+        message: 'Image not found',
+        statusCode: 404,
+        error: 'Not Found',
+      })
+    }
 
     reply.code(200)
     return reply.send({
       data: image,
+      message: 'Image retrieved successfully',
     })
   } catch (error) {
-    request.log.error(error, 'Error getting image')
+    request.log.error(error, 'Error getting image by ID')
     throw error
   }
 }
@@ -64,8 +76,8 @@ export const deleteImage = async (request: FastifyRequest, reply: FastifyReply):
     const params = request.params as { id: string }
     const { id } = params
 
-    // Delete image - service will handle if image exists
-    await imageService.deleteImage(id)
+    // Delete image with RBAC - service will handle if image exists
+    await imageService.deleteImage(id, request.authUser)
 
     reply.code(200)
     return reply.send({
@@ -89,7 +101,7 @@ export const getImagesList = async (
       uploadedById?: string
     }
 
-    const result = await imageService.getImagesList(query)
+    const result = await imageService.getImagesList(query, request.authUser)
 
     reply.code(200)
     return reply.send({
@@ -107,7 +119,7 @@ export const getImageStats = async (
   reply: FastifyReply,
 ): Promise<void> => {
   try {
-    const stats = await imageService.getImageStats()
+    const stats = await imageService.getImageStats(request.authUser)
 
     reply.code(200)
     return reply.send({
@@ -124,8 +136,8 @@ export const getImageFile = async (request: FastifyRequest, reply: FastifyReply)
     const params = request.params as { id: string }
     const { id } = params
 
-    // Get image with binary data
-    const imageData = await imageService.getImageBinaryData(id)
+    // Get image with binary data and RBAC
+    const imageData = await imageService.getImageBinaryData(id, request.authUser)
 
     // Set proper headers for image response
     reply.type(imageData.mimeType)

@@ -41,7 +41,7 @@ describe('Image Service', () => {
         ownerId: user.id,
       }
 
-      const result = await imageService.createImage(testImageData)
+      const result = await imageService.createImage(testImageData, user)
 
       expect(result).toMatchObject({
         filename: 'test.jpg',
@@ -58,34 +58,45 @@ describe('Image Service', () => {
     })
 
     it('should create an image without description', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
+
       const testImageData = {
         file: Buffer.from('test-image-data'),
         filename: 'test.png',
         mimeType: 'image/png',
+        ownerId: user.id,
       }
 
-      const result = await imageService.createImage(testImageData)
+      const result = await imageService.createImage(testImageData, user)
 
       expect(result).toMatchObject({
         filename: 'test.png',
         mimeType: CONTENT_TYPES.IMAGE_WEBP,
-        // description and ownerId should not appear when null
+        ownerId: user.id,
       })
       expect(result.description).toBeUndefined()
-      expect(result.ownerId).toBeUndefined()
     })
 
     it('should throw error for invalid file type', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
+
       const testImageData = {
         file: Buffer.from('test-image-data'),
         filename: 'test.gif',
         mimeType: 'image/gif',
       }
 
-      await expect(imageService.createImage(testImageData)).rejects.toThrow('Invalid file type')
+      await expect(imageService.createImage(testImageData, user)).rejects.toThrow(
+        'Invalid file type',
+      )
     })
 
     it('should throw error for file too large', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
+
       const largeBuffer = Buffer.alloc(IMAGE.MAX_SIZE + 1)
       const testImageData = {
         file: largeBuffer,
@@ -93,12 +104,14 @@ describe('Image Service', () => {
         mimeType: 'image/jpeg',
       }
 
-      await expect(imageService.createImage(testImageData)).rejects.toThrow('File too large')
+      await expect(imageService.createImage(testImageData, user)).rejects.toThrow('File too large')
     })
   })
 
   describe('findImageById', () => {
     it('should find an image by ID', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
       // Create a test image first
       const testImageData = {
         file: Buffer.from('test-image-data'),
@@ -106,8 +119,8 @@ describe('Image Service', () => {
         mimeType: 'image/jpeg',
       }
 
-      const createdImage = await imageService.createImage(testImageData)
-      const foundImage = await imageService.findImageById(createdImage.id)
+      const createdImage = await imageService.createImage(testImageData, user)
+      const foundImage = await imageService.findImageById(createdImage.id, user)
 
       expect(foundImage).toMatchObject({
         id: createdImage.id,
@@ -117,47 +130,63 @@ describe('Image Service', () => {
     })
 
     it('should throw error when image not found', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
       const nonExistentId = '00000000-0000-0000-0000-000000000000'
 
-      await expect(imageService.findImageById(nonExistentId)).rejects.toThrow('Image not found')
+      await expect(imageService.findImageById(nonExistentId, user)).rejects.toThrow(
+        'Image not found',
+      )
     })
   })
 
   describe('deleteImage', () => {
     it('should delete an image successfully', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
+
       // Create a test image first
       const testImageData = {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
+        ownerId: user.id,
       }
 
-      const createdImage = await imageService.createImage(testImageData)
+      const createdImage = await imageService.createImage(testImageData, user)
 
       // Delete the image
-      await expect(imageService.deleteImage(createdImage.id)).resolves.not.toThrow()
+      await expect(imageService.deleteImage(createdImage.id, user)).resolves.not.toThrow()
 
       // Verify it's deleted
-      await expect(imageService.findImageById(createdImage.id)).rejects.toThrow('Image not found')
+      await expect(imageService.findImageById(createdImage.id, user)).rejects.toThrow(
+        'Image not found',
+      )
     })
 
     it('should throw error when deleting non-existent image', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
       const nonExistentId = '00000000-0000-0000-0000-000000000000'
 
-      await expect(imageService.deleteImage(nonExistentId)).rejects.toThrow('Image not found')
+      await expect(imageService.deleteImage(nonExistentId, user)).rejects.toThrow('Image not found')
     })
   })
 
   describe('getImageBinaryData', () => {
     it('should return image binary data', async () => {
+      // Create a test user first
+      const { user } = await createTestUser()
+
       const testImageData = {
         file: Buffer.from('test-image-data'),
         filename: 'test.jpg',
         mimeType: 'image/jpeg',
+        ownerId: user.id,
       }
 
-      const createdImage = await imageService.createImage(testImageData)
-      const binaryData = await imageService.getImageBinaryData(createdImage.id)
+      const createdImage = await imageService.createImage(testImageData, user)
+      const binaryData = await imageService.getImageBinaryData(createdImage.id, user)
 
       expect(binaryData).toEqual({
         blob: expect.any(Buffer),
@@ -169,8 +198,9 @@ describe('Image Service', () => {
     })
 
     it('should throw NotFoundError for non-existent image', async () => {
+      const { user } = await createTestUser()
       await expect(
-        imageService.getImageBinaryData('123e4567-e89b-12d3-a456-426614174000'),
+        imageService.getImageBinaryData('123e4567-e89b-12d3-a456-426614174000', user),
       ).rejects.toThrow('Image not found')
     })
   })

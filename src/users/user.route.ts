@@ -20,6 +20,7 @@ import {
   UserIdParamSchema,
   UserStatsResponseSchema,
 } from './user.schema.js'
+import { authenticateUser, requireRoles, requireSelfOrAdmin } from '../auth/auth.middleware.js'
 
 export const userRoutes = async (
   fastify: FastifyInstance,
@@ -81,6 +82,7 @@ export const userRoutes = async (
 
   // Get users list with pagination and filtering
   fastify.get('/users', {
+    preHandler: [authenticateUser, requireRoles(['MODERATOR', 'ADMIN'])],
     schema: {
       description: 'Get a paginated list of users with optional filtering',
       tags: ['Users'],
@@ -115,6 +117,7 @@ export const userRoutes = async (
 
   // Get user statistics (must be before /:id route to avoid conflicts)
   fastify.get('/users/stats', {
+    preHandler: [authenticateUser, requireRoles(['ADMIN'])],
     schema: {
       description: 'Get user statistics and metrics',
       tags: ['Users'],
@@ -151,6 +154,7 @@ export const userRoutes = async (
 
   // Get user by ID
   fastify.get('/users/:id', {
+    preHandler: [authenticateUser, requireSelfOrAdmin('id')],
     schema: {
       description: 'Get a specific user by their ID',
       tags: ['Users'],
@@ -203,6 +207,7 @@ export const userRoutes = async (
 
   // Update user by ID
   fastify.put('/users/:id', {
+    preHandler: [authenticateUser, requireSelfOrAdmin('id')],
     schema: {
       description: 'Update an existing user by their ID',
       tags: ['Users'],
@@ -273,6 +278,7 @@ export const userRoutes = async (
 
   // Delete user by ID
   fastify.delete('/users/:id', {
+    preHandler: [authenticateUser, requireRoles(['ADMIN'])],
     schema: {
       description: 'Delete a user by their ID (CASCADE deletes related data)',
       tags: ['Users'],

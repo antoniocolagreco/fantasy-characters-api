@@ -243,19 +243,38 @@ describe('Image Controller', () => {
 
   describe('GET /api/images/:id', () => {
     it('should get image metadata', async () => {
-      // Create test image
-      const { user } = await createTestUser()
+      // Create test user and login
+      const { user, password } = await createTestUser({ isEmailVerified: true })
 
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: user.id,
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: user.email,
+          password,
+        },
       })
+
+      const loginResponseBody = loginResponse.json()
+      const { accessToken } = loginResponseBody
+
+      // Create test image with authentication
+      const image = await imageService.createImage(
+        {
+          file: Buffer.from('test-image-data'),
+          filename: 'test.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: user.id,
+        },
+        user,
+      )
 
       const response = await app.inject({
         method: 'GET',
         url: `/api/images/${image.id}`,
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -303,12 +322,15 @@ describe('Image Controller', () => {
       const { accessToken } = loginResponse.json()
 
       // Create test image
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: user.id,
-      })
+      const image = await imageService.createImage(
+        {
+          file: Buffer.from('test-image-data'),
+          filename: 'test.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: user.id,
+        },
+        user,
+      )
 
       const response = await app.inject({
         method: 'DELETE',
@@ -328,12 +350,15 @@ describe('Image Controller', () => {
       // Create a regular user and their image
       const { user: regularUser } = await createTestUser({ email: 'user@test.com' })
 
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: regularUser.id,
-      })
+      const image = await imageService.createImage(
+        {
+          file: Buffer.from('test-image-data'),
+          filename: 'test.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: regularUser.id,
+        },
+        regularUser,
+      )
 
       // Create admin user and login
       const { user: adminUser, password } = await createTestAdminUser({ isEmailVerified: true })
@@ -364,12 +389,15 @@ describe('Image Controller', () => {
       // Create test image
       const { user } = await createTestUser()
 
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: user.id,
-      })
+      const image = await imageService.createImage(
+        {
+          file: Buffer.from('test-image-data'),
+          filename: 'test.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: user.id,
+        },
+        user,
+      )
 
       const response = await app.inject({
         method: 'DELETE',
@@ -447,12 +475,15 @@ describe('Image Controller', () => {
       const { accessToken } = loginResponse.json()
 
       // Create test image
-      const image = await imageService.createImage({
-        file: Buffer.from('test-image-data'),
-        filename: 'test.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: user.id,
-      })
+      const image = await imageService.createImage(
+        {
+          file: Buffer.from('test-image-data'),
+          filename: 'test.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: user.id,
+        },
+        user,
+      )
 
       // Mock deleteImage to throw an error
       vi.spyOn(imageService, 'deleteImage').mockRejectedValueOnce(new Error('Delete failed'))
@@ -476,38 +507,63 @@ describe('Image Controller', () => {
       const { user: user2 } = await createTestUser({ email: 'user2@test.com' })
 
       // Create multiple images in sequence to ensure proper ordering
-      await imageService.createImage({
-        file: Buffer.from('image1'),
-        filename: 'image1.jpg',
-        mimeType: 'image/jpeg',
-        ownerId: user1.id,
-        description: 'First test image',
-      })
+      await imageService.createImage(
+        {
+          file: Buffer.from('image1'),
+          filename: 'image1.jpg',
+          mimeType: 'image/jpeg',
+          ownerId: user1.id,
+          description: 'First test image',
+        },
+        user1,
+      )
 
       // Add small delay to ensure different timestamps
       await setTimeout(10)
 
-      await imageService.createImage({
-        file: Buffer.from('image2'),
-        filename: 'image2.png',
-        mimeType: 'image/png',
-        ownerId: user2.id,
-        description: 'Second test image',
-      })
+      await imageService.createImage(
+        {
+          file: Buffer.from('image2'),
+          filename: 'image2.png',
+          mimeType: 'image/png',
+          ownerId: user2.id,
+          description: 'Second test image',
+        },
+        user2,
+      )
 
       // Add small delay to ensure different timestamps
       await setTimeout(10)
 
-      await imageService.createImage({
-        file: Buffer.from('image3'),
-        filename: 'image3.webp',
-        mimeType: 'image/webp',
-        ownerId: user1.id,
+      await imageService.createImage(
+        {
+          file: Buffer.from('image3'),
+          filename: 'image3.webp',
+          mimeType: 'image/webp',
+          ownerId: user1.id,
+        },
+        user1,
+      )
+
+      // Login to get authentication token
+      const { password } = await createTestUser({ email: 'auth@test.com', isEmailVerified: true })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: 'auth@test.com',
+          password,
+        },
       })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -532,29 +588,54 @@ describe('Image Controller', () => {
       const { user } = await createTestUser()
 
       await Promise.all([
-        imageService.createImage({
-          file: Buffer.from('image1'),
-          filename: 'image1.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image2'),
-          filename: 'image2.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image3'),
-          filename: 'image3.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user.id,
-        }),
+        imageService.createImage(
+          {
+            file: Buffer.from('image1'),
+            filename: 'image1.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user.id,
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image2'),
+            filename: 'image2.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user.id,
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image3'),
+            filename: 'image3.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user.id,
+          },
+          user,
+        ),
       ])
+
+      // Login to get authentication token
+      const { password } = await createTestUser({ email: 'auth@test.com', isEmailVerified: true })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: 'auth@test.com',
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images?page=2&limit=2',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -572,29 +653,54 @@ describe('Image Controller', () => {
       const { user } = await createTestUser()
 
       await Promise.all([
-        imageService.createImage({
-          file: Buffer.from('image1'),
-          filename: 'avatar.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image2'),
-          filename: 'background.png',
-          mimeType: 'image/png',
-          ownerId: user.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image3'),
-          filename: 'avatar-small.webp',
-          mimeType: 'image/webp',
-          ownerId: user.id,
-        }),
+        imageService.createImage(
+          {
+            file: Buffer.from('image1'),
+            filename: 'avatar.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user.id,
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image2'),
+            filename: 'background.png',
+            mimeType: 'image/png',
+            ownerId: user.id,
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image3'),
+            filename: 'avatar-small.webp',
+            mimeType: 'image/webp',
+            ownerId: user.id,
+          },
+          user,
+        ),
       ])
+
+      // Login to get authentication token
+      const { password } = await createTestUser({ email: 'auth@test.com', isEmailVerified: true })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: 'auth@test.com',
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images?search=avatar',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -609,32 +715,57 @@ describe('Image Controller', () => {
       const { user } = await createTestUser()
 
       await Promise.all([
-        imageService.createImage({
-          file: Buffer.from('image1'),
-          filename: 'test1.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user.id,
-          description: 'Profile picture for user',
-        }),
-        imageService.createImage({
-          file: Buffer.from('image2'),
-          filename: 'test2.png',
-          mimeType: 'image/png',
-          ownerId: user.id,
-          description: 'Game background image',
-        }),
-        imageService.createImage({
-          file: Buffer.from('image3'),
-          filename: 'test3.webp',
-          mimeType: 'image/webp',
-          ownerId: user.id,
-          description: 'User avatar picture',
-        }),
+        imageService.createImage(
+          {
+            file: Buffer.from('image1'),
+            filename: 'test1.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user.id,
+            description: 'Profile picture for user',
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image2'),
+            filename: 'test2.png',
+            mimeType: 'image/png',
+            ownerId: user.id,
+            description: 'Game background image',
+          },
+          user,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image3'),
+            filename: 'test3.webp',
+            mimeType: 'image/webp',
+            ownerId: user.id,
+            description: 'User avatar picture',
+          },
+          user,
+        ),
       ])
+
+      // Login to get authentication token
+      const { password } = await createTestUser({ email: 'auth@test.com', isEmailVerified: true })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: 'auth@test.com',
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images?search=picture',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -652,29 +783,54 @@ describe('Image Controller', () => {
       const { user: user2 } = await createTestUser({ email: 'user2@test.com' })
 
       await Promise.all([
-        imageService.createImage({
-          file: Buffer.from('image1'),
-          filename: 'user1-image1.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user1.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image2'),
-          filename: 'user2-image1.png',
-          mimeType: 'image/png',
-          ownerId: user2.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('image3'),
-          filename: 'user1-image2.webp',
-          mimeType: 'image/webp',
-          ownerId: user1.id,
-        }),
+        imageService.createImage(
+          {
+            file: Buffer.from('image1'),
+            filename: 'user1-image1.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user1.id,
+          },
+          user1,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image2'),
+            filename: 'user2-image1.png',
+            mimeType: 'image/png',
+            ownerId: user2.id,
+          },
+          user2,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('image3'),
+            filename: 'user1-image2.webp',
+            mimeType: 'image/webp',
+            ownerId: user1.id,
+          },
+          user1,
+        ),
       ])
+
+      // Login to get authentication token
+      const { password } = await createTestUser({ email: 'auth@test.com', isEmailVerified: true })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: 'auth@test.com',
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: `/api/images?ownerId=${user1.id}`,
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -728,29 +884,58 @@ describe('Image Controller', () => {
 
       // Create images with different mime types
       await Promise.all([
-        imageService.createImage({
-          file: Buffer.from('small-image'),
-          filename: 'image1.jpg',
-          mimeType: 'image/jpeg',
-          ownerId: user1.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('large-image-data'),
-          filename: 'image2.png',
-          mimeType: 'image/png',
-          ownerId: user2.id,
-        }),
-        imageService.createImage({
-          file: Buffer.from('medium'),
-          filename: 'image3.webp',
-          mimeType: 'image/webp',
-          ownerId: user1.id,
-        }),
+        imageService.createImage(
+          {
+            file: Buffer.from('small-image'),
+            filename: 'image1.jpg',
+            mimeType: 'image/jpeg',
+            ownerId: user1.id,
+          },
+          user1,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('large-image-data'),
+            filename: 'image2.png',
+            mimeType: 'image/png',
+            ownerId: user2.id,
+          },
+          user2,
+        ),
+        imageService.createImage(
+          {
+            file: Buffer.from('medium'),
+            filename: 'image3.webp',
+            mimeType: 'image/webp',
+            ownerId: user1.id,
+          },
+          user1,
+        ),
       ])
+
+      // Create admin user for statistics access with unique email
+      const uniqueEmail = `admin-stats-${Date.now()}@test.com`
+      const { password } = await createTestAdminUser({
+        email: uniqueEmail,
+        isEmailVerified: true,
+      })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: uniqueEmail,
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images/stats',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -775,9 +960,28 @@ describe('Image Controller', () => {
     })
 
     it('should return empty statistics when no images exist', async () => {
+      // Create admin user for statistics access
+      const { user: adminUser, password } = await createTestAdminUser({
+        isEmailVerified: true,
+      })
+
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: adminUser.email,
+          password,
+        },
+      })
+
+      const { accessToken } = loginResponse.json()
+
       const response = await app.inject({
         method: 'GET',
         url: '/api/images/stats',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(200)
@@ -793,12 +997,31 @@ describe('Image Controller', () => {
     })
 
     it('should handle service errors in getImageStats gracefully', async () => {
+      // Create admin user for statistics access with unique email
+      const uniqueEmail = `admin-${Date.now()}@test.com`
+      const { password } = await createTestAdminUser({
+        email: uniqueEmail,
+        isEmailVerified: true,
+      })
+      const loginResponse = await app.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: {
+          email: uniqueEmail,
+          password,
+        },
+      })
+      const { accessToken } = loginResponse.json()
+
       // Mock the service to throw an error
       vi.spyOn(imageService, 'getImageStats').mockRejectedValueOnce(new Error('Database error'))
 
       const response = await app.inject({
         method: 'GET',
         url: '/api/images/stats',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
       })
 
       expect(response.statusCode).toBe(500)

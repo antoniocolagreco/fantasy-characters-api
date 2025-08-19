@@ -1,5 +1,22 @@
 # Authentication & Security
 
+## Authentication System
+
+### JWT Token Management
+
+The API uses a secure JWT authentication system with the following components:
+
+- **Access Tokens**: Short-lived tokens (15 minutes) for API authentication
+- **Refresh Tokens**: Long-lived tokens (7 days) for token renewal
+- **Password Hashing**: bcrypt with configurable rounds for secure password storage
+- **Session Management**: Device tracking and revocation capabilities
+
+### OAuth Integration
+
+- **Google OAuth**: Social login via Google accounts
+- **GitHub OAuth**: Developer-focused authentication
+- **Session-based OAuth flow**: Secure OAuth state management
+
 ## Ownership & Sharing System
 
 The API implements a **Flexible Ownership** system that balances user autonomy with content sharing:
@@ -19,6 +36,12 @@ The API implements a **Flexible Ownership** system that balances user autonomy w
 4. **Automatic Orphaning**: When users delete their accounts, their entities become orphaned
 5. **Cascade Deletion**: Entities only used by the owner are deleted when the owner leaves
 6. **Community Management**: Orphaned entities can be managed by moderators and admins
+
+### Visibility Levels
+
+- **PUBLIC**: Visible to all users (including non-authenticated)
+- **PRIVATE**: Visible only to owner and administrators
+- **HIDDEN**: Visible only to administrators
 
 ### Example Scenarios
 
@@ -63,7 +86,27 @@ const myElfCopy = await raceService.create({
 ## Role-Based Access Control (RBAC)
 
 The API implements a hierarchical permission system with three distinct roles following security
-best practices:
+best practices.
+
+### Configuration
+
+```bash
+# Environment Configuration
+RBAC_ENABLED=true   # Enable RBAC in production
+RBAC_ENABLED=false  # Disable for development/testing
+```
+
+**Default**: `false` (for backward compatibility with existing tests)
+
+### Role Hierarchy
+
+```text
+USER (level 1)
+  ↓
+MODERATOR (level 2)
+  ↓
+ADMIN (level 3)
+```
 
 ### USER Role 👤 (Basic Access)
 
@@ -92,14 +135,13 @@ best practices:
 
 **Inherits:** All USER permissions
 
-**Permissions:**
+**Additional Permissions:**
 
-- ✅ All USER permissions (listed above)
 - ✅ Edit content of public entities created by USER role accounts (for content moderation)
 - ✅ Manage orphaned entities (`ownerId: null`)
 - ✅ View all user profiles and activity
-- ✅ Ban/unban USER accounts for inappropriate behavior
-- ✅ Access to basic moderation tools
+- ✅ Access user lists and basic statistics
+- ✅ Access to content moderation tools
 
 **Limitations:**
 
@@ -110,15 +152,14 @@ best practices:
 - ❌ Cannot modify/delete entities owned by ADMIN accounts
 - ❌ Cannot access system administration functions
 - ❌ Cannot change user roles or permissions
-- ❌ Cannot access system statistics
+- ❌ Cannot access sensitive system statistics
 
 ### ADMIN Role 👑 (System Administration)
 
 **Inherits:** All USER and MODERATOR permissions
 
-**Permissions:**
+**Additional Permissions:**
 
-- ✅ All USER and MODERATOR permissions (listed above)
 - ✅ Create, read, update, delete ANY entity regardless of ownership
 - ✅ Manage all USER and MODERATOR accounts and roles
 - ✅ Full access to system statistics, logs, and monitoring
@@ -136,3 +177,178 @@ best practices:
 - ❌ Cannot modify/delete other ADMIN accounts
 - ❌ Cannot change other ADMIN roles or permissions
 - ❌ Cannot access credentials of other ADMIN accounts
+
+## RBAC Implementation Details
+
+### Service Layer Integration
+
+All services implement RBAC through a centralized `rbacService` located in
+`src/shared/rbac.service.ts`:
+
+```typescript
+// Example service method with RBAC
+export const updateImage = async (
+  id: string,
+  data: UpdateImageData,
+  currentUser: AuthUser | null,
+): Promise<Image> => {
+  const image = await findImageById(id, currentUser)
+
+  // Check modification permissions
+  rbacService.enforcePermission(
+    rbacService.canModifyResource(currentUser, image),
+    'Insufficient permissions to modify this image',
+  )
+
+  // Perform update...
+}
+```
+
+### Route Protection
+
+Routes are protected using authentication middleware:
+
+```typescript
+// Authentication required
+fastify.register(async function (fastify) {
+  await fastify.register(authenticateUser)
+
+  // Self or admin access
+  fastify.get('/users/:id', {
+    preHandler: requireSelfOrAdmin('id'),
+    handler: userController.getUserById,
+  })
+
+  // Role-based access
+  fastify.get('/users', {
+    preHandler: requireRoles(['MODERATOR', 'ADMIN']),
+    handler: userController.getUsersList,
+  })
+})
+```
+
+### Permission Checking Functions
+
+The RBAC service provides granular permission checking:
+
+- `canAccessByVisibility()`: Check access based on resource visibility
+- `canModifyResource()`: Check modification permissions
+- `canDeleteResource()`: Check deletion permissions
+- `canAccessUserProfile()`: Check user profile access
+- `canViewStatistics()`: Check statistics access
+- `getOwnershipFilter()`: Generate database filters for authorized resources
+
+## Security Measures
+
+### Input Validation & Sanitization
+
+- **TypeBox Schemas**: Comprehensive input validation for all endpoints
+- **XSS Prevention**: Proper output encoding and Content Security Policy
+- **SQL Injection Prevention**: Parameterized queries with Prisma ORM
+
+### Rate Limiting & Abuse Prevention
+
+- **@fastify/rate-limit**: Configurable rate limiting per endpoint
+- **Device Tracking**: Monitor and limit sessions per device
+- **Audit Logging**: Track access patterns and security events
+
+### HTTP Security Headers
+
+- **@fastify/helmet**: Automatic security headers
+- **CORS Configuration**: Proper cross-origin resource sharing
+- **HTTPS Enforcement**: TLS/SSL in production environments
+
+### Session Security
+
+- **Secure Tokens**: Cryptographically secure JWT generation
+- **Token Rotation**: Automatic refresh token rotation
+- **Session Revocation**: Ability to revoke all user sessions
+- **Device Management**: Track and manage user devices
+
+### Data Protection
+
+- **Password Security**: bcrypt hashing with configurable salt rounds
+- **Sensitive Data**: Proper handling of PII and credentials
+- **Database Security**: Encrypted connections and access controls
+
+## Deployment & Configuration
+
+### Environment Variables
+
+```bash
+# Authentication
+JWT_SECRET=your-secure-jwt-secret
+JWT_EXPIRES_IN=15m
+REFRESH_TOKEN_EXPIRES_IN=7d
+
+# RBAC Control
+RBAC_ENABLED=true  # Enable in production
+RBAC_ENABLED=false # Disable for testing
+
+# Security
+BCRYPT_ROUNDS=12
+SESSION_SECRET=your-session-secret
+
+# OAuth (optional)
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+```
+
+### Production Checklist
+
+- ✅ Set `RBAC_ENABLED=true`
+- ✅ Configure strong JWT and session secrets
+- ✅ Enable HTTPS/TLS encryption
+- ✅ Set up proper CORS policies
+- ✅ Configure rate limiting
+- ✅ Enable audit logging
+- ✅ Set up monitoring and alerting
+- ✅ Regular security updates
+
+### Monitoring & Alerting
+
+Monitor these security metrics:
+
+- Failed authentication attempts
+- Permission denial events
+- Unusual access patterns
+- Token refresh anomalies
+- Admin action logs
+- Rate limit violations
+
+## Testing Strategy
+
+### Test Coverage Requirements
+
+**Critical Security Features (Minimum 90% coverage):**
+
+- Authentication services and controllers
+- Authorization and RBAC functionality
+- Security middleware and validation
+- JWT token management
+- Password hashing and validation
+- Session management
+- Security error handling
+
+**General Features (Minimum 80% coverage):**
+
+- Standard CRUD operations
+- Non-critical business logic
+- Utility functions
+- Configuration management
+
+### RBAC Testing
+
+- **Unit Tests**: Test individual permission functions
+- **Integration Tests**: Test service-level authorization
+- **E2E Tests**: Test complete authentication flows
+- **Flag Control**: RBAC can be disabled for legacy tests
+
+### Security Testing
+
+- **Authentication Flows**: Test login, logout, token refresh
+- **Authorization**: Test role-based access controls
+- **Input Validation**: Test schema validation and sanitization
+- **Error Handling**: Test security error responses

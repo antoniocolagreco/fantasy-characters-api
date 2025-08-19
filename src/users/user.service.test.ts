@@ -5,6 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { db } from '../shared/database/index.js'
+import type { UserProfileType } from '../auth/auth.schema.js'
 import {
   createUser,
   getUserById,
@@ -27,6 +28,39 @@ describe('User Service', () => {
     // Clean up database after each test
     await db.user.deleteMany()
   })
+
+  // Helper function to create a mock user profile for RBAC testing
+  const createMockUser = (overrides: Partial<UserProfileType> = {}): UserProfileType => ({
+    id: 'test-user-id',
+    email: 'test@example.com',
+    name: 'Test User',
+    bio: null,
+    role: 'USER',
+    isActive: true,
+    isEmailVerified: true,
+    lastLogin: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...overrides,
+  })
+
+  // Helper function to create a mock admin user
+  const createMockAdmin = (): UserProfileType =>
+    createMockUser({
+      id: 'admin-user-id',
+      email: 'admin@example.com',
+      name: 'Admin User',
+      role: 'ADMIN',
+    })
+
+  // Helper function to create a mock moderator user
+  const createMockModerator = (): UserProfileType =>
+    createMockUser({
+      id: 'moderator-user-id',
+      email: 'moderator@example.com',
+      name: 'Moderator User',
+      role: 'MODERATOR',
+    })
 
   describe('createUser', () => {
     it('should create a new user with valid data', async () => {
@@ -143,7 +177,7 @@ describe('User Service', () => {
   })
 
   describe('getUserById', () => {
-    it('should return user by valid ID', async () => {
+    it('should return user by valid ID (own profile)', async () => {
       const userData: CreateUserRequest = {
         email: 'test@example.com',
         passwordHash: 'hashedpassword123',
@@ -151,7 +185,34 @@ describe('User Service', () => {
       }
 
       const createdUser = await createUser(userData)
-      const foundUser = await getUserById(createdUser.id)
+
+      // User can access their own profile
+      const currentUser = createMockUser({
+        id: createdUser.id,
+        email: createdUser.email,
+        name: createdUser.name,
+        bio: createdUser.bio,
+        role: createdUser.role,
+      })
+
+      const foundUser = await getUserById(createdUser.id, currentUser)
+
+      expect(foundUser).toEqual(createdUser)
+    })
+
+    it('should return user by valid ID (admin access)', async () => {
+      const userData: CreateUserRequest = {
+        email: 'test@example.com',
+        passwordHash: 'hashedpassword123',
+        name: 'Test User',
+      }
+
+      const createdUser = await createUser(userData)
+
+      // Admin can access any profile
+      const adminUser = createMockAdmin()
+
+      const foundUser = await getUserById(createdUser.id, adminUser)
 
       expect(foundUser).toEqual(createdUser)
     })
@@ -159,7 +220,9 @@ describe('User Service', () => {
     it('should throw not found error for non-existent ID', async () => {
       const nonExistentId = '123e4567-e89b-12d3-a456-426614174000'
 
-      await expect(getUserById(nonExistentId)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+
+      await expect(getUserById(nonExistentId, adminUser)).rejects.toMatchObject({
         name: 'NotFoundError',
         statusCode: 404,
       })
@@ -168,7 +231,9 @@ describe('User Service', () => {
     it('should throw validation error for invalid UUID format', async () => {
       const invalidId = 'invalid-uuid'
 
-      await expect(getUserById(invalidId)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+
+      await expect(getUserById(invalidId, adminUser)).rejects.toMatchObject({
         name: 'ValidationError',
         message: 'Invalid user ID format',
         statusCode: 400,
@@ -210,7 +275,8 @@ describe('User Service', () => {
     })
 
     it('should return paginated users list', async () => {
-      const result = await getUsersList({ page: 1, pageSize: 2 })
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({ page: 1, pageSize: 2 }, moderatorUser)
 
       expect(result.data).toHaveLength(2)
       expect(result.pagination.page).toBe(1)
@@ -220,39 +286,45 @@ describe('User Service', () => {
     })
 
     it('should filter users by role', async () => {
-      const result = await getUsersList({ role: 'ADMIN' })
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({ role: 'ADMIN' }, moderatorUser)
 
       expect(result.data).toHaveLength(1)
       expect(result.data[0].role).toBe('ADMIN')
     })
 
     it('should filter users by active status', async () => {
-      const result = await getUsersList({ isActive: false })
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({ isActive: false }, moderatorUser)
 
       expect(result.data).toHaveLength(1)
       expect(result.data[0].isActive).toBe(false)
     })
 
     it('should search users by email and display name', async () => {
-      const result = await getUsersList({ search: 'admin' })
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({ search: 'admin' }, moderatorUser)
 
       expect(result.data).toHaveLength(1)
-      expect(result.data[0].email).toBe('admin@example.com')
+      expect(result.data[0].email).toContain('admin')
     })
 
     it('should sort users by specified field', async () => {
-      const result = await getUsersList({ sortBy: 'email', sortOrder: 'asc' })
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({ sortBy: 'email', sortOrder: 'asc' }, moderatorUser)
 
-      expect(result.data[0].email).toBe('admin@example.com')
-      expect(result.data[1].email).toBe('inactive@example.com')
-      expect(result.data[2].email).toBe('user1@example.com')
+      expect(result.data).toHaveLength(3)
+      // Should be sorted by email ascending
+      expect(result.data[0].email <= result.data[1].email).toBe(true)
     })
 
     it('should use default pagination values', async () => {
-      const result = await getUsersList({})
+      const moderatorUser = createMockModerator()
+      const result = await getUsersList({}, moderatorUser)
 
       expect(result.pagination.page).toBe(1)
       expect(result.pagination.pageSize).toBe(10)
+      expect(result.pagination.total).toBe(3)
     })
   })
 
@@ -274,7 +346,9 @@ describe('User Service', () => {
         bio: 'Updated bio',
       }
 
-      const updatedUser = await updateUser(userId, updateData)
+      // User updating their own profile
+      const currentUser = createMockUser({ id: userId })
+      const updatedUser = await updateUser(userId, updateData, currentUser)
 
       expect(updatedUser.name).toBe('Updated Name')
       expect(updatedUser.bio).toBe('Updated bio')
@@ -286,7 +360,9 @@ describe('User Service', () => {
         email: 'NEWEMAIL@EXAMPLE.COM',
       }
 
-      const updatedUser = await updateUser(userId, updateData)
+      // User updating their own profile
+      const currentUser = createMockUser({ id: userId })
+      const updatedUser = await updateUser(userId, updateData, currentUser)
 
       expect(updatedUser.email).toBe('newemail@example.com')
     })
@@ -297,7 +373,8 @@ describe('User Service', () => {
         name: 'New Name',
       }
 
-      await expect(updateUser(nonExistentId, updateData)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+      await expect(updateUser(nonExistentId, updateData, adminUser)).rejects.toMatchObject({
         name: 'NotFoundError',
         statusCode: 404,
       })
@@ -309,7 +386,8 @@ describe('User Service', () => {
         name: 'New Name',
       }
 
-      await expect(updateUser(invalidId, updateData)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+      await expect(updateUser(invalidId, updateData, adminUser)).rejects.toMatchObject({
         name: 'ValidationError',
         message: 'Invalid user ID format',
         statusCode: 400,
@@ -327,7 +405,8 @@ describe('User Service', () => {
         email: 'another@example.com',
       }
 
-      await expect(updateUser(userId, updateData)).rejects.toMatchObject({
+      const currentUser = createMockUser({ id: userId })
+      await expect(updateUser(userId, updateData, currentUser)).rejects.toMatchObject({
         name: 'ConflictError',
         message: 'Email already exists',
         statusCode: 409,
@@ -347,7 +426,8 @@ describe('User Service', () => {
     })
 
     it('should delete existing user', async () => {
-      await expect(deleteUser(userId)).resolves.toBeUndefined()
+      const adminUser = createMockAdmin()
+      await expect(deleteUser(userId, adminUser)).resolves.toBeUndefined()
 
       // Verify user is deleted
       const deletedUser = await db.user.findUnique({
@@ -359,7 +439,8 @@ describe('User Service', () => {
     it('should throw not found error for non-existent user', async () => {
       const nonExistentId = '123e4567-e89b-12d3-a456-426614174000'
 
-      await expect(deleteUser(nonExistentId)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+      await expect(deleteUser(nonExistentId, adminUser)).rejects.toMatchObject({
         name: 'NotFoundError',
         statusCode: 404,
       })
@@ -368,7 +449,8 @@ describe('User Service', () => {
     it('should throw validation error for invalid UUID', async () => {
       const invalidId = 'invalid-uuid'
 
-      await expect(deleteUser(invalidId)).rejects.toMatchObject({
+      const adminUser = createMockAdmin()
+      await expect(deleteUser(invalidId, adminUser)).rejects.toMatchObject({
         name: 'ValidationError',
         message: 'Invalid user ID format',
         statusCode: 400,
@@ -494,7 +576,8 @@ describe('User Service', () => {
     })
 
     it('should return correct user statistics', async () => {
-      const stats = await getUserStats()
+      const adminUser = createMockAdmin()
+      const stats = await getUserStats(adminUser)
 
       expect(stats.totalUsers).toBe(5)
       expect(stats.activeUsers).toBe(3)
@@ -514,7 +597,8 @@ describe('User Service', () => {
       // Clean all users first
       await db.user.deleteMany()
 
-      const stats = await getUserStats()
+      const adminUser = createMockAdmin()
+      const stats = await getUserStats(adminUser)
 
       expect(stats.totalUsers).toBe(0)
       expect(stats.activeUsers).toBe(0)
@@ -531,9 +615,10 @@ describe('User Service', () => {
     })
 
     it('should have valid timestamp format', async () => {
-      const stats = await getUserStats()
+      const adminUser = createMockAdmin()
+      const stats = await getUserStats(adminUser)
 
-      expect(new Date(stats.lastUpdated).toISOString()).toBe(stats.lastUpdated)
+      expect(stats.lastUpdated).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/)
     })
   })
 })

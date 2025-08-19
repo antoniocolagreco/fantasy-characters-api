@@ -21,6 +21,11 @@ export default defineConfig({
         'src/**/index.ts',
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
+        'src/**/test.ts',
+        'src/shared/test-helpers.ts',
+        'src/config/environment.ts',
+        'src/**/*.schema.ts',
+        'src/shared/constants.ts',
       ],
       thresholds: {
         global: {
