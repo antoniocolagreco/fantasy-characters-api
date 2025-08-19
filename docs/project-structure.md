@@ -2,6 +2,11 @@
 
 ## Directory Structure (Feature-Based)
 
+This file is an example of a feature-based directory structure and the project can differ from it.
+Every feature should encapsulate all related files, including controllers, services, schemas, and
+tests. The folder `shared` contains code that is shared across multiple features, such as utility
+functions, middleware, and common types.
+
 ```text
 fantasy-character-api/
 ├── src/
@@ -9,6 +14,7 @@ fantasy-character-api/
 │   ├── index.ts              # Application entry point
 │   │
 │   ├── auth/                 # Authentication feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── auth.controller.ts
 │   │   ├── auth.route.ts
 │   │   ├── auth.schema.ts
@@ -16,13 +22,13 @@ fantasy-character-api/
 │   │   ├── auth.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── auth.controller.test.ts
 │   │       ├── auth.service.test.ts
-│   │       ├── auth.route.test.ts
-│   │       ├── auth.schema.test.ts
-│   │       └── auth.e2e.test.ts
+│   │       └── auth.route.test.ts
 │   │
 │   ├── users/                # Users feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── user.controller.ts
 │   │   ├── user.route.ts
 │   │   ├── user.schema.ts
@@ -30,13 +36,13 @@ fantasy-character-api/
 │   │   ├── user.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── user.controller.test.ts
 │   │       ├── user.service.test.ts
-│   │       ├── user.route.test.ts
-│   │       ├── user.schema.test.ts
-│   │       └── user.e2e.test.ts
+│   │       └── user.route.test.ts
 │   │
 │   ├── characters/           # Characters feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── character.controller.ts
 │   │   ├── character.route.ts
 │   │   ├── character.schema.ts
@@ -44,13 +50,13 @@ fantasy-character-api/
 │   │   ├── character.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── character.controller.test.ts
 │   │       ├── character.service.test.ts
-│   │       ├── character.route.test.ts
-│   │       ├── character.schema.test.ts
-│   │       └── character.e2e.test.ts
+│   │       └── character.route.test.ts
 │   │
 │   ├── races/                # Races feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── race.controller.ts
 │   │   ├── race.route.ts
 │   │   ├── race.schema.ts
@@ -58,13 +64,13 @@ fantasy-character-api/
 │   │   ├── race.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── race.controller.test.ts
 │   │       ├── race.service.test.ts
-│   │       ├── race.route.test.ts
-│   │       ├── race.schema.test.ts
-│   │       └── race.e2e.test.ts
+│   │       └── race.route.test.ts
 │   │
 │   ├── archetypes/           # Archetypes feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── archetype.controller.ts
 │   │   ├── archetype.route.ts
 │   │   ├── archetype.schema.ts
@@ -72,13 +78,13 @@ fantasy-character-api/
 │   │   ├── archetype.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── archetype.controller.test.ts
 │   │       ├── archetype.service.test.ts
-│   │       ├── archetype.route.test.ts
-│   │       ├── archetype.schema.test.ts
-│   │       └── archetype.e2e.test.ts
+│   │       └── archetype.route.test.ts
 │   │
 │   ├── skills/               # Skills feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── skill.controller.ts
 │   │   ├── skill.route.ts
 │   │   ├── skill.schema.ts
@@ -86,13 +92,13 @@ fantasy-character-api/
 │   │   ├── skill.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── skill.controller.test.ts
 │   │       ├── skill.service.test.ts
-│   │       ├── skill.route.test.ts
-│   │       ├── skill.schema.test.ts
-│   │       └── skill.e2e.test.ts
+│   │       └── skill.route.test.ts
 │   │
 │   ├── perks/                # Perks feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── perk.controller.ts
 │   │   ├── perk.route.ts
 │   │   ├── perk.schema.ts
@@ -100,13 +106,13 @@ fantasy-character-api/
 │   │   ├── perk.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── perk.controller.test.ts
 │   │       ├── perk.service.test.ts
-│   │       ├── perk.route.test.ts
-│   │       ├── perk.schema.test.ts
-│   │       └── perk.e2e.test.ts
+│   │       └── perk.route.test.ts
 │   │
 │   ├── items/                # Items feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── item.controller.ts
 │   │   ├── item.route.ts
 │   │   ├── item.schema.ts
@@ -114,13 +120,13 @@ fantasy-character-api/
 │   │   ├── item.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── item.controller.test.ts
 │   │       ├── item.service.test.ts
-│   │       ├── item.route.test.ts
-│   │       ├── item.schema.test.ts
-│   │       └── item.e2e.test.ts
+│   │       └── item.route.test.ts
 │   │
 │   ├── images/               # Images feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── image.controller.ts
 │   │   ├── image.route.ts
 │   │   ├── image.schema.ts
@@ -128,13 +134,13 @@ fantasy-character-api/
 │   │   ├── image.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── image.controller.test.ts
 │   │       ├── image.service.test.ts
-│   │       ├── image.route.test.ts
-│   │       ├── image.schema.test.ts
-│   │       └── image.e2e.test.ts
+│   │       └── image.route.test.ts
 │   │
 │   ├── tags/                 # Tags feature
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── tag.controller.ts
 │   │   ├── tag.route.tscls
 │   │   ├── tag.schema.ts
@@ -142,31 +148,35 @@ fantasy-character-api/
 │   │   ├── tag.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── tag.controller.test.ts
 │   │       ├── tag.service.test.ts
-│   │       ├── tag.route.test.ts
-│   │       ├── tag.schema.test.ts
-│   │       └── tag.e2e.test.ts
+│   │       └── tag.route.test.ts
 │   │
 │   ├── health/               # Health check feature (Kubernetes-compatible)
+│   │   ├── *.ts              # Additional feature files
 │   │   ├── health.controller.ts
 │   │   ├── health.route.ts
 │   │   ├── health.types.ts
 │   │   ├── index.ts
 │   │   └── tests/
+│   │       ├── *.test.ts     # Additional test files
 │   │       ├── health.controller.test.ts
-│   │       ├── health.service.test.ts
-│   │       └── health.e2e.test.ts
+│   │       └── health.service.test.ts
 │   │
 │   └── shared/               # Shared utilities and code
+│       ├── *.ts              # Additional feature files
 │       ├── config.ts         # Configuration and environment
 │       ├── constants.ts      # Application constants and enums
 │       ├── errors.ts         # Error classes and handlers
 │       ├── middleware.ts     # Shared middleware
 │       ├── types.ts          # Shared TypeScript definitions
 │       ├── utils.ts          # Shared utility functions
-│       ├── utils.ts          # Shared utility functions
+│       ├── types/            # Shared utilities and code
+│       │   ├── index.ts      # Barrel export for types
+│       │   └── *.ts          # Additional type definitions
 │       └── tests/
+│           ├── *.test.ts     # Additional test files
 │           ├── rbac.service.test.ts
 │           └── utils.test.ts
 │
@@ -203,12 +213,10 @@ Each feature follows a consistent structure:
   - **\*.controller.test.ts**: Unit tests for HTTP request/response handling
   - **\*.service.test.ts**: Unit tests for business logic and data access
   - **\*.route.test.ts**: Integration tests for API endpoints
-  - **\*.schema.test.ts**: Unit tests for input validation schemas
-  - **\*.e2e.test.ts**: End-to-end tests for complete feature workflows
 
 ## Shared Resources
 
-The `shared/` directory contains:
+The `shared/` directory contains code that is used across multiple features, such as:
 
 - **config.ts**: Environment configuration
 - **constants.ts**: Application-wide constants
