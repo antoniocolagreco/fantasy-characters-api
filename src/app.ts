@@ -3,24 +3,24 @@
  * Configures Fastify server with all plugins and routes
  */
 
-import Fastify from 'fastify'
+import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
+import fastifyJwt from '@fastify/jwt'
+import multipart from '@fastify/multipart'
 import rateLimit from '@fastify/rate-limit'
 import sensible from '@fastify/sensible'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
-import cors from '@fastify/cors'
-import fastifyJwt from '@fastify/jwt'
-import multipart from '@fastify/multipart'
+import Fastify from 'fastify'
 
-import { environment, logConfig, securityConfig, apiConfig } from '@/shared/config.js'
-import { errorHandler, notFoundHandler } from './shared/errors.js'
-import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
-import { healthRoutes } from './health/health.route.js'
-import { userRoutes } from './users/user.route.js'
+import { apiConfig, environment, logConfig, securityConfig } from '@/shared/config.js'
 import { authRoutes } from './auth/auth.route.js'
+import { healthRoutes } from './health/health.route.js'
 import { imageRoutes } from './images/image.route.js'
+import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
+import { errorHandler, notFoundHandler } from './shared/errors.js'
 import { tagRoutes } from './tags/tag.route.js'
+import { userRoutes } from './users/user.route.js'
 
 // Create Fastify instance with configuration
 export const app = Fastify({
@@ -32,7 +32,7 @@ export const app = Fastify({
     : {
         level: logConfig.level,
       },
-  disableRequestLogging: false,
+  disableRequestLogging: environment.NODE_ENV === 'test',
   requestIdHeader: 'x-request-id',
   requestIdLogLabel: 'reqId',
   genReqId: () => `req_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
@@ -178,6 +178,11 @@ const registerPlugins = async (): Promise<void> => {
           },
         },
       },
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
     },
   })
 
@@ -191,6 +196,7 @@ const registerPlugins = async (): Promise<void> => {
       deepLinking: false,
       supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
       tryItOutEnabled: true, // Allow testing endpoints directly from UI
+      persistAuthorization: true, // Keep authorization between page reloads
     },
     uiHooks: {
       onRequest: (_request, _reply, next) => {

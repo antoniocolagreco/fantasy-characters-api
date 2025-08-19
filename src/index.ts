@@ -8,17 +8,16 @@ import { environment } from '@/shared/config.js'
 
 const start = async (): Promise<void> => {
   try {
-    const host = environment.NODE_ENV === 'development' ? 'localhost' : environment.HOST
+    // Use specific host to reduce automatic log noise
+    const host = '127.0.0.1' // Only IPv4 localhost - reduces log duplication
     const port = environment.PORT
-    const address = await app.listen({ port, host })
 
-    // For development, always show localhost URLs for better readability
-    const displayAddress =
-      environment.NODE_ENV === 'development' ? `http://localhost:${environment.PORT}` : address
+    await app.listen({ port, host })
 
-    app.log.info(`Server listening at ${displayAddress}`)
-    app.log.info(`Health check: ${displayAddress}/api/health`)
-    app.log.info(`API docs: ${displayAddress}/docs`)
+    // Clean custom logs - only show what's useful
+    app.log.info(`🚀 Server ready at http://localhost:${port}`)
+    app.log.info(`❤️  Health check: http://localhost:${port}/api/health`)
+    app.log.info(`📚 API docs: http://localhost:${port}/docs`)
   } catch (error) {
     // Enhanced error handling with specific error types
     if (error instanceof Error) {

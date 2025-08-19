@@ -119,7 +119,7 @@ export const createTokenResponse = (user: UserProfileType): TokenResponseType =>
     accessToken,
     refreshToken,
     tokenType: 'Bearer',
-    expiresIn: '15m', // Access token expires in 15 minutes
+    expiresIn: securityConfig.jwtExpiresIn, // Use configuration instead of hardcoded value
     user: {
       id: user.id,
       email: user.email,

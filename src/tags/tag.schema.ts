@@ -153,6 +153,7 @@ export const createTagRouteSchema = {
   response: {
     201: tagSchema,
     400: tagValidationErrorSchema,
+    401: tagUnauthorizedErrorSchema,
     409: tagConflictSchema,
   },
 }
