@@ -50,6 +50,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': new URL('./src', import.meta.url).pathname,
+      '@/auth': new URL('./src/auth', import.meta.url).pathname,
+      '@/users': new URL('./src/users', import.meta.url).pathname,
+      '@/health': new URL('./src/health', import.meta.url).pathname,
+      '@/shared': new URL('./src/shared', import.meta.url).pathname,
+      '@/config': new URL('./src/config', import.meta.url).pathname,
+      '@/images': new URL('./src/images', import.meta.url).pathname,
     },
   },
   esbuild: {

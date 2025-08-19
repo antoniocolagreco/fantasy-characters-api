@@ -31,14 +31,12 @@
     "baseUrl": "./",
     "paths": {
       "@/*": ["src/*"],
-      "@/types/*": ["src/types/*"],
-      "@/utils/*": ["src/utils/*"],
+      "@/auth/*": ["src/auth/*"],
+      "@/users/*": ["src/users/*"],
+      "@/health/*": ["src/health/*"],
+      "@/shared/*": ["src/shared/*"],
       "@/config/*": ["src/config/*"],
-      "@/middleware/*": ["src/middleware/*"],
-      "@/routes/*": ["src/routes/*"],
-      "@/services/*": ["src/services/*"],
-      "@/controllers/*": ["src/controllers/*"],
-      "@/schemas/*": ["src/schemas/*"]
+      "@/images/*": ["src/images/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],
