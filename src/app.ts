@@ -91,15 +91,19 @@ const registerPlugins = async (): Promise<void> => {
   await app.register(rateLimit, {
     max: securityConfig.rateLimitMax,
     timeWindow: securityConfig.rateLimitTimeWindow,
-    errorResponseBuilder: (request, context) => ({
-      error: {
-        code: 'TOO_MANY_REQUESTS',
-        message: 'Rate limit exceeded, retry in 1 minute',
-        timestamp: new Date().toISOString(),
-        path: request.url,
-        retryAfter: Math.round(context.ttl / 1000),
-      },
-    }),
+    errorResponseBuilder: (request, context) => {
+      // This function covers the errorResponseBuilder branch
+      const retryAfterSeconds = Math.round(context.ttl / 1000)
+      return {
+        error: {
+          code: 'TOO_MANY_REQUESTS',
+          message: `Rate limit exceeded, retry in ${retryAfterSeconds}s`,
+          timestamp: new Date().toISOString(),
+          path: request.url,
+          retryAfter: retryAfterSeconds,
+        },
+      }
+    },
   })
 
   // Sensible plugin for HTTP errors and utilities

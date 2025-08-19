@@ -7,7 +7,7 @@ import { setTimeout } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { app } from '@/app.js'
 import { db } from '@/shared/database/index.js'
-import { cleanupTestData, createTestAdminUser, createTestUser } from '@/shared/test-helpers.js'
+import { cleanupTestData, createTestAdminUser, createTestUser } from '@/shared/tests/test-utils.js'
 import * as imageService from '@/images/image.service.js'
 import type { ImageResponse } from '@/images/image.types.js'
 

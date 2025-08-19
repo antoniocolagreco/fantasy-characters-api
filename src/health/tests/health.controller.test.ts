@@ -1,159 +1,189 @@
 /**
  * Health controller unit tests
- * Tests for health check controller functions
+ * Tests for health check controller functions using centralized test utilities
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { createMockRequest, createMockReply } from '../../shared/tests/test-utils.js'
+import { HTTP_STATUS } from '../../shared/constants.js'
 
 // Mock the health service before importing the controller
-vi.mock('@/health/health.service.js', () => ({
+vi.mock('../health.service.js', () => ({
   getHealthStatus: vi.fn(),
   getLivenessStatus: vi.fn(),
   getReadinessStatus: vi.fn(),
 }))
 
-import { getHealth, getHealthz, getLiveness, getReadiness } from '@/health/health.controller.js'
-import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '@/health/health.service.js'
+// Mock the shared modules
+vi.mock('../../shared/errors.js', () => ({
+  createInternalServerError: vi.fn(),
+  createErrorResponse: vi.fn(),
+}))
+
+import { getHealth, getHealthz, getLiveness, getReadiness } from '../health.controller.js'
+import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service.js'
+import { createInternalServerError, createErrorResponse } from '../../shared/errors.js'
 
 describe('Health Controller', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('getHealth', () => {
-    it('should return health status successfully', async () => {
-      const healthData = {
+  // Common health data mock
+  const mockHealthData = {
+    status: 'healthy' as const,
+    version: '1.0.0',
+    timestamp: '2024-01-01T00:00:00.000Z',
+    uptime: 1000,
+    environment: 'test',
+    checks: [
+      {
+        name: 'application',
         status: 'healthy' as const,
-        version: '1.0.0',
         timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 1000,
-        environment: 'test',
-        checks: [],
-      }
+        details: {},
+      },
+      {
+        name: 'database',
+        status: 'healthy' as const,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        details: {},
+      },
+    ],
+  }
 
-      vi.mocked(getHealthStatus).mockResolvedValue(healthData)
+  const mockUnhealthyData = {
+    ...mockHealthData,
+    status: 'unhealthy' as const,
+    checks: [
+      {
+        name: 'application',
+        status: 'unhealthy' as const,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        details: {},
+      },
+    ],
+  }
 
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/health',
-      } as unknown as FastifyRequest
+  describe('getHealth', () => {
+    it('should return healthy status with 200', async () => {
+      vi.mocked(getHealthStatus).mockResolvedValue(mockHealthData)
 
-      const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/health' })
+      const mockReply = createMockReply()
 
       await getHealth(mockRequest, mockReply)
 
-      expect(mockReply.status).toHaveBeenCalledWith(200)
-      expect(mockReply.send).toHaveBeenCalledWith(healthData)
+      expect(getHealthStatus).toHaveBeenCalledWith('comprehensive')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
+      expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
+    })
+
+    it('should return unhealthy status with 500', async () => {
+      vi.mocked(getHealthStatus).mockResolvedValue(mockUnhealthyData)
+
+      const mockRequest = createMockRequest({ url: '/api/health' })
+      const mockReply = createMockReply()
+
+      await getHealth(mockRequest, mockReply)
+
+      expect(getHealthStatus).toHaveBeenCalledWith('comprehensive')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      expect(mockReply.send).toHaveBeenCalledWith(mockUnhealthyData)
     })
 
     it('should handle service errors gracefully', async () => {
-      vi.mocked(getHealthStatus).mockRejectedValue(new Error('Service error'))
+      const error = new Error('Health service error')
+      vi.mocked(getHealthStatus).mockRejectedValue(error)
 
-      const mockLogError = vi.fn()
-      const mockRequest = {
-        log: { error: mockLogError },
-        url: '/health',
-      } as unknown as FastifyRequest
+      const mockError = new Error('Health check failed')
+      Object.assign(mockError, { statusCode: 500, code: 'INTERNAL_SERVER_ERROR' })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
 
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
-
-      await getHealth(mockRequest, mockReply)
-
-      expect(mockLogError).toHaveBeenCalled()
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalled()
-    })
-
-    it('should return 500 status for unhealthy service', async () => {
-      const unhealthyData = {
-        status: 'unhealthy' as const,
-        version: '1.0.0',
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 1000,
-        environment: 'test',
-        checks: [],
+      const mockErrorResponse = {
+        error: {
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Health check failed',
+          timestamp: '2024-01-01T00:00:00.000Z',
+          path: '/api/health',
+        },
       }
+      vi.mocked(createErrorResponse).mockReturnValue(mockErrorResponse)
 
-      vi.mocked(getHealthStatus).mockResolvedValue(unhealthyData)
-
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/health',
-      } as unknown as FastifyRequest
-
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/health' })
+      const mockReply = createMockReply()
 
       await getHealth(mockRequest, mockReply)
 
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalledWith(unhealthyData)
+      expect(mockRequest.log.error).toHaveBeenCalledWith({ error }, 'Health check failed')
+      expect(createInternalServerError).toHaveBeenCalledWith(
+        'Health check failed',
+        'Health service error',
+      )
+      expect(createErrorResponse).toHaveBeenCalledWith(mockError, '/api/health')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      expect(mockReply.send).toHaveBeenCalledWith(mockErrorResponse)
     })
   })
 
   describe('getHealthz', () => {
-    it('should return health status successfully', async () => {
-      const healthData = {
-        status: 'healthy' as const,
-        version: '1.0.0',
-        timestamp: '2024-01-01T00:00:00.000Z',
-        uptime: 1000,
-        environment: 'test',
-        checks: [],
-      }
+    it('should return healthy status with 200', async () => {
+      vi.mocked(getHealthStatus).mockResolvedValue(mockHealthData)
 
-      vi.mocked(getHealthStatus).mockResolvedValue(healthData)
-
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/healthz',
-      } as unknown as FastifyRequest
-
-      const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/healthz' })
+      const mockReply = createMockReply()
 
       await getHealthz(mockRequest, mockReply)
 
-      expect(mockReply.status).toHaveBeenCalledWith(200)
-      expect(mockReply.send).toHaveBeenCalledWith(healthData)
+      expect(getHealthStatus).toHaveBeenCalledWith('basic')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
+      expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
+    })
+
+    it('should return degraded status with 200', async () => {
+      const degradedData = { ...mockHealthData, status: 'degraded' as const }
+      vi.mocked(getHealthStatus).mockResolvedValue(degradedData)
+
+      const mockRequest = createMockRequest({ url: '/api/healthz' })
+      const mockReply = createMockReply()
+
+      await getHealthz(mockRequest, mockReply)
+
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
+      expect(mockReply.send).toHaveBeenCalledWith(degradedData)
+    })
+
+    it('should return unhealthy status with 500', async () => {
+      vi.mocked(getHealthStatus).mockResolvedValue(mockUnhealthyData)
+
+      const mockRequest = createMockRequest({ url: '/api/healthz' })
+      const mockReply = createMockReply()
+
+      await getHealthz(mockRequest, mockReply)
+
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      expect(mockReply.send).toHaveBeenCalledWith(mockUnhealthyData)
     })
 
     it('should handle service errors gracefully', async () => {
-      vi.mocked(getHealthStatus).mockRejectedValue(new Error('Service error'))
+      const error = new Error('Healthz service error')
+      vi.mocked(getHealthStatus).mockRejectedValue(error)
 
-      const mockLogError = vi.fn()
-      const mockRequest = {
-        log: { error: mockLogError },
-        url: '/healthz',
-      } as unknown as FastifyRequest
+      const mockError = new Error('Healthz check failed')
+      Object.assign(mockError, { statusCode: 500, code: 'INTERNAL_SERVER_ERROR' })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
 
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/healthz' })
+      const mockReply = createMockReply()
 
       await getHealthz(mockRequest, mockReply)
 
-      expect(mockLogError).toHaveBeenCalled()
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalled()
+      expect(mockRequest.log.error).toHaveBeenCalledWith({ error }, 'Healthz check failed')
+      expect(createInternalServerError).toHaveBeenCalledWith(
+        'Healthz check failed',
+        'Healthz service error',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
   })
 
@@ -165,78 +195,99 @@ describe('Health Controller', () => {
         timestamp: '2024-01-01T00:00:00.000Z',
         uptime: 1000,
         environment: 'test',
-        checks: [],
+        checks: [
+          {
+            name: 'process',
+            status: 'healthy' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
+          },
+        ],
       }
 
       vi.mocked(getLivenessStatus).mockResolvedValue(livenessData)
 
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/live',
-      } as unknown as FastifyRequest
-
-      const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/live' })
+      const mockReply = createMockReply()
 
       await getLiveness(mockRequest, mockReply)
 
-      expect(mockReply.status).toHaveBeenCalledWith(200)
+      expect(getLivenessStatus).toHaveBeenCalled()
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
       expect(mockReply.send).toHaveBeenCalledWith(livenessData)
     })
 
-    it('should handle service errors gracefully', async () => {
-      vi.mocked(getLivenessStatus).mockRejectedValue(new Error('Service error'))
-
-      const mockLogError = vi.fn()
-      const mockRequest = {
-        log: { error: mockLogError },
-        url: '/live',
-      } as unknown as FastifyRequest
-
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
-
-      await getLiveness(mockRequest, mockReply)
-
-      expect(mockLogError).toHaveBeenCalled()
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalled()
-    })
-
-    it('should return 500 status for unhealthy liveness check', async () => {
-      const unhealthyData = {
-        status: 'unhealthy' as const,
+    it('should return degraded status with 200 (liveness should rarely fail)', async () => {
+      const degradedData = {
+        status: 'degraded' as const,
         version: '1.0.0',
         timestamp: '2024-01-01T00:00:00.000Z',
         uptime: 1000,
         environment: 'test',
-        checks: [],
+        checks: [
+          {
+            name: 'process',
+            status: 'degraded' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
+          },
+        ],
+      }
+
+      vi.mocked(getLivenessStatus).mockResolvedValue(degradedData)
+
+      const mockRequest = createMockRequest({ url: '/api/live' })
+      const mockReply = createMockReply()
+
+      await getLiveness(mockRequest, mockReply)
+
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
+      expect(mockReply.send).toHaveBeenCalledWith(degradedData)
+    })
+
+    it('should return unhealthy status with 500', async () => {
+      const unhealthyData = {
+        ...mockUnhealthyData,
+        checks: [
+          {
+            name: 'process',
+            status: 'unhealthy' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
+          },
+        ],
       }
 
       vi.mocked(getLivenessStatus).mockResolvedValue(unhealthyData)
 
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/live',
-      } as unknown as FastifyRequest
-
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/live' })
+      const mockReply = createMockReply()
 
       await getLiveness(mockRequest, mockReply)
 
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalledWith(unhealthyData)
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      expect(mockReply.send).toHaveBeenCalledWith(unhealthyData)
+    })
+
+    it('should handle service errors gracefully', async () => {
+      const error = new Error('Liveness service error')
+      vi.mocked(getLivenessStatus).mockRejectedValue(error)
+
+      const mockError = new Error('Liveness check failed')
+      Object.assign(mockError, { statusCode: 500, code: 'INTERNAL_SERVER_ERROR' })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
+
+      const mockRequest = createMockRequest({ url: '/api/live' })
+      const mockReply = createMockReply()
+
+      await getLiveness(mockRequest, mockReply)
+
+      expect(mockRequest.log.error).toHaveBeenCalledWith({ error }, 'Liveness check failed')
+      expect(createInternalServerError).toHaveBeenCalledWith(
+        'Liveness check failed',
+        'Liveness service error',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
   })
 
@@ -253,61 +304,32 @@ describe('Health Controller', () => {
             name: 'database',
             status: 'healthy' as const,
             timestamp: '2024-01-01T00:00:00.000Z',
-            details: { responseTime: 10 },
+            details: {},
           },
           {
             name: 'memory',
             status: 'healthy' as const,
             timestamp: '2024-01-01T00:00:00.000Z',
-            details: { usage: 50 },
+            details: {},
           },
         ],
       }
 
       vi.mocked(getReadinessStatus).mockResolvedValue(readinessData)
 
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/ready',
-      } as unknown as FastifyRequest
-
-      const mockReply = {
-        status: vi.fn().mockReturnThis(),
-        send: vi.fn(),
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/ready' })
+      const mockReply = createMockReply()
 
       await getReadiness(mockRequest, mockReply)
 
-      expect(mockReply.status).toHaveBeenCalledWith(200)
+      expect(getReadinessStatus).toHaveBeenCalled()
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
       expect(mockReply.send).toHaveBeenCalledWith(readinessData)
     })
 
-    it('should handle service errors gracefully', async () => {
-      vi.mocked(getReadinessStatus).mockRejectedValue(new Error('Service error'))
-
-      const mockLogError = vi.fn()
-      const mockRequest = {
-        log: { error: mockLogError },
-        url: '/ready',
-      } as unknown as FastifyRequest
-
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
-
-      await getReadiness(mockRequest, mockReply)
-
-      expect(mockLogError).toHaveBeenCalled()
-      expect(mockStatus).toHaveBeenCalledWith(500)
-      expect(mockSend).toHaveBeenCalled()
-    })
-
-    it('should return 503 status for not ready service', async () => {
-      const notReadyData = {
-        status: 'unhealthy' as const,
+    it('should return degraded status with 503 (not ready to serve traffic)', async () => {
+      const degradedData = {
+        status: 'degraded' as const,
         version: '1.0.0',
         timestamp: '2024-01-01T00:00:00.000Z',
         uptime: 1000,
@@ -315,52 +337,113 @@ describe('Health Controller', () => {
         checks: [
           {
             name: 'database',
-            status: 'unhealthy' as const,
+            status: 'degraded' as const,
             timestamp: '2024-01-01T00:00:00.000Z',
-            details: { responseTime: 5000 },
+            details: {},
+          },
+          {
+            name: 'memory',
+            status: 'healthy' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
           },
         ],
       }
 
-      vi.mocked(getReadinessStatus).mockResolvedValue(notReadyData)
+      vi.mocked(getReadinessStatus).mockResolvedValue(degradedData)
 
-      const mockRequest = {
-        log: { error: vi.fn() },
-        url: '/ready',
-      } as unknown as FastifyRequest
-
-      const mockStatus = vi.fn().mockReturnThis()
-      const mockSend = vi.fn()
-      const mockReply = {
-        status: mockStatus,
-        send: mockSend,
-      } as unknown as FastifyReply
+      const mockRequest = createMockRequest({ url: '/api/ready' })
+      const mockReply = createMockReply()
 
       await getReadiness(mockRequest, mockReply)
 
-      expect(mockStatus).toHaveBeenCalledWith(503)
-      expect(mockSend).toHaveBeenCalledWith(notReadyData)
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.SERVICE_UNAVAILABLE)
+      expect(mockReply.send).toHaveBeenCalledWith(degradedData)
+    })
+
+    it('should return unhealthy status with 503', async () => {
+      const unhealthyData = {
+        ...mockUnhealthyData,
+        checks: [
+          {
+            name: 'database',
+            status: 'unhealthy' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
+          },
+          {
+            name: 'memory',
+            status: 'healthy' as const,
+            timestamp: '2024-01-01T00:00:00.000Z',
+            details: {},
+          },
+        ],
+      }
+
+      vi.mocked(getReadinessStatus).mockResolvedValue(unhealthyData)
+
+      const mockRequest = createMockRequest({ url: '/api/ready' })
+      const mockReply = createMockReply()
+
+      await getReadiness(mockRequest, mockReply)
+
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.SERVICE_UNAVAILABLE)
+      expect(mockReply.send).toHaveBeenCalledWith(unhealthyData)
+    })
+
+    it('should handle service errors gracefully', async () => {
+      const error = new Error('Readiness service error')
+      vi.mocked(getReadinessStatus).mockRejectedValue(error)
+
+      const mockError = new Error('Readiness check failed')
+      Object.assign(mockError, { statusCode: 500, code: 'INTERNAL_SERVER_ERROR' })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
+
+      const mockRequest = createMockRequest({ url: '/api/ready' })
+      const mockReply = createMockReply()
+
+      await getReadiness(mockRequest, mockReply)
+
+      expect(mockRequest.log.error).toHaveBeenCalledWith({ error }, 'Readiness check failed')
+      expect(createInternalServerError).toHaveBeenCalledWith(
+        'Readiness check failed',
+        'Readiness service error',
+      )
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
   })
 
-  describe('Function exports and structure', () => {
-    it('should export all controller functions', () => {
-      expect(getHealth).toBeDefined()
-      expect(getHealthz).toBeDefined()
-      expect(getLiveness).toBeDefined()
-      expect(getReadiness).toBeDefined()
+  describe('Error handling edge cases', () => {
+    it('should handle non-Error objects in error handling', async () => {
+      vi.mocked(getHealthStatus).mockRejectedValue('String error')
 
-      expect(typeof getHealth).toBe('function')
-      expect(typeof getHealthz).toBe('function')
-      expect(typeof getLiveness).toBe('function')
-      expect(typeof getReadiness).toBe('function')
+      const mockError = new Error('Health check failed')
+      Object.assign(mockError, { statusCode: 500 })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
+
+      const mockRequest = createMockRequest({ url: '/api/health' })
+      const mockReply = createMockReply()
+
+      await getHealth(mockRequest, mockReply)
+
+      expect(createInternalServerError).toHaveBeenCalledWith('Health check failed', 'Unknown error')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
 
-    it('should have async functions', () => {
-      expect(getHealth.constructor.name).toBe('AsyncFunction')
-      expect(getHealthz.constructor.name).toBe('AsyncFunction')
-      expect(getLiveness.constructor.name).toBe('AsyncFunction')
-      expect(getReadiness.constructor.name).toBe('AsyncFunction')
+    it('should handle null/undefined errors in error handling', async () => {
+      vi.mocked(getHealthStatus).mockRejectedValue(null)
+
+      const mockError = new Error('Health check failed')
+      Object.assign(mockError, { statusCode: 500 })
+      vi.mocked(createInternalServerError).mockReturnValue(mockError)
+
+      const mockRequest = createMockRequest({ url: '/api/health' })
+      const mockReply = createMockReply()
+
+      await getHealth(mockRequest, mockReply)
+
+      expect(createInternalServerError).toHaveBeenCalledWith('Health check failed', 'Unknown error')
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
   })
 })

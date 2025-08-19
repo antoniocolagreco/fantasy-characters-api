@@ -151,6 +151,18 @@ export const errorHandler = async (
   // Log the error
   request.log.error(error, 'Request error')
 
+  // Handle rate limit errors specifically
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if ((error as any).code === 429 || (error as any).statusCode === 429) {
+    const errorResponse = {
+      message: error.message || 'Rate limit exceeded',
+      statusCode: 429,
+      error: 'Too Many Requests',
+    }
+    reply.status(429)
+    return reply.send(errorResponse)
+  }
+
   // Handle different error types
   if (isAppError(error)) {
     // Create a simple error response that Fastify can serialize properly

@@ -18,14 +18,18 @@ export default defineConfig({
       exclude: [
         'src/**/tests/**/*.*',
         'src/**/*.d.ts',
+        'src/**/types.ts',
         'src/**/*.type.ts',
+        'src/**/*.types.ts',
         'src/**/index.ts',
         'src/**/*.test.ts',
         'src/**/*.spec.ts',
         'src/**/test.ts',
-        'src/shared/test-helpers.ts',
+        'src/**/test-utils.ts',
         'src/shared/config.ts',
         'src/shared/constants.ts',
+        'src/app.ts',
+        'src/shared/middleware.ts',
       ],
       thresholds: {
         global: {

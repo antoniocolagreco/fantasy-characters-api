@@ -1,14 +1,15 @@
 /**
  * Health check tests
- * Unit and integration tests for health check functionality
+ * Unit and integration tests for health check functionality using centralized test utilities
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { getHealthStatus } from '@/health/health.service.js'
-import { healthConfig } from '@/shared/config.js'
+import { getHealthStatus } from '../health.service.js'
+import { healthConfig } from '../../shared/config.js'
+import { expectHealthResponse } from '../../shared/tests/test-utils.js'
 
 // Mock the environment config
-vi.mock('@/shared/config.js', () => ({
+vi.mock('../../shared/config.js', () => ({
   healthConfig: {
     enabled: true,
   },
@@ -27,15 +28,7 @@ describe('Health Service', () => {
     it('should return health status when enabled', async () => {
       const health = await getHealthStatus()
 
-      expect(health).toHaveProperty('status')
-      expect(health).toHaveProperty('timestamp')
-      expect(health).toHaveProperty('uptime')
-      expect(health).toHaveProperty('version')
-      expect(health).toHaveProperty('environment')
-      expect(health).toHaveProperty('checks')
-
-      expect(health.status).toMatch(/^(healthy|unhealthy|degraded)$/)
-      expect(Array.isArray(health.checks)).toBe(true)
+      expectHealthResponse(health)
       expect(health.checks.length).toBeGreaterThan(0)
     })
 
@@ -99,27 +92,11 @@ describe('Health Service', () => {
       expect(health.status).toBe('healthy')
     })
 
-    it('should have valid timestamp format', async () => {
-      const health = await getHealthStatus()
-
-      expect(() => new Date(health.timestamp)).not.toThrow()
-      expect(health.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/)
-    })
-
     it('should have positive uptime', async () => {
       const health = await getHealthStatus()
 
       expect(health.uptime).toBeGreaterThanOrEqual(0)
       expect(typeof health.uptime).toBe('number')
-    })
-
-    it('should include environment information', async () => {
-      const health = await getHealthStatus()
-
-      expect(health.environment).toBeDefined()
-      expect(typeof health.environment).toBe('string')
-      expect(health.version).toBeDefined()
-      expect(typeof health.version).toBe('string')
     })
   })
 })

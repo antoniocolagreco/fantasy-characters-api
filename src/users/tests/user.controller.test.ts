@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { app } from '@/app.js'
 import type { CreateUserRequest, UpdateUserRequest } from '@/users/user.schema.js'
 import * as userService from '@/users/user.service.js'
-import { cleanupTestData, createTestUser, createTestAdminUser } from '@/shared/test-helpers.js'
+import { cleanupTestData, createTestUser, createTestAdminUser } from '@/shared/tests/test-utils.js'
 
 describe('User Controller', () => {
   afterEach(async () => {

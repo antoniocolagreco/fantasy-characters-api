@@ -214,7 +214,7 @@ export default [
 
   // Test files specific configuration
   {
-    files: ['src/**/*.test.ts', 'tests/**/*.ts'],
+    files: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
     languageOptions: {
       globals: vitestGlobals,
     },
