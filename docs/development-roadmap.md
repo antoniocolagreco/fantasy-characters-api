@@ -23,24 +23,6 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 9: Races System 🧝 ✅
-
-**Objective**: Fantasy races with attribute modifiers
-
-### Tasks
-
-- [x] **TASK-9.1**: Create Race TypeBox schemas (create, update, response, filters)
-- [x] **TASK-9.2**: Implement race creation service with name uniqueness and RBAC validation
-- [x] **TASK-9.3**: Implement race retrieval service with filtering and stat comparisons
-- [x] **TASK-9.4**: Implement race update service with modifier validation and RBAC checks
-- [x] **TASK-9.5**: Implement race deletion service with character usage validation
-- [x] **TASK-9.6**: Create race statistics service (count, usage, popular modifiers)
-- [x] **TASK-9.7**: Create race CRUD controller with modifier validation
-- [x] **TASK-9.8**: Create race routes with authentication and role-based middleware
-- [x] **TASK-9.9**: Write unit tests for race modifier calculations and validation
-- [x] **TASK-9.10**: Write integration tests for race API endpoints and character creation
-- [x] **TASK-9.11**: Update OpenAPI documentation with race endpoints and modifier schemas
-
 ## Core Development Process per Chapter
 
 1. **Schema Definition**: Define TypeScript types and validation schemas with TypeBox
@@ -225,23 +207,23 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 9: Races System 🧝
+## Chapter 9: Races System 🧝 ✅
 
 **Objective**: Fantasy races with attribute modifiers
 
 ### Tasks
 
-- [ ] **TASK-9.1**: Create Race TypeBox schemas (create, update, response, filters)
-- [ ] **TASK-9.2**: Implement race creation service with name uniqueness and RBAC validation
-- [ ] **TASK-9.3**: Implement race retrieval service with filtering and stat comparisons
-- [ ] **TASK-9.4**: Implement race update service with modifier validation and RBAC checks
-- [ ] **TASK-9.5**: Implement race deletion service with character usage validation
-- [ ] **TASK-9.6**: Create race statistics service (count, usage, popular modifiers)
-- [ ] **TASK-9.7**: Create race CRUD controller with modifier validation
-- [ ] **TASK-9.8**: Create race routes with authentication and role-based middleware
-- [ ] **TASK-9.9**: Write unit tests for race modifier calculations and validation
-- [ ] **TASK-9.10**: Write integration tests for race API endpoints and character creation
-- [ ] **TASK-9.11**: Update OpenAPI documentation with race endpoints and modifier schemas
+- [x] **TASK-9.1**: Create Race TypeBox schemas (create, update, response, filters)
+- [x] **TASK-9.2**: Implement race creation service with name uniqueness and RBAC validation
+- [x] **TASK-9.3**: Implement race retrieval service with filtering and stat comparisons
+- [x] **TASK-9.4**: Implement race update service with modifier validation and RBAC checks
+- [x] **TASK-9.5**: Implement race deletion service with character usage validation
+- [x] **TASK-9.6**: Create race statistics service (count, usage, popular modifiers)
+- [x] **TASK-9.7**: Create race CRUD controller with modifier validation
+- [x] **TASK-9.8**: Create race routes with authentication and role-based middleware
+- [x] **TASK-9.9**: Write unit tests for race modifier calculations and validation
+- [x] **TASK-9.10**: Write integration tests for race API endpoints and character creation
+- [x] **TASK-9.11**: Update OpenAPI documentation with race endpoints and modifier schemas
 
 ---
 
