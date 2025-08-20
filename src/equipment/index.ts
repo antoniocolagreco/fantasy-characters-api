@@ -1,0 +1,5 @@
+export * from './equipment.schema'
+export * from './equipment.types'
+export * from './equipment.service'
+export * from './equipment.controller'
+export { default as equipmentRoutes } from './equipment.route'

@@ -16,6 +16,7 @@ import Fastify from 'fastify'
 import { apiConfig, environment, logConfig, securityConfig } from './shared/config'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
+import equipmentRoutes from './equipment/equipment.route'
 import { healthRoutes } from './health/health.route'
 import { imageRoutes } from './images/image.route'
 import { itemRoutes } from './items/item.route'
@@ -171,6 +172,7 @@ const registerPlugins = async (): Promise<void> => {
         { name: 'Skills', description: 'Skill management endpoints' },
         { name: 'Perks', description: 'Perk management endpoints' },
         { name: 'Items', description: 'Item management endpoints' },
+        { name: 'Equipment', description: 'Character equipment management endpoints' },
         { name: 'Tags', description: 'Tag management endpoints' },
       ],
       components: {
@@ -253,8 +255,11 @@ const registerRoutes = async (): Promise<void> => {
       // Items routes (Chapter 11)
       await fastify.register(itemRoutes, { prefix: '/items' })
 
+      // Equipment routes (Chapter 12)
+      await fastify.register(equipmentRoutes)
+
       // Future routes will be added here in subsequent chapters:
-      // - Characters routes (Chapter 12)
+      // - Characters routes (Chapter 13)
     },
     { prefix: apiConfig.prefix },
   )
