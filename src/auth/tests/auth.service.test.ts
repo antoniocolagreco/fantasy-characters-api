@@ -8,7 +8,7 @@ import bcrypt from 'bcrypt'
 import { Role } from '@prisma/client'
 
 // Mock database
-vi.mock('@/shared/database/index', () => ({
+vi.mock('../../shared/database/index', () => ({
   db: {
     user: {
       findUnique: vi.fn(),
@@ -37,8 +37,8 @@ import {
   deactivateUser,
   reactivateUser,
   validatePasswordStrength,
-} from '@/auth/auth.service'
-import { db } from '@/shared/database/index'
+} from '../auth.service'
+import { db } from '../../shared/database/index'
 
 describe('Auth Service', () => {
   // Helper function to create complete mock user with all required fields

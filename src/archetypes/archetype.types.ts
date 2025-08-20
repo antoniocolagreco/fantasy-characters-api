@@ -4,7 +4,7 @@ import type {
   createArchetypeSchema,
   updateArchetypeSchema,
   listArchetypesQuerySchema,
-} from '@/archetypes/archetype.schema'
+} from './archetype.schema'
 
 // Database model types
 export type ArchetypeModel = Archetype

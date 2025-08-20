@@ -13,7 +13,7 @@ import {
   createErrorResponse,
   errorHandler,
   notFoundHandler,
-} from '@/shared/errors'
+} from '../errors'
 
 // Mock Fastify objects
 const createMockRequest = (overrides: Partial<FastifyRequest> = {}): FastifyRequest =>

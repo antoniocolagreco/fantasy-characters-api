@@ -4,8 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db } from '@/shared/database/index'
-import type { UserProfileType } from '@/auth/auth.schema'
+import { db } from '../../shared/database/index'
+import type { UserProfileType } from '../../auth/auth.schema'
 import {
   createUser,
   getUserById,
@@ -15,8 +15,8 @@ import {
   getUserByEmail,
   userExists,
   getUserStats,
-} from '@/users/user.service'
-import type { CreateUserRequest, UpdateUserRequest } from '@/users/user.schema'
+} from '../user.service'
+import type { CreateUserRequest, UpdateUserRequest } from '../user.schema'
 
 describe('User Service', () => {
   beforeEach(async () => {

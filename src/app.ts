@@ -13,7 +13,7 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import Fastify from 'fastify'
 
-import { apiConfig, environment, logConfig, securityConfig } from '@/shared/config'
+import { apiConfig, environment, logConfig, securityConfig } from './shared/config'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
 import { healthRoutes } from './health/health.route'

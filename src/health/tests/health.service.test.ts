@@ -6,12 +6,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock the database module
-vi.mock('@/shared/database/index', () => ({
+vi.mock('../../shared/database/index', () => ({
   getDatabaseHealth: vi.fn(),
 }))
 
 // Mock the config module
-vi.mock('@/shared/config', () => ({
+vi.mock('../../shared/config', () => ({
   healthConfig: {
     name: 'fantasy-characters-api',
     version: '1.0.0',
@@ -23,8 +23,8 @@ vi.mock('@/shared/config', () => ({
 // Store original NODE_ENV
 const originalNodeEnv = process.env.NODE_ENV
 
-import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '@/health/health.service'
-import { getDatabaseHealth } from '@/shared/database/index'
+import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service'
+import { getDatabaseHealth } from '../../shared/database/index'
 
 describe('Health Service', () => {
   beforeEach(() => {

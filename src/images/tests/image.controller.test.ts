@@ -5,11 +5,11 @@
 
 import { setTimeout } from 'node:timers/promises'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { app } from '@/app'
-import { db } from '@/shared/database/index'
-import { cleanupTestData, createTestAdminUser, createTestUser } from '@/shared/tests/test-utils'
-import * as imageService from '@/images/image.service'
-import type { ImageResponse } from '@/images/image.types'
+import { app } from '../../app'
+import { db } from '../../shared/database/index'
+import { cleanupTestData, createTestAdminUser, createTestUser } from '../../shared/tests/test-utils'
+import * as imageService from '../image.service'
+import type { ImageResponse } from '../image.types'
 
 // Mock Sharp
 vi.mock('sharp', () => ({

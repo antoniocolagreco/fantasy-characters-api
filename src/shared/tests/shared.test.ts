@@ -4,7 +4,7 @@ import {
   createNotFoundError,
   isAppError,
   createErrorResponse,
-} from '@/shared/errors'
+} from '../errors'
 
 describe('Shared Error Utilities', () => {
   describe('Error Creation Functions', () => {

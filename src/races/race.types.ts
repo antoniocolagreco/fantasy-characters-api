@@ -1,6 +1,6 @@
 import type { Race, Visibility } from '@prisma/client'
 import type { Static } from '@sinclair/typebox'
-import type { createRaceSchema, updateRaceSchema, listRacesQuerySchema } from '@/races/race.schema'
+import type { createRaceSchema, updateRaceSchema, listRacesQuerySchema } from './race.schema'
 
 // Database model types
 export type RaceModel = Race

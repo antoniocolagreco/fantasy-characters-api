@@ -11,8 +11,8 @@
 
 import { vi, expect } from 'vitest'
 import Fastify, { type FastifyRequest, FastifyReply, FastifyInstance } from 'fastify'
-import { db } from '@/shared/database/index'
-import { hashPassword } from '@/auth/auth.service'
+import { db } from '../database/index'
+import { hashPassword } from '../../auth/auth.service'
 import { Role } from '@prisma/client'
 
 // ====================
@@ -87,7 +87,7 @@ export const createTestApp = async (
 
 // Create test app specifically for health routes
 export const createHealthTestApp = async (): Promise<FastifyInstance> => {
-  const { healthRoutes } = await import('@/health/health.route')
+  const { healthRoutes } = await import('../../health/health.route')
 
   return createTestApp({
     routes: async app => {

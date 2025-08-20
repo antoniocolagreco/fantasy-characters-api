@@ -1,10 +1,6 @@
 import type { Skill, Visibility } from '@prisma/client'
 import type { Static } from '@sinclair/typebox'
-import type {
-  createSkillSchema,
-  updateSkillSchema,
-  listSkillsQuerySchema,
-} from '@/skills/skill.schema'
+import type { createSkillSchema, updateSkillSchema, listSkillsQuerySchema } from './skill.schema'
 
 // Database model types
 export type SkillModel = Skill

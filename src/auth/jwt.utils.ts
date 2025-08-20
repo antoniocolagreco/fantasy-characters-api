@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
-import { securityConfig } from '@/shared/config'
+import { securityConfig } from '../shared/config'
 import { createUnauthorizedError, createInternalServerError } from '../shared/errors'
 import type { UserProfileType, TokenResponseType } from './auth.schema'
 

@@ -1,6 +1,6 @@
 import type { Perk, Visibility } from '@prisma/client'
 import type { Static } from '@sinclair/typebox'
-import type { createPerkSchema, updatePerkSchema, listPerksQuerySchema } from '@/perks/perk.schema'
+import type { createPerkSchema, updatePerkSchema, listPerksQuerySchema } from './perk.schema'
 
 // Database model types
 export type PerkModel = Perk
