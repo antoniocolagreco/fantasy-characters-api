@@ -12,7 +12,7 @@ export default defineConfig({
     },
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
+      reporter: ['text', 'lcov', 'html', 'json-summary'],
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
@@ -59,6 +59,10 @@ export default defineConfig({
       '@/health': new URL('./src/health', import.meta.url).pathname,
       '@/shared': new URL('./src/shared', import.meta.url).pathname,
       '@/images': new URL('./src/images', import.meta.url).pathname,
+      '@/archetypes': new URL('./src/archetypes', import.meta.url).pathname,
+      '@/perks': new URL('./src/perks', import.meta.url).pathname,
+      '@/races': new URL('./src/races', import.meta.url).pathname,
+      '@/skills': new URL('./src/skills', import.meta.url).pathname,
     },
   },
   esbuild: {

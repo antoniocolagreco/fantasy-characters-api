@@ -4,7 +4,7 @@
  */
 
 import type { Static } from '@sinclair/typebox'
-import { imageResponseSchema, imageStatsResponseSchema } from './image.schema.js'
+import { imageResponseSchema, imageStatsResponseSchema } from './image.schema'
 
 // Types extracted from schemas
 export type ImageResponse = Static<typeof imageResponseSchema>

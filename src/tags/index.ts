@@ -1,6 +1,6 @@
-export * from './tag.service.js'
-export * from './tag.controller.js'
-export * from './tag.route.js'
+export * from './tag.service'
+export * from './tag.controller'
+export * from './tag.route'
 export {
   tagSchema,
   createTagSchema,
@@ -14,4 +14,4 @@ export {
   deleteTagRouteSchema,
   listTagsRouteSchema,
   tagStatsRouteSchema,
-} from './tag.schema.js'
+} from './tag.schema'

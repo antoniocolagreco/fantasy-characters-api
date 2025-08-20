@@ -6,14 +6,14 @@ import {
   deleteRace,
   listRaces,
   getRaceStats,
-} from './race.service.js'
+} from './race.service'
 import type {
   CreateRaceData,
   UpdateRaceData,
   ListRacesQuery,
   RaceResponse,
   RaceStatsData,
-} from './race.types.js'
+} from './race.types'
 
 // Create a new race
 export const createRaceHandler = async (

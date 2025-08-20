@@ -4,7 +4,7 @@
  */
 
 import { Type, type Static } from '@sinclair/typebox'
-import { ListPaginationQuerySchema } from '../shared/schemas/pagination.schema.js'
+import { ListPaginationQuerySchema } from '../shared/schemas/pagination.schema'
 
 // User role enum schema
 export const UserRoleSchema = Type.String({

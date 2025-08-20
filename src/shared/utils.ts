@@ -3,7 +3,7 @@
  * Pure functions for common operations
  */
 
-import { VALIDATION, PAGINATION } from './constants.js'
+import { VALIDATION, PAGINATION } from './constants'
 
 // Type helpers
 export type Nullable<T> = T | null

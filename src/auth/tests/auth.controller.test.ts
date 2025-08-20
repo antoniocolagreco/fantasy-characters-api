@@ -13,13 +13,13 @@ import {
   changePasswordById,
   deactivateAccount,
   deactivateAccountById,
-} from '@/auth/auth.controller.js'
-import * as authService from '@/auth/auth.service.js'
-import * as jwtUtils from '@/auth/jwt.utils.js'
+} from '@/auth/auth.controller'
+import * as authService from '@/auth/auth.service'
+import * as jwtUtils from '@/auth/jwt.utils'
 
 // Mock the dependencies
-vi.mock('@/auth/auth.service.js')
-vi.mock('@/auth/jwt.utils.js')
+vi.mock('@/auth/auth.service')
+vi.mock('@/auth/jwt.utils')
 
 describe('Auth Controller', () => {
   const mockUser = {

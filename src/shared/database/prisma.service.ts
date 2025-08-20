@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { environment } from '@/shared/config.js'
+import { environment } from '@/shared/config'
 
 /**
  * Prisma client configuration with connection pooling and error handling

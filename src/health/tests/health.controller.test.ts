@@ -4,25 +4,25 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createMockRequest, createMockReply } from '../../shared/tests/test-utils.js'
-import { HTTP_STATUS } from '../../shared/constants.js'
+import { createMockRequest, createMockReply } from '../../shared/tests/test-utils'
+import { HTTP_STATUS } from '../../shared/constants'
 
 // Mock the health service before importing the controller
-vi.mock('../health.service.js', () => ({
+vi.mock('../health.service', () => ({
   getHealthStatus: vi.fn(),
   getLivenessStatus: vi.fn(),
   getReadinessStatus: vi.fn(),
 }))
 
 // Mock the shared modules
-vi.mock('../../shared/errors.js', () => ({
+vi.mock('../../shared/errors', () => ({
   createInternalServerError: vi.fn(),
   createErrorResponse: vi.fn(),
 }))
 
-import { getHealth, getHealthz, getLiveness, getReadiness } from '../health.controller.js'
-import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service.js'
-import { createInternalServerError, createErrorResponse } from '../../shared/errors.js'
+import { getHealth, getHealthz, getLiveness, getReadiness } from '../health.controller'
+import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service'
+import { createInternalServerError, createErrorResponse } from '../../shared/errors'
 
 describe('Health Controller', () => {
   beforeEach(() => {

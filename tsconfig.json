@@ -35,7 +35,11 @@
       "@/users/*": ["src/users/*"],
       "@/health/*": ["src/health/*"],
       "@/shared/*": ["src/shared/*"],
-      "@/images/*": ["src/images/*"]
+      "@/images/*": ["src/images/*"],
+      "@/archetypes/*": ["src/archetypes/*"],
+      "@/perks/*": ["src/perks/*"],
+      "@/races/*": ["src/races/*"],
+      "@/skills/*": ["src/skills/*"]
     }
   },
   "include": ["src/**/*", "tests/**/*"],

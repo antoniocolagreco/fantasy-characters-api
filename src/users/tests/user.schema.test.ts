@@ -12,7 +12,7 @@ import {
   UserResponseSchema,
   UserListQuerySchema,
   UserIdParamSchema,
-} from '@/users/user.schema.js'
+} from '@/users/user.schema'
 
 // Setup AJV for schema validation
 const ajv = new Ajv({ strict: false })

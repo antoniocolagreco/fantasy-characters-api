@@ -1,20 +1,15 @@
-import sharp from 'sharp'
 import { Prisma, Visibility } from '@prisma/client'
-import { db } from '../shared/database/index.js'
-import { createNotFoundError, createValidationError } from '../shared/errors.js'
-import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
+import sharp from 'sharp'
+import { CONTENT_TYPES, IMAGE } from '../shared/constants'
+import { db } from '../shared/database/index'
+import { createNotFoundError, createValidationError } from '../shared/errors'
 import {
-  rbacService,
-  type AuthUser,
   enforceAuthentication,
   enforcePermission,
-} from '../shared/rbac.service.js'
-import type {
-  ImageCreateData,
-  ImageResponse,
-  ImageStatsData,
-  ImageBinaryData,
-} from './image.types.js'
+  rbacService,
+  type AuthUser,
+} from '../shared/rbac.service'
+import type { ImageBinaryData, ImageCreateData, ImageResponse, ImageStatsData } from './image.types'
 
 // Utility functions
 const validateImageFile = (file: Buffer, mimeType: string): void => {
@@ -97,7 +92,7 @@ type ImageWithoutBlob = {
 }
 
 const transformImageToResponse = (
-  image: Prisma.ImageGetPayload<{}> | ImageWithoutBlob,
+  image: Prisma.ImageGetPayload<Record<string, never>> | ImageWithoutBlob,
 ): ImageResponse => {
   const response: ImageResponse = {
     id: image.id,

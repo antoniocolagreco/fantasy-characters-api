@@ -10,7 +10,7 @@ import {
   logConfig,
   securityConfig,
   serverConfig,
-} from '@/shared/config.js'
+} from '@/shared/config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 describe('Environment Configuration', () => {

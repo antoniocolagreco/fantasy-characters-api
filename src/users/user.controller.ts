@@ -11,15 +11,15 @@ import {
   updateUser,
   deleteUser,
   getUserStats,
-} from './user.service.js'
-import { createErrorResponse, isAppError, createInternalServerError } from '../shared/errors.js'
-import { HTTP_STATUS, MESSAGES } from '../shared/constants.js'
+} from './user.service'
+import { createErrorResponse, isAppError, createInternalServerError } from '../shared/errors'
+import { HTTP_STATUS, MESSAGES } from '../shared/constants'
 import type {
   CreateUserRequest,
   UpdateUserRequest,
   UserListQuery,
   UserIdParam,
-} from './user.schema.js'
+} from './user.schema'
 
 /**
  * Create a new user

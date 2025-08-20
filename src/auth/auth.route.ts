@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify'
-import { authController } from './auth.controller.js'
-import { authenticateUser, requireActiveUser } from './auth.middleware.js'
+import { authController } from './auth.controller'
+import { authenticateUser, requireActiveUser } from './auth.middleware'
 import {
   RegisterUserSchema,
   LoginUserSchema,
@@ -11,7 +11,7 @@ import {
   UserProfileSchema,
   SuccessMessageSchema,
   CommonAuthResponses,
-} from './auth.schema.js'
+} from './auth.schema'
 
 /**
  * Authentication routes plugin

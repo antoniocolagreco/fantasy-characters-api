@@ -1,19 +1,12 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
-import {
-  createTag,
-  findTagById,
-  updateTag,
-  deleteTag,
-  listTags,
-  getTagStats,
-} from './tag.service.js'
+import { createTag, findTagById, updateTag, deleteTag, listTags, getTagStats } from './tag.service'
 import type {
   CreateTagData,
   UpdateTagData,
   ListTagsQuery,
   TagResponse,
   TagStatsData,
-} from './tag.types.js'
+} from './tag.types'
 
 // Create a new tag
 export const createTagHandler = async (

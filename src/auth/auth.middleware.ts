@@ -1,7 +1,7 @@
 import type { FastifyRequest } from 'fastify'
-import { verifyAccessToken, extractTokenFromHeader } from './jwt.utils.js'
-import { getUserProfile } from './auth.service.js'
-import { createUnauthorizedError, createForbiddenError } from '../shared/errors.js'
+import { verifyAccessToken, extractTokenFromHeader } from './jwt.utils'
+import { getUserProfile } from './auth.service'
+import { createUnauthorizedError, createForbiddenError } from '../shared/errors'
 
 /**
  * Authentication middleware to verify JWT tokens

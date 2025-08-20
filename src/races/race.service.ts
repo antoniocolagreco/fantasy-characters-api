@@ -1,20 +1,20 @@
 import { Visibility } from '@prisma/client'
-import { db } from '../shared/database/index.js'
-import { createNotFoundError, createConflictError } from '../shared/errors.js'
-import { PAGINATION } from '../shared/constants.js'
+import { db } from '../shared/database/index'
+import { createNotFoundError, createConflictError } from '../shared/errors'
+import { PAGINATION } from '../shared/constants'
 import {
   rbacService,
   type AuthUser,
   enforceAuthentication,
   enforcePermission,
-} from '../shared/rbac.service.js'
+} from '../shared/rbac.service'
 import type {
   CreateRaceData,
   UpdateRaceData,
   RaceResponse,
   RaceStatsData,
   ListRacesQuery,
-} from './race.types.js'
+} from './race.types'
 
 // Type for database race
 type RaceWithCounts = {

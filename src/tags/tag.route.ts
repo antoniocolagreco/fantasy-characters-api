@@ -6,7 +6,7 @@ import {
   deleteTagHandler,
   listTagsHandler,
   getTagStatsHandler,
-} from './tag.controller.js'
+} from './tag.controller'
 import {
   createTagRouteSchema,
   updateTagRouteSchema,
@@ -14,8 +14,8 @@ import {
   deleteTagRouteSchema,
   listTagsRouteSchema,
   tagStatsRouteSchema,
-} from './tag.schema.js'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+} from './tag.schema'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
 
 export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/tags - List tags with pagination and filtering

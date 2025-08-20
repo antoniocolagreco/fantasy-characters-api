@@ -3,8 +3,8 @@
  * Provides health status information about the application
  */
 
-import { healthConfig } from '@/shared/config.js'
-import { getDatabaseHealth } from '../shared/database/index.js'
+import { healthConfig } from '@/shared/config'
+import { getDatabaseHealth } from '../shared/database/index'
 
 export type HealthStatus = 'healthy' | 'unhealthy' | 'degraded'
 

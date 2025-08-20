@@ -8,7 +8,7 @@ import {
   createHealthTestApp,
   expectHealthResponse,
   expectJsonResponse,
-} from '../../shared/tests/test-utils.js'
+} from '../../shared/tests/test-utils'
 
 describe('Health Routes', () => {
   describe('Route registration', () => {

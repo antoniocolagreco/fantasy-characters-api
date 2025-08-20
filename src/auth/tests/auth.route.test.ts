@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { app } from '@/app.js'
+import { app } from '@/app'
 import { Role } from '@prisma/client'
-import { cleanupTestData, createTestUser } from '@/shared/tests/test-utils.js'
+import { cleanupTestData, createTestUser } from '@/shared/tests/test-utils'
 
 describe('Auth Routes Integration Tests', () => {
   beforeEach(async () => {

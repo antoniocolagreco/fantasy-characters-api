@@ -4,7 +4,7 @@
  */
 
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
-import { getHealth, getHealthz, getLiveness, getReadiness } from './health.controller.js'
+import { getHealth, getHealthz, getLiveness, getReadiness } from './health.controller'
 
 export const healthRoutes = async (
   fastify: FastifyInstance,

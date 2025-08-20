@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { app } from '@/app.js'
-import { cleanupTestData, createTestUser } from '@/shared/tests/test-utils.js'
+import { app } from '@/app'
+import { cleanupTestData, createTestUser } from '@/shared/tests/test-utils'
 
 describe('Refresh Token Tests', () => {
   beforeEach(async () => {

@@ -5,7 +5,7 @@
  */
 
 import type { Role, Visibility } from '@prisma/client'
-import { createForbiddenError, createUnauthorizedError } from './errors.js'
+import { createForbiddenError, createUnauthorizedError } from './errors'
 
 export type AuthUser = {
   id: string

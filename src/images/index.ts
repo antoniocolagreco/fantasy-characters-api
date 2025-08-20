@@ -1,4 +1,4 @@
-export { imageRoutes } from './image.route.js'
-export * as imageService from './image.service.js'
-export * as imageController from './image.controller.js'
-export * from './image.schema.js'
+export { imageRoutes } from './image.route'
+export * as imageService from './image.service'
+export * as imageController from './image.controller'
+export * from './image.schema'

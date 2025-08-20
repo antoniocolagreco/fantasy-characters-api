@@ -1,14 +1,14 @@
 import bcrypt from 'bcrypt'
-import { db } from '../shared/database/index.js'
+import { db } from '../shared/database/index'
 import {
   createBadRequestError,
   createUnauthorizedError,
   createNotFoundError,
   createConflictError,
   createInternalServerError,
-} from '../shared/errors.js'
+} from '../shared/errors'
 import { Role } from '@prisma/client'
-import { verifyRefreshToken } from './jwt.utils.js'
+import { verifyRefreshToken } from './jwt.utils'
 import type {
   RegisterUserType,
   LoginUserType,
@@ -17,7 +17,7 @@ import type {
   UserProfileType,
   RefreshTokenType,
   TokenResponseType,
-} from './auth.schema.js'
+} from './auth.schema'
 
 // Password hashing configuration
 const SALT_ROUNDS = 12
@@ -496,7 +496,7 @@ export const refreshAccessToken = async (
   const user = await validateRefreshToken(refreshData)
 
   // Generate new tokens
-  const { createTokenResponse } = await import('./jwt.utils.js')
+  const { createTokenResponse } = await import('./jwt.utils')
   const tokenResponse = createTokenResponse(user)
 
   // Store the new refresh token

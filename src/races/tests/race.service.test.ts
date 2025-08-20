@@ -6,9 +6,9 @@ import {
   deleteRace,
   listRaces,
   getRaceStats,
-} from '../race.service.js'
-import { db } from '../../shared/database/index.js'
-import type { AuthUser } from '../../shared/rbac.service.js'
+} from '../race.service'
+import { db } from '../../shared/database/index'
+import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser

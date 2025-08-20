@@ -4,17 +4,17 @@
  */
 
 import { User, Role, Prisma } from '@prisma/client'
-import { db } from '../shared/database/index.js'
-import { rbacService, enforcePermission } from '../shared/rbac.service.js'
-import type { UserProfileType } from '../auth/auth.schema.js'
+import { db } from '../shared/database/index'
+import { rbacService, enforcePermission } from '../shared/rbac.service'
+import type { UserProfileType } from '../auth/auth.schema'
 import {
   createNotFoundError,
   createConflictError,
   createValidationError,
   createInternalServerError,
   isAppError,
-} from '../shared/errors.js'
-import { VALIDATION, PAGINATION } from '../shared/constants.js'
+} from '../shared/errors'
+import { VALIDATION, PAGINATION } from '../shared/constants'
 import type {
   CreateUserRequest,
   UpdateUserRequest,
@@ -22,7 +22,7 @@ import type {
   UserResponse,
   UserListResponse,
   UserStatsResponse,
-} from './user.schema.js'
+} from './user.schema'
 
 /**
  * Transform database user to API response format

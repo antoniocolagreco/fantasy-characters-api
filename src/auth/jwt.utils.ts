@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
-import { securityConfig } from '@/shared/config.js'
-import { createUnauthorizedError, createInternalServerError } from '../shared/errors.js'
-import type { UserProfileType, TokenResponseType } from './auth.schema.js'
+import { securityConfig } from '@/shared/config'
+import { createUnauthorizedError, createInternalServerError } from '../shared/errors'
+import type { UserProfileType, TokenResponseType } from './auth.schema'
 
 // JWT payload interface
 export type JwtPayload = {

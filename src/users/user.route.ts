@@ -11,7 +11,7 @@ import {
   updateUserHandler,
   deleteUserHandler,
   getUserStatsHandler,
-} from './user.controller.js'
+} from './user.controller'
 import {
   CreateUserRequestSchema,
   UpdateUserRequestSchema,
@@ -19,8 +19,8 @@ import {
   UserListQuerySchema,
   UserIdParamSchema,
   UserStatsResponseSchema,
-} from './user.schema.js'
-import { authenticateUser, requireRoles, requireSelfOrAdmin } from '../auth/auth.middleware.js'
+} from './user.schema'
+import { authenticateUser, requireRoles, requireSelfOrAdmin } from '../auth/auth.middleware'
 
 export const userRoutes = async (
   fastify: FastifyInstance,

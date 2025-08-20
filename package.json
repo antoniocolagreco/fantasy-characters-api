@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:coverage:enforce": "pnpm run test:coverage && node scripts/check-coverage.mjs",
     "test:ui": "vitest --ui",
     "lint": "eslint ./**/*.ts",
     "lint:fix": "eslint ./**/*.ts --fix",

@@ -6,9 +6,9 @@ import {
   deleteSkill,
   listSkills,
   getSkillStats,
-} from '../skill.service.js'
-import { db } from '../../shared/database/index.js'
-import type { AuthUser } from '../../shared/rbac.service.js'
+} from '../skill.service'
+import { db } from '../../shared/database/index'
+import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser

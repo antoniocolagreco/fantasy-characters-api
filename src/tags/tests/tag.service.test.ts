@@ -1,14 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-  createTag,
-  findTagById,
-  updateTag,
-  deleteTag,
-  listTags,
-  getTagStats,
-} from '../tag.service.js'
-import { db } from '../../shared/database/index.js'
-import type { AuthUser } from '../../shared/rbac.service.js'
+import { createTag, findTagById, updateTag, deleteTag, listTags, getTagStats } from '../tag.service'
+import { db } from '../../shared/database/index'
+import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser

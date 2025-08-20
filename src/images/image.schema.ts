@@ -1,5 +1,5 @@
 import { Type } from '@sinclair/typebox'
-import { IMAGE, CONTENT_TYPES } from '../shared/constants.js'
+import { IMAGE, CONTENT_TYPES } from '../shared/constants'
 
 // Base image schema for database
 export const imageSchema = Type.Object(

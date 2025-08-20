@@ -6,7 +6,7 @@ import {
   deleteSkillRouteSchema,
   listSkillsRouteSchema,
   skillStatsRouteSchema,
-} from './skill.schema.js'
+} from './skill.schema'
 import {
   createSkillHandler,
   getSkillHandler,
@@ -14,8 +14,8 @@ import {
   deleteSkillHandler,
   listSkillsHandler,
   getSkillStatsHandler,
-} from './skill.controller.js'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+} from './skill.controller'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
 
 export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/skills - List skills with pagination and filtering

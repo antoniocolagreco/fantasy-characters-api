@@ -10,9 +10,9 @@ import {
   revokeRefreshToken,
   refreshAccessToken,
   revokeAllUserRefreshTokens,
-} from './auth.service.js'
-import { createTokenResponse } from './jwt.utils.js'
-import { createSuccessMessage } from '../shared/utils.js'
+} from './auth.service'
+import { createTokenResponse } from './jwt.utils'
+import { createSuccessMessage } from '../shared/utils'
 import type {
   RegisterUserType,
   LoginUserType,
@@ -23,7 +23,7 @@ import type {
   TokenResponseType,
   UserProfileType,
   SuccessMessageType,
-} from './auth.schema.js'
+} from './auth.schema'
 
 /**
  * Register a new user

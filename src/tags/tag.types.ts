@@ -1,6 +1,6 @@
 import type { Tag, Visibility } from '@prisma/client'
 import type { Static } from '@sinclair/typebox'
-import type { createTagSchema, updateTagSchema, listTagsQuerySchema } from './tag.schema.js'
+import type { createTagSchema, updateTagSchema, listTagsQuerySchema } from './tag.schema'
 
 // Database model types
 export type TagModel = Tag

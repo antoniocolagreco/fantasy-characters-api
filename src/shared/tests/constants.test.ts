@@ -22,7 +22,7 @@ import {
   CHARACTER_DEFAULTS,
   API_VERSIONS,
   LOG_LEVELS,
-} from '@/shared/constants.js'
+} from '@/shared/constants'
 
 describe('Application Constants', () => {
   describe('HTTP_STATUS', () => {

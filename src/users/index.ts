@@ -4,7 +4,7 @@
  */
 
 // Routes
-export { userRoutes } from './user.route.js'
+export { userRoutes } from './user.route'
 
 // Controllers
 export {
@@ -13,7 +13,7 @@ export {
   getUsersListHandler,
   updateUserHandler,
   deleteUserHandler,
-} from './user.controller.js'
+} from './user.controller'
 
 // Services
 export {
@@ -24,7 +24,7 @@ export {
   deleteUser,
   getUserByEmail,
   userExists,
-} from './user.service.js'
+} from './user.service'
 
 // Schemas and types
 export {
@@ -35,7 +35,7 @@ export {
   UserListResponseSchema,
   UserIdParamSchema,
   UserRoleSchema,
-} from './user.schema.js'
+} from './user.schema'
 
 export type {
   CreateUserRequest,
@@ -45,4 +45,4 @@ export type {
   UserListResponse,
   UserIdParam,
   UserRole,
-} from './user.schema.js'
+} from './user.schema'

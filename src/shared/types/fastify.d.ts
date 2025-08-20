@@ -1,5 +1,5 @@
-import type { UserProfileType } from '../auth/auth.schema.js'
-import type { JwtPayload } from '../auth/jwt.utils.js'
+import type { UserProfileType } from '../auth/auth.schema'
+import type { JwtPayload } from '../auth/jwt.utils'
 
 // Extend FastifyRequest to include authentication information
 declare module 'fastify' {

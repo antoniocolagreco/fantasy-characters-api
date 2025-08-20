@@ -6,9 +6,9 @@ import {
   deletePerk,
   listPerks,
   getPerkStats,
-} from '../perk.service.js'
-import { db } from '../../shared/database/index.js'
-import type { AuthUser } from '../../shared/rbac.service.js'
+} from '../perk.service'
+import { db } from '../../shared/database/index'
+import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser

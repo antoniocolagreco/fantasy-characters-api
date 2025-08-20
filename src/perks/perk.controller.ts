@@ -6,14 +6,14 @@ import {
   deletePerk,
   listPerks,
   getPerkStats,
-} from './perk.service.js'
+} from './perk.service'
 import type {
   CreatePerkData,
   UpdatePerkData,
   ListPerksQuery,
   PerkResponse,
   PerkStatsData,
-} from './perk.types.js'
+} from './perk.types'
 
 // Create a new perk
 export const createPerkHandler = async (

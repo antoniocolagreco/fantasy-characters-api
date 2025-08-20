@@ -49,7 +49,7 @@ import {
   isNumber,
   isBoolean,
   isObject,
-} from '@/shared/utils.js'
+} from '@/shared/utils'
 
 describe('Utility Functions', () => {
   describe('String utilities', () => {

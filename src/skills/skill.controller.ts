@@ -6,14 +6,14 @@ import {
   deleteSkill,
   listSkills,
   getSkillStats,
-} from './skill.service.js'
+} from './skill.service'
 import type {
   CreateSkillData,
   UpdateSkillData,
   ListSkillsQuery,
   SkillResponse,
   SkillStatsData,
-} from './skill.types.js'
+} from './skill.types'
 
 // Create a new skill
 export const createSkillHandler = async (

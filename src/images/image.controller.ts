@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from 'fastify'
-import * as imageService from './image.service.js'
+import * as imageService from './image.service'
 
 // Controllers
 export const uploadImage = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {

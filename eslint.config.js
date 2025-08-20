@@ -8,8 +8,9 @@
 import js from '@eslint/js'
 import typescript from '@typescript-eslint/eslint-plugin'
 import typescriptParser from '@typescript-eslint/parser'
-import prettier from 'eslint-plugin-prettier'
 import prettierConfig from 'eslint-config-prettier'
+import importPlugin from 'eslint-plugin-import'
+import prettier from 'eslint-plugin-prettier'
 import unicorn from 'eslint-plugin-unicorn'
 
 // ============================================================================
@@ -141,6 +142,29 @@ const typescriptRules = {
 }
 
 // ============================================================================
+// IMPORT RULES
+// (Requirement: In TypeScript files, imports that explicitly include an extension must error; other files ignore)
+// We'll declare a placeholder here; actual restriction is applied inside the TS override to limit scope.
+// ============================================================================
+const importRules = {
+  'no-restricted-imports': [
+    'error',
+    {
+      patterns: [
+        {
+          group: ['**/*.ts', '**/*.tsx'],
+          message: 'Import paths should not include .ts or .tsx extensions',
+        },
+        {
+          group: ['**/*.js', '**/*.jsx', '**/*.mjs', '**/*.cjs'],
+          message: 'Import paths should not include .js extensions in TypeScript files',
+        },
+      ],
+    },
+  ],
+}
+
+// ============================================================================
 // UNICORN RULES (Code Quality & Modern JavaScript)
 // ============================================================================
 const unicornRules = {
@@ -201,10 +225,14 @@ export default [
       '@typescript-eslint': typescript,
       prettier: prettier,
       unicorn: unicorn,
+      import: importPlugin,
     },
     rules: {
+      // TypeScript recommended rules (manually included for ESLint v9 compatibility)
+      ...typescript.configs.recommended.rules,
       ...typescriptRules,
       ...unicornRules,
+      ...importRules,
       ...generalRules,
 
       // Prettier integration
@@ -222,6 +250,17 @@ export default [
       // Relaxed rules for test files
       'no-console': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      'no-restricted-imports': 'off', // Allow any imports in test files
+    },
+  },
+
+  // For plain JavaScript files we don't enforce the import/extensions rule
+  // (the TypeScript override above will enforce it for .ts/.tsx files).
+  {
+    files: ['**/*.js', '**/*.cjs', '**/*.mjs'],
+    rules: {
+      // Ensure the restriction is not applied to JS files
+      'no-restricted-imports': 'off',
     },
   },
 

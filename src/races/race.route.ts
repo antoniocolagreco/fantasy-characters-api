@@ -6,7 +6,7 @@ import {
   deleteRaceRouteSchema,
   listRacesRouteSchema,
   raceStatsRouteSchema,
-} from './race.schema.js'
+} from './race.schema'
 import {
   createRaceHandler,
   getRaceHandler,
@@ -14,8 +14,8 @@ import {
   deleteRaceHandler,
   listRacesHandler,
   getRaceStatsHandler,
-} from './race.controller.js'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+} from './race.controller'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
 
 export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/races - List races with pagination and filtering

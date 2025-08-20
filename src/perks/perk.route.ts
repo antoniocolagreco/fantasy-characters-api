@@ -6,7 +6,7 @@ import {
   deletePerkRouteSchema,
   listPerksRouteSchema,
   perkStatsRouteSchema,
-} from './perk.schema.js'
+} from './perk.schema'
 import {
   createPerkHandler,
   getPerkHandler,
@@ -14,8 +14,8 @@ import {
   deletePerkHandler,
   listPerksHandler,
   getPerkStatsHandler,
-} from './perk.controller.js'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+} from './perk.controller'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
 
 export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/perks - List perks with pagination and filtering

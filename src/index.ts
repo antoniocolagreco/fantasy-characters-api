@@ -3,8 +3,8 @@
  * Starts the Fastify server with all configured plugins and routes
  */
 
-import { app } from './app.js'
-import { environment } from '@/shared/config.js'
+import { app } from './app'
+import { environment } from '@/shared/config'
 
 const start = async (): Promise<void> => {
   try {

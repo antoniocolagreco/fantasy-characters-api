@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { FastifyInstance } from 'fastify'
-import { db } from '../../shared/database/index.js'
-import { app } from '../../app.js'
+import { db } from '../../shared/database/index'
+import { app } from '../../app'
 
 describe('Skill Controller', () => {
   let fastify: FastifyInstance

@@ -4,9 +4,9 @@
  */
 
 import { FastifyRequest, FastifyReply } from 'fastify'
-import { getHealthStatus, getLivenessStatus, getReadinessStatus } from './health.service.js'
-import { createInternalServerError, createErrorResponse } from '../shared/errors.js'
-import { HTTP_STATUS } from '../shared/constants.js'
+import { getHealthStatus, getLivenessStatus, getReadinessStatus } from './health.service'
+import { createInternalServerError, createErrorResponse } from '../shared/errors'
+import { HTTP_STATUS } from '../shared/constants'
 
 // Standard health check (comprehensive)
 export const getHealth = async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {

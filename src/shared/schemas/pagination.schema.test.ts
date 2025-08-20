@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { ListPaginationQuerySchema, type ListPagination } from './pagination.schema.js'
+import { ListPaginationQuerySchema, type ListPagination } from './pagination.schema'
 
 // Helper type for schema property access
 type SchemaProperty = {

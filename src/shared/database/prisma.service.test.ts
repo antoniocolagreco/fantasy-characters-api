@@ -6,7 +6,7 @@ import {
   testDatabaseConnection,
   getDatabaseHealth,
   executeTransaction,
-} from './prisma.service.js'
+} from './prisma.service'
 
 // Mock console methods to avoid log noise in tests
 vi.spyOn(console, 'log').mockImplementation(() => {})

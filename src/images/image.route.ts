@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify'
-import * as imageController from './image.controller.js'
+import * as imageController from './image.controller'
 import {
   getImageResponseSchema,
   deleteImageResponseSchema,
@@ -11,8 +11,8 @@ import {
   listImagesQuerySchema,
   listImagesResponseSchema,
   imageStatsResponseSchema,
-} from './image.schema.js'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware.js'
+} from './image.schema'
+import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
 
 export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // List images
