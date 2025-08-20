@@ -19,6 +19,7 @@ import { healthRoutes } from './health/health.route.js'
 import { imageRoutes } from './images/image.route.js'
 import { connectDatabase, disconnectDatabase } from './shared/database/index.js'
 import { errorHandler, notFoundHandler } from './shared/errors.js'
+import { skillRoutes } from './skills/skill.route.js'
 import { tagRoutes } from './tags/tag.route.js'
 import { userRoutes } from './users/user.route.js'
 
@@ -233,8 +234,10 @@ const registerRoutes = async (): Promise<void> => {
       // Tag routes (Chapter 6)
       await fastify.register(tagRoutes, { prefix: '/tags' })
 
+      // Skills routes (Chapter 7)
+      await fastify.register(skillRoutes, { prefix: '/skills' })
+
       // Future routes will be added here in subsequent chapters:
-      // - Skills routes (Chapter 7)
       // - Perks routes (Chapter 8)
       // - Races routes (Chapter 9)
       // - Archetypes routes (Chapter 10)

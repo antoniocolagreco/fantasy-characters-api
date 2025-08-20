@@ -1,0 +1,5 @@
+export { skillRoutes } from './skill.route.js'
+export * from './skill.controller.js'
+export * from './skill.service.js'
+export * from './skill.schema.js'
+export * from './skill.types.js'

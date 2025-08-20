@@ -144,7 +144,7 @@ describe('JWT Utils', () => {
         accessToken: mockToken,
         refreshToken: mockToken,
         tokenType: 'Bearer',
-        expiresIn: '15m',
+        expiresIn: '7d',
         user: {
           id: mockUser.id,
           email: mockUser.email,
