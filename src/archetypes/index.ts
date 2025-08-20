@@ -1,0 +1,5 @@
+export * from './archetype.schema'
+export * from './archetype.types'
+export * from './archetype.service'
+export * from './archetype.controller'
+export * from './archetype.route'

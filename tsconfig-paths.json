@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./dist",
+    "paths": {
+      "@/*": ["./*"],
+      "@/auth/*": ["./auth/*"],
+      "@/users/*": ["./users/*"],
+      "@/health/*": ["./health/*"],
+      "@/shared/*": ["./shared/*"],
+      "@/images/*": ["./images/*"],
+      "@/archetypes/*": ["./archetypes/*"],
+      "@/perks/*": ["./perks/*"],
+      "@/races/*": ["./races/*"],
+      "@/skills/*": ["./skills/*"]
+    }
+  }
+}

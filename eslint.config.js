@@ -244,7 +244,19 @@ export default [
   {
     files: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
     languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+        project: './tsconfig.test.json',
+      },
       globals: vitestGlobals,
+    },
+    plugins: {
+      '@typescript-eslint': typescript,
+      prettier: prettier,
+      unicorn: unicorn,
+      import: importPlugin,
     },
     rules: {
       // Relaxed rules for test files

@@ -14,6 +14,7 @@ import swaggerUi from '@fastify/swagger-ui'
 import Fastify from 'fastify'
 
 import { apiConfig, environment, logConfig, securityConfig } from '@/shared/config'
+import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
 import { healthRoutes } from './health/health.route'
 import { imageRoutes } from './images/image.route'
@@ -245,8 +246,10 @@ const registerRoutes = async (): Promise<void> => {
       // Races routes (Chapter 9)
       await fastify.register(raceRoutes, { prefix: '/races' })
 
+      // Archetypes routes (Chapter 10)
+      await fastify.register(archetypeRoutes, { prefix: '/archetypes' })
+
       // Future routes will be added here in subsequent chapters:
-      // - Archetypes routes (Chapter 10)
       // - Items routes (Chapter 11)
       // - Characters routes (Chapter 12)
     },
