@@ -18,6 +18,7 @@ import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
 import { healthRoutes } from './health/health.route'
 import { imageRoutes } from './images/image.route'
+import { itemRoutes } from './items/item.route'
 import { perkRoutes } from './perks/perk.route'
 import { raceRoutes } from './races/race.route'
 import { connectDatabase, disconnectDatabase } from './shared/database/index'
@@ -249,8 +250,10 @@ const registerRoutes = async (): Promise<void> => {
       // Archetypes routes (Chapter 10)
       await fastify.register(archetypeRoutes, { prefix: '/archetypes' })
 
+      // Items routes (Chapter 11)
+      await fastify.register(itemRoutes, { prefix: '/items' })
+
       // Future routes will be added here in subsequent chapters:
-      // - Items routes (Chapter 11)
       // - Characters routes (Chapter 12)
     },
     { prefix: apiConfig.prefix },
