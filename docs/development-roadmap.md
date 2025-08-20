@@ -5,20 +5,20 @@ chapter is self-contained and can be completed independently.
 
 ## 🎯 Current Status (Aggiornato: Agosto 2025)
 
-**Chapters Completati**: 1-7 (Foundation → Skills) + RBAC Security  
-**Test Coverage**: 97.99% Skills System | 96.67% Overall Project  
+**Chapters Completati**: 1-8 (Foundation → Perks) + RBAC Security  
+**Test Coverage**: 97.31% Perks System | 97.05% Overall Project  
 **Database**: Prisma ORM con SQLite, schema completo implementato  
 **Security**: RBAC implementato con JWT + Refresh Tokens, controllo accessi granulare  
 **Features Ready**: User Management, Authentication, Image Upload System, Tags System, Skills  
-System, Role-Based Security
+System, Perks System, Role-Based Security
 
-**Prossimo Capitolo**: Chapter 8 - Perks System 🌟
+**Prossimo Capitolo**: Chapter 9 - Races System 🧝
 
 ---
 
 ## Current Features Implemented
 
-### ✅ Chapter 1-7 Completati (96.67% Overall Test Coverage)
+### ✅ Chapter 1-8 Completati (97.05% Overall Test Coverage)
 
 1. **🚀 Project Foundation**: Fastify server, TypeScript, testing framework, Docker
 2. **🗄️ Database Foundation**: Complete Prisma schema with all models, migrations, RBAC system
@@ -28,10 +28,12 @@ System, Role-Based Security
 6. **🏷️ Tags System**: Complete CRUD, search, statistics, cleanup, RBAC integration
 7. **⚡ Skills System**: Complete CRUD, level requirements, usage validation, advanced  
    statistics (97.99% coverage)
+8. **🌟 Perks System**: Complete CRUD, level requirements, character advantages system,  
+   statistics (97.31% coverage)
 
-### 🔄 Next Phase: Chapter 8 - Perks System
+### 🔄 Next Phase: Chapter 9 - Races System
 
-**Ready to implement**: Perk CRUD operations, level requirements, character advantages system
+**Ready to implement**: Race CRUD operations, attribute modifiers, character race system
 
 ---
 
@@ -52,11 +54,11 @@ System, Role-Based Security
 - Service layer with complete business logic
 - Controller with appropriate error handling
 - Routes integrated with auth/validation middleware
-- Test coverage >90% (Current: 96.67% Overall | 97.99% Skills)
+- Test coverage >90% (Current: 97.05% Overall | 97.31% Perks)
 - Swagger documentation updated
 - Structured logging with Pino implemented
 
-**Status**: ✅ Tutti i Quality Gates soddisfatti fino al Chapter 7 (Skills System + RBAC Security)
+**Status**: ✅ Tutti i Quality Gates soddisfatti fino al Chapter 8 (Perks System + RBAC Security)
 
 ---
 
@@ -212,23 +214,23 @@ System, Role-Based Security
 
 ---
 
-## Chapter 8: Perks System 🌟
+## Chapter 8: Perks System 🌟 ✅
 
 **Objective**: Character advantages and disadvantages system
 
 ### Tasks
 
-- [ ] **TASK-8.1**: Create Perk TypeBox schemas (create, update, response, filters)
-- [ ] **TASK-8.2**: Implement perk creation service with name uniqueness and RBAC validation
-- [ ] **TASK-8.3**: Implement perk retrieval service with filtering
-- [ ] **TASK-8.4**: Implement perk update service with validation and RBAC checks
-- [ ] **TASK-8.5**: Implement perk deletion service with character usage validation
-- [ ] **TASK-8.6**: Create perk statistics service (count, usage, level distribution)
-- [ ] **TASK-8.7**: Create perk CRUD controller with proper error handling
-- [ ] **TASK-8.8**: Create perk routes with authentication and role-based middleware
-- [ ] **TASK-8.9**: Write unit tests for perk service layer and business logic
-- [ ] **TASK-8.10**: Write integration tests for perk API endpoints and character integration
-- [ ] **TASK-8.11**: Update OpenAPI documentation with perk endpoints and schemas
+- [x] **TASK-8.1**: Create Perk TypeBox schemas (create, update, response, filters)
+- [x] **TASK-8.2**: Implement perk creation service with name uniqueness and RBAC validation
+- [x] **TASK-8.3**: Implement perk retrieval service with filtering
+- [x] **TASK-8.4**: Implement perk update service with validation and RBAC checks
+- [x] **TASK-8.5**: Implement perk deletion service with character usage validation
+- [x] **TASK-8.6**: Create perk statistics service (count, usage, level distribution)
+- [x] **TASK-8.7**: Create perk CRUD controller with proper error handling
+- [x] **TASK-8.8**: Create perk routes with authentication and role-based middleware
+- [x] **TASK-8.9**: Write unit tests for perk service layer and business logic
+- [x] **TASK-8.10**: Write integration tests for perk API endpoints and character integration
+- [x] **TASK-8.11**: Update OpenAPI documentation with perk endpoints and schemas
 
 ---
 

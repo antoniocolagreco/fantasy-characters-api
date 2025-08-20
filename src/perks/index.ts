@@ -1,0 +1,5 @@
+export { perkRoutes } from './perk.route.js'
+export * from './perk.controller.js'
+export * from './perk.service.js'
+export * from './perk.schema.js'
+export * from './perk.types.js'
