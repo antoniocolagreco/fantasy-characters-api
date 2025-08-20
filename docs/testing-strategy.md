@@ -7,7 +7,6 @@ Each feature directory contains its own tests organized by type in a dedicated `
 1. **Unit Tests**: Testing isolated functions and services
 2. **Integration Tests**: Testing feature endpoints and controllers
 3. **Schema Tests**: Testing input validation with TypeBox
-4. **E2E Tests**: Testing complete feature workflows
 
 ## Testing Principles
 
@@ -44,8 +43,7 @@ src/
 │       ├── feature.controller.test.ts  # Unit tests for HTTP layer
 │       ├── feature.service.test.ts     # Unit tests for business logic
 │       ├── feature.route.test.ts       # Integration tests for endpoints
-│       ├── feature.schema.test.ts      # Unit tests for validation
-│       └── feature.e2e.test.ts         # End-to-end feature tests
+│       └── feature.schema.test.ts      # Unit tests for validation
 ```
 
 ## Test Categories

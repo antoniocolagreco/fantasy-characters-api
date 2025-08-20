@@ -5,20 +5,20 @@ chapter is self-contained and can be completed independently.
 
 ## 🎯 Current Status (Aggiornato: Agosto 2025)
 
-**Chapters Completati**: 1-8 (Foundation → Perks) + RBAC Security  
-**Test Coverage**: 97.31% Perks System | 97.05% Overall Project  
+**Chapters Completati**: 1-9 (Foundation → Races) + RBAC Security ✅  
+**Test Coverage**: 97.35% Overall Project (All Service Layers Complete)  
 **Database**: Prisma ORM con SQLite, schema completo implementato  
 **Security**: RBAC implementato con JWT + Refresh Tokens, controllo accessi granulare  
 **Features Ready**: User Management, Authentication, Image Upload System, Tags System, Skills  
-System, Perks System, Role-Based Security
+System, Perks System, **Races System Complete**, Role-Based Security
 
-**Prossimo Capitolo**: Chapter 9 - Races System 🧝
+**Prossimo Capitolo**: Chapter 10 - Archetypes System 🛡️
 
 ---
 
 ## Current Features Implemented
 
-### ✅ Chapter 1-8 Completati (97.05% Overall Test Coverage)
+### ✅ Chapter 1-9 Completati (97%+ Overall Test Coverage)
 
 1. **🚀 Project Foundation**: Fastify server, TypeScript, testing framework, Docker
 2. **🗄️ Database Foundation**: Complete Prisma schema with all models, migrations, RBAC system
@@ -30,12 +30,32 @@ System, Perks System, Role-Based Security
    statistics (97.99% coverage)
 8. **🌟 Perks System**: Complete CRUD, level requirements, character advantages system,  
    statistics (97.31% coverage)
+9. **🧝 Races System**: Complete CRUD, attribute modifiers, usage validation, statistics,  
+   RBAC integration, filtering by modifiers, comprehensive test coverage (99.19% coverage) ✅
 
-### 🔄 Next Phase: Chapter 9 - Races System
+### 🔄 Next Phase: Chapter 10 - Archetypes System
 
-**Ready to implement**: Race CRUD operations, attribute modifiers, character race system
+**Ready to implement**: Archetype CRUD operations, race requirements, character class system
 
 ---
+
+## Chapter 9: Races System 🧝 ✅
+
+**Objective**: Fantasy races with attribute modifiers
+
+### Tasks
+
+- [x] **TASK-9.1**: Create Race TypeBox schemas (create, update, response, filters)
+- [x] **TASK-9.2**: Implement race creation service with name uniqueness and RBAC validation
+- [x] **TASK-9.3**: Implement race retrieval service with filtering and stat comparisons
+- [x] **TASK-9.4**: Implement race update service with modifier validation and RBAC checks
+- [x] **TASK-9.5**: Implement race deletion service with character usage validation
+- [x] **TASK-9.6**: Create race statistics service (count, usage, popular modifiers)
+- [x] **TASK-9.7**: Create race CRUD controller with modifier validation
+- [x] **TASK-9.8**: Create race routes with authentication and role-based middleware
+- [x] **TASK-9.9**: Write unit tests for race modifier calculations and validation
+- [x] **TASK-9.10**: Write integration tests for race API endpoints and character creation
+- [x] **TASK-9.11**: Update OpenAPI documentation with race endpoints and modifier schemas
 
 ## Core Development Process per Chapter
 
