@@ -101,15 +101,35 @@ export const listCharactersHandler = async (
     ...(query.perkId && { perkId: query.perkId }),
     ...(query.tagId && { tagId: query.tagId }),
 
-    // Convert numeric filters if present
+    // Convert level and age filters
     ...(query.minLevel && { minLevel: parseInt(query.minLevel, 10) }),
     ...(query.maxLevel && { maxLevel: parseInt(query.maxLevel, 10) }),
     ...(query.minAge && { minAge: parseInt(query.minAge, 10) }),
     ...(query.maxAge && { maxAge: parseInt(query.maxAge, 10) }),
+    ...(query.minExperience && { minExperience: parseInt(query.minExperience, 10) }),
+    ...(query.maxExperience && { maxExperience: parseInt(query.maxExperience, 10) }),
+
+    // Convert primary attribute filters
     ...(query.minStrength && { minStrength: parseInt(query.minStrength, 10) }),
     ...(query.maxStrength && { maxStrength: parseInt(query.maxStrength, 10) }),
+    ...(query.minConstitution && { minConstitution: parseInt(query.minConstitution, 10) }),
+    ...(query.maxConstitution && { maxConstitution: parseInt(query.maxConstitution, 10) }),
+    ...(query.minDexterity && { minDexterity: parseInt(query.minDexterity, 10) }),
+    ...(query.maxDexterity && { maxDexterity: parseInt(query.maxDexterity, 10) }),
     ...(query.minIntelligence && { minIntelligence: parseInt(query.minIntelligence, 10) }),
     ...(query.maxIntelligence && { maxIntelligence: parseInt(query.maxIntelligence, 10) }),
+    ...(query.minWisdom && { minWisdom: parseInt(query.minWisdom, 10) }),
+    ...(query.maxWisdom && { maxWisdom: parseInt(query.maxWisdom, 10) }),
+    ...(query.minCharisma && { minCharisma: parseInt(query.minCharisma, 10) }),
+    ...(query.maxCharisma && { maxCharisma: parseInt(query.maxCharisma, 10) }),
+
+    // Convert core attribute filters
+    ...(query.minHealth && { minHealth: parseInt(query.minHealth, 10) }),
+    ...(query.maxHealth && { maxHealth: parseInt(query.maxHealth, 10) }),
+    ...(query.minMana && { minMana: parseInt(query.minMana, 10) }),
+    ...(query.maxMana && { maxMana: parseInt(query.maxMana, 10) }),
+    ...(query.minStamina && { minStamina: parseInt(query.minStamina, 10) }),
+    ...(query.maxStamina && { maxStamina: parseInt(query.maxStamina, 10) }),
 
     // Pass enums directly - TypeScript knows these are correct from schema validation
     ...(query.sex && { sex: query.sex as 'MALE' | 'FEMALE' }),
@@ -121,6 +141,10 @@ export const listCharactersHandler = async (
 
     // Pass search string directly
     ...(query.search && { search: query.search }),
+
+    // Add sorting options
+    ...(query.sortBy && { sortBy: query.sortBy }),
+    ...(query.sortOrder && { sortOrder: query.sortOrder as 'asc' | 'desc' }),
   }
 
   const currentUser = request.authUser || null

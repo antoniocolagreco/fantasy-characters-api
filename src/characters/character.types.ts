@@ -92,6 +92,24 @@ export type CharacterResponse = {
     rarity: string
     slot: string
   }>
+  equipment?: {
+    id: string
+    characterId: string
+    head: { id: string; name: string; description: string | null } | null
+    face: { id: string; name: string; description: string | null } | null
+    chest: { id: string; name: string; description: string | null } | null
+    legs: { id: string; name: string; description: string | null } | null
+    feet: { id: string; name: string; description: string | null } | null
+    hands: { id: string; name: string; description: string | null } | null
+    rightHand: { id: string; name: string; description: string | null } | null
+    leftHand: { id: string; name: string; description: string | null } | null
+    rightRing: { id: string; name: string; description: string | null } | null
+    leftRing: { id: string; name: string; description: string | null } | null
+    amulet: { id: string; name: string; description: string | null } | null
+    belt: { id: string; name: string; description: string | null } | null
+    backpack: { id: string; name: string; description: string | null } | null
+    cloak: { id: string; name: string; description: string | null } | null
+  } | null
 
   // Owner and metadata
   ownerId: string
@@ -180,8 +198,24 @@ export type CharacterFilters = {
   maxAge?: number
   minStrength?: number
   maxStrength?: number
+  minConstitution?: number
+  maxConstitution?: number
+  minDexterity?: number
+  maxDexterity?: number
   minIntelligence?: number
   maxIntelligence?: number
+  minWisdom?: number
+  maxWisdom?: number
+  minCharisma?: number
+  maxCharisma?: number
+  minHealth?: number
+  maxHealth?: number
+  minMana?: number
+  maxMana?: number
+  minStamina?: number
+  maxStamina?: number
+  minExperience?: number
+  maxExperience?: number
 
   // Visibility and ownership
   visibility?: Visibility
@@ -192,6 +226,10 @@ export type CharacterFilters = {
 
   // Include relations
   includeRelations?: boolean
+
+  // Sorting
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 // Character statistics types

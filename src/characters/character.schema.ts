@@ -68,6 +68,25 @@ const SimpleItemSchema = Type.Object({
   slot: Type.String(),
 })
 
+const SimpleEquipmentSchema = Type.Object({
+  id: Type.String(),
+  characterId: Type.String(),
+  head: Type.Union([SimpleItemSchema, Type.Null()]),
+  face: Type.Union([SimpleItemSchema, Type.Null()]),
+  chest: Type.Union([SimpleItemSchema, Type.Null()]),
+  legs: Type.Union([SimpleItemSchema, Type.Null()]),
+  feet: Type.Union([SimpleItemSchema, Type.Null()]),
+  hands: Type.Union([SimpleItemSchema, Type.Null()]),
+  rightHand: Type.Union([SimpleItemSchema, Type.Null()]),
+  leftHand: Type.Union([SimpleItemSchema, Type.Null()]),
+  rightRing: Type.Union([SimpleItemSchema, Type.Null()]),
+  leftRing: Type.Union([SimpleItemSchema, Type.Null()]),
+  amulet: Type.Union([SimpleItemSchema, Type.Null()]),
+  belt: Type.Union([SimpleItemSchema, Type.Null()]),
+  backpack: Type.Union([SimpleItemSchema, Type.Null()]),
+  cloak: Type.Union([SimpleItemSchema, Type.Null()]),
+})
+
 const SimpleUserSchema = Type.Object({
   id: Type.String(),
   email: Type.String(),
@@ -166,6 +185,7 @@ export const CharacterResponseSchema = Type.Object(
     perks: Type.Optional(Type.Array(SimplePerkSchema)),
     tags: Type.Optional(Type.Array(SimpleTagSchema)),
     inventory: Type.Optional(Type.Array(SimpleItemSchema)),
+    equipment: Type.Optional(Type.Union([SimpleEquipmentSchema, Type.Null()])),
 
     // Owner and metadata
     ownerId: Type.String({ description: 'Owner user ID' }),
@@ -636,6 +656,136 @@ export const ListCharactersQuerySchema = Type.Object(
         enum: ['true', 'false'],
         default: 'false',
         description: 'Include race, archetype, and other related data (string boolean)',
+      }),
+    ),
+
+    // Sorting options
+    sortBy: Type.Optional(
+      Type.String({
+        enum: [
+          'name',
+          'level',
+          'age',
+          'experience',
+          'health',
+          'mana',
+          'stamina',
+          'strength',
+          'constitution',
+          'dexterity',
+          'intelligence',
+          'wisdom',
+          'charisma',
+          'createdAt',
+          'updatedAt',
+        ],
+        default: 'createdAt',
+        description: 'Field to sort by',
+      }),
+    ),
+    sortOrder: Type.Optional(
+      Type.String({
+        enum: ['asc', 'desc'],
+        default: 'desc',
+        description: 'Sort order (ascending or descending)',
+      }),
+    ),
+
+    // Enhanced attribute filtering
+    minConstitution: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by minimum constitution (string number)',
+      }),
+    ),
+    maxConstitution: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by maximum constitution (string number)',
+      }),
+    ),
+    minDexterity: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by minimum dexterity (string number)',
+      }),
+    ),
+    maxDexterity: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by maximum dexterity (string number)',
+      }),
+    ),
+    minWisdom: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by minimum wisdom (string number)',
+      }),
+    ),
+    maxWisdom: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by maximum wisdom (string number)',
+      }),
+    ),
+    minCharisma: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by minimum charisma (string number)',
+      }),
+    ),
+    maxCharisma: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by maximum charisma (string number)',
+      }),
+    ),
+    minHealth: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by minimum health (string number)',
+      }),
+    ),
+    maxHealth: Type.Optional(
+      Type.String({
+        pattern: '^[1-9]\\d*$',
+        description: 'Filter by maximum health (string number)',
+      }),
+    ),
+    minMana: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by minimum mana (string number)',
+      }),
+    ),
+    maxMana: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by maximum mana (string number)',
+      }),
+    ),
+    minStamina: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by minimum stamina (string number)',
+      }),
+    ),
+    maxStamina: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by maximum stamina (string number)',
+      }),
+    ),
+    minExperience: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by minimum experience (string number)',
+      }),
+    ),
+    maxExperience: Type.Optional(
+      Type.String({
+        pattern: '^\\d+$',
+        description: 'Filter by maximum experience (string number)',
       }),
     ),
   },

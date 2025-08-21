@@ -37,6 +37,24 @@ const characterInclude = {
   perks: true,
   tags: true,
   inventory: true,
+  equipment: {
+    include: {
+      head: true,
+      face: true,
+      chest: true,
+      legs: true,
+      feet: true,
+      hands: true,
+      rightHand: true,
+      leftHand: true,
+      rightRing: true,
+      leftRing: true,
+      amulet: true,
+      belt: true,
+      backpack: true,
+      cloak: true,
+    },
+  },
 } as const
 
 // Type for database character with all includes
@@ -113,6 +131,24 @@ type CharacterWithIncludes = {
     rarity: string
     slot: string
   }>
+  equipment?: {
+    id: string
+    characterId: string
+    head: { id: string; name: string; description: string | null } | null
+    face: { id: string; name: string; description: string | null } | null
+    chest: { id: string; name: string; description: string | null } | null
+    legs: { id: string; name: string; description: string | null } | null
+    feet: { id: string; name: string; description: string | null } | null
+    hands: { id: string; name: string; description: string | null } | null
+    rightHand: { id: string; name: string; description: string | null } | null
+    leftHand: { id: string; name: string; description: string | null } | null
+    rightRing: { id: string; name: string; description: string | null } | null
+    leftRing: { id: string; name: string; description: string | null } | null
+    amulet: { id: string; name: string; description: string | null } | null
+    belt: { id: string; name: string; description: string | null } | null
+    backpack: { id: string; name: string; description: string | null } | null
+    cloak: { id: string; name: string; description: string | null } | null
+  } | null
   visibility: Visibility
   createdAt: Date
   updatedAt: Date
@@ -398,6 +434,26 @@ const transformCharacterToResponse = (character: CharacterWithIncludes): Charact
           slot: item.slot,
         }),
       ) || [],
+    equipment: character.equipment
+      ? {
+          id: character.equipment.id,
+          characterId: character.equipment.characterId,
+          head: character.equipment.head,
+          face: character.equipment.face,
+          chest: character.equipment.chest,
+          legs: character.equipment.legs,
+          feet: character.equipment.feet,
+          hands: character.equipment.hands,
+          rightHand: character.equipment.rightHand,
+          leftHand: character.equipment.leftHand,
+          rightRing: character.equipment.rightRing,
+          leftRing: character.equipment.leftRing,
+          amulet: character.equipment.amulet,
+          belt: character.equipment.belt,
+          backpack: character.equipment.backpack,
+          cloak: character.equipment.cloak,
+        }
+      : null,
     visibility: character.visibility,
     createdAt: character.createdAt,
     updatedAt: character.updatedAt,
@@ -509,22 +565,44 @@ const buildCharacterFilters = (filters: CharacterFilters, currentUser: AuthUser 
   if (filters.ownerId) where.ownerId = filters.ownerId
   if (filters.sex) where.sex = filters.sex
 
+  // Level filtering
   if (filters.minLevel || filters.maxLevel) {
     where.level = {}
     if (filters.minLevel) where.level.gte = filters.minLevel
     if (filters.maxLevel) where.level.lte = filters.maxLevel
   }
 
+  // Age filtering
   if (filters.minAge || filters.maxAge) {
     where.age = {}
     if (filters.minAge) where.age.gte = filters.minAge
     if (filters.maxAge) where.age.lte = filters.maxAge
   }
 
+  // Experience filtering
+  if (filters.minExperience || filters.maxExperience) {
+    where.experience = {}
+    if (filters.minExperience) where.experience.gte = filters.minExperience
+    if (filters.maxExperience) where.experience.lte = filters.maxExperience
+  }
+
+  // Primary attribute filtering
   if (filters.minStrength || filters.maxStrength) {
     where.strength = {}
     if (filters.minStrength) where.strength.gte = filters.minStrength
     if (filters.maxStrength) where.strength.lte = filters.maxStrength
+  }
+
+  if (filters.minConstitution || filters.maxConstitution) {
+    where.constitution = {}
+    if (filters.minConstitution) where.constitution.gte = filters.minConstitution
+    if (filters.maxConstitution) where.constitution.lte = filters.maxConstitution
+  }
+
+  if (filters.minDexterity || filters.maxDexterity) {
+    where.dexterity = {}
+    if (filters.minDexterity) where.dexterity.gte = filters.minDexterity
+    if (filters.maxDexterity) where.dexterity.lte = filters.maxDexterity
   }
 
   if (filters.minIntelligence || filters.maxIntelligence) {
@@ -533,6 +611,38 @@ const buildCharacterFilters = (filters: CharacterFilters, currentUser: AuthUser 
     if (filters.maxIntelligence) where.intelligence.lte = filters.maxIntelligence
   }
 
+  if (filters.minWisdom || filters.maxWisdom) {
+    where.wisdom = {}
+    if (filters.minWisdom) where.wisdom.gte = filters.minWisdom
+    if (filters.maxWisdom) where.wisdom.lte = filters.maxWisdom
+  }
+
+  if (filters.minCharisma || filters.maxCharisma) {
+    where.charisma = {}
+    if (filters.minCharisma) where.charisma.gte = filters.minCharisma
+    if (filters.maxCharisma) where.charisma.lte = filters.maxCharisma
+  }
+
+  // Core attribute filtering
+  if (filters.minHealth || filters.maxHealth) {
+    where.health = {}
+    if (filters.minHealth) where.health.gte = filters.minHealth
+    if (filters.maxHealth) where.health.lte = filters.maxHealth
+  }
+
+  if (filters.minMana || filters.maxMana) {
+    where.mana = {}
+    if (filters.minMana) where.mana.gte = filters.minMana
+    if (filters.maxMana) where.mana.lte = filters.maxMana
+  }
+
+  if (filters.minStamina || filters.maxStamina) {
+    where.stamina = {}
+    if (filters.minStamina) where.stamina.gte = filters.minStamina
+    if (filters.maxStamina) where.stamina.lte = filters.maxStamina
+  }
+
+  // Search filtering
   if (filters.search) {
     where.OR = [
       {
@@ -549,6 +659,49 @@ const buildCharacterFilters = (filters: CharacterFilters, currentUser: AuthUser 
   }
 
   return where
+}
+
+/**
+ * Build character sorting options for database queries
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const buildCharacterSorting = (filters: CharacterFilters): any => {
+  const sortBy = filters.sortBy || 'createdAt'
+  const sortOrder = filters.sortOrder || 'desc'
+
+  // Validate sort field
+  const validSortFields = [
+    'name',
+    'level',
+    'age',
+    'experience',
+    'health',
+    'mana',
+    'stamina',
+    'strength',
+    'constitution',
+    'dexterity',
+    'intelligence',
+    'wisdom',
+    'charisma',
+    'createdAt',
+    'updatedAt',
+  ]
+
+  if (!validSortFields.includes(sortBy)) {
+    // Default sorting if invalid field
+    return [{ createdAt: 'desc' }, { name: 'asc' }]
+  }
+
+  // Special case for multi-field sorting
+  if (sortBy === 'name') {
+    return [{ name: sortOrder }, { createdAt: 'desc' }]
+  } else if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
+    return [{ [sortBy]: sortOrder }, { name: 'asc' }]
+  } else {
+    // For attribute sorting, add secondary sorts for consistency
+    return [{ [sortBy]: sortOrder }, { name: 'asc' }, { createdAt: 'desc' }]
+  }
 }
 
 /**
@@ -569,13 +722,14 @@ export const listCharacters = async (
   const skip = (page - 1) * limit
 
   const where = buildCharacterFilters(filters, currentUser)
+  const orderBy = buildCharacterSorting(filters)
 
   const [characters, total] = await Promise.all([
     prisma.character.findMany({
       where,
       skip,
       take: limit,
-      orderBy: [{ createdAt: 'desc' }, { name: 'asc' }],
+      orderBy,
       include: filters.includeRelations
         ? characterInclude
         : { race: true, archetype: true, owner: true },
