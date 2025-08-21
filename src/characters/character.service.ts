@@ -777,31 +777,31 @@ export const updateCharacter = async (
     }
   }
 
-  // Prepare update data (simplified for now)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateData: any = { ...data }
+  // Prepare update data (exclude relationship IDs from direct update)
+  const { skillIds, perkIds, tagIds, ...updateData } = data
 
   // Update character with relationships
   const updatedCharacter = await prisma.character.update({
     where: { id },
     data: {
       ...updateData,
-      ...(data.skillIds && {
+      ...(skillIds && {
         skills: {
-          set: data.skillIds.map(skillId => ({ id: skillId })),
+          set: skillIds.map(skillId => ({ id: skillId })),
         },
       }),
-      ...(data.perkIds && {
+      ...(perkIds && {
         perks: {
-          set: data.perkIds.map(perkId => ({ id: perkId })),
+          set: perkIds.map(perkId => ({ id: perkId })),
         },
       }),
-      ...(data.tagIds && {
+      ...(tagIds && {
         tags: {
-          set: data.tagIds.map(tagId => ({ id: tagId })),
+          set: tagIds.map(tagId => ({ id: tagId })),
         },
       }),
-    },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any,
     include: characterInclude,
   })
 

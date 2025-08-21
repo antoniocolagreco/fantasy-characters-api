@@ -510,4 +510,108 @@ describe('Character Service', () => {
       expect(result.totalCount).toBeGreaterThanOrEqual(3)
     })
   })
+
+  // Additional tests to improve branch coverage
+  describe('listCharacters edge cases', () => {
+    it('should test various filter combinations for branch coverage', async () => {
+      // Create characters with different attributes to test filters
+      const char1 = await createCharacter(
+        createValidCharacterData({
+          name: 'Test Filter 1',
+          experience: 1500,
+          strength: 15,
+          constitution: 14,
+          dexterity: 16,
+          intelligence: 18,
+          wisdom: 17,
+          charisma: 19,
+        }),
+        testUser,
+      )
+
+      // Update the character to have specific health/mana/stamina values
+      await db.character.update({
+        where: { id: char1.id },
+        data: { health: 120, mana: 130, stamina: 110 },
+      })
+
+      // Test each attribute filter branch
+      let result = await listCharacters({ minExperience: 1000 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxExperience: 2000 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minStrength: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxStrength: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minConstitution: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxConstitution: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minDexterity: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxDexterity: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minIntelligence: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxIntelligence: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minWisdom: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxWisdom: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minCharisma: 10 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxCharisma: 20 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      // Test core attribute filters
+      result = await listCharacters({ minHealth: 100 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxHealth: 150 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minMana: 100 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxMana: 150 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ minStamina: 100 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ maxStamina: 150 }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      // Test other filters
+      result = await listCharacters({ sex: 'MALE' }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ visibility: 'PUBLIC' }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ ownerId: testUser.id }, testUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ includeOrphaned: true }, adminUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+
+      result = await listCharacters({ includeOrphaned: false }, adminUser)
+      expect(result.characters.length).toBeGreaterThanOrEqual(1)
+    })
+  })
 })
