@@ -15,7 +15,11 @@ import {
   listRacesHandler,
   getRaceStatsHandler,
 } from './race.controller'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/races - List races with pagination and filtering
@@ -23,6 +27,7 @@ export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listRacesRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listRacesHandler,
   })
 
@@ -40,6 +45,7 @@ export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getRaceRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getRaceHandler,
   })
 

@@ -15,7 +15,11 @@ import {
   listTagsRouteSchema,
   tagStatsRouteSchema,
 } from './tag.schema'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/tags - List tags with pagination and filtering
@@ -23,6 +27,7 @@ export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listTagsRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listTagsHandler,
   })
 
@@ -40,6 +45,7 @@ export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getTagRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getTagHandler,
   })
 

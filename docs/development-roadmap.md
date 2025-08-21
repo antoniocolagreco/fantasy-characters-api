@@ -51,11 +51,13 @@ chapter is self-contained and can be completed independently.
        (@fastify/cors, @fastify/helmet, @fastify/swagger)
 - [x] **TASK-1.3**: Setup TypeScript strict configuration with proper paths and compilation targets
 - [x] **TASK-1.4**: Configure ESLint with TypeScript rules and Prettier integration
-- [x] **TASK-1.5**: Setup Vitest configuration for unit and integration testing
+- [ ] **TASK-1.5**: Setup Vitest configuration for unit and integration testing
 - [x] **TASK-1.6**: Create Docker development environment with multi-stage builds
 - [x] **TASK-1.7**: Implement health check endpoints (`/api/health`, `/api/healthz`, `/api/ready`,
       `/api/live`)
 - [x] **TASK-1.8**: Configure Pino logger with structured JSON output and log levels
+- [ ] **TASK-1.9**: Write unit tests for health check endpoints and core utilities
+- [ ] **TASK-1.10**: Write integration tests for server startup and basic functionality
 
 ---
 
@@ -82,6 +84,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-2.15**: Implement database connection utilities with error handling
 - [x] **TASK-2.16**: Add ownership system (ownerId fields) to all content models
 - [x] **TASK-2.17**: Add visibility enum (PUBLIC, PRIVATE, HIDDEN) to all content models
+- [ ] **TASK-2.18**: Write unit tests for database connection utilities and error handling
+- [ ] **TASK-2.19**: Write integration tests for database migrations and seed scripts
 
 ---
 
@@ -103,6 +107,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-3.10**: Implement RBAC service with role-based permission checking
 - [x] **TASK-3.11**: Create authentication middleware with user context injection
 - [x] **TASK-3.12**: Implement session management with device tracking
+- [ ] **TASK-3.13**: Write unit tests for authentication services and JWT utilities
+- [ ] **TASK-3.14**: Write integration tests for authentication endpoints and flows
 
 ---
 
@@ -122,8 +128,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-4.8**: Create user statistics service (count, roles, activity)
 - [x] **TASK-4.9**: Create user CRUD controller with proper error handling
 - [x] **TASK-4.10**: Create user routes with authentication and authorization middleware
-- [x] **TASK-4.11**: Write comprehensive unit tests for user service layer
-- [x] **TASK-4.12**: Write integration tests for user API endpoints
+- [ ] **TASK-4.11**: Write comprehensive unit tests for user service layer
+- [ ] **TASK-4.12**: Write integration tests for user API endpoints
 
 ---
 
@@ -148,8 +154,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-5.13**: Create image statistics service (count, storage usage, formats)
 - [x] **TASK-5.14**: Create image CRUD controller with multipart handling
 - [x] **TASK-5.15**: Create image routes with file upload and authentication middleware
-- [x] **TASK-5.16**: Write unit tests for image processing and validation services
-- [x] **TASK-5.17**: Write integration tests for image upload and serving endpoints
+- [ ] **TASK-5.16**: Write unit tests for image processing and validation services
+- [ ] **TASK-5.17**: Write integration tests for image upload and serving endpoints
 
 ---
 
@@ -167,8 +173,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-6.6**: Create tag statistics service (count, usage statistics)
 - [x] **TASK-6.7**: Create tag CRUD controller with proper error handling
 - [x] **TASK-6.8**: Create tag routes with authentication and authorization middleware
-- [x] **TASK-6.9**: Write unit tests for tag service layer with edge cases
-- [x] **TASK-6.10**: Write integration tests for tag API endpoints and relationships
+- [ ] **TASK-6.9**: Write unit tests for tag service layer with edge cases
+- [ ] **TASK-6.10**: Write integration tests for tag API endpoints and relationships
 
 ---
 
@@ -186,8 +192,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-7.6**: Create skill statistics service (count, usage, level distribution)
 - [x] **TASK-7.7**: Create skill CRUD controller with comprehensive error handling
 - [x] **TASK-7.8**: Create skill routes with authentication and role-based middleware
-- [x] **TASK-7.9**: Write unit tests for skill service layer and business logic
-- [x] **TASK-7.10**: Write integration tests for skill API endpoints and relationships
+- [ ] **TASK-7.9**: Write unit tests for skill service layer and business logic
+- [ ] **TASK-7.10**: Write integration tests for skill API endpoints and relationships
 - [x] **TASK-7.11**: Update OpenAPI documentation with skill endpoints and schemas
 
 ---
@@ -206,8 +212,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-8.6**: Create perk statistics service (count, usage, level distribution)
 - [x] **TASK-8.7**: Create perk CRUD controller with proper error handling
 - [x] **TASK-8.8**: Create perk routes with authentication and role-based middleware
-- [x] **TASK-8.9**: Write unit tests for perk service layer and business logic
-- [x] **TASK-8.10**: Write integration tests for perk API endpoints and character integration
+- [ ] **TASK-8.9**: Write unit tests for perk service layer and business logic
+- [ ] **TASK-8.10**: Write integration tests for perk API endpoints and character integration
 - [x] **TASK-8.11**: Update OpenAPI documentation with perk endpoints and schemas
 
 ---
@@ -226,8 +232,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-9.6**: Create race statistics service (count, usage, popular modifiers)
 - [x] **TASK-9.7**: Create race CRUD controller with modifier validation
 - [x] **TASK-9.8**: Create race routes with authentication and role-based middleware
-- [x] **TASK-9.9**: Write unit tests for race modifier calculations and validation
-- [x] **TASK-9.10**: Write integration tests for race API endpoints and character creation
+- [ ] **TASK-9.9**: Write unit tests for race modifier calculations and validation
+- [ ] **TASK-9.10**: Write integration tests for race API endpoints and character creation
 - [x] **TASK-9.11**: Update OpenAPI documentation with race endpoints and modifier schemas
 
 ---
@@ -246,8 +252,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-10.6**: Create archetype statistics service (count, usage, race combinations)
 - [x] **TASK-10.7**: Create archetype CRUD controller with relationship validation
 - [x] **TASK-10.8**: Create archetype routes with authentication and role-based middleware
-- [x] **TASK-10.9**: Write unit tests for archetype logic and race requirements
-- [x] **TASK-10.10**: Write integration tests for archetype API and character creation flow
+- [ ] **TASK-10.9**: Write unit tests for archetype logic and race requirements
+- [ ] **TASK-10.10**: Write integration tests for archetype API and character creation flow
 - [x] **TASK-10.11**: Update OpenAPI documentation with archetype endpoints and relationships
 
 ---
@@ -266,8 +272,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-11.6**: Create item statistics service (count by type, rarity distribution)
 - [x] **TASK-11.7**: Create item CRUD controller with type-specific validation
 - [x] **TASK-11.8**: Create item routes with authentication and role-based middleware
-- [x] **TASK-11.9**: Write unit tests for item service layer and validation logic
-- [x] **TASK-11.10**: Write integration tests for item API endpoints and equipment system
+- [ ] **TASK-11.9**: Write unit tests for item service layer and validation logic
+- [ ] **TASK-11.10**: Write integration tests for item API endpoints and equipment system
 - [x] **TASK-11.11**: Update OpenAPI documentation with item endpoints and type schemas
 
 ---
@@ -285,8 +291,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-12.5**: Create equipment statistics service (GET /equipment/stats)
 - [x] **TASK-12.6**: Add equipment endpoints to character controller
 - [x] **TASK-12.7**: Add equipment routes with character ownership validation
-- [x] **TASK-12.8**: Write unit tests for slot validation and equipment logic
-- [x] **TASK-12.9**: Write integration tests for character equipment operations
+- [ ] **TASK-12.8**: Write unit tests for slot validation and equipment logic
+- [ ] **TASK-12.9**: Write integration tests for character equipment operations
 - [x] **TASK-12.10**: Update OpenAPI documentation with equipment endpoints as character
       sub-resource
 
@@ -306,8 +312,8 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-13.6**: Create character statistics service (count, level distribution, popular builds)
 - [x] **TASK-13.7**: Create character CRUD controller with comprehensive validation
 - [x] **TASK-13.8**: Create character routes with authentication and ownership/visibility checks
-- [x] **TASK-13.9**: Write unit tests for stat calculation engine and validation logic
-- [x] **TASK-13.10**: Write integration tests for character lifecycle and relationships
+- [ ] **TASK-13.9**: Write unit tests for stat calculation engine and validation logic
+- [ ] **TASK-13.10**: Write integration tests for character lifecycle and relationships
 - [x] **TASK-13.11**: Update OpenAPI documentation with character endpoints and stat schemas
 
 ---

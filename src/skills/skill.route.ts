@@ -15,7 +15,11 @@ import {
   listSkillsHandler,
   getSkillStatsHandler,
 } from './skill.controller'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/skills - List skills with pagination and filtering
@@ -23,6 +27,7 @@ export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listSkillsRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listSkillsHandler,
   })
 
@@ -40,6 +45,7 @@ export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getSkillRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getSkillHandler,
   })
 

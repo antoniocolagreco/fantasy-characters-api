@@ -15,7 +15,11 @@ import {
   listItemsHandler,
   getItemStatsHandler,
 } from './item.controller'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/items - List items with pagination and filtering
@@ -23,6 +27,7 @@ export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listItemsRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listItemsHandler,
   })
 
@@ -40,6 +45,7 @@ export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getItemRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getItemHandler,
   })
 

@@ -15,7 +15,11 @@ import {
   listPerksHandler,
   getPerkStatsHandler,
 } from './perk.controller'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/perks - List perks with pagination and filtering
@@ -23,6 +27,7 @@ export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listPerksRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listPerksHandler,
   })
 
@@ -40,6 +45,7 @@ export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getPerkRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getPerkHandler,
   })
 

@@ -12,7 +12,11 @@ import {
   listImagesResponseSchema,
   imageStatsResponseSchema,
 } from './image.schema'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // List images
@@ -27,6 +31,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           200: listImagesResponseSchema,
         },
       },
+      preHandler: [optionalAuthentication],
     },
     imageController.getImagesList,
   )
@@ -86,6 +91,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           404: imageNotFoundSchema,
         },
       },
+      preHandler: [optionalAuthentication],
     },
     imageController.getImageById,
   )

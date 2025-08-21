@@ -33,6 +33,7 @@ import {
 export const characterRoutes = async (fastify: FastifyInstance) => {
   // Get character statistics - public endpoint for basic stats
   fastify.get('/characters/stats', {
+    preHandler: [optionalAuthentication],
     schema: {
       tags: ['Characters'],
       summary: 'Get character statistics',
@@ -52,6 +53,7 @@ export const characterRoutes = async (fastify: FastifyInstance) => {
 
   // List characters with filtering and pagination - public endpoint
   fastify.get('/characters', {
+    preHandler: [optionalAuthentication],
     schema: {
       tags: ['Characters'],
       summary: 'List characters',

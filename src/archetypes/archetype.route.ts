@@ -15,13 +15,18 @@ import {
   listArchetypesHandler,
   getArchetypeStatsHandler,
 } from './archetype.controller'
-import { authenticateUser, requireActiveUser } from '../auth/auth.middleware'
+import {
+  authenticateUser,
+  requireActiveUser,
+  optionalAuthentication,
+} from '../auth/auth.middleware'
 
 export const archetypeRoutes = async (fastify: FastifyInstance): Promise<void> => {
   fastify.route({
     method: 'GET',
     url: '/',
     schema: listArchetypesRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: listArchetypesHandler,
   })
 
@@ -37,6 +42,7 @@ export const archetypeRoutes = async (fastify: FastifyInstance): Promise<void> =
     method: 'GET',
     url: '/:id',
     schema: getArchetypeRouteSchema,
+    preHandler: [optionalAuthentication],
     handler: getArchetypeHandler,
   })
 
