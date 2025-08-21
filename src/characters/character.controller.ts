@@ -1,0 +1,192 @@
+/**
+ * Character controller - HTTP request/response handling
+ * Handles character-related endpoints with proper validation and error handling
+ */
+
+import type { FastifyReply, FastifyRequest } from 'fastify'
+import { errorHandler } from '../shared/errors'
+import { HTTP_STATUS } from '../shared/constants'
+import type {
+  CreateCharacterData,
+  UpdateCharacterData,
+  CharacterFilters,
+  ListCharactersQuery,
+  CharacterResponse,
+} from './character.types'
+import {
+  createCharacter,
+  findCharacterById,
+  listCharacters,
+  updateCharacter,
+  deleteCharacter,
+  getCharacterStats,
+} from './character.service'
+
+type CharacterParams = { id: string }
+
+/**
+ * Create a new character
+ * POST /api/characters
+ */
+export const createCharacterHandler = async (
+  request: FastifyRequest<{ Body: CreateCharacterData }>,
+  reply: FastifyReply,
+) => {
+  try {
+    const currentUser = request.authUser
+    // Request body is already validated by Fastify schema validation
+    const characterData = request.body
+
+    const character = await createCharacter(characterData, currentUser)
+
+    reply.status(HTTP_STATUS.CREATED)
+    return character
+  } catch (error) {
+    return errorHandler(error as Error, request, reply)
+  }
+}
+
+/**
+ * Get character by ID
+ * GET /api/characters/:id
+ */
+export const getCharacterByIdHandler = async (
+  request: FastifyRequest<{ Params: { id: string }; Querystring: { includeRelations?: string } }>,
+  reply: FastifyReply,
+) => {
+  try {
+    const currentUser = request.authUser || null
+    const { id } = request.params
+    const includeRelations = request.query.includeRelations === 'true'
+
+    const character = await findCharacterById(id, currentUser, includeRelations)
+
+    if (!character) {
+      return reply.status(HTTP_STATUS.NOT_FOUND).send({
+        error: 'Not Found',
+        message: 'Character not found',
+        statusCode: 404,
+      })
+    }
+
+    return character
+  } catch (error) {
+    return errorHandler(error as Error, request, reply)
+  }
+}
+export const listCharactersHandler = async (
+  request: FastifyRequest<{ Querystring: ListCharactersQuery }>,
+  _reply: FastifyReply,
+): Promise<{
+  characters: CharacterResponse[]
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}> => {
+  // Convert string query parameters to proper types for service layer
+  const query = request.query
+
+  // Transform string parameters to numbers for service layer
+  const serviceFilters: Partial<CharacterFilters> = {
+    // Convert pagination strings to numbers
+    ...(query.page && { page: parseInt(query.page, 10) }),
+    ...(query.limit && { limit: parseInt(query.limit, 10) }),
+
+    // Pass UUID strings directly
+    ...(query.raceId && { raceId: query.raceId }),
+    ...(query.archetypeId && { archetypeId: query.archetypeId }),
+    ...(query.ownerId && { ownerId: query.ownerId }),
+    ...(query.skillId && { skillId: query.skillId }),
+    ...(query.perkId && { perkId: query.perkId }),
+    ...(query.tagId && { tagId: query.tagId }),
+
+    // Convert numeric filters if present
+    ...(query.minLevel && { minLevel: parseInt(query.minLevel, 10) }),
+    ...(query.maxLevel && { maxLevel: parseInt(query.maxLevel, 10) }),
+    ...(query.minAge && { minAge: parseInt(query.minAge, 10) }),
+    ...(query.maxAge && { maxAge: parseInt(query.maxAge, 10) }),
+    ...(query.minStrength && { minStrength: parseInt(query.minStrength, 10) }),
+    ...(query.maxStrength && { maxStrength: parseInt(query.maxStrength, 10) }),
+    ...(query.minIntelligence && { minIntelligence: parseInt(query.minIntelligence, 10) }),
+    ...(query.maxIntelligence && { maxIntelligence: parseInt(query.maxIntelligence, 10) }),
+
+    // Pass enums directly - TypeScript knows these are correct from schema validation
+    ...(query.sex && { sex: query.sex as 'MALE' | 'FEMALE' }),
+    ...(query.visibility && { visibility: query.visibility as 'PUBLIC' | 'PRIVATE' | 'HIDDEN' }),
+
+    // Convert boolean-like strings
+    ...(query.includeOrphaned && { includeOrphaned: query.includeOrphaned === 'true' }),
+    ...(query.includeRelations && { includeRelations: query.includeRelations === 'true' }),
+
+    // Pass search string directly
+    ...(query.search && { search: query.search }),
+  }
+
+  const currentUser = request.authUser || null
+  return await listCharacters(serviceFilters, currentUser)
+}
+
+/**
+ * Update character
+ * PUT /api/characters/:id
+ */
+export const updateCharacterHandler = async (
+  request: FastifyRequest<{
+    Params: CharacterParams
+    Body: UpdateCharacterData
+  }>,
+  reply: FastifyReply,
+) => {
+  try {
+    // Request params and body are already validated by Fastify schema validation
+    const params = request.params
+    const updateData = request.body
+    const currentUser = request.authUser || null
+
+    const character = await updateCharacter(params.id, updateData, currentUser)
+
+    return character
+  } catch (error) {
+    return errorHandler(error as Error, request, reply)
+  }
+}
+
+/**
+ * Delete character
+ * DELETE /api/characters/:id
+ */
+export const deleteCharacterHandler = async (
+  request: FastifyRequest<{ Params: CharacterParams }>,
+  reply: FastifyReply,
+) => {
+  try {
+    // Request params are already validated by Fastify schema validation
+    const params = request.params
+    const currentUser = request.authUser || null
+
+    await deleteCharacter(params.id, currentUser)
+
+    return reply.status(HTTP_STATUS.NO_CONTENT).send()
+  } catch (error) {
+    return errorHandler(error as Error, request, reply)
+  }
+}
+
+/**
+ * Get character statistics
+ * GET /api/characters/stats
+ */
+export const getCharacterStatsHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const currentUser = request.authUser || null
+    const stats = await getCharacterStats(currentUser)
+
+    return reply.status(HTTP_STATUS.OK).send({
+      success: true,
+      data: stats,
+    })
+  } catch (error) {
+    return errorHandler(error as Error, request, reply)
+  }
+}

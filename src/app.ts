@@ -16,6 +16,7 @@ import Fastify from 'fastify'
 import { apiConfig, environment, logConfig, securityConfig } from './shared/config'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
+import { characterRoutes } from './characters/character.route'
 import equipmentRoutes from './equipment/equipment.route'
 import { healthRoutes } from './health/health.route'
 import { imageRoutes } from './images/image.route'
@@ -258,8 +259,10 @@ const registerRoutes = async (): Promise<void> => {
       // Equipment routes (Chapter 12)
       await fastify.register(equipmentRoutes)
 
+      // Characters routes (Chapter 13)
+      await fastify.register(characterRoutes)
+
       // Future routes will be added here in subsequent chapters:
-      // - Characters routes (Chapter 13)
     },
     { prefix: apiConfig.prefix },
   )
