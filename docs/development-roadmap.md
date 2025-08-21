@@ -343,46 +343,22 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 16: Documentation & Deployment 📚
+## Chapter 16: Project Finalization 🎯
 
-**Objective**: Complete documentation and production deployment
-
-### Tasks
-
-- [ ] **TASK-16.1**: Complete OpenAPI documentation with all endpoints and schemas
-- [ ] **TASK-16.2**: Create comprehensive API usage examples for all features
-- [ ] **TASK-16.3**: Write detailed deployment guides for production environments
-- [ ] **TASK-16.4**: Create production readiness checklist validation
-- [ ] **TASK-16.5**: Create production monitoring dashboard setup
-- [ ] **TASK-16.6**: Write deployment verification tests (smoke tests)
-- [ ] **TASK-16.7**: Create maintenance and troubleshooting documentation
-
----
-
-## Chapter 17: Documentation & Deployment 📚
-
-**Objective**: Complete documentation and production deployment automation
+**Objective**: Essential tasks to make the API production-ready
 
 ### Tasks
 
-- [ ] **TASK-17.1**: Complete OpenAPI documentation with all endpoints and schemas
-- [ ] **TASK-17.2**: Create comprehensive API usage examples for all features
-- [ ] **TASK-17.3**: Write detailed deployment guides for multiple environments
-- [ ] **TASK-17.4**: Implement monitoring setup service (Prometheus, Grafana)
-- [ ] **TASK-17.5**: Create automated backup strategies service (database, configurations)
-- [ ] **TASK-17.6**: Implement performance benchmarking service (continuous monitoring)
-- [ ] **TASK-17.7**: Create production readiness checklist service (validation automation)
-- [ ] **TASK-17.8**: Implement deployment automation pipeline (CI/CD)
-- [ ] **TASK-17.9**: Create infrastructure as code templates (Terraform, Helm)
-- [ ] **TASK-17.10**: Implement health check automation service (comprehensive monitoring)
-- [ ] **TASK-17.11**: Create disaster recovery procedures service (automated failover)
-- [ ] **TASK-17.12**: Implement configuration management service (environment-specific)
-- [ ] **TASK-17.13**: Create production monitoring dashboard (real-time metrics)
-- [ ] **TASK-17.14**: Write deployment verification tests (smoke tests)
-- [ ] **TASK-17.15**: Write production integration tests (end-to-end scenarios)
-- [ ] **TASK-17.16**: Create maintenance and troubleshooting documentation
-
----
+- [ ] **TASK-16.1**: Audit and fix all TODO/FIXME comments in codebase
+- [ ] **TASK-16.2**: Review and optimize database indexes for performance
+- [ ] **TASK-16.3**: Validate all environment variables have proper defaults/validation
+- [ ] **TASK-16.4**: Ensure proper error messages (no stack traces in production)
+- [ ] **TASK-16.5**: Add request/response logging for debugging
+- [ ] **TASK-16.6**: Set up proper CORS configuration for production domains
+- [ ] **TASK-16.7**: Validate Kubernetes manifests work with real deployments
+- [ ] **TASK-16.8**: Create simple backup/restore scripts for SQLite database
+- [ ] **TASK-16.9**: Performance test critical endpoints under load
+- [ ] **TASK-16.10**: Security audit: check for exposed secrets, weak passwords, etc.
 
 ## Development Guidelines
 
