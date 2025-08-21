@@ -37,6 +37,11 @@ export const EnvironmentSchema = Type.Object({
   JWT_SECRET: Type.String({ minLength: 32 }),
   JWT_EXPIRES_IN: Type.String({ default: '7d' }),
 
+  // Argon2 Configuration
+  ARGON2_MEMORY_COST: Type.Number({ minimum: 1024, default: 65536 }),
+  ARGON2_TIME_COST: Type.Number({ minimum: 1, default: 3 }),
+  ARGON2_PARALLELISM: Type.Number({ minimum: 1, default: 4 }),
+
   // Rate Limiting
   RATE_LIMIT_MAX: Type.Number({ minimum: 1, default: 100 }),
   RATE_LIMIT_TIMEWINDOW: Type.Number({ minimum: 1000, default: 60000 }),
@@ -62,6 +67,9 @@ function loadEnvironment(): EnvironmentConfig {
     DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
     JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-key-change-in-production-123456789',
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+    ARGON2_MEMORY_COST: parseInt(process.env.ARGON2_MEMORY_COST || '65536', 10),
+    ARGON2_TIME_COST: parseInt(process.env.ARGON2_TIME_COST || '3', 10),
+    ARGON2_PARALLELISM: parseInt(process.env.ARGON2_PARALLELISM || '4', 10),
     RATE_LIMIT_MAX: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
     RATE_LIMIT_TIMEWINDOW: parseInt(process.env.RATE_LIMIT_TIMEWINDOW || '60000', 10),
     CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
@@ -111,6 +119,12 @@ export const securityConfig = {
   rateLimitMax: environment.RATE_LIMIT_MAX,
   rateLimitTimeWindow: environment.RATE_LIMIT_TIMEWINDOW,
   corsOrigin: environment.CORS_ORIGIN,
+}
+
+export const argon2Config = {
+  memoryCost: environment.ARGON2_MEMORY_COST,
+  timeCost: environment.ARGON2_TIME_COST,
+  parallelism: environment.ARGON2_PARALLELISM,
 }
 
 export const healthConfig = {

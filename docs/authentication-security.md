@@ -8,7 +8,7 @@ The API uses a secure JWT authentication system with the following components:
 
 - **Access Tokens**: Short-lived tokens (15 minutes) for API authentication
 - **Refresh Tokens**: Long-lived tokens (7 days) for token renewal
-- **Password Hashing**: bcrypt with configurable rounds for secure password storage
+- **Password Hashing**: Argon2 with configurable memory, time, and parallelism parameters
 - **Session Management**: Device tracking and revocation capabilities
 
 ### OAuth Integration
@@ -267,7 +267,7 @@ The RBAC service provides granular permission checking:
 
 ### Data Protection
 
-- **Password Security**: bcrypt hashing with configurable salt rounds
+- **Password Security**: Argon2 hashing with configurable memory cost, time cost, and parallelism
 - **Sensitive Data**: Proper handling of PII and credentials
 - **Database Security**: Encrypted connections and access controls
 
@@ -286,7 +286,9 @@ RBAC_ENABLED=true  # Enable in production
 RBAC_ENABLED=false # Disable for testing
 
 # Security
-BCRYPT_ROUNDS=12
+ARGON2_MEMORY_COST=65536
+ARGON2_TIME_COST=3
+ARGON2_PARALLELISM=4
 SESSION_SECRET=your-session-secret
 
 # OAuth (optional)

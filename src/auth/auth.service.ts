@@ -1,5 +1,6 @@
-import bcrypt from 'bcrypt'
+import argon2 from 'argon2'
 import { db } from '../shared/database/index'
+import { argon2Config } from '../shared/config'
 import {
   createBadRequestError,
   createUnauthorizedError,
@@ -19,15 +20,17 @@ import type {
   TokenResponseType,
 } from './auth.schema'
 
-// Password hashing configuration
-const SALT_ROUNDS = 12
-
 /**
- * Hash a password using bcrypt
+ * Hash a password using Argon2
  */
 export const hashPassword = async (password: string): Promise<string> => {
   try {
-    return await bcrypt.hash(password, SALT_ROUNDS)
+    return await argon2.hash(password, {
+      type: argon2.argon2id,
+      memoryCost: argon2Config.memoryCost,
+      timeCost: argon2Config.timeCost,
+      parallelism: argon2Config.parallelism,
+    })
   } catch (_error) {
     throw createInternalServerError('Failed to hash password')
   }
@@ -38,7 +41,7 @@ export const hashPassword = async (password: string): Promise<string> => {
  */
 export const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
   try {
-    return await bcrypt.compare(password, hash)
+    return await argon2.verify(hash, password)
   } catch (_error) {
     throw createInternalServerError('Failed to verify password')
   }

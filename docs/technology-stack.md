@@ -29,7 +29,7 @@
 - **@fastify/session**: Session management for OAuth flows and secure user sessions
 - **@fastify/helmet**: Automatic HTTP security headers
 - **@fastify/rate-limit**: Rate limiting to prevent abuse
-- **bcrypt**: Industry-standard password hashing with configurable rounds
+- **argon2**: Modern password hashing algorithm, winner of the Password Hashing Competition
 
 ## Monitoring & Logging
 

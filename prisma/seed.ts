@@ -1,9 +1,17 @@
 import { PrismaClient, Role, Rarity, Slot, Sex, Visibility } from '@prisma/client'
 import * as fs from 'fs'
 import * as path from 'path'
-import bcrypt from 'bcrypt'
+import argon2 from 'argon2'
 
 const prisma = new PrismaClient()
+
+// Argon2 configuration for seeding
+const argon2Options = {
+  type: argon2.argon2id,
+  memoryCost: 65536,
+  timeCost: 3,
+  parallelism: 4,
+}
 
 // Utility function to read image files
 const readImageFile = (filename: string): Buffer => {
@@ -49,7 +57,7 @@ async function main() {
   const adminUser = await prisma.user.create({
     data: {
       email: 'admin@fantasy-api.com',
-      passwordHash: await bcrypt.hash('admin123', 10),
+      passwordHash: await argon2.hash('admin123', argon2Options),
       role: Role.ADMIN,
       name: 'System Administrator',
       bio: 'System administrator with full access',
@@ -62,7 +70,7 @@ async function main() {
   const moderatorUser = await prisma.user.create({
     data: {
       email: 'moderator@fantasy-api.com',
-      passwordHash: await bcrypt.hash('mod123', 10),
+      passwordHash: await argon2.hash('mod123', argon2Options),
       role: Role.MODERATOR,
       name: 'Content Moderator',
       bio: 'Moderator responsible for content quality',
@@ -75,7 +83,7 @@ async function main() {
   const regularUser = await prisma.user.create({
     data: {
       email: 'user@fantasy-api.com',
-      passwordHash: await bcrypt.hash('user123', 10),
+      passwordHash: await argon2.hash('user123', argon2Options),
       role: Role.USER,
       name: 'Fantasy Player',
       bio: 'Enthusiastic fantasy game player',
@@ -87,7 +95,7 @@ async function main() {
   const gameDesigner = await prisma.user.create({
     data: {
       email: 'designer@fantasy-api.com',
-      passwordHash: await bcrypt.hash('design123', 10),
+      passwordHash: await argon2.hash('design123', argon2Options),
       role: Role.USER,
       name: 'Game Designer',
       bio: 'Creative game designer and world builder',
