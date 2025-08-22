@@ -1,4 +1,4 @@
-import { beforeAll, afterAll } from 'vitest'
+import { beforeAll, afterAll, beforeEach } from 'vitest'
 import { execSync } from 'child_process'
 import { existsSync } from 'fs'
 import path from 'path'
@@ -63,5 +63,16 @@ afterAll(async () => {
     } catch {
       // Ignore cleanup errors
     }
+  }
+})
+
+// Clear cache before each test to ensure test isolation
+beforeEach(async () => {
+  try {
+    // Import and clear cache service
+    const { cacheService } = await import('./src/shared/cache.service')
+    cacheService.clear()
+  } catch {
+    // Ignore if cache service is not available
   }
 })

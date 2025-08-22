@@ -250,6 +250,14 @@ export const cleanupTestData = async (): Promise<void> => {
   try {
     // Delete all users to ensure clean state
     await db.user.deleteMany({})
+
+    // Clear cache to ensure test isolation
+    try {
+      const { cacheService } = await import('../cache.service')
+      cacheService.clear()
+    } catch {
+      // Ignore if cache service is not available
+    }
   } catch (error) {
     // Ignore errors if tables don't exist yet - this can happen during setup
     if (error instanceof Error && error.message.includes('does not exist')) {
