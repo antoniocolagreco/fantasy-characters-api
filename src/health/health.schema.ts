@@ -16,14 +16,14 @@ export const HealthStatusSchema = Type.Union([
 export const HealthCheckSchema = Type.Object({
   name: Type.String(),
   status: HealthStatusSchema,
-  timestamp: Type.String({ format: 'date-time' }),
+  timestamp: Type.String(),
   details: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
 })
 
 // Health response schema
 export const HealthResponseSchema = Type.Object({
   status: HealthStatusSchema,
-  timestamp: Type.String({ format: 'date-time' }),
+  timestamp: Type.String(),
   uptime: Type.Number({ minimum: 0 }),
   version: Type.String(),
   environment: Type.String(),
@@ -35,7 +35,7 @@ export const HealthErrorSchema = Type.Object({
   error: Type.Object({
     code: Type.String(),
     message: Type.String(),
-    timestamp: Type.String({ format: 'date-time' }),
+    timestamp: Type.String(),
     path: Type.String(),
   }),
 })

@@ -6,6 +6,7 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     exclude: ['node_modules', 'dist', 'coverage'],
+    setupFiles: ['./vitest.setup.ts'],
     env: {
       NODE_ENV: 'test',
       DATABASE_URL: 'file:./test.db',
@@ -28,7 +29,6 @@ export default defineConfig({
         'src/**/test-utils.ts',
         'src/shared/config.ts',
         'src/shared/constants.ts',
-        'src/app.ts',
         'src/shared/middleware.ts',
       ],
       thresholds: {

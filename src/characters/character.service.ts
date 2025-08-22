@@ -523,7 +523,7 @@ export const createCharacter = async (
  */
 export const findCharacterById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
   includeRelations = true,
 ): Promise<CharacterResponse | null> => {
   const character = await prisma.character.findUnique({
@@ -547,7 +547,10 @@ export const findCharacterById = async (
  * Build character filter conditions for database queries
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const buildCharacterFilters = (filters: CharacterFilters, currentUser: AuthUser | null): any => {
+const buildCharacterFilters = (
+  filters: CharacterFilters,
+  currentUser: AuthUser | undefined,
+): any => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {}
 
@@ -709,7 +712,7 @@ const buildCharacterSorting = (filters: CharacterFilters): any => {
  */
 export const listCharacters = async (
   filters: CharacterFilters,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   characters: CharacterResponse[]
   total: number
@@ -752,7 +755,7 @@ export const listCharacters = async (
 export const updateCharacter = async (
   id: string,
   data: UpdateCharacterData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<CharacterResponse> => {
   const character = await findCharacterById(id, currentUser)
 
@@ -811,7 +814,10 @@ export const updateCharacter = async (
 /**
  * Delete character with ownership validation
  */
-export const deleteCharacter = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteCharacter = async (
+  id: string,
+  currentUser: AuthUser | undefined,
+): Promise<void> => {
   const character = await findCharacterById(id, currentUser)
 
   if (!character) {
@@ -833,7 +839,9 @@ export const deleteCharacter = async (id: string, currentUser: AuthUser | null):
 /**
  * Get character statistics (simplified for now)
  */
-export const getCharacterStats = async (currentUser: AuthUser | null): Promise<CharacterStats> => {
+export const getCharacterStats = async (
+  currentUser: AuthUser | undefined,
+): Promise<CharacterStats> => {
   const baseWhere = buildCharacterFilters({}, currentUser)
 
   // Get basic counts

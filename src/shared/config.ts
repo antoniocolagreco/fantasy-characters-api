@@ -35,7 +35,7 @@ export const EnvironmentSchema = Type.Object({
 
   // Security (for future chapters)
   JWT_SECRET: Type.String({ minLength: 32 }),
-  JWT_EXPIRES_IN: Type.String({ default: '7d' }),
+  JWT_EXPIRES_IN: Type.String({ default: '15m' }),
 
   // Argon2 Configuration
   ARGON2_MEMORY_COST: Type.Number({ minimum: 1024, default: 65536 }),
@@ -66,7 +66,7 @@ function loadEnvironment(): EnvironmentConfig {
     LOG_LEVEL: process.env.LOG_LEVEL || 'info',
     DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
     JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-key-change-in-production-123456789',
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
     ARGON2_MEMORY_COST: parseInt(process.env.ARGON2_MEMORY_COST || '65536', 10),
     ARGON2_TIME_COST: parseInt(process.env.ARGON2_TIME_COST || '3', 10),
     ARGON2_PARALLELISM: parseInt(process.env.ARGON2_PARALLELISM || '4', 10),

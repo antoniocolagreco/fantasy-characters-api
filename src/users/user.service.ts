@@ -5,8 +5,7 @@
 
 import { User, Role, Prisma } from '@prisma/client'
 import { db } from '../shared/database/index'
-import { rbacService, enforcePermission } from '../shared/rbac.service'
-import type { UserProfileType } from '../auth/auth.schema'
+import { rbacService, enforcePermission, type AuthUser } from '../shared/rbac.service'
 import {
   createNotFoundError,
   createConflictError,
@@ -130,10 +129,7 @@ export const createUser = async (userData: CreateUserRequest): Promise<UserRespo
 /**
  * Get user by ID
  */
-export const getUserById = async (
-  id: string,
-  currentUser?: UserProfileType,
-): Promise<UserResponse> => {
+export const getUserById = async (id: string, currentUser?: AuthUser): Promise<UserResponse> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
     throw createValidationError('Invalid user ID format')
@@ -169,11 +165,11 @@ export const getUserById = async (
  */
 export const getUsersList = async (
   query: UserListQuery,
-  currentUser?: UserProfileType,
+  currentUser?: AuthUser,
 ): Promise<UserListResponse> => {
   // RBAC: Only moderators and admins can list users
   enforcePermission(
-    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.MODERATOR),
+    rbacService.hasRoleOrHigher(currentUser?.role ?? Role.USER, Role.MODERATOR),
     'You do not have permission to list users',
   )
 
@@ -266,7 +262,7 @@ export const getUsersList = async (
 export const updateUser = async (
   id: string,
   updateData: UpdateUserRequest,
-  currentUser?: UserProfileType,
+  currentUser?: AuthUser,
 ): Promise<UserResponse> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
@@ -369,7 +365,7 @@ export const updateUser = async (
 /**
  * Delete user by ID
  */
-export const deleteUser = async (id: string, currentUser?: UserProfileType): Promise<void> => {
+export const deleteUser = async (id: string, currentUser?: AuthUser): Promise<void> => {
   // Validate UUID format
   if (!VALIDATION.UUID_REGEX.test(id)) {
     throw createValidationError('Invalid user ID format')
@@ -407,7 +403,7 @@ export const deleteUser = async (id: string, currentUser?: UserProfileType): Pro
 /**
  * Get user statistics
  */
-export const getUserStats = async (currentUser?: UserProfileType): Promise<UserStatsResponse> => {
+export const getUserStats = async (currentUser?: AuthUser): Promise<UserStatsResponse> => {
   // RBAC: Only admins can view user statistics
   enforcePermission(
     rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN),

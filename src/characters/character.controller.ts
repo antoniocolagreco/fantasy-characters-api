@@ -21,8 +21,14 @@ import {
   deleteCharacter,
   getCharacterStats,
 } from './character.service'
+import type { AuthUser } from '../shared/rbac.service'
 
 type CharacterParams = { id: string }
+
+/**
+ * Convert null to undefined for consistency with service layer
+ */
+const normalizeUser = (user?: AuthUser | null): AuthUser | undefined => user ?? undefined
 
 /**
  * Create a new character
@@ -34,6 +40,11 @@ export const createCharacterHandler = async (
 ) => {
   try {
     const currentUser = request.authUser
+    // Ensure user is authenticated (guaranteed by authenticateUser middleware)
+    if (!currentUser) {
+      throw new Error('User authentication required')
+    }
+
     // Request body is already validated by Fastify schema validation
     const characterData = request.body
 
@@ -59,7 +70,7 @@ export const getCharacterByIdHandler = async (
     const { id } = request.params
     const includeRelations = request.query.includeRelations === 'true'
 
-    const character = await findCharacterById(id, currentUser, includeRelations)
+    const character = await findCharacterById(id, normalizeUser(currentUser), includeRelations)
 
     if (!character) {
       return reply.status(HTTP_STATUS.NOT_FOUND).send({
@@ -148,7 +159,7 @@ export const listCharactersHandler = async (
   }
 
   const currentUser = request.authUser || null
-  return await listCharacters(serviceFilters, currentUser)
+  return await listCharacters(serviceFilters, normalizeUser(currentUser))
 }
 
 /**
@@ -168,7 +179,7 @@ export const updateCharacterHandler = async (
     const updateData = request.body
     const currentUser = request.authUser || null
 
-    const character = await updateCharacter(params.id, updateData, currentUser)
+    const character = await updateCharacter(params.id, updateData, normalizeUser(currentUser))
 
     return character
   } catch (error) {
@@ -189,7 +200,7 @@ export const deleteCharacterHandler = async (
     const params = request.params
     const currentUser = request.authUser || null
 
-    await deleteCharacter(params.id, currentUser)
+    await deleteCharacter(params.id, normalizeUser(currentUser))
 
     return reply.status(HTTP_STATUS.NO_CONTENT).send()
   } catch (error) {
@@ -204,7 +215,7 @@ export const deleteCharacterHandler = async (
 export const getCharacterStatsHandler = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const currentUser = request.authUser || null
-    const stats = await getCharacterStats(currentUser)
+    const stats = await getCharacterStats(normalizeUser(currentUser))
 
     return reply.status(HTTP_STATUS.OK).send({
       success: true,

@@ -49,7 +49,7 @@ const transformPerk = (perk: PerkWithCounts): PerkResponse => {
  */
 export const createPerk = async (
   data: CreatePerkData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<PerkResponse> => {
   enforceAuthentication(currentUser)
 
@@ -99,7 +99,7 @@ export const createPerk = async (
  */
 export const findPerkById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<PerkResponse> => {
   const perk = await db.perk.findUnique({
     where: { id },
@@ -123,7 +123,7 @@ export const findPerkById = async (
  */
 export const listPerks = async (
   query: ListPerksQuery,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   data: PerkResponse[]
   pagination: {
@@ -179,7 +179,7 @@ export const listPerks = async (
 export const updatePerk = async (
   id: string,
   data: UpdatePerkData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<PerkResponse> => {
   const perk = await findPerkById(id, currentUser)
 
@@ -235,7 +235,7 @@ export const updatePerk = async (
 /**
  * Delete perk by ID
  */
-export const deletePerk = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deletePerk = async (id: string, currentUser: AuthUser | undefined): Promise<void> => {
   const perk = await findPerkById(id, currentUser)
 
   // Check deletion permissions
@@ -282,7 +282,7 @@ export const deletePerk = async (id: string, currentUser: AuthUser | null): Prom
 /**
  * Get perk statistics
  */
-export const getPerkStats = async (currentUser: AuthUser | null): Promise<PerkStatsData> => {
+export const getPerkStats = async (currentUser: AuthUser | undefined): Promise<PerkStatsData> => {
   // Check permissions for viewing statistics
   enforcePermission(
     rbacService.canViewStatistics(currentUser),

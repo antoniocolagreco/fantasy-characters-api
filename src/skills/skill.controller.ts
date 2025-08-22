@@ -14,13 +14,19 @@ import type {
   SkillResponse,
   SkillStatsData,
 } from './skill.types'
+import type { AuthUser } from '../shared/rbac.service'
+
+/**
+ * Convert null to undefined for consistency with service layer
+ */
+const normalizeUser = (user?: AuthUser | null): AuthUser | undefined => user ?? undefined
 
 // Create a new skill
 export const createSkillHandler = async (
   request: FastifyRequest<{ Body: CreateSkillData }>,
   reply: FastifyReply,
 ): Promise<SkillResponse> => {
-  const skill = await createSkill(request.body, request.authUser)
+  const skill = await createSkill(request.body, normalizeUser(request.authUser))
   reply.status(201)
   return skill
 }
@@ -30,7 +36,7 @@ export const getSkillHandler = async (
   request: FastifyRequest<{ Params: { id: string } }>,
   _reply: FastifyReply,
 ): Promise<SkillResponse> => {
-  return await findSkillById(request.params.id, request.authUser)
+  return await findSkillById(request.params.id, normalizeUser(request.authUser))
 }
 
 // Update skill by ID
@@ -38,7 +44,7 @@ export const updateSkillHandler = async (
   request: FastifyRequest<{ Params: { id: string }; Body: UpdateSkillData }>,
   _reply: FastifyReply,
 ): Promise<SkillResponse> => {
-  return await updateSkill(request.params.id, request.body, request.authUser)
+  return await updateSkill(request.params.id, request.body, normalizeUser(request.authUser))
 }
 
 // Delete skill by ID
@@ -46,7 +52,7 @@ export const deleteSkillHandler = async (
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply,
 ): Promise<void> => {
-  await deleteSkill(request.params.id, request.authUser)
+  await deleteSkill(request.params.id, normalizeUser(request.authUser))
   reply.status(204)
 }
 
@@ -63,7 +69,7 @@ export const listSkillsHandler = async (
     totalPages: number
   }
 }> => {
-  return await listSkills(request.query, request.authUser)
+  return await listSkills(request.query, normalizeUser(request.authUser))
 }
 
 // Get global skill statistics
@@ -71,5 +77,5 @@ export const getSkillStatsHandler = async (
   request: FastifyRequest,
   _reply: FastifyReply,
 ): Promise<SkillStatsData> => {
-  return await getSkillStats(request.authUser)
+  return await getSkillStats(normalizeUser(request.authUser))
 }

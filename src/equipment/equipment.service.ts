@@ -16,7 +16,7 @@ import {
  */
 export const getCharacterEquipment = async (
   characterId: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<EquipmentWithItems> => {
   // Find character first to check ownership/visibility
   const character = await db.character.findUnique({
@@ -87,7 +87,7 @@ export const getCharacterEquipment = async (
 export const updateCharacterEquipment = async (
   characterId: string,
   updateData: BulkEquipmentUpdateData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<EquipmentWithItems> => {
   // Find character first to check ownership
   const character = await db.character.findUnique({
@@ -161,7 +161,7 @@ export const updateCharacterEquipment = async (
 export const updateEquipmentSlot = async (
   characterId: string,
   slotData: SlotUpdateData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<EquipmentWithItems> => {
   // Convert slot update to bulk update format
   const bulkUpdate: BulkEquipmentUpdateData = {
@@ -281,7 +281,9 @@ export const validateSlotCompatibility = (
 /**
  * Get equipment statistics
  */
-export const getEquipmentStats = async (currentUser: AuthUser | null): Promise<EquipmentStats> => {
+export const getEquipmentStats = async (
+  currentUser: AuthUser | undefined,
+): Promise<EquipmentStats> => {
   // Only moderators and admins can view statistics
   rbacService.enforcePermission(
     Boolean(currentUser && ['MODERATOR', 'ADMIN'].includes(currentUser.role)),

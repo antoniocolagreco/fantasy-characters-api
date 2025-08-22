@@ -93,7 +93,7 @@ const transformItem = (item: ItemWithCounts): ItemResponse => {
  */
 export const createItem = async (
   data: CreateItemData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ItemResponse> => {
   enforceAuthentication(currentUser)
 
@@ -177,7 +177,7 @@ export const createItem = async (
  */
 export const findItemById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ItemResponse> => {
   const item = await db.item.findUnique({
     where: { id },
@@ -205,7 +205,7 @@ export const findItemById = async (
  */
 export const listItems = async (
   query: ListItemsQuery,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   data: ItemResponse[]
   pagination: {
@@ -268,7 +268,7 @@ export const listItems = async (
 export const updateItem = async (
   id: string,
   data: UpdateItemData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ItemResponse> => {
   const item = await findItemById(id, currentUser)
 
@@ -360,7 +360,7 @@ export const updateItem = async (
 /**
  * Delete item by ID
  */
-export const deleteItem = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteItem = async (id: string, currentUser: AuthUser | undefined): Promise<void> => {
   const item = await findItemById(id, currentUser)
 
   // Check deletion permissions
@@ -420,7 +420,7 @@ export const deleteItem = async (id: string, currentUser: AuthUser | null): Prom
 /**
  * Get item statistics
  */
-export const getItemStats = async (currentUser: AuthUser | null): Promise<ItemStatsData> => {
+export const getItemStats = async (currentUser: AuthUser | undefined): Promise<ItemStatsData> => {
   // Check permissions for viewing statistics
   enforcePermission(
     rbacService.canViewStatistics(currentUser),

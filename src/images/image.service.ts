@@ -124,7 +124,7 @@ export const createImage = async (
   const { file, filename, mimeType, description, ownerId } = data
 
   // RBAC: Enforce authentication
-  enforceAuthentication(currentUser ?? null)
+  enforceAuthentication(currentUser)
 
   // RBAC: Check if user can create for the target owner
   if (ownerId && currentUser) {
@@ -165,7 +165,7 @@ export const findImageById = async (id: string, currentUser?: AuthUser): Promise
 
   // RBAC: Check if user can access this image based on visibility
   enforcePermission(
-    rbacService.canAccessByVisibility(currentUser ?? null, image),
+    rbacService.canAccessByVisibility(currentUser, image),
     'You do not have permission to access this image',
   )
 
@@ -194,7 +194,7 @@ export const getImageBinaryData = async (
 
   // RBAC: Check if user can access this image based on visibility
   enforcePermission(
-    rbacService.canAccessByVisibility(currentUser ?? null, image),
+    rbacService.canAccessByVisibility(currentUser, image),
     'You do not have permission to access this image',
   )
 
@@ -228,7 +228,7 @@ export const getImagesList = async (
   const skip = (page - 1) * limit
 
   // Build where clause with RBAC filtering
-  const baseFilter = rbacService.getOwnershipFilter(currentUser ?? null)
+  const baseFilter = rbacService.getOwnershipFilter(currentUser)
   const where: Prisma.ImageWhereInput = {
     ...baseFilter,
   }
@@ -297,7 +297,7 @@ export const getImagesList = async (
 export const getImageStats = async (currentUser?: AuthUser): Promise<ImageStatsData> => {
   // RBAC: Only moderators and admins can view statistics
   enforcePermission(
-    rbacService.canViewStatistics(currentUser ?? null),
+    rbacService.canViewStatistics(currentUser),
     'You do not have permission to view image statistics',
   )
 
@@ -307,7 +307,7 @@ export const getImageStats = async (currentUser?: AuthUser): Promise<ImageStatsD
   const last30Days = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
   // Apply RBAC filtering to statistics
-  const baseFilter = rbacService.getOwnershipFilter(currentUser ?? null)
+  const baseFilter = rbacService.getOwnershipFilter(currentUser)
 
   // Get basic statistics
   const [totalImages, totalSizeResult, mimeTypeStats, recent24h, recent7d, recent30d] =
@@ -373,7 +373,7 @@ export const deleteImage = async (id: string, currentUser?: AuthUser): Promise<v
 
   // RBAC: Check if user can delete this image
   enforcePermission(
-    rbacService.canDeleteResource(currentUser ?? null, image),
+    rbacService.canDeleteResource(currentUser, image),
     'You do not have permission to delete this image',
   )
 
@@ -413,7 +413,7 @@ export const updateImage = async (
 
   // RBAC: Check if user can modify this image
   enforcePermission(
-    rbacService.canModifyResource(currentUser ?? null, image),
+    rbacService.canModifyResource(currentUser, image),
     'You do not have permission to modify this image',
   )
 

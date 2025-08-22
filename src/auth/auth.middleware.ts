@@ -1,7 +1,20 @@
 import type { FastifyRequest } from 'fastify'
+import type { Role } from '@prisma/client'
 import { verifyAccessToken, extractTokenFromHeader } from './jwt.utils'
 import { getUserProfile } from './auth.service'
 import { createUnauthorizedError, createForbiddenError } from '../shared/errors'
+import type { AuthUser } from '../shared/rbac.service'
+import type { UserProfileType } from './auth.schema'
+
+/**
+ * Convert UserProfileType to AuthUser
+ */
+const convertToAuthUser = (userProfile: UserProfileType): AuthUser => ({
+  id: userProfile.id,
+  role: userProfile.role as Role,
+  isActive: userProfile.isActive,
+  isEmailVerified: userProfile.isEmailVerified,
+})
 
 /**
  * Authentication middleware to verify JWT tokens
@@ -16,10 +29,10 @@ export const authenticateUser = async (request: FastifyRequest): Promise<void> =
   const payload = verifyAccessToken(token)
 
   // Get full user profile
-  const user = await getUserProfile(payload.userId)
+  const userProfile = await getUserProfile(payload.userId)
 
-  // Attach user information to request
-  request.authUser = user
+  // Convert and attach user information to request
+  request.authUser = convertToAuthUser(userProfile)
   request.authJwt = payload
 }
 
@@ -33,9 +46,9 @@ export const optionalAuthentication = async (request: FastifyRequest): Promise<v
     if (request.headers.authorization) {
       const token = extractTokenFromHeader(request.headers.authorization)
       const payload = verifyAccessToken(token)
-      const user = await getUserProfile(payload.userId)
+      const userProfile = await getUserProfile(payload.userId)
 
-      request.authUser = user
+      request.authUser = convertToAuthUser(userProfile)
       request.authJwt = payload
     }
   } catch (_error) {

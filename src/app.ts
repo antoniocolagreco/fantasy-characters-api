@@ -13,6 +13,9 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import Fastify, { type FastifyInstance } from 'fastify'
 
+// Import type declarations to ensure they're loaded
+import './shared/types/fastify'
+
 import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
@@ -160,7 +163,7 @@ export const createApp = async (): Promise<FastifyInstance> => {
       openapi: {
         openapi: '3.0.0',
         info: {
-          title: 'Fantasy Character API',
+          title: 'Fantasy Characters API',
           description: 'A comprehensive RESTful API for managing fantasy characters',
           version: '1.0.0',
           contact: {

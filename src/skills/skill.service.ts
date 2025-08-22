@@ -49,7 +49,7 @@ const transformSkill = (skill: SkillWithCounts): SkillResponse => {
  */
 export const createSkill = async (
   data: CreateSkillData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<SkillResponse> => {
   enforceAuthentication(currentUser)
 
@@ -99,7 +99,7 @@ export const createSkill = async (
  */
 export const findSkillById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<SkillResponse> => {
   const skill = await db.skill.findUnique({
     where: { id },
@@ -124,7 +124,7 @@ export const findSkillById = async (
 export const updateSkill = async (
   id: string,
   data: UpdateSkillData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<SkillResponse> => {
   const skill = await findSkillById(id, currentUser)
 
@@ -179,7 +179,7 @@ export const updateSkill = async (
 /**
  * Delete skill by ID
  */
-export const deleteSkill = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteSkill = async (id: string, currentUser: AuthUser | undefined): Promise<void> => {
   const skill = await findSkillById(id, currentUser)
 
   // Check deletion permissions
@@ -211,7 +211,7 @@ export const deleteSkill = async (id: string, currentUser: AuthUser | null): Pro
  */
 export const listSkills = async (
   query: ListSkillsQuery,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   data: SkillResponse[]
   pagination: {
@@ -272,7 +272,7 @@ export const listSkills = async (
 /**
  * Get skill statistics
  */
-export const getSkillStats = async (currentUser: AuthUser | null): Promise<SkillStatsData> => {
+export const getSkillStats = async (currentUser: AuthUser | undefined): Promise<SkillStatsData> => {
   const filters = rbacService.getOwnershipFilter(currentUser)
 
   const [

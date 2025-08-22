@@ -12,6 +12,7 @@ export type JwtPayload = {
   type?: string
   iat?: number
   exp?: number
+  jti?: string
 }
 
 /**
@@ -22,6 +23,7 @@ export const generateAccessToken = (user: UserProfileType): string => {
     userId: user.id,
     email: user.email,
     role: user.role,
+    type: 'access',
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + 15 * 60, // 15 minutes
   }
@@ -87,6 +89,14 @@ export const verifyRefreshToken = (token: string): JwtPayload => {
 
     return decoded
   } catch (error) {
+    // If it's our custom error, re-throw it as is
+    if (error && typeof error === 'object' && 'message' in error) {
+      const errorMessage = (error as Error).message
+      if (errorMessage === 'Invalid refresh token') {
+        throw error
+      }
+    }
+
     if (error instanceof jwt.TokenExpiredError) {
       throw createUnauthorizedError('Refresh token has expired')
     }
@@ -145,7 +155,7 @@ export const extractTokenFromHeader = (authHeader?: string): string => {
     throw createUnauthorizedError('Authorization header must be Bearer token')
   }
 
-  const token = authHeader.slice(7) // Remove 'Bearer ' prefix
+  const token = authHeader.slice(7).trim() // Remove 'Bearer ' prefix and trim spaces
 
   if (!token) {
     throw createUnauthorizedError('Token is required')

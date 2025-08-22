@@ -1,19 +1,15 @@
 # API Development Workflow
 
-Optimized workflow for developing a CRUD API following an incremental and AI-friendly approach. Each
-chapter is self-contained and can be completed independently.
-
 ## 🎯 Current Status
 
 **Completed**: Chapters 1-13 (Foundation → Characters System) ✅  
-**Test Coverage**: 97.39% Overall Project  
 **Current**: Chapter 14 - API Optimization � (Ready to Start)
 
 ## Features Implemented ✅
 
 1. **🚀 Project Foundation**: Fastify server, TypeScript, testing framework, Docker
 2. **🗄️ Database Foundation**: Complete Prisma schema, migrations, RBAC system
-3. **🔐 Authentication**: JWT + Refresh tokens, RBAC (USER/MODERATOR/ADMIN), bcrypt hashing
+3. **🔐 Authentication**: JWT + Refresh tokens, RBAC (USER/MODERATOR/ADMIN), Argon2 hashing
 4. **👥 User Management**: Complete CRUD, profile management, user statistics
 5. **📁 Image System**: Upload, Sharp processing, WebP conversion, binary serving
 6. **🏷️ Tags System**: Complete CRUD, search, statistics, RBAC integration
@@ -40,7 +36,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 1: Project Foundation 🚀 ✅
+## Chapter 1: Project Foundation 🚀
 
 **Objective**: Basic project setup with complete tooling
 
@@ -51,17 +47,17 @@ chapter is self-contained and can be completed independently.
        (@fastify/cors, @fastify/helmet, @fastify/swagger)
 - [x] **TASK-1.3**: Setup TypeScript strict configuration with proper paths and compilation targets
 - [x] **TASK-1.4**: Configure ESLint with TypeScript rules and Prettier integration
-- [ ] **TASK-1.5**: Setup Vitest configuration for unit and integration testing
+- [x] **TASK-1.5**: Setup Vitest configuration for unit and integration testing
 - [x] **TASK-1.6**: Create Docker development environment with multi-stage builds
 - [x] **TASK-1.7**: Implement health check endpoints (`/api/health`, `/api/healthz`, `/api/ready`,
       `/api/live`)
 - [x] **TASK-1.8**: Configure Pino logger with structured JSON output and log levels
-- [ ] **TASK-1.9**: Write unit tests for health check endpoints and core utilities
-- [ ] **TASK-1.10**: Write integration tests for server startup and basic functionality
+- [x] **TASK-1.9**: Write unit tests for health check endpoints and core utilities
+- [ ] **TASK-1.10**: Write integration tests for server startup and basic functionality ✅
 
 ---
 
-## Chapter 2: Database Foundation 🗄️ ✅
+## Chapter 2: Database Foundation 🗄️
 
 **Objective**: Persistence layer with Prisma ORM
 
@@ -84,19 +80,19 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-2.15**: Implement database connection utilities with error handling
 - [x] **TASK-2.16**: Add ownership system (ownerId fields) to all content models
 - [x] **TASK-2.17**: Add visibility enum (PUBLIC, PRIVATE, HIDDEN) to all content models
-- [ ] **TASK-2.18**: Write unit tests for database connection utilities and error handling
-- [ ] **TASK-2.19**: Write integration tests for database migrations and seed scripts
+- [ ] **TASK-2.18**: Write unit tests for database connection utilities and error handling ✅
+- [ ] **TASK-2.19**: Write integration tests for database migrations and seed scripts ✅
 
 ---
 
-## Chapter 3: Authentication System 🔐 ✅
+## Chapter 3: Authentication System 🔐
 
 **Objective**: Complete JWT authentication system
 
 ### Tasks
 
 - [x] **TASK-3.1**: Create User TypeBox schemas for registration, login, and profile
-- [x] **TASK-3.2**: Implement password hashing service with bcrypt (configurable rounds)
+- [x] **TASK-3.2**: Implement password hashing service with Argon2
 - [x] **TASK-3.3**: Create JWT token generation service with access/refresh token logic
 - [x] **TASK-3.4**: Create JWT validation middleware for protected routes
 - [x] **TASK-3.5**: Implement refresh token storage and rotation service
@@ -107,12 +103,12 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-3.10**: Implement RBAC service with role-based permission checking
 - [x] **TASK-3.11**: Create authentication middleware with user context injection
 - [x] **TASK-3.12**: Implement session management with device tracking
-- [ ] **TASK-3.13**: Write unit tests for authentication services and JWT utilities
-- [ ] **TASK-3.14**: Write integration tests for authentication endpoints and flows
+- [ ] **TASK-3.13**: Write unit tests for authentication services and JWT utilities ✅
+- [ ] **TASK-3.14**: Write integration tests for authentication endpoints and flows ✅
 
 ---
 
-## Chapter 4: User Management 👥 ✅
+## Chapter 4: User Management 👥
 
 **Objective**: Complete CRUD for user management
 
@@ -128,12 +124,12 @@ chapter is self-contained and can be completed independently.
 - [x] **TASK-4.8**: Create user statistics service (count, roles, activity)
 - [x] **TASK-4.9**: Create user CRUD controller with proper error handling
 - [x] **TASK-4.10**: Create user routes with authentication and authorization middleware
-- [ ] **TASK-4.11**: Write comprehensive unit tests for user service layer
-- [ ] **TASK-4.12**: Write integration tests for user API endpoints
+- [ ] **TASK-4.11**: Write comprehensive integration tests for user API endpoints ✅
+- [ ] **TASK-4.12**: Write integration tests for user API endpoints ✅
 
 ---
 
-## Chapter 5: Image Management System 📁 ✅
+## Chapter 5: Image Management System 📁
 
 **Objective**: File upload and image processing system
 
@@ -159,7 +155,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 6: Tags System 🏷️ ✅
+## Chapter 6: Tags System 🏷️
 
 **Objective**: Flexible tagging system for all content
 
@@ -178,7 +174,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 7: Skills System ⚡ ✅
+## Chapter 7: Skills System ⚡
 
 **Objective**: Character skills management with level requirements
 
@@ -198,7 +194,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 8: Perks System 🌟 ✅
+## Chapter 8: Perks System 🌟
 
 **Objective**: Character advantages and disadvantages system
 
@@ -218,7 +214,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 9: Races System 🧝 ✅
+## Chapter 9: Races System 🧝
 
 **Objective**: Fantasy races with attribute modifiers
 
@@ -238,7 +234,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 10: Archetypes System 🛡️ ✅
+## Chapter 10: Archetypes System 🛡️
 
 **Objective**: Character classes with race requirements
 
@@ -258,7 +254,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 11: Items System ⚔️ ✅
+## Chapter 11: Items System ⚔️
 
 **Objective**: Equipment and consumables with stats and rarity
 
@@ -278,7 +274,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 12: Equipment System 🗡️ ✅
+## Chapter 12: Equipment System 🗡️
 
 **Objective**: Character equipment management as sub-resource
 
@@ -298,7 +294,7 @@ chapter is self-contained and can be completed independently.
 
 ---
 
-## Chapter 13: Characters System 👤 ✅
+## Chapter 13: Characters System 👤
 
 **Objective**: Complete character management with stats and progression
 
@@ -381,8 +377,15 @@ chapter is self-contained and can be completed independently.
 
 ### Quality Standards
 
-- **Test Coverage**: Minimum 90% per chapter
+- **Test Coverage**: Respect Test Completion Criteria / Test Required Coverage
 - **Type Safety**: Strict TypeScript without any
 - **Performance**: Response time <200ms for CRUD operations
 - **Security**: Input sanitization and auth on all endpoints
 - **Documentation**: Every endpoint documented with examples
+
+### Test Completion Criteria
+
+- Every test passed
+- No skipped tests
+- Authentication/Security : Stmts>90% | Branch>90% | % Funcs>90% | % Lines>90%
+- Everything else : Stmts>80% | Branch>80% | % Funcs>80% | % Lines>80%

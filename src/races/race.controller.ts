@@ -14,13 +14,19 @@ import type {
   RaceResponse,
   RaceStatsData,
 } from './race.types'
+import type { AuthUser } from '../shared/rbac.service'
+
+/**
+ * Convert null to undefined for consistency with service layer
+ */
+const normalizeUser = (user?: AuthUser | null): AuthUser | undefined => user ?? undefined
 
 // Create a new race
 export const createRaceHandler = async (
   request: FastifyRequest<{ Body: CreateRaceData }>,
   reply: FastifyReply,
 ): Promise<RaceResponse> => {
-  const race = await createRace(request.body, request.authUser)
+  const race = await createRace(request.body, normalizeUser(request.authUser))
   reply.status(201)
   return race
 }
@@ -30,7 +36,7 @@ export const getRaceHandler = async (
   request: FastifyRequest<{ Params: { id: string } }>,
   _reply: FastifyReply,
 ): Promise<RaceResponse> => {
-  return await findRaceById(request.params.id, request.authUser)
+  return await findRaceById(request.params.id, normalizeUser(request.authUser))
 }
 
 // Update race by ID
@@ -38,7 +44,7 @@ export const updateRaceHandler = async (
   request: FastifyRequest<{ Params: { id: string }; Body: UpdateRaceData }>,
   _reply: FastifyReply,
 ): Promise<RaceResponse> => {
-  return await updateRace(request.params.id, request.body, request.authUser)
+  return await updateRace(request.params.id, request.body, normalizeUser(request.authUser))
 }
 
 // Delete race by ID
@@ -46,7 +52,7 @@ export const deleteRaceHandler = async (
   request: FastifyRequest<{ Params: { id: string } }>,
   reply: FastifyReply,
 ): Promise<void> => {
-  await deleteRace(request.params.id, request.authUser)
+  await deleteRace(request.params.id, normalizeUser(request.authUser))
   reply.status(204)
 }
 
@@ -61,7 +67,7 @@ export const listRacesHandler = async (
   limit: number
   totalPages: number
 }> => {
-  return await listRaces(request.query, request.authUser)
+  return await listRaces(request.query, normalizeUser(request.authUser))
 }
 
 // Get global race statistics
@@ -69,5 +75,5 @@ export const getRaceStatsHandler = async (
   request: FastifyRequest,
   _reply: FastifyReply,
 ): Promise<RaceStatsData> => {
-  return await getRaceStats(request.authUser)
+  return await getRaceStats(normalizeUser(request.authUser))
 }

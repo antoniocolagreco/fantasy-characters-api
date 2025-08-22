@@ -65,7 +65,7 @@ const transformRace = (race: RaceWithCounts): RaceResponse => {
  */
 export const createRace = async (
   data: CreateRaceData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<RaceResponse> => {
   enforceAuthentication(currentUser)
 
@@ -123,7 +123,7 @@ export const createRace = async (
  */
 export const findRaceById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<RaceResponse> => {
   const race = await db.race.findUnique({
     where: { id },
@@ -147,7 +147,7 @@ export const findRaceById = async (
  */
 export const listRaces = async (
   query: ListRacesQuery,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   races: RaceResponse[]
   total: number
@@ -211,7 +211,7 @@ export const listRaces = async (
 export const updateRace = async (
   id: string,
   data: UpdateRaceData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<RaceResponse> => {
   const race = await findRaceById(id, currentUser)
 
@@ -279,7 +279,7 @@ export const updateRace = async (
 /**
  * Delete race by ID
  */
-export const deleteRace = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteRace = async (id: string, currentUser: AuthUser | undefined): Promise<void> => {
   const race = await findRaceById(id, currentUser)
 
   // Check deletion permissions
@@ -324,7 +324,7 @@ export const deleteRace = async (id: string, currentUser: AuthUser | null): Prom
 /**
  * Get race statistics
  */
-export const getRaceStats = async (currentUser: AuthUser | null): Promise<RaceStatsData> => {
+export const getRaceStats = async (currentUser: AuthUser | undefined): Promise<RaceStatsData> => {
   // Use base filter for authorized races (matches skills service approach)
   const baseFilter = rbacService.getOwnershipFilter(currentUser)
 

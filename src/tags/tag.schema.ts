@@ -20,7 +20,9 @@ export const tagSchema = Type.Object(
         examples: ['Tags related to magical abilities and spells'],
       }),
     ),
-    ownerId: Type.Optional(Type.String({ description: 'ID of the user who created the tag' })),
+    ownerId: Type.Union([Type.String(), Type.Null()], {
+      description: 'ID of the user who created the tag (null for orphaned tags)',
+    }),
     visibility: Type.String({
       enum: VISIBILITY_VALUES,
       description: 'Tag visibility level',

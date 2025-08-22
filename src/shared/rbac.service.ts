@@ -44,7 +44,7 @@ export const hasRoleOrHigher = (userRole: Role, requiredRole: Role): boolean => 
  * Check if user can access resource based on visibility
  */
 export const canAccessByVisibility = (
-  user: AuthUser | null,
+  user: AuthUser | undefined,
   resource: { visibility: Visibility; ownerId: string | null },
 ): boolean => {
   switch (resource.visibility) {
@@ -69,7 +69,10 @@ export const canAccessByVisibility = (
 /**
  * Check if user can modify resource (owner, moderator, or admin)
  */
-export const canModifyResource = (user: AuthUser | null, resource: ResourceOwnership): boolean => {
+export const canModifyResource = (
+  user: AuthUser | undefined,
+  resource: ResourceOwnership,
+): boolean => {
   if (!user) return false
 
   // Admins can modify anything
@@ -87,7 +90,10 @@ export const canModifyResource = (user: AuthUser | null, resource: ResourceOwner
 /**
  * Check if user can delete resource
  */
-export const canDeleteResource = (user: AuthUser | null, resource: ResourceOwnership): boolean => {
+export const canDeleteResource = (
+  user: AuthUser | undefined,
+  resource: ResourceOwnership,
+): boolean => {
   if (!user) return false
 
   // Admins can delete anything
@@ -105,7 +111,7 @@ export const canDeleteResource = (user: AuthUser | null, resource: ResourceOwner
 /**
  * Check if user can create resource on behalf of another user
  */
-export const canCreateForUser = (user: AuthUser | null, targetUserId: string): boolean => {
+export const canCreateForUser = (user: AuthUser | undefined, targetUserId: string): boolean => {
   if (!user) return false
 
   // Admins can create for anyone
@@ -119,7 +125,7 @@ export const canCreateForUser = (user: AuthUser | null, targetUserId: string): b
  * Check if user can access another user's profile
  */
 export const canAccessUserProfile = (
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
   targetUserId: string,
 ): boolean => {
   if (!currentUser) return false
@@ -135,7 +141,7 @@ export const canAccessUserProfile = (
  * Check if user can modify another user's profile
  */
 export const canModifyUserProfile = (
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
   targetUserId: string,
 ): boolean => {
   if (!currentUser) return false
@@ -150,7 +156,7 @@ export const canModifyUserProfile = (
 /**
  * Check if user can access admin features
  */
-export const canAccessAdminFeatures = (user: AuthUser | null): boolean => {
+export const canAccessAdminFeatures = (user: AuthUser | undefined): boolean => {
   if (!user) return false
   return hasRoleOrHigher(user.role, 'ADMIN')
 }
@@ -158,7 +164,7 @@ export const canAccessAdminFeatures = (user: AuthUser | null): boolean => {
 /**
  * Check if user can access moderator features
  */
-export const canAccessModeratorFeatures = (user: AuthUser | null): boolean => {
+export const canAccessModeratorFeatures = (user: AuthUser | undefined): boolean => {
   if (!user) return false
   return hasRoleOrHigher(user.role, 'MODERATOR')
 }
@@ -166,7 +172,7 @@ export const canAccessModeratorFeatures = (user: AuthUser | null): boolean => {
 /**
  * Check if user can view statistics
  */
-export const canViewStatistics = (user: AuthUser | null): boolean => {
+export const canViewStatistics = (user: AuthUser | undefined): boolean => {
   if (!user) return false
   return hasRoleOrHigher(user.role, 'MODERATOR')
 }
@@ -183,7 +189,7 @@ export const enforcePermission = (hasPermission: boolean, message = 'Access deni
 /**
  * Enforce authentication - throws error if user not authenticated
  */
-export const enforceAuthentication = (user: AuthUser | null): void => {
+export const enforceAuthentication = (user: AuthUser | undefined): void => {
   if (!user) {
     throw createUnauthorizedError('Authentication required')
   }
@@ -195,7 +201,7 @@ export const enforceAuthentication = (user: AuthUser | null): void => {
 export const filterVisibleResources = <
   T extends { visibility: Visibility; ownerId: string | null },
 >(
-  user: AuthUser | null,
+  user: AuthUser | undefined,
   resources: T[],
 ): T[] => {
   return resources.filter(resource => canAccessByVisibility(user, resource))
@@ -205,7 +211,7 @@ export const filterVisibleResources = <
  * Get ownership filter for database queries
  */
 export const getOwnershipFilter = (
-  user: AuthUser | null,
+  user: AuthUser | undefined,
 ): {
   OR?: Array<{
     ownerId?: string | null

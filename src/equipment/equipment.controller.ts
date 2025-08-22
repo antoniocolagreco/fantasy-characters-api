@@ -6,6 +6,12 @@ import {
   updateEquipmentSlot,
 } from './equipment.service'
 import type { BulkEquipmentUpdateData, SlotUpdateData } from './equipment.types'
+import type { AuthUser } from '../shared/rbac.service'
+
+/**
+ * Convert null to undefined for consistency with service layer
+ */
+const normalizeUser = (user?: AuthUser | null): AuthUser | undefined => user ?? undefined
 
 /**
  * Get character equipment controller
@@ -17,7 +23,7 @@ export const getCharacterEquipmentController = async (
   const characterId = request.params.id
   const currentUser = request.authUser || null
 
-  const equipment = await getCharacterEquipment(characterId, currentUser)
+  const equipment = await getCharacterEquipment(characterId, normalizeUser(currentUser))
   await reply.code(200).send(equipment)
 }
 
@@ -35,7 +41,11 @@ export const updateCharacterEquipmentController = async (
   const updateData = request.body
   const currentUser = request.authUser
 
-  const equipment = await updateCharacterEquipment(characterId, updateData, currentUser)
+  const equipment = await updateCharacterEquipment(
+    characterId,
+    updateData,
+    normalizeUser(currentUser),
+  )
   await reply.code(200).send(equipment)
 }
 
@@ -53,7 +63,7 @@ export const updateEquipmentSlotController = async (
   const slotData = request.body
   const currentUser = request.authUser
 
-  const equipment = await updateEquipmentSlot(characterId, slotData, currentUser)
+  const equipment = await updateEquipmentSlot(characterId, slotData, normalizeUser(currentUser))
   await reply.code(200).send(equipment)
 }
 
@@ -66,6 +76,6 @@ export const getEquipmentStatsController = async (
 ): Promise<void> => {
   const currentUser = request.authUser
 
-  const stats = await getEquipmentStats(currentUser)
+  const stats = await getEquipmentStats(normalizeUser(currentUser))
   await reply.code(200).send(stats)
 }

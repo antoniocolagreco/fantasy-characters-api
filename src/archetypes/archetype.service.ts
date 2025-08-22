@@ -47,7 +47,7 @@ const transformArchetype = (archetype: ArchetypeWithCounts): ArchetypeResponse =
 
 export const createArchetype = async (
   data: CreateArchetypeData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ArchetypeResponse> => {
   enforceAuthentication(currentUser)
 
@@ -89,7 +89,7 @@ export const createArchetype = async (
 
 export const findArchetypeById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ArchetypeResponse> => {
   const archetype = await db.archetype.findUnique({
     where: { id },
@@ -107,7 +107,10 @@ export const findArchetypeById = async (
   return transformArchetype(archetype)
 }
 
-export const listArchetypes = async (query: ListArchetypesQuery, currentUser: AuthUser | null) => {
+export const listArchetypes = async (
+  query: ListArchetypesQuery,
+  currentUser: AuthUser | undefined,
+) => {
   const { page = 1, limit = PAGINATION.DEFAULT_LIMIT, search, ownerId, visibility } = query
 
   const validatedLimit = Math.min(limit, PAGINATION.MAX_LIMIT)
@@ -158,7 +161,7 @@ export const listArchetypes = async (query: ListArchetypesQuery, currentUser: Au
 export const updateArchetype = async (
   id: string,
   data: UpdateArchetypeData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ArchetypeResponse> => {
   const existingArchetype = await db.archetype.findUnique({
     where: { id },
@@ -212,7 +215,10 @@ export const updateArchetype = async (
   return transformArchetype(updatedArchetype)
 }
 
-export const deleteArchetype = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteArchetype = async (
+  id: string,
+  currentUser: AuthUser | undefined,
+): Promise<void> => {
   const existingArchetype = await db.archetype.findUnique({
     where: { id },
     include: {
@@ -245,7 +251,7 @@ export const deleteArchetype = async (id: string, currentUser: AuthUser | null):
 }
 
 export const getArchetypeStats = async (
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<ArchetypeStatsData> => {
   enforcePermission(
     rbacService.canViewStatistics(currentUser),

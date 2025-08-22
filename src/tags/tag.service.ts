@@ -44,26 +44,26 @@ const transformTag = (tag: TagWithCounts): TagResponse => {
  * Create a new tag
  */
 export const createTag = async (
-  data: CreateTagData,
-  currentUser: AuthUser | null,
+  tagData: CreateTagData,
+  currentUser: AuthUser | undefined,
 ): Promise<TagResponse> => {
   enforceAuthentication(currentUser)
 
   // Check if tag name already exists
   const existingTag = await db.tag.findUnique({
-    where: { name: data.name },
+    where: { name: tagData.name },
   })
 
   if (existingTag) {
-    throw createConflictError(`Tag with name "${data.name}" already exists`)
+    throw createConflictError(`Tag with name "${tagData.name}" already exists`)
   }
 
   // Create tag with current user as owner
   const tag = await db.tag.create({
     data: {
-      name: data.name,
-      description: data.description ?? null,
-      visibility: (data.visibility as Visibility) || 'PUBLIC',
+      name: tagData.name,
+      description: tagData.description ?? null,
+      visibility: (tagData.visibility as Visibility) || 'PUBLIC',
       ownerId: currentUser?.id ?? null,
     },
   })
@@ -76,7 +76,7 @@ export const createTag = async (
  */
 export const findTagById = async (
   id: string,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<TagResponse> => {
   const tag = await db.tag.findUnique({
     where: { id },
@@ -101,7 +101,7 @@ export const findTagById = async (
 export const updateTag = async (
   id: string,
   data: UpdateTagData,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<TagResponse> => {
   const tag = await findTagById(id, currentUser)
 
@@ -137,7 +137,7 @@ export const updateTag = async (
 /**
  * Delete tag by ID
  */
-export const deleteTag = async (id: string, currentUser: AuthUser | null): Promise<void> => {
+export const deleteTag = async (id: string, currentUser: AuthUser | undefined): Promise<void> => {
   const tag = await findTagById(id, currentUser)
 
   // Check deletion permissions
@@ -156,7 +156,7 @@ export const deleteTag = async (id: string, currentUser: AuthUser | null): Promi
  */
 export const listTags = async (
   query: ListTagsQuery,
-  currentUser: AuthUser | null,
+  currentUser: AuthUser | undefined,
 ): Promise<{
   data: TagResponse[]
   pagination: {
@@ -170,17 +170,17 @@ export const listTags = async (
   const limit = query.limit || PAGINATION.DEFAULT_LIMIT
   const skip = (page - 1) * limit
 
-  const filters = rbacService.getOwnershipFilter(currentUser)
+  const whereFilters = rbacService.getOwnershipFilter(currentUser)
   const orderBy = { name: 'asc' as const }
 
   const tags = await db.tag.findMany({
-    where: filters,
+    where: whereFilters,
     orderBy,
     skip,
     take: limit,
   })
 
-  const total = await db.tag.count({ where: filters })
+  const total = await db.tag.count({ where: whereFilters })
   const totalPages = Math.ceil(total / limit)
 
   return {
@@ -197,7 +197,7 @@ export const listTags = async (
 /**
  * Get tag statistics
  */
-export const getTagStats = async (currentUser: AuthUser | null): Promise<TagStatsData> => {
+export const getTagStats = async (currentUser: AuthUser | undefined): Promise<TagStatsData> => {
   const filters = rbacService.getOwnershipFilter(currentUser)
 
   const [totalTags, publicTags, privateTags, orphanedTags] = await Promise.all([

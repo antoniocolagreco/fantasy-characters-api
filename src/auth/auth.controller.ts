@@ -98,7 +98,8 @@ export const getProfile = async (request: FastifyRequest): Promise<UserProfileTy
     throw new Error('User not authenticated')
   }
 
-  return request.authUser
+  // Get complete user profile from database
+  return await getUserProfile(request.authUser.id)
 }
 
 /**
