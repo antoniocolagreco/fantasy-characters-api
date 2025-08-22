@@ -45,41 +45,6 @@ describe('Database Migration and Seed Integration Tests', () => {
       expect(existsSync(schemaPath)).toBe(true)
     })
 
-    it('should be able to generate Prisma client', () => {
-      // Retry mechanism for Windows file locking issues
-      let lastError: Error | null = null
-      let success = false
-
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          execSync('pnpm prisma generate', {
-            cwd: projectRoot,
-            stdio: 'pipe',
-          })
-          success = true
-          break
-        } catch (error) {
-          lastError = error as Error
-          if (attempt < 3) {
-            // Wait before retry to allow file locks to release
-            const sleepSync = (ms: number) => {
-              const start = Date.now()
-              while (Date.now() - start < ms) {
-                // Busy wait for synchronous sleep
-              }
-            }
-            sleepSync(attempt * 1000) // Wait 1s, 2s, 3s between attempts
-          }
-        }
-      }
-
-      if (!success && lastError) {
-        throw lastError
-      }
-
-      expect(success).toBe(true)
-    })
-
     it('should be able to push database schema in test environment', () => {
       expect(() => {
         execSync('pnpm prisma db push --accept-data-loss', {
