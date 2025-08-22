@@ -21,6 +21,7 @@ import {
   UserStatsResponseSchema,
 } from './user.schema'
 import { authenticateUser, requireRoles, requireSelfOrAdmin } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const userRoutes = async (
   fastify: FastifyInstance,
@@ -82,7 +83,11 @@ export const userRoutes = async (
 
   // Get users list with pagination and filtering
   fastify.get('/users', {
-    preHandler: [authenticateUser, requireRoles(['MODERATOR', 'ADMIN'])],
+    preHandler: [
+      authenticateUser,
+      requireRoles(['MODERATOR', 'ADMIN']),
+      CacheMiddleware.userSpecific(),
+    ],
     schema: {
       description: 'Get a paginated list of users with optional filtering',
       tags: ['Users'],
@@ -117,7 +122,7 @@ export const userRoutes = async (
 
   // Get user statistics (must be before /:id route to avoid conflicts)
   fastify.get('/users/stats', {
-    preHandler: [authenticateUser, requireRoles(['ADMIN'])],
+    preHandler: [authenticateUser, requireRoles(['ADMIN']), CacheMiddleware.stats()],
     schema: {
       description: 'Get user statistics and metrics',
       tags: ['Users'],
@@ -154,7 +159,7 @@ export const userRoutes = async (
 
   // Get user by ID
   fastify.get('/users/:id', {
-    preHandler: [authenticateUser, requireSelfOrAdmin('id')],
+    preHandler: [authenticateUser, requireSelfOrAdmin('id'), CacheMiddleware.userSpecific()],
     schema: {
       description: 'Get a specific user by their ID',
       tags: ['Users'],

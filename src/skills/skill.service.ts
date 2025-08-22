@@ -8,6 +8,7 @@ import {
   enforceAuthentication,
   enforcePermission,
 } from '../shared/rbac.service'
+import { CacheInvalidation } from '../shared/cache.middleware'
 import type {
   CreateSkillData,
   UpdateSkillData,
@@ -91,6 +92,11 @@ export const createSkill = async (
     },
   })
 
+  // Invalidate relevant caches
+  CacheInvalidation.lists()
+  CacheInvalidation.stats()
+  CacheInvalidation.resource('skills')
+
   return transformSkill(skill)
 }
 
@@ -173,6 +179,11 @@ export const updateSkill = async (
     },
   })
 
+  // Invalidate relevant caches
+  CacheInvalidation.lists()
+  CacheInvalidation.stats()
+  CacheInvalidation.resource('skills', id)
+
   return transformSkill(updatedSkill)
 }
 
@@ -204,6 +215,11 @@ export const deleteSkill = async (id: string, currentUser: AuthUser | undefined)
   await db.skill.delete({
     where: { id },
   })
+
+  // Invalidate relevant caches
+  CacheInvalidation.lists()
+  CacheInvalidation.stats()
+  CacheInvalidation.resource('skills', id)
 }
 
 /**

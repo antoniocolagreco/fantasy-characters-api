@@ -20,6 +20,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/skills - List skills with pagination and filtering
@@ -27,7 +28,7 @@ export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listSkillsRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listSkillsHandler,
   })
 
@@ -36,7 +37,7 @@ export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/stats',
     schema: skillStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getSkillStatsHandler,
   })
 
@@ -45,7 +46,7 @@ export const skillRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getSkillRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getSkillHandler,
   })
 

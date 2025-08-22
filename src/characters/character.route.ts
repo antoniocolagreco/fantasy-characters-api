@@ -5,6 +5,7 @@
 
 import type { FastifyInstance } from 'fastify'
 import { authenticateUser, optionalAuthentication } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 import {
   createCharacterHandler,
   getCharacterByIdHandler,
@@ -33,7 +34,7 @@ import {
 export const characterRoutes = async (fastify: FastifyInstance) => {
   // Get character statistics - public endpoint for basic stats
   fastify.get('/characters/stats', {
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.stats()],
     schema: {
       tags: ['Characters'],
       summary: 'Get character statistics',
@@ -53,7 +54,7 @@ export const characterRoutes = async (fastify: FastifyInstance) => {
 
   // List characters with filtering and pagination - public endpoint
   fastify.get('/characters', {
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     schema: {
       tags: ['Characters'],
       summary: 'List characters',
@@ -68,7 +69,7 @@ export const characterRoutes = async (fastify: FastifyInstance) => {
 
   // Get character by ID - public endpoint with visibility controls
   fastify.get('/characters/:id', {
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     schema: {
       tags: ['Characters'],
       summary: 'Get character by ID',

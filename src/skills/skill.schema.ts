@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox'
+import { notModifiedResponse } from '../shared/cache.schema'
 
 // Visibility enum values
 const VISIBILITY_VALUES = ['PUBLIC', 'PRIVATE', 'HIDDEN'] as const
@@ -207,6 +208,32 @@ export const skillUnauthorizedErrorSchema = Type.Object({
 })
 
 // Route schemas for Fastify endpoints
+
+/*
+ * CACHE HEADERS DOCUMENTATION
+ * ===========================
+ *
+ * The following GET endpoints support HTTP caching with these automatic headers:
+ *
+ * Response Headers:
+ * - Cache-Control: public, max-age=300 (configurable, see cache.middleware.ts)
+ * - ETag: "hash-of-content" (for conditional requests and cache validation)
+ * - Last-Modified: HTTP date format (when resource was last updated)
+ * - Age: Number (seconds since response was cached)
+ * - X-Cache: "HIT" | "MISS" (indicates if response was served from cache)
+ * - Expires: HTTP date (absolute expiration time)
+ *
+ * Request Headers (Conditional Requests):
+ * - If-None-Match: Client sends ETag to check if resource changed
+ * - If-Modified-Since: Client sends date to check if resource was modified
+ *
+ * Status Codes:
+ * - 200: Resource returned with cache headers
+ * - 304: Not Modified (resource unchanged, use cached version)
+ *
+ * Cached Endpoints: GET /skills, GET /skills/:id, GET /skills/stats
+ */
+
 export const createSkillRouteSchema = {
   description: 'Create a new skill',
   tags: ['Skills'],
@@ -227,6 +254,7 @@ export const getSkillRouteSchema = {
   }),
   response: {
     200: skillSchema,
+    304: notModifiedResponse,
     404: skillNotFoundSchema,
     401: skillUnauthorizedErrorSchema,
   },
@@ -267,6 +295,7 @@ export const listSkillsRouteSchema = {
   querystring: listSkillsQuerySchema,
   response: {
     200: listSkillsResponseSchema,
+    304: notModifiedResponse,
   },
 }
 
@@ -275,5 +304,6 @@ export const skillStatsRouteSchema = {
   tags: ['Skills'],
   response: {
     200: skillStatsResponseSchema,
+    304: notModifiedResponse,
   },
 }

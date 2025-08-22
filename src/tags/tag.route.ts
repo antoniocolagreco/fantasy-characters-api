@@ -20,6 +20,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/tags - List tags with pagination and filtering
@@ -27,7 +28,7 @@ export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listTagsRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listTagsHandler,
   })
 
@@ -36,7 +37,7 @@ export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/stats',
     schema: tagStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getTagStatsHandler,
   })
 
@@ -45,7 +46,7 @@ export const tagRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getTagRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getTagHandler,
   })
 

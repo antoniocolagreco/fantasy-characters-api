@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox'
+import { notModifiedResponse } from '../shared/cache.schema'
 
 // Visibility enum values
 const VISIBILITY_VALUES = ['PUBLIC', 'PRIVATE', 'HIDDEN'] as const
@@ -432,6 +433,32 @@ export const raceUsageConflictSchema = Type.Object({
 })
 
 // Route schemas for Fastify endpoints
+
+/*
+ * CACHE HEADERS DOCUMENTATION
+ * ===========================
+ *
+ * The following GET endpoints support HTTP caching with these automatic headers:
+ *
+ * Response Headers:
+ * - Cache-Control: public, max-age=300 (configurable, see cache.middleware.ts)
+ * - ETag: "hash-of-content" (for conditional requests and cache validation)
+ * - Last-Modified: HTTP date format (when resource was last updated)
+ * - Age: Number (seconds since response was cached)
+ * - X-Cache: "HIT" | "MISS" (indicates if response was served from cache)
+ * - Expires: HTTP date (absolute expiration time)
+ *
+ * Request Headers (Conditional Requests):
+ * - If-None-Match: Client sends ETag to check if resource changed
+ * - If-Modified-Since: Client sends date to check if resource was modified
+ *
+ * Status Codes:
+ * - 200: Resource returned with cache headers
+ * - 304: Not Modified (resource unchanged, use cached version)
+ *
+ * Cached Endpoints: GET /races, GET /races/:id, GET /races/stats
+ */
+
 export const createRaceRouteSchema = {
   description: 'Create a new race',
   tags: ['Races'],
@@ -452,6 +479,7 @@ export const getRaceRouteSchema = {
   }),
   response: {
     200: raceSchema,
+    304: notModifiedResponse,
     404: raceNotFoundSchema,
     401: raceUnauthorizedErrorSchema,
   },
@@ -493,6 +521,7 @@ export const listRacesRouteSchema = {
   querystring: listRacesQuerySchema,
   response: {
     200: listRacesResponseSchema,
+    304: notModifiedResponse,
   },
 }
 
@@ -501,5 +530,6 @@ export const raceStatsRouteSchema = {
   tags: ['Races'],
   response: {
     200: raceStatsResponseSchema,
+    304: notModifiedResponse,
   },
 }

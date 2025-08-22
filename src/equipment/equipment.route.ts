@@ -13,11 +13,12 @@ import {
   EquipmentErrorResponseSchema,
 } from './equipment.schema'
 import { authenticateUser, requireRoles, optionalAuthentication } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 const equipmentRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // Equipment statistics endpoint (global)
   fastify.get('/equipment/stats', {
-    preHandler: [authenticateUser, requireRoles(['MODERATOR', 'ADMIN'])],
+    preHandler: [authenticateUser, requireRoles(['MODERATOR', 'ADMIN']), CacheMiddleware.stats()],
     schema: {
       tags: ['Equipment'],
       summary: 'Get equipment statistics',

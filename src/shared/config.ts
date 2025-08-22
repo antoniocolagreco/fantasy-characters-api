@@ -51,6 +51,11 @@ export const EnvironmentSchema = Type.Object({
 
   // Health Check
   HEALTH_CHECK_ENABLED: Type.Boolean({ default: true }),
+
+  // Caching
+  CACHE_ENABLED: Type.Boolean({ default: true }),
+  CACHE_DEFAULT_TTL: Type.Number({ minimum: 1, default: 300 }),
+  CACHE_MAX_ENTRIES: Type.Number({ minimum: 1, default: 1000 }),
 })
 
 export type EnvironmentConfig = Static<typeof EnvironmentSchema>
@@ -74,6 +79,9 @@ function loadEnvironment(): EnvironmentConfig {
     RATE_LIMIT_TIMEWINDOW: parseInt(process.env.RATE_LIMIT_TIMEWINDOW || '60000', 10),
     CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:3000',
     HEALTH_CHECK_ENABLED: process.env.HEALTH_CHECK_ENABLED !== 'false',
+    CACHE_ENABLED: process.env.CACHE_ENABLED !== 'false',
+    CACHE_DEFAULT_TTL: parseInt(process.env.CACHE_DEFAULT_TTL || '300', 10),
+    CACHE_MAX_ENTRIES: parseInt(process.env.CACHE_MAX_ENTRIES || '1000', 10),
   }
 
   // In production, ensure JWT_SECRET is properly set
@@ -129,6 +137,12 @@ export const argon2Config = {
 
 export const healthConfig = {
   enabled: environment.HEALTH_CHECK_ENABLED,
+}
+
+export const cacheConfig = {
+  enabled: environment.CACHE_ENABLED,
+  defaultTtl: environment.CACHE_DEFAULT_TTL,
+  maxEntries: environment.CACHE_MAX_ENTRIES,
 }
 
 // RBAC is always enabled - no configuration needed

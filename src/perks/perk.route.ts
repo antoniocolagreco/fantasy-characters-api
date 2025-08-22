@@ -20,6 +20,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/perks - List perks with pagination and filtering
@@ -27,7 +28,7 @@ export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listPerksRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listPerksHandler,
   })
 
@@ -36,7 +37,7 @@ export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/stats',
     schema: perkStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getPerkStatsHandler,
   })
 
@@ -45,7 +46,7 @@ export const perkRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getPerkRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getPerkHandler,
   })
 

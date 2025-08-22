@@ -20,6 +20,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/races - List races with pagination and filtering
@@ -27,7 +28,7 @@ export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listRacesRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listRacesHandler,
   })
 
@@ -36,7 +37,7 @@ export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/stats',
     schema: raceStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getRaceStatsHandler,
   })
 
@@ -45,7 +46,7 @@ export const raceRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getRaceRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getRaceHandler,
   })
 

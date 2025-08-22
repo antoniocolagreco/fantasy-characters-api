@@ -17,6 +17,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // List images
@@ -31,7 +32,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           200: listImagesResponseSchema,
         },
       },
-      preHandler: [optionalAuthentication],
+      preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     },
     imageController.getImagesList,
   )
@@ -47,7 +48,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           200: imageStatsResponseSchema,
         },
       },
-      preHandler: [authenticateUser, requireActiveUser],
+      preHandler: [authenticateUser, requireActiveUser, CacheMiddleware.stats()],
     },
     imageController.getImageStats,
   )
@@ -91,7 +92,7 @@ export const imageRoutes = async (fastify: FastifyInstance): Promise<void> => {
           404: imageNotFoundSchema,
         },
       },
-      preHandler: [optionalAuthentication],
+      preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     },
     imageController.getImageById,
   )

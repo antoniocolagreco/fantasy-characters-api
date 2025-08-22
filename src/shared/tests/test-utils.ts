@@ -49,10 +49,12 @@ export const createMockReply = (): FastifyReply => {
     code: vi.fn().mockReturnThis(),
     header: vi.fn().mockReturnThis(),
     headers: vi.fn().mockReturnThis(),
+    getHeader: vi.fn().mockReturnValue('application/json'),
     type: vi.fn().mockReturnThis(),
     redirect: vi.fn().mockReturnThis(),
     cookie: vi.fn().mockReturnThis(),
     clearCookie: vi.fn().mockReturnThis(),
+    statusCode: 200,
   }
   return reply as unknown as FastifyReply
 }
@@ -142,7 +144,7 @@ export const expectHealthResponse = (body: Record<string, unknown>) => {
 
 // Common test assertions for JSON API responses
 export const expectJsonResponse = (
-  response: { statusCode: number; headers: Record<string, any>; body: string },
+  response: { statusCode: number; headers: Record<string, unknown>; body: string },
   expectedStatus = 200,
 ) => {
   expect(response.statusCode).toBe(expectedStatus)
@@ -262,7 +264,7 @@ export const cleanupTestData = async (): Promise<void> => {
  * Safe delete operation that handles missing tables gracefully
  */
 export const safeDeleteMany = async (
-  operation: () => Promise<any>,
+  operation: () => Promise<unknown>,
   tableName = 'unknown',
 ): Promise<void> => {
   try {

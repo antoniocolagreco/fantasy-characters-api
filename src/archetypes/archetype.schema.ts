@@ -4,6 +4,7 @@
  */
 
 import { Type } from '@sinclair/typebox'
+import { notModifiedResponse } from '../shared/cache.schema'
 
 // Base archetype response schema
 export const ArchetypeResponseSchema = Type.Object(
@@ -280,6 +281,31 @@ export const updateArchetypeSchema = UpdateArchetypeSchema
 export const listArchetypesQuerySchema = ListArchetypesQuerySchema
 
 // Route schemas for Fastify
+/*
+ * CACHE HEADERS DOCUMENTATION
+ * ===========================
+ *
+ * The following GET endpoints support HTTP caching with these automatic headers:
+ *
+ * Response Headers:
+ * - Cache-Control: public, max-age=300 (configurable, see cache.middleware.ts)
+ * - ETag: "hash-of-content" (for conditional requests and cache validation)
+ * - Last-Modified: HTTP date format (when resource was last updated)
+ * - Age: Number (seconds since response was cached)
+ * - X-Cache: "HIT" | "MISS" (indicates if response was served from cache)
+ * - Expires: HTTP date (absolute expiration time)
+ *
+ * Request Headers (Conditional Requests):
+ * - If-None-Match: Client sends ETag to check if resource changed
+ * - If-Modified-Since: Client sends date to check if resource was modified
+ *
+ * Status Codes:
+ * - 200: Resource returned with cache headers
+ * - 304: Not Modified (resource unchanged, use cached version)
+ *
+ * Cached Endpoints: GET /archetypes, GET /archetypes/:id, GET /archetypes/stats
+ */
+
 export const createArchetypeRouteSchema = {
   tags: ['Archetypes'],
   summary: 'Create a new archetype',
@@ -300,6 +326,7 @@ export const getArchetypeRouteSchema = {
   params: ArchetypeParamsSchema,
   response: {
     200: ArchetypeResponseSchema,
+    304: notModifiedResponse,
     404: ArchetypeErrorSchema,
   },
 }
@@ -359,6 +386,7 @@ export const listArchetypesRouteSchema = {
         },
       },
     },
+    304: notModifiedResponse,
   },
 }
 
@@ -368,6 +396,7 @@ export const archetypeStatsRouteSchema = {
   description: 'Get comprehensive statistics about archetypes',
   response: {
     200: ArchetypeStatsSchema,
+    304: notModifiedResponse,
     401: ArchetypeErrorSchema,
     403: ArchetypeErrorSchema,
   },

@@ -20,6 +20,7 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
   // GET /api/items - List items with pagination and filtering
@@ -27,7 +28,7 @@ export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/',
     schema: listItemsRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listItemsHandler,
   })
 
@@ -36,7 +37,7 @@ export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/stats',
     schema: itemStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getItemStatsHandler,
   })
 
@@ -45,7 +46,7 @@ export const itemRoutes = async (fastify: FastifyInstance): Promise<void> => {
     method: 'GET',
     url: '/:id',
     schema: getItemRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getItemHandler,
   })
 

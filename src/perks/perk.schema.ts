@@ -1,4 +1,5 @@
 import { Type } from '@sinclair/typebox'
+import { notModifiedResponse } from '../shared/cache.schema'
 
 // Visibility enum values
 const VISIBILITY_VALUES = ['PUBLIC', 'PRIVATE', 'HIDDEN'] as const
@@ -208,6 +209,32 @@ export const perkUnauthorizedErrorSchema = Type.Object({
 })
 
 // Route schemas for Fastify endpoints
+
+/*
+ * CACHE HEADERS DOCUMENTATION
+ * ===========================
+ *
+ * The following GET endpoints support HTTP caching with these automatic headers:
+ *
+ * Response Headers:
+ * - Cache-Control: public, max-age=300 (configurable, see cache.middleware.ts)
+ * - ETag: "hash-of-content" (for conditional requests and cache validation)
+ * - Last-Modified: HTTP date format (when resource was last updated)
+ * - Age: Number (seconds since response was cached)
+ * - X-Cache: "HIT" | "MISS" (indicates if response was served from cache)
+ * - Expires: HTTP date (absolute expiration time)
+ *
+ * Request Headers (Conditional Requests):
+ * - If-None-Match: Client sends ETag to check if resource changed
+ * - If-Modified-Since: Client sends date to check if resource was modified
+ *
+ * Status Codes:
+ * - 200: Resource returned with cache headers
+ * - 304: Not Modified (resource unchanged, use cached version)
+ *
+ * Cached Endpoints: GET /perks, GET /perks/:id, GET /perks/stats
+ */
+
 export const createPerkRouteSchema = {
   description: 'Create a new perk',
   tags: ['Perks'],
@@ -228,6 +255,7 @@ export const getPerkRouteSchema = {
   }),
   response: {
     200: perkSchema,
+    304: notModifiedResponse,
     404: perkNotFoundSchema,
     401: perkUnauthorizedErrorSchema,
   },
@@ -268,6 +296,7 @@ export const listPerksRouteSchema = {
   querystring: listPerksQuerySchema,
   response: {
     200: listPerksResponseSchema,
+    304: notModifiedResponse,
   },
 }
 
@@ -276,5 +305,6 @@ export const perkStatsRouteSchema = {
   tags: ['Perks'],
   response: {
     200: perkStatsResponseSchema,
+    304: notModifiedResponse,
   },
 }

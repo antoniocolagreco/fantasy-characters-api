@@ -20,13 +20,14 @@ import {
   requireActiveUser,
   optionalAuthentication,
 } from '../auth/auth.middleware'
+import { CacheMiddleware } from '../shared/cache.middleware'
 
 export const archetypeRoutes = async (fastify: FastifyInstance): Promise<void> => {
   fastify.route({
     method: 'GET',
     url: '/',
     schema: listArchetypesRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.publicList()],
     handler: listArchetypesHandler,
   })
 
@@ -34,7 +35,7 @@ export const archetypeRoutes = async (fastify: FastifyInstance): Promise<void> =
     method: 'GET',
     url: '/stats',
     schema: archetypeStatsRouteSchema,
-    preHandler: [authenticateUser],
+    preHandler: [authenticateUser, CacheMiddleware.stats()],
     handler: getArchetypeStatsHandler,
   })
 
@@ -42,7 +43,7 @@ export const archetypeRoutes = async (fastify: FastifyInstance): Promise<void> =
     method: 'GET',
     url: '/:id',
     schema: getArchetypeRouteSchema,
-    preHandler: [optionalAuthentication],
+    preHandler: [optionalAuthentication, CacheMiddleware.medium()],
     handler: getArchetypeHandler,
   })
 
