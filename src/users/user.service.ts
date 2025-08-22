@@ -14,6 +14,7 @@ import {
   isAppError,
 } from '../shared/errors'
 import { VALIDATION, PAGINATION } from '../shared/constants'
+import { toRole, isRole } from '../shared/type-guards'
 import type {
   CreateUserRequest,
   UpdateUserRequest,
@@ -116,7 +117,7 @@ export const createUser = async (userData: CreateUserRequest): Promise<UserRespo
         passwordHash: userData.passwordHash,
         name: userData.name?.trim() || null,
         bio: userData.bio?.trim() || null,
-        role: (userData.role as Role) || 'USER',
+        role: toRole(userData.role, 'USER'),
       },
     })
 
@@ -138,7 +139,7 @@ export const getUserById = async (id: string, currentUser?: AuthUser): Promise<U
   // RBAC: Check if user can access this profile (self or admin)
   const canAccess =
     currentUser?.id === id || // Own profile
-    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN) // Admin access
+    rbacService.hasRoleOrHigher(toRole(currentUser?.role, 'USER'), Role.ADMIN) // Admin access
 
   enforcePermission(canAccess, 'You do not have permission to access this user profile')
 
@@ -185,8 +186,8 @@ export const getUsersList = async (
     const where: Prisma.UserWhereInput = {}
 
     // Filter by role
-    if (query.role) {
-      where.role = query.role as Role
+    if (query.role && isRole(query.role)) {
+      where.role = query.role
     }
 
     // Filter by active status
@@ -272,7 +273,7 @@ export const updateUser = async (
   // RBAC: Check if user can update this profile (self or admin)
   const canUpdate =
     currentUser?.id === id || // Own profile
-    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN) // Admin access
+    rbacService.hasRoleOrHigher(toRole(currentUser?.role, 'USER'), Role.ADMIN) // Admin access
 
   enforcePermission(canUpdate, 'You do not have permission to update this user profile')
 
@@ -336,7 +337,7 @@ export const updateUser = async (
     }
 
     if (updateData.role !== undefined) {
-      updatePayload.role = updateData.role as Role
+      updatePayload.role = toRole(updateData.role, 'USER')
     }
 
     if (updateData.isActive !== undefined) {
@@ -373,7 +374,7 @@ export const deleteUser = async (id: string, currentUser?: AuthUser): Promise<vo
 
   // RBAC: Only admins can delete users (not even self-deletion for safety)
   enforcePermission(
-    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN),
+    rbacService.hasRoleOrHigher(toRole(currentUser?.role, 'USER'), Role.ADMIN),
     'You do not have permission to delete users',
   )
 
@@ -406,7 +407,7 @@ export const deleteUser = async (id: string, currentUser?: AuthUser): Promise<vo
 export const getUserStats = async (currentUser?: AuthUser): Promise<UserStatsResponse> => {
   // RBAC: Only admins can view user statistics
   enforcePermission(
-    rbacService.hasRoleOrHigher((currentUser?.role as Role) ?? Role.USER, Role.ADMIN),
+    rbacService.hasRoleOrHigher(toRole(currentUser?.role, 'USER'), Role.ADMIN),
     'You do not have permission to view user statistics',
   )
 
@@ -455,8 +456,8 @@ export const getUserStats = async (currentUser?: AuthUser): Promise<UserStatsRes
     }
 
     usersByRole.forEach(group => {
-      if (group.role in roleStats) {
-        roleStats[group.role as keyof typeof roleStats] = group._count.role
+      if (isRole(group.role) && group.role in roleStats) {
+        roleStats[group.role] = group._count.role
       }
     })
 

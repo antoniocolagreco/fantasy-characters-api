@@ -165,6 +165,70 @@ const importRules = {
 }
 
 // ============================================================================
+// ASSERTION RULES (for non-test files)
+// ============================================================================
+const assertionRules = {
+  'no-restricted-globals': [
+    'error',
+    {
+      name: 'expect',
+      message: 'Test assertions should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'describe',
+      message: 'Test blocks should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'test',
+      message: 'Test blocks should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'it',
+      message: 'Test blocks should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'beforeAll',
+      message: 'Test setup should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'afterAll',
+      message: 'Test teardown should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'beforeEach',
+      message: 'Test setup should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'afterEach',
+      message: 'Test teardown should not be used in production code. Move this to a test file.',
+    },
+    {
+      name: 'vi',
+      message: 'Vitest utilities should not be used in production code. Move this to a test file.',
+    },
+  ],
+  'no-restricted-syntax': [
+    'error',
+    {
+      selector: "CallExpression[callee.name='expect']",
+      message: 'Assertions should not be used in production code. Move this to a test file.',
+    },
+    {
+      selector: "CallExpression[callee.property.name='expect']",
+      message: 'Assertions should not be used in production code. Move this to a test file.',
+    },
+    {
+      selector: "CallExpression[callee.name='assert']",
+      message: 'Assertions should not be used in production code. Move this to a test file.',
+    },
+    {
+      selector: "CallExpression[callee.property.name='assert']",
+      message: 'Assertions should not be used in production code. Move this to a test file.',
+    },
+  ],
+}
+
+// ============================================================================
 // UNICORN RULES (Code Quality & Modern JavaScript)
 // ============================================================================
 const unicornRules = {
@@ -240,6 +304,15 @@ export default [
     },
   },
 
+  // Non-test files configuration (with assertion restrictions)
+  {
+    files: ['src/**/*.ts'],
+    ignores: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
+    rules: {
+      ...assertionRules,
+    },
+  },
+
   // Test files specific configuration
   {
     files: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
@@ -261,8 +334,9 @@ export default [
     rules: {
       // Relaxed rules for test files
       'no-console': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
       'no-restricted-imports': 'off', // Allow any imports in test files
+      'no-restricted-globals': 'off', // Allow test globals in test files
+      'no-restricted-syntax': 'off', // Allow assertions in test files
     },
   },
 

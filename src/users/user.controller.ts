@@ -12,8 +12,9 @@ import {
   deleteUser,
   getUserStats,
 } from './user.service'
-import { createErrorResponse, isAppError, createInternalServerError } from '../shared/errors'
+import { createErrorResponse, isAppError } from '../shared/errors'
 import { HTTP_STATUS, MESSAGES } from '../shared/constants'
+import { toErrorWithStatusCode } from '../shared/type-guards'
 import type {
   CreateUserRequest,
   UpdateUserRequest,
@@ -46,11 +47,7 @@ export const createUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to create user') as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to create user')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -81,11 +78,7 @@ export const getUserByIdHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to retrieve user') as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to retrieve user')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -117,11 +110,7 @@ export const getUsersListHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to retrieve users list') as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to retrieve users list')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -157,11 +146,7 @@ export const updateUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to update user') as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to update user')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -188,11 +173,7 @@ export const deleteUserHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError('Failed to delete user') as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to delete user')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }
@@ -222,13 +203,7 @@ export const getUserStatsHandler = async (
       const errorResponse = createErrorResponse(error, request.url)
       await reply.status(error.statusCode).send(errorResponse)
     } else {
-      const internalError = createInternalServerError(
-        'Failed to retrieve user statistics',
-      ) as Error & {
-        statusCode: number
-        code?: string
-        details?: unknown
-      }
+      const internalError = toErrorWithStatusCode(error, 'Failed to retrieve user statistics')
       const errorResponse = createErrorResponse(internalError, request.url)
       await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
     }

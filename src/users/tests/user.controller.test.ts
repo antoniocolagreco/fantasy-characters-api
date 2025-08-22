@@ -38,8 +38,7 @@ describe('User Controller', () => {
 
   // Helper function to create and authenticate a user
   const createAuthenticatedUser = async (role: 'USER' | 'MODERATOR' | 'ADMIN' = 'USER') => {
-    const userData =
-      role === 'ADMIN' ? await createTestAdminUser() : await createTestUser({ role: role as any })
+    const userData = role === 'ADMIN' ? await createTestAdminUser() : await createTestUser({ role })
     const token = await getAuthToken(userData.user.email, userData.password)
     return { userData, token }
   }
@@ -211,7 +210,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to create user')
+      expect(body.error.message).toBe('Database connection failed')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe('/api/users')
 
@@ -452,7 +451,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to retrieve users list')
+      expect(body.error.message).toBe('Database query failed')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe('/api/users')
 
@@ -543,7 +542,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to retrieve user')
+      expect(body.error.message).toBe('Database connection lost')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe(`/api/users/${validUuid}`)
 
@@ -758,7 +757,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to update user')
+      expect(body.error.message).toBe('Database transaction failed')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe(`/api/users/${testUser.id}`)
 
@@ -855,7 +854,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to delete user')
+      expect(body.error.message).toBe('Database constraint violation')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe(`/api/users/${testUser.id}`)
 
@@ -967,7 +966,7 @@ describe('User Controller', () => {
       expect(response.statusCode).toBe(500)
       const body = response.json()
       expect(body.error.code).toBe('INTERNAL_SERVER_ERROR')
-      expect(body.error.message).toBe('Failed to retrieve user statistics')
+      expect(body.error.message).toBe('Database connection failed')
       expect(body.error.timestamp).toBeDefined()
       expect(body.error.path).toBe('/api/users/stats')
 

@@ -13,8 +13,7 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import Fastify, { type FastifyInstance } from 'fastify'
 
-// Import type declarations to ensure they're loaded
-import './shared/types/fastify'
+// Type declarations are automatically loaded from ambient modules
 
 import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
 import { archetypeRoutes } from './archetypes/archetype.route'

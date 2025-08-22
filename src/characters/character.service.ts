@@ -4,7 +4,7 @@
  * and relationship management following functional programming principles
  */
 
-import { PrismaClient, type Visibility, type Sex } from '@prisma/client'
+import { PrismaClient, Prisma, type Visibility, type Sex } from '@prisma/client'
 import { CHARACTER_DEFAULTS } from '../shared/constants'
 import { createBadRequestError, createConflictError, createNotFoundError } from '../shared/errors'
 import { rbacService, type AuthUser } from '../shared/rbac.service'
@@ -546,13 +546,11 @@ export const findCharacterById = async (
 /**
  * Build character filter conditions for database queries
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const buildCharacterFilters = (
   filters: CharacterFilters,
   currentUser: AuthUser | undefined,
-): any => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {}
+): Prisma.CharacterWhereInput => {
+  const where: Prisma.CharacterWhereInput = {}
 
   // Simple visibility filtering
   if (currentUser?.role === 'ADMIN') {

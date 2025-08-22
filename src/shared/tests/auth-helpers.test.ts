@@ -3,6 +3,10 @@ import type { FastifyRequest } from 'fastify'
 import { getAuthUser, requireAuthUser } from '../auth-helpers'
 import type { AuthUser } from '../rbac.service'
 
+// Helper function to create a mock FastifyRequest with only the properties we need
+const createMockRequest = (authUser?: AuthUser): FastifyRequest =>
+  ({ authUser }) as unknown as FastifyRequest
+
 describe('Auth Helpers', () => {
   describe('getAuthUser', () => {
     it('should return the authenticated user when present', () => {
@@ -13,9 +17,7 @@ describe('Auth Helpers', () => {
         isEmailVerified: true,
       }
 
-      const mockRequest = {
-        authUser: mockUser,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(mockUser)
 
       const result = getAuthUser(mockRequest)
 
@@ -23,9 +25,7 @@ describe('Auth Helpers', () => {
     })
 
     it('should return null when authUser is undefined', () => {
-      const mockRequest = {
-        authUser: undefined,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(undefined)
 
       const result = getAuthUser(mockRequest)
 
@@ -33,7 +33,7 @@ describe('Auth Helpers', () => {
     })
 
     it('should return null when request has no authUser property', () => {
-      const mockRequest = {} as FastifyRequest
+      const mockRequest = createMockRequest()
 
       const result = getAuthUser(mockRequest)
 
@@ -50,9 +50,7 @@ describe('Auth Helpers', () => {
         isEmailVerified: true,
       }
 
-      const mockRequest = {
-        authUser: mockUser,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(mockUser)
 
       const result = requireAuthUser(mockRequest)
 
@@ -60,15 +58,13 @@ describe('Auth Helpers', () => {
     })
 
     it('should throw error when authUser is undefined', () => {
-      const mockRequest = {
-        authUser: undefined,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(undefined)
 
       expect(() => requireAuthUser(mockRequest)).toThrow('Authentication required')
     })
 
     it('should throw error when request has no authUser property', () => {
-      const mockRequest = {} as FastifyRequest
+      const mockRequest = createMockRequest()
 
       expect(() => requireAuthUser(mockRequest)).toThrow('Authentication required')
     })
@@ -84,9 +80,7 @@ describe('Auth Helpers', () => {
           isEmailVerified: true,
         }
 
-        const mockRequest = {
-          authUser: mockUser,
-        } as FastifyRequest
+        const mockRequest = createMockRequest(mockUser)
 
         const result = requireAuthUser(mockRequest)
 
@@ -103,9 +97,7 @@ describe('Auth Helpers', () => {
         isEmailVerified: true,
       }
 
-      const mockRequest = {
-        authUser: mockUser,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(mockUser)
 
       const result = requireAuthUser(mockRequest)
 
@@ -121,9 +113,7 @@ describe('Auth Helpers', () => {
         isEmailVerified: false,
       }
 
-      const mockRequest = {
-        authUser: mockUser,
-      } as FastifyRequest
+      const mockRequest = createMockRequest(mockUser)
 
       const result = requireAuthUser(mockRequest)
 
