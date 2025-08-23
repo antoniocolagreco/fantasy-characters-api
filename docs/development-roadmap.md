@@ -67,7 +67,7 @@
 
 ### Tasks
 
-- [x] **TASK-2.1**: Setup Prisma ORM with SQLite database configuration
+- [x] **TASK-2.1**: Setup Prisma ORM with PostgreSQL database configuration
 - [x] **TASK-2.2**: Design User model with authentication fields (email, passwordHash, role, OAuth)
 - [x] **TASK-2.3**: Design RefreshToken model with device tracking and revocation
 - [x] **TASK-2.4**: Design Image model with blob storage and metadata fields
@@ -378,7 +378,7 @@
 - [ ] **TASK-16.5**: Add request/response logging for debugging
 - [ ] **TASK-16.6**: Set up proper CORS configuration for production domains
 - [ ] **TASK-16.7**: Validate Kubernetes manifests work with real deployments
-- [ ] **TASK-16.8**: Create simple backup/restore scripts for SQLite database
+- [ ] **TASK-16.8**: Create simple backup/restore scripts for PostgreSQL database
 - [ ] **TASK-16.9**: Performance test critical endpoints under load
 - [ ] **TASK-16.10**: Security audit: check for exposed secrets, weak passwords, etc.
 

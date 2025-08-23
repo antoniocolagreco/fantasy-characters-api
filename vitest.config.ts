@@ -9,7 +9,7 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'file:./test.db',
+      DATABASE_URL: 'postgresql://developer:password@localhost:5433/fantasy_character_api_test',
     },
     coverage: {
       provider: 'v8',

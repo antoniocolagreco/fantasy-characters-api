@@ -276,6 +276,9 @@ The RBAC service provides granular permission checking:
 ### Environment Variables
 
 ```bash
+# Database
+DATABASE_URL=postgresql://username:password@localhost:5432/fantasy_characters_db
+
 # Authentication
 JWT_SECRET=your-secure-jwt-secret
 JWT_EXPIRES_IN=15m
@@ -300,6 +303,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 
 ### Production Checklist
 
+- ✅ Set `DATABASE_URL` to secure PostgreSQL connection string
 - ✅ Set `RBAC_ENABLED=true`
 - ✅ Configure strong JWT and session secrets
 - ✅ Enable HTTPS/TLS encryption
@@ -308,6 +312,7 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 - ✅ Enable audit logging
 - ✅ Set up monitoring and alerting
 - ✅ Regular security updates
+- ✅ Configure PostgreSQL connection pooling and SSL
 
 ### Monitoring & Alerting
 

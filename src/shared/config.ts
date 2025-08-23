@@ -30,8 +30,10 @@ export const EnvironmentSchema = Type.Object({
     { default: 'info' },
   ),
 
-  // Database (for future chapters)
-  DATABASE_URL: Type.String({ default: 'file:./dev.db' }),
+  // Database (PostgreSQL for all environments)
+  DATABASE_URL: Type.String({
+    default: 'postgresql://developer:password@localhost:5432/fantasy_character_api',
+  }),
 
   // Security (for future chapters)
   JWT_SECRET: Type.String({ minLength: 32 }),
@@ -69,7 +71,9 @@ function loadEnvironment(): EnvironmentConfig {
     API_PREFIX: process.env.API_PREFIX || '/api',
     API_VERSION: process.env.API_VERSION || 'v1',
     LOG_LEVEL: process.env.LOG_LEVEL || 'info',
-    DATABASE_URL: process.env.DATABASE_URL || 'file:./dev.db',
+    DATABASE_URL:
+      process.env.DATABASE_URL ||
+      'postgresql://developer:password@localhost:5432/fantasy_character_api',
     JWT_SECRET: process.env.JWT_SECRET || 'dev-secret-key-change-in-production-123456789',
     JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '15m',
     ARGON2_MEMORY_COST: parseInt(process.env.ARGON2_MEMORY_COST || '65536', 10),

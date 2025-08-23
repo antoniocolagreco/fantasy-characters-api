@@ -187,18 +187,10 @@ export const mockProcessUptime = (seconds: number) => {
 }
 
 // Setup common environment variables for testing
-export const setupTestEnvironment = () => {
-  const originalEnv = { ...process.env }
-
-  // Set test-specific environment
-  process.env.NODE_ENV = 'test'
-  process.env.DATABASE_URL = 'file:./test.db'
-  process.env.JWT_SECRET = 'test-secret'
-
-  return () => {
-    // Restore original environment
-    process.env = originalEnv
-  }
+export const setupTestDatabase = async (): Promise<void> => {
+  // Set test database URL for PostgreSQL
+  process.env.DATABASE_URL =
+    'postgresql://developer:password@localhost:5433/fantasy_character_api_test'
 }
 
 // Common error response structure validation

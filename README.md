@@ -14,7 +14,7 @@ programming principles.
 ### Database & ORM
 
 - **Prisma ORM**: Type-safe database interactions
-- **SQLite**: Development database (file-based)
+- **PostgreSQL**: Database for all environments
 
 ### Validation & Documentation
 

@@ -20,7 +20,8 @@
 ## Database & ORM
 
 - **Prisma ORM**: Advanced ORM for TypeScript/Node.js with type-safe database interactions
-- **SQLite**: Default database for local development (file-based)
+- **PostgreSQL**: Database for all environments (development, testing, production) with connection
+  pooling, ACID compliance, and horizontal scaling support
 
 ## Authentication & Security
 

@@ -1,5 +1,13 @@
 # Kubernetes Configuration
 
+## Database Architecture
+
+The application uses PostgreSQL as the database for all deployments:
+
+- **Development**: PostgreSQL in Docker container via docker-compose
+- **Testing**: PostgreSQL with dedicated test database
+- **Production**: Managed PostgreSQL service (AWS RDS, Google Cloud SQL, or self-hosted cluster)
+
 ## Health Check Strategy
 
 The application provides four health endpoints for Kubernetes deployment:
@@ -28,7 +36,7 @@ Essential files in `k8s/` directory:
 ```bash
 # Create secrets (replace with actual values)
 kubectl create secret generic fantasy-characters-secrets \
-  --from-literal=database-url="your-db-url" \
+  --from-literal=database-url="postgresql://username:password@postgres-service:5432/fantasy_characters_db" \
   --from-literal=jwt-secret="your-jwt-secret" \
   --namespace=fantasy-characters
 ```

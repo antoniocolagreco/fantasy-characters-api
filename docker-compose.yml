@@ -12,9 +12,12 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
       - LOG_LEVEL=debug
+      - DATABASE_URL=postgresql://developer:password@database:5432/fantasy_character_api_dev
     volumes:
       - .:/app
       - /app/node_modules
+    depends_on:
+      - database
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
@@ -23,17 +26,44 @@ services:
       retries: 3
       start_period: 40s
 
-  # Future database service (for Chapter 2)
-  # database:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     POSTGRES_DB: fantasy_character_api
-  #     POSTGRES_USER: developer
-  #     POSTGRES_PASSWORD: password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   restart: unless-stopped
-# volumes:
-#   postgres_data:
+  # PostgreSQL database for development
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fantasy_character_api_dev
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U developer -d fantasy_character_api_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PostgreSQL test database
+  database-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fantasy_character_api_test
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U developer -d fantasy_character_api_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  postgres_test_data:

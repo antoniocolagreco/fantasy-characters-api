@@ -101,11 +101,17 @@ export const getDatabaseHealth = async (): Promise<{
     // Test basic connectivity
     await client.$queryRaw`SELECT 1`
 
-    // Get SQLite version
-    const versionResult = await client.$queryRaw<Array<{ 'sqlite_version()': string }>>`
-      SELECT sqlite_version()
-    `
-    const version = versionResult[0]?.['sqlite_version()']
+    // Get PostgreSQL version
+    let version: string | undefined
+
+    try {
+      const pgVersionResult = await client.$queryRaw<Array<{ version: string }>>`
+        SELECT version()
+      `
+      version = pgVersionResult[0]?.version
+    } catch {
+      version = 'Unknown'
+    }
 
     return {
       status: 'healthy',

@@ -12,10 +12,13 @@ This documentation is organized into the following sections:
 ### Core Documentation
 
 - **[Technology Stack](./technology-stack.md)** - Backend technologies, frameworks, and libraries
+- **[PostgreSQL Configuration](./postgresql-configuration.md)** - Database setup, scaling, and
+  optimization
+- **[Testing with PostgreSQL](./testing-with-postgresql.md)** - Testing setup and best practices
 - **[Authentication & Security](./authentication-security.md)** - JWT, OAuth, RBAC, and security
   measures
 - **[Data Models](./data-models.md)** - Database schemas, enums, and entity relationships
-- **[API Endpoints](./api-endpoints.md)** - Complete API reference with examples
+- **[API Endpoints](./api-endpoints.md)** - Complete API reference with examples z
 
 ### Development Guides
 

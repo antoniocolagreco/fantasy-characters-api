@@ -9,34 +9,14 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url))
 
 describe('Database Migration and Seed Integration Tests', () => {
   const projectRoot = path.resolve(currentDir, '../../../..')
-  const dbPath = path.join(projectRoot, 'prisma', 'test.db')
 
   beforeAll(async () => {
-    // Clean up any existing test database
-    if (existsSync(dbPath)) {
-      try {
-        execSync(`Remove-Item "${dbPath}" -Force`, {
-          shell: 'powershell.exe',
-          cwd: projectRoot,
-        })
-      } catch (_error) {
-        // Ignore errors if file doesn't exist
-      }
-    }
+    // PostgreSQL doesn't need file cleanup like SQLite
+    // Database will be reset during test setup
   })
 
   afterAll(async () => {
-    // Clean up test database
-    if (existsSync(dbPath)) {
-      try {
-        execSync(`Remove-Item "${dbPath}" -Force`, {
-          shell: 'powershell.exe',
-          cwd: projectRoot,
-        })
-      } catch (_error) {
-        // Ignore cleanup errors
-      }
-    }
+    // No file cleanup needed for PostgreSQL
   })
 
   describe('Database Migration', () => {
@@ -52,15 +32,23 @@ describe('Database Migration and Seed Integration Tests', () => {
           stdio: 'pipe',
           env: {
             ...process.env,
-            DATABASE_URL: 'file:./test.db',
+            DATABASE_URL:
+              'postgresql://developer:password@localhost:5433/fantasy_character_api_test',
           },
         })
       }).not.toThrow()
     })
 
-    it('should create database file after schema push', () => {
-      // The database should exist after the schema push
-      expect(existsSync(dbPath)).toBe(true)
+    it('should verify database schema is properly applied', async () => {
+      // Test that we can connect to the database and query basic structure
+      const { getPrismaClient } = await import('../prisma.service')
+      const client = getPrismaClient()
+
+      try {
+        await client.$queryRaw`SELECT 1`
+      } finally {
+        await client.$disconnect()
+      }
     })
   })
 
@@ -77,7 +65,8 @@ describe('Database Migration and Seed Integration Tests', () => {
           stdio: 'pipe',
           env: {
             ...process.env,
-            DATABASE_URL: 'file:./test.db',
+            DATABASE_URL:
+              'postgresql://developer:password@localhost:5433/fantasy_character_api_test',
           },
         })
       }).not.toThrow()

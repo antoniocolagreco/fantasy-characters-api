@@ -30,9 +30,9 @@
 
 ### Local Development
 
-- **Docker Compose**: Multi-container setup with database
+- **Docker Compose**: Multi-container setup with PostgreSQL database
 - **Hot Reload**: Live code reloading with tsx
-- **Development Database**: SQLite for rapid iteration
+- **Development Database**: PostgreSQL in Docker container for consistency
 - **Environment Isolation**: Separate development and test environments
 
 ### Staging/Production Deployment
@@ -63,18 +63,21 @@
 
 ### Development Environment
 
-- **Database**: SQLite (file-based)
+- **Database**: PostgreSQL in Docker container (development)
+- **Test Database**: PostgreSQL with dedicated test database for fast iteration
 - **Migrations**: Automatic migration on startup
 - **Seed Data**: Consistent test data for development
 - **Test Isolation**: Separate test database for each test run
 
 ### Production Environment
 
-- **Database**: PostgreSQL or MySQL with persistent volumes
+- **Database**: PostgreSQL with persistent volumes and clustering
 - **Migration Strategy**: Automated database migrations in init containers
 - **Backup Strategy**: Regular automated backups with point-in-time recovery
 - **High Availability**: Database clustering and replication
 - **Performance Monitoring**: Query performance and optimization
+- **Connection Pooling**: Efficient PostgreSQL connection management
+- **SSL/TLS**: Encrypted database connections
 
 ## Security Standards
 
