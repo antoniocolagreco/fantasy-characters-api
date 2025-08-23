@@ -334,6 +334,7 @@ export default [
     rules: {
       // Relaxed rules for test files
       'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       'no-restricted-imports': 'off', // Allow any imports in test files
       'no-restricted-globals': 'off', // Allow test globals in test files
       'no-restricted-syntax': 'off', // Allow assertions in test files

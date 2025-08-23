@@ -3,11 +3,11 @@
  * Tests for caching middleware functionality
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import { cacheMiddleware, CacheMiddleware, CacheInvalidation } from '../cache.middleware'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+import { beforeEach, describe, expect, it } from 'vitest'
+import { CacheInvalidation, cacheMiddleware, CacheMiddleware } from '../cache.middleware'
 import { cacheService } from '../cache.service'
-import { createMockRequest, createMockReply } from './test-utils'
+import { createMockReply, createMockRequest } from './test-utils'
 
 describe('Cache Middleware', () => {
   let mockRequest: FastifyRequest
@@ -189,7 +189,6 @@ describe('Cache Middleware', () => {
         url: '/api/skills',
         query: { page: '1', limit: '10' },
       }) as FastifyRequest & { authUser?: { id: string } }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(requestWithUser as any).authUser = {
         id: 'user123',
         email: 'test@example.com',

@@ -143,7 +143,10 @@ export const listPerks = async (
       rbacService.getOwnershipFilter(currentUser), // RBAC filtering
       query.search
         ? {
-            OR: [{ name: { contains: query.search } }, { description: { contains: query.search } }],
+            OR: [
+              { name: { contains: query.search, mode: 'insensitive' } },
+              { description: { contains: query.search, mode: 'insensitive' } },
+            ],
           }
         : {},
       query.minLevel !== undefined ? { requiredLevel: { gte: query.minLevel } } : {},

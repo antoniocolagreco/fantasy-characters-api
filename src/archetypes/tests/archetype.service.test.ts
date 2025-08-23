@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import {
-  createArchetype,
-  findArchetypeById,
-  updateArchetype,
-  deleteArchetype,
-  listArchetypes,
-  getArchetypeStats,
-} from '../archetype.service'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { db } from '../../shared/database/index'
 import type { AuthUser } from '../../shared/rbac.service'
+import {
+  createArchetype,
+  deleteArchetype,
+  findArchetypeById,
+  getArchetypeStats,
+  listArchetypes,
+  updateArchetype,
+} from '../archetype.service'
 
 let mockUser: AuthUser
 let mockAdmin: AuthUser

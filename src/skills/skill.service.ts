@@ -249,8 +249,8 @@ export const listSkills = async (
   // Add search filtering
   if (query.search) {
     whereClause.OR = [
-      { name: { contains: query.search } },
-      { description: { contains: query.search } },
+      { name: { contains: query.search, mode: 'insensitive' } },
+      { description: { contains: query.search, mode: 'insensitive' } },
     ]
   }
 
