@@ -266,6 +266,39 @@ const generalRules = {
   // 'no-console': ['warn', { allow: ['warn', 'error'] }], // Commented for development
 }
 
+const testRules = {
+  files: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
+  languageOptions: {
+    parser: typescriptParser,
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      project: './tsconfig.test.json',
+    },
+    globals: vitestGlobals,
+  },
+  plugins: {
+    '@typescript-eslint': typescript,
+    prettier: prettier,
+    unicorn: unicorn,
+    import: importPlugin,
+  },
+  rules: {
+    // Relaxed rules for test files
+    'no-console': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    'no-restricted-imports': 'off', // Allow any imports in test files
+    'no-restricted-globals': 'off', // Allow test globals in test files
+    'no-restricted-syntax': 'off', // Allow assertions in test files
+    '@typescript-eslint/consistent-type-assertions': [
+      'off',
+      {
+        assertionStyle: 'allow',
+      },
+    ],
+  },
+}
+
 // ============================================================================
 // ESLINT CONFIGURATION EXPORT
 // ============================================================================
@@ -304,40 +337,14 @@ export default [
     },
   },
 
+  testRules,
+
   // Non-test files configuration (with assertion restrictions)
   {
     files: ['src/**/*.ts'],
     ignores: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
     rules: {
       ...assertionRules,
-    },
-  },
-
-  // Test files specific configuration
-  {
-    files: ['src/**/*.test.ts', 'src/**/tests/**/*.*'],
-    languageOptions: {
-      parser: typescriptParser,
-      parserOptions: {
-        ecmaVersion: 2022,
-        sourceType: 'module',
-        project: './tsconfig.test.json',
-      },
-      globals: vitestGlobals,
-    },
-    plugins: {
-      '@typescript-eslint': typescript,
-      prettier: prettier,
-      unicorn: unicorn,
-      import: importPlugin,
-    },
-    rules: {
-      // Relaxed rules for test files
-      'no-console': 'off',
-      '@typescript-eslint/no-explicit-any': 'off',
-      'no-restricted-imports': 'off', // Allow any imports in test files
-      'no-restricted-globals': 'off', // Allow test globals in test files
-      'no-restricted-syntax': 'off', // Allow assertions in test files
     },
   },
 

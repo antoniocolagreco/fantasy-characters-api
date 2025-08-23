@@ -16,6 +16,7 @@ import Fastify, { type FastifyInstance } from 'fastify'
 // Type declarations are automatically loaded from ambient modules
 
 import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
+import { initializeAuditService, getAuditService } from './shared/audit.service'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
 import { characterRoutes } from './characters/character.route'
@@ -71,12 +72,30 @@ export const createApp = async (): Promise<FastifyInstance> => {
     // Get current port from environment or default
     const currentPort = process.env.PORT || environment.PORT
 
-    // CORS configuration
-    // TODO: Configure restrictive CORS origins for production deployment
-    // FIXME: Permissive CORS (origin: true) used in development for Swagger UI
-    // In production, should use specific allowed origins from securityConfig
+    // Comprehensive CORS configuration with proper validation
     await app.register(cors, {
-      origin: environment.NODE_ENV === 'development' ? true : securityConfig.corsOrigin,
+      origin:
+        (process.env.NODE_ENV || environment.NODE_ENV) === 'development'
+          ? true // Allow all origins in development for Swagger UI and testing
+          : (origin, callback) => {
+              // In production, validate against allowed origins list
+              // Read from process.env to allow dynamic updates during testing
+              const corsOrigin = process.env.CORS_ORIGIN || securityConfig.corsOrigin
+              const allowedOrigins = corsOrigin.split(',').map(o => o.trim())
+
+              // Allow requests with no origin (like mobile apps or Postman)
+              if (!origin) {
+                return callback(null, true)
+              }
+
+              // Check if the origin is in the allowed list
+              if (allowedOrigins.includes(origin)) {
+                return callback(null, true)
+              }
+
+              // Reject unauthorized origins
+              return callback(new Error('Not allowed by CORS'), false)
+            },
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
       allowedHeaders: [
         'Content-Type',
@@ -85,35 +104,107 @@ export const createApp = async (): Promise<FastifyInstance> => {
         'Accept',
         'Origin',
         'X-Requested-With',
+        'Cache-Control',
+        'If-None-Match',
+        'If-Modified-Since',
+      ],
+      exposedHeaders: [
+        'x-request-id',
+        'Cache-Control',
+        'ETag',
+        'Last-Modified',
+        'X-RateLimit-Limit',
+        'X-RateLimit-Remaining',
+        'X-RateLimit-Reset',
       ],
       credentials: true,
       optionsSuccessStatus: 200, // For legacy browser support
       preflightContinue: false,
+      maxAge: 86400, // 24 hours for preflight cache
     })
 
-    // Security headers
-    // TODO: Review security headers configuration before production deployment
-    // FIXME: Most security headers are disabled in development for Swagger UI compatibility
-    // In production, these should be properly configured for security
+    // Comprehensive HTTP security headers configuration
     await app.register(helmet, {
-      // CSP disabled in development to allow Swagger UI to function properly
-      contentSecurityPolicy: environment.NODE_ENV === 'production' ? true : false,
-      // FIXME: These are disabled for development - re-enable for production
-      crossOriginEmbedderPolicy: false,
-      crossOriginOpenerPolicy: false,
-      crossOriginResourcePolicy: false,
-      originAgentCluster: false,
-      referrerPolicy: false,
-      // HTTPS-only header - enabled only in production
-      strictTransportSecurity: environment.NODE_ENV === 'production',
-      // FIXME: Security headers disabled for Swagger compatibility - re-evaluate for production
-      xContentTypeOptions: false,
-      xDnsPrefetchControl: false,
-      xDownloadOptions: false,
-      xFrameOptions: false,
-      xPermittedCrossDomainPolicies: false,
+      // Content Security Policy - strict in production, relaxed in development for Swagger UI
+      contentSecurityPolicy:
+        environment.NODE_ENV === 'production'
+          ? {
+              directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", 'data:', 'https:'],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+                workerSrc: ["'self'"],
+                formAction: ["'self'"],
+                upgradeInsecureRequests: [],
+              },
+            }
+          : {
+              directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+                imgSrc: ["'self'", 'data:', 'https:'],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'", 'data:'],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+              },
+            },
+
+      // Cross-Origin Embedder Policy - enforced in production
+      crossOriginEmbedderPolicy: environment.NODE_ENV === 'production',
+
+      // Cross-Origin Opener Policy - enforced in production
+      crossOriginOpenerPolicy:
+        environment.NODE_ENV === 'production' ? { policy: 'same-origin' } : false,
+
+      // Cross-Origin Resource Policy - enforced in production
+      crossOriginResourcePolicy:
+        environment.NODE_ENV === 'production' ? { policy: 'same-origin' } : false,
+
+      // Origin Agent Cluster - enforced in production
+      originAgentCluster: environment.NODE_ENV === 'production',
+
+      // Referrer Policy - always enabled for privacy
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+
+      // HTTPS Strict Transport Security - enabled in production
+      strictTransportSecurity:
+        environment.NODE_ENV === 'production'
+          ? {
+              maxAge: 31536000, // 1 year
+              includeSubDomains: true,
+              preload: true,
+            }
+          : false,
+
+      // X-Content-Type-Options - disabled in test environment
+      xContentTypeOptions: environment.NODE_ENV !== 'test',
+
+      // X-DNS-Prefetch-Control - disabled in test environment
+      xDnsPrefetchControl: environment.NODE_ENV !== 'test' ? { allow: false } : false,
+
+      // X-Download-Options - disabled in test environment
+      xDownloadOptions: environment.NODE_ENV !== 'test',
+
+      // X-Frame-Options - disabled in test environment
+      xFrameOptions: environment.NODE_ENV !== 'test' ? { action: 'deny' } : false,
+
+      // X-Permitted-Cross-Domain-Policies - disabled in test environment
+      xPermittedCrossDomainPolicies: environment.NODE_ENV !== 'test' ? false : false,
+
+      // X-Powered-By - always disabled
       xPoweredBy: false,
-      xXssProtection: false,
+
+      // X-XSS-Protection - disabled in test environment
+      xXssProtection: environment.NODE_ENV !== 'test',
     })
 
     // Rate limiting (disabled in test environment)
@@ -163,7 +254,8 @@ export const createApp = async (): Promise<FastifyInstance> => {
         openapi: '3.0.0',
         info: {
           title: 'Fantasy Characters API',
-          description: 'A comprehensive RESTful API for managing fantasy characters',
+          description:
+            'A comprehensive RESTful API for managing fantasy characters with advanced security features including JWT authentication, RBAC authorization, comprehensive audit logging, and HTTP security headers. Features role-based access control with USER, MODERATOR, and ADMIN roles, data classification (PUBLIC, PRIVATE, HIDDEN), and complete CRUD operations for characters, races, archetypes, skills, perks, items, and equipment management.',
           version: '1.0.0',
           contact: {
             name: 'Antonio Colagreco',
@@ -185,19 +277,59 @@ export const createApp = async (): Promise<FastifyInstance> => {
           },
         ],
         tags: [
-          { name: 'Health', description: 'Health check endpoints' },
-          { name: 'Users', description: 'User management endpoints' },
-          { name: 'Auth', description: 'Authentication endpoints' },
-          { name: 'Profile', description: 'User profile management endpoints' },
-          { name: 'Images', description: 'Image upload and management endpoints' },
-          { name: 'Characters', description: 'Character management endpoints' },
-          { name: 'Races', description: 'Race management endpoints' },
-          { name: 'Archetypes', description: 'Archetype management endpoints' },
-          { name: 'Skills', description: 'Skill management endpoints' },
-          { name: 'Perks', description: 'Perk management endpoints' },
-          { name: 'Items', description: 'Item management endpoints' },
-          { name: 'Equipment', description: 'Character equipment management endpoints' },
-          { name: 'Tags', description: 'Tag management endpoints' },
+          {
+            name: 'Health',
+            description: 'Health check endpoints for monitoring and Kubernetes probes',
+          },
+          {
+            name: 'Auth',
+            description:
+              'Authentication endpoints for login, logout, token refresh, and password management',
+          },
+          {
+            name: 'Profile',
+            description: 'User profile management endpoints for self-service operations',
+          },
+          {
+            name: 'Users',
+            description: 'User management endpoints (admin access required for most operations)',
+          },
+          {
+            name: 'Images',
+            description: 'Image upload and management endpoints with WebP optimization',
+          },
+          {
+            name: 'Characters',
+            description: 'Character management endpoints with stats calculation and relationships',
+          },
+          {
+            name: 'Races',
+            description: 'Fantasy race management with attribute modifiers and validation',
+          },
+          {
+            name: 'Archetypes',
+            description: 'Character class management with race requirements and restrictions',
+          },
+          {
+            name: 'Skills',
+            description: 'Skill management with level requirements and character progression',
+          },
+          {
+            name: 'Perks',
+            description: 'Character advantage/disadvantage system with level gating',
+          },
+          {
+            name: 'Items',
+            description: 'Equipment and consumable management with stats and rarity system',
+          },
+          {
+            name: 'Equipment',
+            description: 'Character equipment management with slot validation and stat calculation',
+          },
+          {
+            name: 'Tags',
+            description: 'Flexible tagging system for content organization and filtering',
+          },
         ],
         components: {
           securitySchemes: {
@@ -205,7 +337,138 @@ export const createApp = async (): Promise<FastifyInstance> => {
               type: 'http',
               scheme: 'bearer',
               bearerFormat: 'JWT',
-              description: 'JWT token for authentication',
+              description:
+                'JWT Bearer token authentication. Obtain tokens via POST /auth/login, use in Authorization header as "Bearer TOKEN". Access tokens expire in 15 minutes, refresh tokens expire in 7 days. Supports three roles: USER (basic access), MODERATOR (content management), ADMIN (full access).',
+            },
+          },
+          responses: {
+            UnauthorizedError: {
+              description: 'Authentication required - missing or invalid JWT token',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      error: {
+                        type: 'object',
+                        properties: {
+                          code: { type: 'string', example: 'UNAUTHORIZED' },
+                          message: { type: 'string', example: 'Authentication required' },
+                          timestamp: { type: 'string', format: 'date-time' },
+                          path: { type: 'string', example: '/api/characters' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            ForbiddenError: {
+              description: 'Insufficient permissions for this operation',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      error: {
+                        type: 'object',
+                        properties: {
+                          code: { type: 'string', example: 'FORBIDDEN' },
+                          message: { type: 'string', example: 'Insufficient permissions' },
+                          timestamp: { type: 'string', format: 'date-time' },
+                          path: { type: 'string', example: '/api/users' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            RateLimitError: {
+              description: 'Rate limit exceeded',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      error: {
+                        type: 'object',
+                        properties: {
+                          code: { type: 'string', example: 'TOO_MANY_REQUESTS' },
+                          message: { type: 'string', example: 'Rate limit exceeded, retry in 60s' },
+                          timestamp: { type: 'string', format: 'date-time' },
+                          path: { type: 'string', example: '/api/auth/login' },
+                          retryAfter: { type: 'number', example: 60 },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              headers: {
+                'X-RateLimit-Limit': {
+                  description: 'Request limit per time window',
+                  schema: { type: 'integer', example: 100 },
+                },
+                'X-RateLimit-Remaining': {
+                  description: 'Remaining requests in current window',
+                  schema: { type: 'integer', example: 0 },
+                },
+                'X-RateLimit-Reset': {
+                  description: 'Time when rate limit resets (Unix timestamp)',
+                  schema: { type: 'integer', example: 1625097600 },
+                },
+              },
+            },
+            ValidationError: {
+              description: 'Input validation failed',
+              content: {
+                'application/json': {
+                  schema: {
+                    type: 'object',
+                    properties: {
+                      error: {
+                        type: 'object',
+                        properties: {
+                          code: { type: 'string', example: 'VALIDATION_ERROR' },
+                          message: { type: 'string', example: 'Validation failed' },
+                          timestamp: { type: 'string', format: 'date-time' },
+                          path: { type: 'string', example: '/api/characters' },
+                          details: {
+                            type: 'array',
+                            items: {
+                              type: 'object',
+                              properties: {
+                                field: { type: 'string', example: 'name' },
+                                message: { type: 'string', example: 'Name is required' },
+                                value: { type: 'string', example: '' },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+          headers: {
+            'X-Request-ID': {
+              description: 'Unique request identifier for tracing and debugging',
+              schema: { type: 'string', example: 'req_1625097600_abc123' },
+            },
+            'Cache-Control': {
+              description: 'Caching directives for client and proxy caches',
+              schema: { type: 'string', example: 'public, max-age=300' },
+            },
+            ETag: {
+              description: 'Entity tag for cache validation',
+              schema: { type: 'string', example: '"abc123def456"' },
+            },
+            'Last-Modified': {
+              description: 'Date and time when resource was last modified',
+              schema: { type: 'string', format: 'date-time' },
             },
           },
         },
@@ -322,6 +585,25 @@ export const createApp = async (): Promise<FastifyInstance> => {
     }
 
     await registerPlugins()
+
+    // Initialize audit service after logger is configured (skip in test environment)
+    if (environment.NODE_ENV !== 'test') {
+      initializeAuditService(app.log)
+
+      // Log system startup event
+      const auditService = getAuditService()
+      auditService.logSystem({
+        eventType: 'system.startup',
+        severity: 'low',
+        message: 'Fastify application starting up',
+        details: {
+          environment: environment.NODE_ENV,
+          logLevel: logConfig.level,
+          apiPrefix: apiConfig.prefix,
+        },
+      })
+    }
+
     await registerRoutes()
     setupHooks()
     setupErrorHandlers()
@@ -338,6 +620,21 @@ export const createApp = async (): Promise<FastifyInstance> => {
   // Add graceful shutdown hook
   app.addHook('onClose', async instance => {
     instance.log.info('Shutting down Fastify application...')
+
+    // Log shutdown event (skip in test environment)
+    if (environment.NODE_ENV !== 'test') {
+      try {
+        const auditService = getAuditService()
+        auditService.logSystem({
+          eventType: 'system.shutdown',
+          severity: 'low',
+          message: 'Fastify application shutting down gracefully',
+        })
+      } catch {
+        // Ignore audit service errors during shutdown
+      }
+    }
+
     // Only disconnect database if this is the main app instance (not test instances)
     if (!global.databaseConnected || instance === app) {
       await disconnectDatabase()
