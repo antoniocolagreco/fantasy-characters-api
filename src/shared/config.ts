@@ -1,4 +1,5 @@
 import { Type, Static } from '@sinclair/typebox'
+import 'dotenv/config'
 
 // Environment configuration schema
 export const EnvironmentSchema = Type.Object({

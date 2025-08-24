@@ -2,8 +2,7 @@
 
 ## 🎯 Current Status
 
-**Completed**: Chapters 1-16 (Foundation → Core Security Configuration) + Testing
-Infrastructure  
+**Completed**: Chapters 1-16 (Foundation → Core Security Configuration) + Testing Infrastructure  
 **Current**: Chapter 17 - Security Audit & Testing � (Ready to Start)
 
 ## Features Implemented
@@ -366,33 +365,40 @@ Infrastructure
 
 ## Chapter 17: Security Audit & Testing 🔍
 
-**Objective**: Input validation audit and security testing suite
+**Objective**: Comprehensive security audit including input validation, health endpoint hardening,
+and security testing suite
 
 ### Tasks
 
-- [ ] **TASK-17.1**: Audit input sanitization in Authentication endpoints
-- [ ] **TASK-17.2**: Audit input sanitization in Users endpoints
-- [ ] **TASK-17.3**: Audit input sanitization in Images endpoints
-- [ ] **TASK-17.4**: Audit input sanitization in Tags endpoints
-- [ ] **TASK-17.5**: Audit input sanitization in Skills endpoints
-- [ ] **TASK-17.6**: Audit input sanitization in Perks endpoints
-- [ ] **TASK-17.7**: Audit input sanitization in Races endpoints
-- [ ] **TASK-17.8**: Audit input sanitization in Archetypes endpoints
-- [ ] **TASK-17.9**: Audit input sanitization in Items endpoints
-- [ ] **TASK-17.10**: Audit input sanitization in Equipment endpoints
-- [ ] **TASK-17.11**: Audit input sanitization in Characters endpoints
-- [ ] **TASK-17.12**: Create security testing suite for authentication flows
-- [ ] **TASK-17.13**: Write security unit tests for authentication flows
-- [ ] **TASK-17.14**: Write security integration tests for Users authorization
-- [ ] **TASK-17.15**: Write security integration tests for Images authorization
-- [ ] **TASK-17.16**: Write security integration tests for Tags authorization
-- [ ] **TASK-17.17**: Write security integration tests for Skills authorization
-- [ ] **TASK-17.18**: Write security integration tests for Perks authorization
-- [ ] **TASK-17.19**: Write security integration tests for Races authorization
-- [ ] **TASK-17.20**: Write security integration tests for Archetypes authorization
-- [ ] **TASK-17.21**: Write security integration tests for Items authorization
-- [ ] **TASK-17.22**: Write security integration tests for Equipment authorization
-- [ ] **TASK-17.23**: Write security integration tests for Characters authorization
+- [x] **TASK-17.1**: Audit input sanitization in Authentication endpoints
+- [x] **TASK-17.2**: Audit input sanitization in Users endpoints
+- [x] **TASK-17.3**: Audit input sanitization in Images endpoints
+- [x] **TASK-17.4**: Audit input sanitization in Tags endpoints
+- [x] **TASK-17.5**: Audit input sanitization in Skills endpoints
+- [x] **TASK-17.6**: Audit input sanitization in Perks endpoints
+- [x] **TASK-17.7**: Audit input sanitization in Races endpoints
+- [x] **TASK-17.8**: Audit input sanitization in Archetypes endpoints
+- [x] **TASK-17.9**: Audit input sanitization in Items endpoints
+- [x] **TASK-17.10**: Audit input sanitization in Equipment endpoints
+- [x] **TASK-17.11**: Audit input sanitization in Characters endpoints
+- [x] **TASK-17.12**: Audit health endpoint information disclosure and implement security
+      improvements
+- [x] **TASK-17.13**: Implement tiered health endpoints (public basic vs internal detailed)
+- [x] **TASK-17.14**: Add health endpoint rate limiting and access control
+- [x] **TASK-17.15**: Add health endpoint security headers and audit logging
+- [x] **TASK-17.16**: Create security testing suite for authentication flows
+- [x] **TASK-17.17**: Write security unit tests for authentication flows
+- [x] **TASK-17.18**: Write security integration tests for Users authorization
+- [x] **TASK-17.19**: Write security integration tests for Images authorization
+- [x] **TASK-17.20**: Write security integration tests for Tags authorization
+- [x] **TASK-17.21**: Write security integration tests for Skills authorization
+- [x] **TASK-17.22**: Write security integration tests for Perks authorization
+- [x] **TASK-17.23**: Write security integration tests for Races authorization
+- [x] **TASK-17.24**: Write security integration tests for Archetypes authorization
+- [x] **TASK-17.25**: Write security integration tests for Items authorization
+- [x] **TASK-17.26**: Write security integration tests for Equipment authorization
+- [x] **TASK-17.27**: Write security integration tests for Characters authorization
+- [x] **TASK-17.28**: Write security integration tests for Health endpoints authorization
 
 ---
 
@@ -411,7 +417,8 @@ Infrastructure
 - [ ] **TASK-18.7**: Validate Kubernetes manifests work with real deployments
 - [ ] **TASK-18.8**: Create simple backup/restore scripts for PostgreSQL database
 - [ ] **TASK-18.9**: Performance test critical endpoints under load
-- [ ] **TASK-18.10**: Security audit: check for exposed secrets, weak passwords, etc.
+- [ ] **TASK-18.10**: Check the tests coverage.
+- [ ] **TASK-18.11**: Security audit: check for exposed secrets, weak passwords, etc.
 
 ## Development Guidelines
 

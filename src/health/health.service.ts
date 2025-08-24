@@ -1,6 +1,6 @@
 /**
  * Health check service
- * Provides health status information about the application
+ * Provides health status information about the application with security considerations
  */
 
 import { healthConfig } from '../shared/config'
@@ -12,33 +12,49 @@ export type HealthCheck = {
   readonly name: string
   readonly status: HealthStatus
   readonly timestamp: string
-  readonly details?: Record<string, unknown>
+  readonly details?: Record<string, unknown> | undefined
 }
 
 export type HealthResponse = {
   readonly status: HealthStatus
   readonly timestamp: string
-  readonly uptime: number
-  readonly version: string
-  readonly environment: string
-  readonly checks: HealthCheck[]
+  readonly uptime?: number
+  readonly version?: string
+  readonly environment?: string
+  readonly checks?: HealthCheck[]
 }
 
-export type HealthCheckLevel = 'basic' | 'liveness' | 'readiness' | 'comprehensive'
+export type HealthCheckLevel =
+  | 'basic'
+  | 'liveness'
+  | 'readiness'
+  | 'comprehensive'
+  | 'public'
+  | 'internal'
 
 // Individual health check functions
-const checkApplication = (): HealthCheck => ({
-  name: 'application',
-  status: 'healthy',
-  timestamp: new Date().toISOString(),
-  details: {
-    nodeVersion: process.version,
-    platform: process.platform,
-    architecture: process.arch,
-  },
-})
+const checkApplication = (includeDetails = false): HealthCheck => {
+  const base = {
+    name: 'application',
+    status: 'healthy' as const,
+    timestamp: new Date().toISOString(),
+  }
 
-const checkMemory = (): HealthCheck => {
+  if (includeDetails) {
+    return {
+      ...base,
+      details: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        architecture: process.arch,
+      },
+    }
+  }
+
+  return base
+}
+
+const checkMemory = (includeDetails = false): HealthCheck => {
   const memoryUsage = process.memoryUsage()
   const freeMemory = process.memoryUsage().heapTotal - process.memoryUsage().heapUsed
   const memoryUtilization = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100
@@ -51,74 +67,114 @@ const checkMemory = (): HealthCheck => {
     status = 'degraded'
   }
 
-  return {
+  const base = {
     name: 'memory',
     status,
     timestamp: new Date().toISOString(),
-    details: {
-      used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
-      total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
-      free: Math.round(freeMemory / 1024 / 1024), // MB
-      utilization: Math.round(memoryUtilization * 100) / 100, // percentage
-    },
   }
+
+  if (includeDetails) {
+    return {
+      ...base,
+      details: {
+        used: Math.round(memoryUsage.heapUsed / 1024 / 1024), // MB
+        total: Math.round(memoryUsage.heapTotal / 1024 / 1024), // MB
+        free: Math.round(freeMemory / 1024 / 1024), // MB
+        utilization: Math.round(memoryUtilization * 100) / 100, // percentage
+      },
+    }
+  }
+
+  return base
 }
 
-const checkUptime = (): HealthCheck => {
+const checkUptime = (includeDetails = false): HealthCheck => {
   const uptimeSeconds = process.uptime()
   const status: HealthStatus = uptimeSeconds > 0 ? 'healthy' : 'unhealthy'
 
-  return {
+  const base = {
     name: 'uptime',
     status,
     timestamp: new Date().toISOString(),
-    details: {
-      seconds: Math.round(uptimeSeconds),
-      formatted: formatUptime(uptimeSeconds),
-    },
   }
+
+  if (includeDetails) {
+    return {
+      ...base,
+      details: {
+        seconds: Math.round(uptimeSeconds),
+        formatted: formatUptime(uptimeSeconds),
+      },
+    }
+  }
+
+  return base
 }
 
 // Basic process health check (lightweight for liveness probe)
-const checkProcess = (): HealthCheck => {
+const checkProcess = (includeDetails = false): HealthCheck => {
   const status: HealthStatus = process.uptime() > 0 ? 'healthy' : 'unhealthy'
 
-  return {
+  const base = {
     name: 'process',
     status,
     timestamp: new Date().toISOString(),
-    details: {
-      pid: process.pid,
-      uptime: Math.round(process.uptime()),
-    },
   }
+
+  if (includeDetails) {
+    return {
+      ...base,
+      details: {
+        pid: process.pid,
+        uptime: Math.round(process.uptime()),
+      },
+    }
+  }
+
+  return base
 }
 
 // Database health check
-const checkDatabase = async (): Promise<HealthCheck> => {
+const checkDatabase = async (includeDetails = false): Promise<HealthCheck> => {
   try {
     const dbHealth = await getDatabaseHealth()
 
-    return {
+    const base = {
       name: 'database',
       status: dbHealth.status,
       timestamp: new Date().toISOString(),
-      details: {
-        connected: dbHealth.connected,
-        version: dbHealth.version,
-        errorMessage: dbHealth.errorMessage,
-      },
     }
+
+    if (includeDetails) {
+      return {
+        ...base,
+        details: {
+          connected: dbHealth.connected,
+          version: dbHealth.version,
+          errorMessage: dbHealth.errorMessage,
+        },
+      }
+    }
+
+    return base
   } catch (error) {
-    return {
+    const base = {
       name: 'database',
-      status: 'unhealthy',
+      status: 'unhealthy' as const,
       timestamp: new Date().toISOString(),
-      details: {
-        connected: false,
-        errorMessage: error instanceof Error ? error.message : 'Unknown database error',
-      },
     }
+
+    if (includeDetails) {
+      return {
+        ...base,
+        details: {
+          connected: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown database error',
+        },
+      }
+    }
+
+    return base
   }
 }
 
@@ -151,6 +207,11 @@ const determineOverallStatus = (checks: HealthCheck[]): HealthStatus => {
 // Get checks based on health check level
 const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]> => {
   switch (level) {
+    case 'public':
+      // Public health check - minimal information for external consumption
+      // Only status, no sensitive details
+      return [checkProcess(), checkMemory()]
+
     case 'basic':
       // Basic health check - minimal information for /healthz
       return [checkProcess(), checkMemory()]
@@ -158,17 +219,33 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
     case 'liveness':
       // Liveness probe - ONLY process check (Kubernetes best practice)
       // This should be extremely lightweight and never fail unless the process is truly dead
-      return [checkProcess()]
+      return [checkProcess(true)]
 
     case 'readiness':
       // Readiness probe - focus on external dependencies (Kubernetes best practice)
       // This determines if the app can serve traffic (database, external services)
       return [await checkDatabase(), checkMemory()]
 
+    case 'internal':
+      // Internal health check with detailed information for monitoring dashboards
+      // Includes sensitive system information for authenticated internal use
+      return [
+        checkApplication(true),
+        checkMemory(true),
+        checkUptime(true),
+        await checkDatabase(true),
+      ]
+
     case 'comprehensive':
     default:
       // Full health check with all available checks for monitoring dashboards
-      return [checkApplication(), checkMemory(), checkUptime(), await checkDatabase()]
+      // Backward compatibility - same as internal but can be adjusted
+      return [
+        checkApplication(true),
+        checkMemory(true),
+        checkUptime(true),
+        await checkDatabase(true),
+      ]
   }
 }
 
@@ -184,6 +261,28 @@ export const getHealthStatus = async (
   const checks = await getChecksForLevel(level)
   const overallStatus = determineOverallStatus(checks)
 
+  // Return different information based on access level
+  if (level === 'public') {
+    // Public endpoint - minimal information
+    return {
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+    }
+  }
+
+  if (level === 'basic' || level === 'liveness' || level === 'readiness') {
+    // Kubernetes probes - basic information
+    return {
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      uptime: Math.round(process.uptime()),
+      version: process.env.npm_package_version || '1.0.0',
+      environment: process.env.NODE_ENV || 'development',
+      checks,
+    }
+  }
+
+  // Internal/comprehensive - full information
   return {
     status: overallStatus,
     timestamp: new Date().toISOString(),
@@ -205,4 +304,13 @@ export const getReadinessStatus = async (): Promise<HealthResponse> => {
 
 export const getBasicHealthStatus = async (): Promise<HealthResponse> => {
   return getHealthStatus('basic')
+}
+
+// New secure health status functions
+export const getPublicHealthStatus = async (): Promise<HealthResponse> => {
+  return getHealthStatus('public')
+}
+
+export const getInternalHealthStatus = async (): Promise<HealthResponse> => {
+  return getHealthStatus('internal')
 }

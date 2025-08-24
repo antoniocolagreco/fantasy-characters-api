@@ -33,11 +33,16 @@ describe('Health Controller', () => {
         msgPrefix: '',
       },
       url: '/health',
+      ip: '127.0.0.1',
+      headers: {
+        'user-agent': 'test-agent',
+      },
     }
 
     mockReply = {
       status: vi.fn().mockReturnThis(),
       send: vi.fn().mockResolvedValue(undefined),
+      header: vi.fn().mockReturnThis(),
     }
   })
 
@@ -52,11 +57,11 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getPublicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealth(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
-      expect(mockedHealthService.getHealthStatus).toHaveBeenCalledWith('comprehensive')
+      expect(mockedHealthService.getPublicHealthStatus).toHaveBeenCalledWith()
       expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
@@ -71,11 +76,11 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getPublicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealth(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
-      expect(mockedHealthService.getHealthStatus).toHaveBeenCalledWith('comprehensive')
+      expect(mockedHealthService.getPublicHealthStatus).toHaveBeenCalledWith()
       expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
@@ -90,11 +95,11 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getPublicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealth(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
-      expect(mockedHealthService.getHealthStatus).toHaveBeenCalledWith('comprehensive')
+      expect(mockedHealthService.getPublicHealthStatus).toHaveBeenCalledWith()
       expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
@@ -116,7 +121,7 @@ describe('Health Controller', () => {
         },
       }
 
-      mockedHealthService.getHealthStatus.mockRejectedValue(mockError)
+      mockedHealthService.getPublicHealthStatus.mockRejectedValue(mockError)
       mockedErrors.createInternalServerError.mockReturnValue(mockAppError as any)
       mockedErrors.createErrorResponse.mockReturnValue(mockErrorResponse)
 
@@ -124,7 +129,7 @@ describe('Health Controller', () => {
 
       expect(mockRequest.log?.error).toHaveBeenCalledWith(
         { error: mockError },
-        'Health check failed',
+        'Public health check failed',
       )
       expect(mockedErrors.createInternalServerError).toHaveBeenCalledWith(
         'Health check failed',
@@ -136,7 +141,7 @@ describe('Health Controller', () => {
     })
 
     it('should handle unknown errors', async () => {
-      const mockError = 'Unknown error type'
+      const mockError = 'Unknown error'
       const mockAppError = {
         statusCode: 500,
         message: 'Health check failed',
@@ -152,16 +157,21 @@ describe('Health Controller', () => {
         },
       }
 
-      mockedHealthService.getHealthStatus.mockRejectedValue(mockError)
+      mockedHealthService.getPublicHealthStatus.mockRejectedValue(mockError)
       mockedErrors.createInternalServerError.mockReturnValue(mockAppError as any)
       mockedErrors.createErrorResponse.mockReturnValue(mockErrorResponse)
 
       await getHealth(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
+      expect(mockRequest.log?.error).toHaveBeenCalledWith(
+        { error: mockError },
+        'Public health check failed',
+      )
       expect(mockedErrors.createInternalServerError).toHaveBeenCalledWith(
         'Health check failed',
         'Unknown error',
       )
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
     })
   })
 
@@ -176,11 +186,11 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getBasicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealthz(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
-      expect(mockedHealthService.getHealthStatus).toHaveBeenCalledWith('basic')
+      expect(mockedHealthService.getBasicHealthStatus).toHaveBeenCalledWith()
       expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
@@ -195,7 +205,7 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getBasicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealthz(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -213,7 +223,7 @@ describe('Health Controller', () => {
         checks: [],
       }
 
-      mockedHealthService.getHealthStatus.mockResolvedValue(mockHealthData)
+      mockedHealthService.getBasicHealthStatus.mockResolvedValue(mockHealthData)
 
       await getHealthz(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -223,7 +233,8 @@ describe('Health Controller', () => {
 
     it('should handle service errors', async () => {
       const mockError = new Error('Healthz service error')
-      mockedHealthService.getHealthStatus.mockRejectedValue(mockError)
+
+      mockedHealthService.getBasicHealthStatus.mockRejectedValue(mockError)
 
       await getHealthz(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
@@ -290,8 +301,9 @@ describe('Health Controller', () => {
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
 
-    it('should handle service errors', async () => {
+    it('should handle service errors and return 500', async () => {
       const mockError = new Error('Liveness service error')
+
       mockedHealthService.getLivenessStatus.mockRejectedValue(mockError)
 
       await getLiveness(mockRequest as FastifyRequest, mockReply as FastifyReply)
@@ -359,8 +371,9 @@ describe('Health Controller', () => {
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
 
-    it('should handle service errors', async () => {
+    it('should handle service errors and return 500', async () => {
       const mockError = new Error('Readiness service error')
+
       mockedHealthService.getReadinessStatus.mockRejectedValue(mockError)
 
       await getReadiness(mockRequest as FastifyRequest, mockReply as FastifyReply)

@@ -1,12 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import Fastify, { FastifyInstance } from 'fastify'
 import { healthRoutes } from '../health.route'
-import * as healthController from '../health.controller'
+import * as healthService from '../health.service'
 
-// Mock the health controller
-vi.mock('../health.controller')
+// Mock the health service instead of the controller
+vi.mock('../health.service')
 
-const mockedController = vi.mocked(healthController)
+const mockedService = vi.mocked(healthService)
 
 describe('Health Routes', () => {
   let fastify: FastifyInstance
@@ -20,21 +20,43 @@ describe('Health Routes', () => {
     // Register the health routes
     await fastify.register(healthRoutes)
 
-    // Mock all controller functions
-    mockedController.getHealth.mockImplementation(async (_req, reply) => {
-      return reply.status(200).send({ status: 'healthy' })
+    // Mock all service functions to return healthy responses
+    mockedService.getPublicHealthStatus.mockResolvedValue({
+      status: 'healthy' as const,
+      timestamp: new Date().toISOString(),
     })
 
-    mockedController.getHealthz.mockImplementation(async (_req, reply) => {
-      return reply.status(200).send({ status: 'healthy' })
+    mockedService.getInternalHealthStatus.mockResolvedValue({
+      status: 'healthy' as const,
+      timestamp: new Date().toISOString(),
+      uptime: 12345,
+      version: '1.0.0',
+      environment: 'test',
+      checks: [],
     })
 
-    mockedController.getLiveness.mockImplementation(async (_req, reply) => {
-      return reply.status(200).send({ status: 'healthy' })
+    mockedService.getBasicHealthStatus.mockResolvedValue({
+      status: 'healthy' as const,
+      timestamp: new Date().toISOString(),
+      uptime: 12345,
+      version: '1.0.0',
+      environment: 'test',
     })
 
-    mockedController.getReadiness.mockImplementation(async (_req, reply) => {
-      return reply.status(200).send({ status: 'healthy' })
+    mockedService.getLivenessStatus.mockResolvedValue({
+      status: 'healthy' as const,
+      timestamp: new Date().toISOString(),
+      uptime: 12345,
+      version: '1.0.0',
+      environment: 'test',
+    })
+
+    mockedService.getReadinessStatus.mockResolvedValue({
+      status: 'healthy' as const,
+      timestamp: new Date().toISOString(),
+      uptime: 12345,
+      version: '1.0.0',
+      environment: 'test',
     })
   })
 
@@ -50,7 +72,11 @@ describe('Health Routes', () => {
       })
 
       expect(response.statusCode).toBe(200)
-      expect(mockedController.getHealth).toHaveBeenCalledTimes(1)
+      expect(mockedService.getPublicHealthStatus).toHaveBeenCalledTimes(1)
+
+      const body = response.json()
+      expect(body.status).toBe('healthy')
+      expect(body.timestamp).toBeDefined()
     })
 
     it('should have correct route schema', () => {
@@ -67,7 +93,11 @@ describe('Health Routes', () => {
       })
 
       expect(response.statusCode).toBe(200)
-      expect(mockedController.getHealthz).toHaveBeenCalledTimes(1)
+      expect(mockedService.getBasicHealthStatus).toHaveBeenCalledTimes(1)
+
+      const body = response.json()
+      expect(body.status).toBe('healthy')
+      expect(body.timestamp).toBeDefined()
     })
 
     it('should have correct route schema', () => {
@@ -84,7 +114,11 @@ describe('Health Routes', () => {
       })
 
       expect(response.statusCode).toBe(200)
-      expect(mockedController.getReadiness).toHaveBeenCalledTimes(1)
+      expect(mockedService.getReadinessStatus).toHaveBeenCalledTimes(1)
+
+      const body = response.json()
+      expect(body.status).toBe('healthy')
+      expect(body.timestamp).toBeDefined()
     })
 
     it('should have correct route schema', () => {
@@ -101,7 +135,11 @@ describe('Health Routes', () => {
       })
 
       expect(response.statusCode).toBe(200)
-      expect(mockedController.getLiveness).toHaveBeenCalledTimes(1)
+      expect(mockedService.getLivenessStatus).toHaveBeenCalledTimes(1)
+
+      const body = response.json()
+      expect(body.status).toBe('healthy')
+      expect(body.timestamp).toBeDefined()
     })
 
     it('should have correct route schema', () => {

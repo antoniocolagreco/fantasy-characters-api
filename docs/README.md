@@ -26,6 +26,8 @@ This documentation is organized into the following sections:
   best practices
 - **[Project Structure](./project-structure.md)** - Directory organization and feature-based
   architecture
+- **[Package Scripts](./package-scripts.md)** - Complete reference for all npm/pnpm scripts with
+  usage examples
 - **[Development Roadmap](./development-roadmap.md)** - Project milestones and feature
   implementation plan
 - **[Testing Strategy](./testing-strategy.md)** - Testing approach, coverage requirements, and
@@ -42,9 +44,10 @@ This documentation is organized into the following sections:
 
 1. Review the [Technology Stack](./technology-stack.md) to understand the project architecture
 2. Check the [Project Structure](./project-structure.md) to navigate the codebase
-3. Understand [Authentication & Security](./authentication-security.md) for user management
-4. Explore [Data Models](./data-models.md) for database structure
-5. Use [API Endpoints](./api-endpoints.md) as your development reference
+3. Use the [Package Scripts](./package-scripts.md) reference for development workflows and commands
+4. Understand [Authentication & Security](./authentication-security.md) for user management
+5. Explore [Data Models](./data-models.md) for database structure
+6. Use [API Endpoints](./api-endpoints.md) as your development reference
 
 ## Development Workflow
 

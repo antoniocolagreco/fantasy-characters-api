@@ -58,7 +58,7 @@ describe('Health Service', () => {
       expect(health.version).toBeDefined()
       expect(health.environment).toBe('test')
       expect(Array.isArray(health.checks)).toBe(true)
-      expect(health.checks.length).toBeGreaterThan(0)
+      expect(health.checks?.length).toBeGreaterThan(0)
     })
 
     it('should include application check in comprehensive mode', async () => {
@@ -69,7 +69,7 @@ describe('Health Service', () => {
       })
 
       const health = await getHealthStatus('comprehensive')
-      const appCheck = health.checks.find(check => check.name === 'application')
+      const appCheck = health.checks?.find(check => check.name === 'application')
 
       expect(appCheck).toBeDefined()
       expect(appCheck?.status).toBe('healthy')
@@ -86,7 +86,7 @@ describe('Health Service', () => {
       })
 
       const health = await getHealthStatus()
-      const memoryCheck = health.checks.find(check => check.name === 'memory')
+      const memoryCheck = health.checks?.find(check => check.name === 'memory')
 
       expect(memoryCheck).toBeDefined()
       expect(memoryCheck?.status).toBeDefined()
@@ -104,7 +104,7 @@ describe('Health Service', () => {
       })
 
       const health = await getHealthStatus()
-      const dbCheck = health.checks.find(check => check.name === 'database')
+      const dbCheck = health.checks?.find(check => check.name === 'database')
 
       expect(dbCheck).toBeDefined()
       expect(dbCheck?.status).toBe('healthy')
@@ -116,7 +116,7 @@ describe('Health Service', () => {
       vi.mocked(getDatabaseHealth).mockRejectedValue(new Error('Database connection failed'))
 
       const health = await getHealthStatus()
-      const dbCheck = health.checks.find(check => check.name === 'database')
+      const dbCheck = health.checks?.find(check => check.name === 'database')
 
       expect(dbCheck).toBeDefined()
       expect(dbCheck?.status).toBe('unhealthy')
@@ -153,10 +153,10 @@ describe('Health Service', () => {
       const health = await getLivenessStatus()
 
       expect(health.checks).toHaveLength(1)
-      expect(health.checks[0].name).toBe('process')
-      expect(health.checks[0].status).toBe('healthy')
-      expect(health.checks[0].details).toHaveProperty('pid')
-      expect(health.checks[0].details).toHaveProperty('uptime')
+      expect(health.checks?.[0]?.name).toBe('process')
+      expect(health.checks?.[0]?.status).toBe('healthy')
+      expect(health.checks?.[0]?.details).toHaveProperty('pid')
+      expect(health.checks?.[0]?.details).toHaveProperty('uptime')
     })
 
     it('should be healthy when process is running', async () => {
@@ -178,7 +178,7 @@ describe('Health Service', () => {
       const health = await getReadinessStatus()
 
       expect(health.checks).toHaveLength(2)
-      const checkNames = health.checks.map(check => check.name)
+      const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('database')
       expect(checkNames).toContain('memory')
     })
@@ -208,7 +208,7 @@ describe('Health Service', () => {
       const health = await getHealthStatus('basic')
 
       expect(health.checks).toHaveLength(2)
-      const checkNames = health.checks.map(check => check.name)
+      const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('process')
       expect(checkNames).toContain('memory')
     })
@@ -217,7 +217,7 @@ describe('Health Service', () => {
       const health = await getHealthStatus('readiness')
 
       expect(health.checks).toHaveLength(2)
-      const checkNames = health.checks.map(check => check.name)
+      const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('database')
       expect(checkNames).toContain('memory')
     })
@@ -225,8 +225,8 @@ describe('Health Service', () => {
     it('should return comprehensive health status', async () => {
       const health = await getHealthStatus('comprehensive')
 
-      expect(health.checks.length).toBeGreaterThanOrEqual(4)
-      const checkNames = health.checks.map(check => check.name)
+      expect(health.checks?.length).toBeGreaterThanOrEqual(4)
+      const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('application')
       expect(checkNames).toContain('memory')
       expect(checkNames).toContain('uptime')
@@ -248,7 +248,7 @@ describe('Health Service', () => {
       vi.spyOn(process, 'memoryUsage').mockImplementation(mockMemoryUsage)
 
       const health = await getHealthStatus('basic')
-      const memoryCheck = health.checks.find(check => check.name === 'memory')
+      const memoryCheck = health.checks?.find(check => check.name === 'memory')
 
       expect(memoryCheck?.status).toBe('degraded') // 96% should be degraded
 
@@ -271,7 +271,7 @@ describe('Health Service', () => {
       vi.spyOn(process, 'uptime').mockReturnValue(3661) // 1 hour, 1 minute, 1 second
 
       const health = await getHealthStatus()
-      const uptimeCheck = health.checks.find(check => check.name === 'uptime')
+      const uptimeCheck = health.checks?.find(check => check.name === 'uptime')
 
       expect(uptimeCheck?.details).toHaveProperty('formatted')
       expect(typeof uptimeCheck?.details?.formatted).toBe('string')
@@ -294,7 +294,7 @@ describe('Health Service', () => {
       vi.spyOn(process, 'memoryUsage').mockImplementation(mockMemoryUsage)
 
       const health = await getHealthStatus()
-      const memoryCheck = health.checks.find(check => check.name === 'memory')
+      const memoryCheck = health.checks?.find(check => check.name === 'memory')
 
       expect(memoryCheck?.status).toBe('unhealthy')
       expect(memoryCheck?.details?.utilization).toBeGreaterThan(98)
