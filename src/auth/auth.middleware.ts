@@ -4,13 +4,14 @@ import { verifyAccessToken, extractTokenFromHeader } from './jwt.utils'
 import { getUserProfile } from './auth.service'
 import { createUnauthorizedError, createForbiddenError } from '../shared/errors'
 import type { AuthUser } from '../shared/rbac.service'
-import type { UserProfileType } from './auth.schema'
+import type { UserProfileType } from './auth.types'
 
 /**
  * Convert UserProfileType to AuthUser
  */
 const convertToAuthUser = (userProfile: UserProfileType): AuthUser => ({
   id: userProfile.id,
+  email: userProfile.email,
   role: userProfile.role as Role,
   isActive: userProfile.isActive,
   isEmailVerified: userProfile.isEmailVerified,

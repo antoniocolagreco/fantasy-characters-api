@@ -4,11 +4,11 @@
  * These tests deliberately avoid clearing cache between operations to test persistence
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { app } from '../../app'
-import { db } from '../database/index'
 import { cacheService } from '../cache.service'
-import { createTestUser, createTestAdminUser } from './test-utils'
+import { db } from '../prisma.service'
+import { createTestAdminUser, createTestUser } from './test-utils'
 
 describe('Cache Integration Tests', () => {
   let testUser: Awaited<ReturnType<typeof createTestUser>>

@@ -3,7 +3,7 @@
  * Defines the health check endpoints with security controls and precise schemas
  */
 
-import { FastifyInstance, FastifyPluginOptions } from 'fastify'
+import { FastifyInstance, FastifyPluginAsync } from 'fastify'
 import {
   getHealth,
   getInternalHealth,
@@ -14,10 +14,7 @@ import {
 import { authenticateUser } from '../auth/auth.middleware'
 import { BasicHealthResponseSchema, HealthResponseSchema, HealthErrorSchema } from './health.schema'
 
-export const healthRoutes = async (
-  fastify: FastifyInstance,
-  _options: FastifyPluginOptions,
-): Promise<void> => {
+export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
   // Public health check endpoint (minimal information)
   fastify.get('/health', {
     schema: {
@@ -32,24 +29,17 @@ export const healthRoutes = async (
     handler: getHealth,
   })
 
-  // Internal health check endpoint (detailed information - requires authentication)
-  fastify.get('/internal/health', {
+  // Detailed health check endpoint (requires authentication)
+  fastify.get('/health/detailed', {
     preHandler: authenticateUser,
     schema: {
-      description: 'Get detailed application health status (internal - requires authentication)',
+      description: 'Get detailed application health status (requires authentication)',
       tags: ['Health'],
-      summary: 'Internal Health Check',
+      summary: 'Detailed Health Check',
       security: [{ bearerAuth: [] }],
       response: {
         200: HealthResponseSchema,
-        401: {
-          type: 'object',
-          properties: {
-            error: { type: 'string' },
-            message: { type: 'string' },
-          },
-        },
-        500: HealthErrorSchema,
+        401: HealthErrorSchema,
       },
     },
     handler: getInternalHealth,
@@ -78,8 +68,7 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Readiness Check',
       response: {
-        200: HealthResponseSchema,
-        500: HealthErrorSchema,
+        200: BasicHealthResponseSchema,
         503: HealthErrorSchema,
       },
     },
@@ -93,7 +82,7 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Liveness Check',
       response: {
-        200: HealthResponseSchema,
+        200: BasicHealthResponseSchema,
         500: HealthErrorSchema,
       },
     },

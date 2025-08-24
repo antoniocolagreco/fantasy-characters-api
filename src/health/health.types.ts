@@ -26,4 +26,4 @@ export type HealthCheckLevel =
   | 'readiness'
   | 'comprehensive'
   | 'public'
-  | 'internal'
+  | 'detailed'

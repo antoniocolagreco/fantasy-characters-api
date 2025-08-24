@@ -1,5 +1,5 @@
 import { Visibility } from '@prisma/client'
-import { db } from '../shared/database/index'
+import { db } from '../shared/prisma.service'
 import { createNotFoundError, createConflictError, createValidationError } from '../shared/errors'
 import { PAGINATION } from '../shared/constants'
 import {

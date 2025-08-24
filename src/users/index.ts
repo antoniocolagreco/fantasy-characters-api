@@ -38,6 +38,7 @@ export {
 } from './user.schema'
 
 export type {
+  // Schema-derived types
   CreateUserRequest,
   UpdateUserRequest,
   UserResponse,
@@ -45,4 +46,11 @@ export type {
   UserListResponse,
   UserIdParam,
   UserRole,
-} from './user.schema'
+  UserStatsResponse,
+  // Business logic types
+  UserProfile,
+  CreateUserData,
+  UpdateUserData,
+  UserFilterOptions,
+  UserStatsData,
+} from './user.types'

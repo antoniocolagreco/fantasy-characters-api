@@ -1,4 +1,4 @@
-import { Type, type Static } from '@sinclair/typebox'
+import { Type } from '@sinclair/typebox'
 
 export const ListPaginationQuerySchema = Type.Object(
   {
@@ -35,5 +35,3 @@ export const ListPaginationQuerySchema = Type.Object(
     description: 'Base pagination and sorting parameters for list operations',
   },
 )
-
-export type ListPagination = Static<typeof ListPaginationQuerySchema>

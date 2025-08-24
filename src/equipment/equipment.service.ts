@@ -1,13 +1,13 @@
-import { db } from '../shared/database/index'
-import { createNotFoundError, createBadRequestError } from '../shared/errors'
+import { createBadRequestError, createNotFoundError } from '../shared/errors'
+import { db } from '../shared/prisma.service'
 import { rbacService, type AuthUser } from '../shared/rbac.service'
 import {
   SLOT_COMPATIBILITY,
+  type BulkEquipmentUpdateData,
+  type EquipmentSlot,
+  type EquipmentStats,
   type EquipmentWithItems,
   type SlotUpdateData,
-  type BulkEquipmentUpdateData,
-  type EquipmentStats,
-  type EquipmentSlot,
   type SlotValidationResult,
 } from './equipment.types'
 

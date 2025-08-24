@@ -5,10 +5,6 @@
 
 import { VALIDATION, PAGINATION } from './constants'
 
-// Type helpers
-export type Nullable<T> = T | null
-export type Optional<T> = T | undefined
-
 // String utilities
 export const isValidEmail = (email: string): boolean => {
   return VALIDATION.EMAIL_REGEX.test(email)

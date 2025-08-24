@@ -181,12 +181,9 @@ describe('Health Schemas', () => {
 
     it('should validate error response', () => {
       const validError = {
-        error: {
-          code: 'INTERNAL_ERROR',
-          message: 'Health check failed',
-          timestamp: '2023-01-01T00:00:00.000Z',
-          path: '/health',
-        },
+        statusCode: 500,
+        error: 'Internal Server Error',
+        message: 'Health check failed',
       }
 
       expect(Value.Check(HealthErrorSchema, validError)).toBe(true)
@@ -194,10 +191,8 @@ describe('Health Schemas', () => {
 
     it('should reject error response with missing fields', () => {
       const incompleteError = {
-        error: {
-          code: 'INTERNAL_ERROR',
-          // missing message, timestamp, path
-        },
+        statusCode: 500,
+        // missing error and message
       }
 
       expect(errorCompiler.Check(incompleteError)).toBe(false)
@@ -205,7 +200,7 @@ describe('Health Schemas', () => {
 
     it('should reject error response with invalid structure', () => {
       const invalidStructure = {
-        message: 'Error occurred', // wrong structure
+        message: 'Error occurred', // missing statusCode and error
         code: 'ERROR',
       }
 
@@ -214,12 +209,9 @@ describe('Health Schemas', () => {
 
     it('should reject error response with invalid types', () => {
       const invalidTypes = {
-        error: {
-          code: 123, // should be string
-          message: 'Error',
-          timestamp: '2023-01-01T00:00:00.000Z',
-          path: '/health',
-        },
+        statusCode: '500', // should be number
+        error: 'Internal Server Error',
+        message: 'Error',
       }
 
       expect(errorCompiler.Check(invalidTypes)).toBe(false)

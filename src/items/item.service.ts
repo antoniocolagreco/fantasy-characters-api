@@ -1,5 +1,5 @@
 import { Visibility, Rarity, Slot } from '@prisma/client'
-import { db } from '../shared/database/index'
+import { db } from '../shared/prisma.service'
 import { createNotFoundError, createConflictError, createUnauthorizedError } from '../shared/errors'
 import { PAGINATION } from '../shared/constants'
 import {

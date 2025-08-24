@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { AuthUser } from '../../auth/auth.types'
+import { db } from '../../shared/prisma.service'
 import {
   createItem,
-  findItemById,
-  updateItem,
   deleteItem,
-  listItems,
+  findItemById,
   getItemStats,
+  listItems,
+  updateItem,
 } from '../item.service'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser
@@ -49,6 +49,7 @@ describe('Item Service', () => {
 
     mockUser = {
       id: createdUser.id,
+      email: createdUser.email,
       role: 'USER',
       isActive: true,
       isEmailVerified: true,
@@ -56,6 +57,7 @@ describe('Item Service', () => {
 
     mockAdmin = {
       id: createdAdmin.id,
+      email: createdAdmin.email,
       role: 'ADMIN',
       isActive: true,
       isEmailVerified: true,
@@ -325,6 +327,7 @@ describe('Item Service', () => {
 
       const otherAuthUser: AuthUser = {
         id: otherUser.id,
+        email: otherUser.email,
         role: 'USER',
         isActive: true,
         isEmailVerified: true,
@@ -432,6 +435,7 @@ describe('Item Service', () => {
 
       const otherAuthUser: AuthUser = {
         id: otherUser.id,
+        email: otherUser.email,
         role: 'USER',
         isActive: true,
         isEmailVerified: true,
@@ -513,6 +517,7 @@ describe('Item Service', () => {
 
       const otherAuthUser: AuthUser = {
         id: otherUser.id,
+        email: otherUser.email,
         role: 'USER',
         isActive: true,
         isEmailVerified: true,

@@ -44,8 +44,8 @@ describe('App Integration Tests', () => {
           // Readiness endpoint can return 200, 500, or 503 in real environments
           expect([200, 500, 503]).toContain(response.statusCode)
 
-          // Only check response body if it's not a 500 error
-          if (response.statusCode !== 500) {
+          // Only check response body if it's successful (200)
+          if (response.statusCode === 200) {
             const data = JSON.parse(response.body)
             expect(data).toHaveProperty('status')
             expect(['healthy', 'degraded']).toContain(data.status)

@@ -1,7 +1,7 @@
 import { Prisma, Visibility } from '@prisma/client'
 import sharp from 'sharp'
 import { CONTENT_TYPES, IMAGE } from '../shared/constants'
-import { db } from '../shared/database/index'
+import { db } from '../shared/prisma.service'
 import { createNotFoundError, createValidationError } from '../shared/errors'
 import {
   enforceAuthentication,

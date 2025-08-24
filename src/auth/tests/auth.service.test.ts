@@ -8,7 +8,7 @@ import argon2 from 'argon2'
 import { Role } from '@prisma/client'
 
 // Mock database
-vi.mock('../../shared/database/index', () => ({
+vi.mock('../../shared/prisma.service', () => ({
   db: {
     user: {
       findUnique: vi.fn(),
@@ -39,7 +39,7 @@ import {
   reactivateUser,
   validatePasswordStrength,
 } from '../auth.service'
-import { db } from '../../shared/database/index'
+import { db } from '../../shared/prisma.service'
 
 describe('Auth Service', () => {
   // Helper function to create complete mock user with all required fields

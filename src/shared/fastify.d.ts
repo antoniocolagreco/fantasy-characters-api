@@ -1,4 +1,4 @@
-import type { AuthUser } from '../rbac.service'
+import type { AuthUser } from '../../auth/auth.types'
 import type { JwtPayload } from '../../auth/jwt.utils'
 
 // Extend FastifyRequest to include authentication information

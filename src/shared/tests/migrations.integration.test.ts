@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url'
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 
 describe('Database Migration and Seed Integration Tests', () => {
-  const projectRoot = path.resolve(currentDir, '../../../..')
+  const projectRoot = path.resolve(currentDir, '../../..')
 
   beforeAll(async () => {
     // PostgreSQL doesn't need file cleanup like SQLite
@@ -148,7 +148,7 @@ describe('Database Migration and Seed Integration Tests', () => {
     })
 
     it('should have database URL configured', async () => {
-      const { environment } = await import('../../config')
+      const { environment } = await import('../config')
       expect(environment.DATABASE_URL).toBeDefined()
       expect(typeof environment.DATABASE_URL).toBe('string')
       expect(environment.DATABASE_URL.length).toBeGreaterThan(0)

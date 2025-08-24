@@ -1,4 +1,4 @@
-﻿import { Type, type Static } from '@sinclair/typebox'
+﻿import { Type } from '@sinclair/typebox'
 
 // TypeBox schemas for Equipment endpoints
 
@@ -159,9 +159,3 @@ export const EquipmentErrorResponseSchema = Type.Object({
 export const EquipmentBulkUpdateSchema = EquipmentUpdateSchema
 export const EquipmentSlotUpdateSchema = EquipmentSlotPatchSchema
 export const EquipmentStatsResponseSchema = EquipmentStatsSchema
-
-// Type exports
-export type EquipmentResponse = Static<typeof EquipmentResponseSchema>
-export type EquipmentUpdate = Static<typeof EquipmentUpdateSchema>
-export type EquipmentSlotPatch = Static<typeof EquipmentSlotPatchSchema>
-export type EquipmentStatsResponse = Static<typeof EquipmentStatsSchema>

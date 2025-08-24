@@ -3,7 +3,9 @@
  * Replaces dangerous type assertions with proper runtime validation
  */
 
-import type { Role, Visibility } from './types'
+export type Visibility = 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
+
+export type Role = 'USER' | 'MODERATOR' | 'ADMIN'
 
 /**
  * Type guard for Role enum

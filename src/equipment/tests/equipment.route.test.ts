@@ -1,12 +1,13 @@
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { app } from '../../app'
-import { db } from '../../shared/database/index'
+import type { AuthUser } from '../../auth/auth.types'
 import { generateAccessToken } from '../../auth/jwt.utils'
-import type { AuthUser } from '../../shared/rbac.service'
+import { db } from '../../shared/prisma.service'
 
 // Test users
 const testUser: AuthUser = {
   id: 'test-user-equipment-route',
+  email: 'test@equipment.test',
   role: 'USER',
   isActive: true,
   isEmailVerified: true,
@@ -14,6 +15,7 @@ const testUser: AuthUser = {
 
 const adminUser: AuthUser = {
   id: 'admin-user-equipment-route',
+  email: 'admin@equipment.test',
   role: 'ADMIN',
   isActive: true,
   isEmailVerified: true,
@@ -21,6 +23,7 @@ const adminUser: AuthUser = {
 
 const anotherUser: AuthUser = {
   id: 'another-user-equipment-route',
+  email: 'another@equipment.test',
   role: 'USER',
   isActive: true,
   isEmailVerified: true,

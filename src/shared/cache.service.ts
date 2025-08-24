@@ -5,48 +5,7 @@
 
 import { setInterval as nodeSetInterval } from 'node:timers'
 import { cacheConfig } from './config'
-
-/**
- * Cache configuration interface
- */
-export type CacheConfig = {
-  /** Default TTL in seconds */
-  defaultTtl: number
-  /** Maximum number of entries in cache */
-  maxEntries: number
-  /** Enable/disable caching globally */
-  enabled: boolean
-}
-
-/**
- * Cache entry interface
- */
-export type CacheEntry = {
-  /** Cached data */
-  data: unknown
-  /** Timestamp when entry was created */
-  createdAt: number
-  /** TTL in seconds */
-  ttl: number
-  /** ETag for conditional requests */
-  etag: string
-  /** Content type of cached response */
-  contentType?: string
-}
-
-/**
- * Cache key generation interface
- */
-export type CacheKeyOptions = {
-  /** HTTP method */
-  method: string
-  /** Request URL */
-  url: string
-  /** User ID for user-specific caching */
-  userId?: string
-  /** Additional cache key components */
-  params?: Record<string, unknown>
-}
+import type { CacheConfig, CacheEntry, CacheKeyOptions } from './cache.types'
 
 /**
  * Cache service implementation using Map

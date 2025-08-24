@@ -3,10 +3,10 @@
  * Provides health status information about the application with security considerations
  */
 
-import { healthConfig } from '../shared/config'
-import { getDatabaseHealth } from '../shared/database/index'
 import { CacheConfig } from '../shared/cache.middleware'
-import { HealthStatus, HealthCheck, HealthResponse, HealthCheckLevel } from './health.types'
+import { healthConfig } from '../shared/config'
+import { getDatabaseHealth } from '../shared/prisma.service'
+import { HealthCheck, HealthCheckLevel, HealthResponse, HealthStatus } from './health.types'
 
 // Individual health check functions
 const checkApplication = (includeDetails: boolean): HealthCheck => {
@@ -264,7 +264,7 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
       // This determines if the app can serve traffic (database, external services)
       return [await checkDatabase(), checkMemory(), checkCache()]
 
-    case 'internal':
+    case 'detailed':
       // Internal health check with detailed information for monitoring dashboards
       // Includes sensitive system information for authenticated internal use
       return [
@@ -352,5 +352,5 @@ export const getPublicHealthStatus = async (): Promise<HealthResponse> => {
 }
 
 export const getInternalHealthStatus = async (): Promise<HealthResponse> => {
-  return getHealthStatus('internal')
+  return getHealthStatus('detailed')
 }

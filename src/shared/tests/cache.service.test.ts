@@ -4,7 +4,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
-import { cacheService, CacheTTL, CachePatterns, type CacheConfig } from '../cache.service'
+import { cacheService, CacheTTL, CachePatterns } from '../cache.service'
+import type { CacheConfig } from '../cache.types'
 
 describe('Cache Service', () => {
   beforeEach(() => {

@@ -4,7 +4,8 @@
  */
 
 import type { FastifyRequest, FastifyReply } from 'fastify'
-import { cacheService, type CacheKeyOptions, type CacheEntry, CacheTTL } from './cache.service'
+import { cacheService, CacheTTL } from './cache.service'
+import type { CacheKeyOptions, CacheEntry } from './cache.types'
 
 /**
  * Cache middleware options

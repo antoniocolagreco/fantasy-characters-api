@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { createTag, findTagById, updateTag, deleteTag, listTags, getTagStats } from '../tag.service'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
+import { db } from '../../shared/prisma.service'
+import type { AuthUser } from '../../auth/auth.types'
 
 // Mock user for testing
 let mockUser: AuthUser
@@ -26,6 +26,7 @@ describe('Tag Service', () => {
 
     mockUser = {
       id: createdUser.id,
+      email: createdUser.email,
       role: 'USER',
       isActive: true,
       isEmailVerified: true,

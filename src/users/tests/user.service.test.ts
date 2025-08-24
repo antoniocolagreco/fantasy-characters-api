@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db } from '../../shared/database/index'
+import { db } from '../../shared/prisma.service'
 import type { AuthUser } from '../../shared/rbac.service'
 import { Role } from '@prisma/client'
 import {
@@ -17,7 +17,7 @@ import {
   userExists,
   getUserStats,
 } from '../user.service'
-import type { CreateUserRequest, UpdateUserRequest } from '../user.schema'
+import type { CreateUserRequest, UpdateUserRequest } from '../user.types'
 
 describe('User Service', () => {
   beforeEach(async () => {
@@ -33,6 +33,7 @@ describe('User Service', () => {
   // Helper function to create a mock user profile for RBAC testing
   const createMockUser = (overrides: Partial<AuthUser> = {}): AuthUser => ({
     id: 'test-user-id',
+    email: 'test@example.com',
     role: Role.USER,
     isActive: true,
     isEmailVerified: true,

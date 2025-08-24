@@ -1257,37 +1257,108 @@ export const DeleteSuccessSchema = Type.Object({
 // HEALTH CHECK SCHEMAS
 // ============================================================================
 
-export const HealthCheckResponseSchema = Type.Object({
-  status: Type.String({
-    enum: ['ok', 'error'],
-    description: 'Health check status',
-    examples: ['ok'],
-  }),
-  timestamp: TimestampSchema,
-  uptime: Type.Number({
-    description: 'Server uptime in seconds',
-    examples: [3600],
-  }),
-  version: Type.String({
-    description: 'API version',
-    examples: ['1.0.0'],
-  }),
-  environment: Type.String({
-    description: 'Current environment',
-    examples: ['development'],
-  }),
-  database: Type.Object({
-    status: Type.String({
-      enum: ['connected', 'disconnected', 'error'],
-      description: 'Database connection status',
-      examples: ['connected'],
+// ============================================================================
+// HEALTH CHECK SCHEMAS
+// ============================================================================
+
+// Health status enum - matches the actual API values
+export const HealthStatusSchema = Type.Union(
+  [Type.Literal('healthy'), Type.Literal('unhealthy'), Type.Literal('degraded')],
+  {
+    description: 'Health status enum with proper values',
+    examples: ['healthy'],
+  },
+)
+
+// Individual health check schema
+export const HealthCheckSchema = Type.Object(
+  {
+    name: Type.String({
+      description: 'Name of the health check',
+      examples: ['memory', 'database', 'application'],
     }),
-    responseTime: Type.Number({
-      description: 'Database response time in milliseconds',
-      examples: [25],
+    status: HealthStatusSchema,
+    timestamp: TimestampSchema,
+    details: Type.Optional(
+      Type.Record(Type.String(), Type.Unknown(), {
+        description: 'Optional details about the health check',
+      }),
+    ),
+    debugInfo: Type.Optional(
+      Type.Record(Type.String(), Type.Unknown(), {
+        description: 'Optional debug information',
+      }),
+    ),
+  },
+  {
+    additionalProperties: true,
+    description: 'Individual health check result',
+  },
+)
+
+// Basic health response (for public endpoints)
+export const BasicHealthResponseSchema = Type.Object(
+  {
+    status: HealthStatusSchema,
+    timestamp: TimestampSchema,
+  },
+  {
+    additionalProperties: true,
+    description: 'Basic health status for public endpoints',
+  },
+)
+
+// Complete health response (for internal/detailed endpoints)
+export const DetailedHealthResponseSchema = Type.Object(
+  {
+    status: HealthStatusSchema,
+    timestamp: TimestampSchema,
+    uptime: Type.Optional(
+      Type.Number({
+        minimum: 0,
+        description: 'Server uptime in seconds',
+        examples: [3600],
+      }),
+    ),
+    version: Type.Optional(
+      Type.String({
+        description: 'Application version',
+        examples: ['1.0.0'],
+      }),
+    ),
+    environment: Type.Optional(
+      Type.String({
+        description: 'Environment name',
+        examples: ['development', 'production'],
+      }),
+    ),
+    checks: Type.Optional(
+      Type.Array(HealthCheckSchema, {
+        description: 'Array of individual health checks',
+      }),
+    ),
+  },
+  {
+    additionalProperties: true,
+    description: 'Complete health check response with optional checks array',
+  },
+)
+
+// Health error response
+export const HealthErrorSchema = Type.Object(
+  {
+    error: Type.Object({
+      code: Type.String({ description: 'Error code' }),
+      message: Type.String({ description: 'Error message' }),
+      timestamp: TimestampSchema,
+      path: Type.String({ description: 'API path' }),
     }),
-  }),
-})
+  },
+  {
+    additionalProperties: true,
+    description: 'Error response for health check failures',
+  },
+)
 
 // ============================================================================
 // CACHE HEADERS SCHEMAS

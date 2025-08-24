@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { AuthUser } from '../../auth/auth.types'
+import { db } from '../../shared/prisma.service'
 import {
   createPerk,
-  findPerkById,
-  updatePerk,
   deletePerk,
-  listPerks,
+  findPerkById,
   getPerkStats,
+  listPerks,
+  updatePerk,
 } from '../perk.service'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
 
 // Mock user for testing
 let mockUser: AuthUser
@@ -48,6 +48,7 @@ describe('Perk Service', () => {
 
     mockUser = {
       id: createdUser.id,
+      email: createdUser.email,
       role: 'USER',
       isActive: true,
       isEmailVerified: true,
@@ -55,6 +56,7 @@ describe('Perk Service', () => {
 
     mockAdmin = {
       id: createdAdmin.id,
+      email: createdAdmin.email,
       role: 'ADMIN',
       isActive: true,
       isEmailVerified: true,

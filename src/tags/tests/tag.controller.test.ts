@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import type { FastifyInstance } from 'fastify'
-import { db } from '../../shared/database/index'
+import { db } from '../../shared/prisma.service'
 import { app } from '../../app'
 
 describe('Tag Controller', () => {

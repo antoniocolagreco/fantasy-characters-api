@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { FastifyRequest } from 'fastify'
 import { getAuthUser, requireAuthUser } from '../auth-helpers'
-import type { AuthUser } from '../rbac.service'
+import type { AuthUser } from '../../auth/auth.types'
 
 // Helper function to create a mock FastifyRequest with only the properties we need
 const createMockRequest = (authUser?: AuthUser): FastifyRequest =>
@@ -12,6 +12,7 @@ describe('Auth Helpers', () => {
     it('should return the authenticated user when present', () => {
       const mockUser: AuthUser = {
         id: 'user-123',
+        email: 'user@test.com',
         role: 'USER',
         isActive: true,
         isEmailVerified: true,
@@ -45,6 +46,7 @@ describe('Auth Helpers', () => {
     it('should return the authenticated user when present', () => {
       const mockUser: AuthUser = {
         id: 'user-456',
+        email: 'admin@test.com',
         role: 'ADMIN',
         isActive: true,
         isEmailVerified: true,
@@ -75,6 +77,7 @@ describe('Auth Helpers', () => {
       roles.forEach(role => {
         const mockUser: AuthUser = {
           id: `user-${role.toLowerCase()}`,
+          email: `${role.toLowerCase()}@test.com`,
           role,
           isActive: true,
           isEmailVerified: true,
@@ -92,6 +95,7 @@ describe('Auth Helpers', () => {
     it('should handle inactive user correctly', () => {
       const mockUser: AuthUser = {
         id: 'inactive-user',
+        email: 'inactive@test.com',
         role: 'USER',
         isActive: false,
         isEmailVerified: true,
@@ -108,6 +112,7 @@ describe('Auth Helpers', () => {
     it('should handle unverified email user correctly', () => {
       const mockUser: AuthUser = {
         id: 'unverified-user',
+        email: 'unverified@test.com',
         role: 'USER',
         isActive: true,
         isEmailVerified: false,

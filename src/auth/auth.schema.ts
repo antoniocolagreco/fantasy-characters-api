@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox'
+import { Type } from '@sinclair/typebox'
 
 // Authentication Schemas
 
@@ -175,18 +175,6 @@ export const AuthParamsSchema = Type.Object(
     description: 'Authentication parameters schema',
   },
 )
-
-// Type exports
-export type RegisterUserType = Static<typeof RegisterUserSchema>
-export type LoginUserType = Static<typeof LoginUserSchema>
-export type ChangePasswordType = Static<typeof ChangePasswordSchema>
-export type UpdateProfileType = Static<typeof UpdateProfileSchema>
-export type RefreshTokenType = Static<typeof RefreshTokenSchema>
-export type TokenResponseType = Static<typeof TokenResponseSchema>
-export type UserProfileType = Static<typeof UserProfileSchema>
-export type AuthErrorType = Static<typeof AuthErrorSchema>
-export type SuccessMessageType = Static<typeof SuccessMessageSchema>
-export type AuthParamsType = Static<typeof AuthParamsSchema>
 
 // Common response schemas for OpenAPI documentation
 export const CommonAuthResponses = {

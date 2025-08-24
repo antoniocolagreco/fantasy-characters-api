@@ -88,17 +88,12 @@ export const BasicHealthResponseSchema = Type.Object(
   },
 )
 
-// Error response schema for health endpoints
+// Error response schema for health endpoints (compatible with Fastify error format)
 export const HealthErrorSchema = Type.Object(
   {
-    error: Type.Object({
-      code: Type.String({ description: 'Error code' }),
-      message: Type.String({ description: 'Error message' }),
-      timestamp: Type.String({
-        description: 'ISO 8601 timestamp',
-      }),
-      path: Type.String({ description: 'API path' }),
-    }),
+    statusCode: Type.Number({ description: 'HTTP status code' }),
+    error: Type.String({ description: 'Error type' }),
+    message: Type.String({ description: 'Error message' }),
   },
   {
     additionalProperties: true,

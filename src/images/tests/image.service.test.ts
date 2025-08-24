@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import * as imageService from '../image.service'
-import { db } from '../../shared/database/index'
+import { db } from '../../shared/prisma.service'
 import { IMAGE, CONTENT_TYPES } from '../../shared/constants'
 import { createTestUser, cleanupTestData } from '../../shared/tests/test-utils'
 

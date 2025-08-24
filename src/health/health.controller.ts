@@ -68,13 +68,13 @@ export const getHealth = async (request: FastifyRequest, reply: FastifyReply): P
   }
 }
 
-// Internal health check (detailed information - requires authentication)
+// Detailed health check (requires authentication)
 export const getInternalHealth = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> => {
   try {
-    // Log internal health check access for security monitoring
+    // Log detailed health check access for security monitoring
     request.log.warn(
       {
         ip: request.ip,
@@ -82,7 +82,7 @@ export const getInternalHealth = async (
         endpoint: request.url,
         user: (request as { user?: { id: string } }).user?.id || 'anonymous',
       },
-      'Internal health check accessed',
+      'Detailed health check accessed',
     )
 
     const healthData = await getInternalHealthStatus()
@@ -97,10 +97,10 @@ export const getInternalHealth = async (
 
     await reply.status(httpStatus).send(healthData)
   } catch (error) {
-    request.log.error({ error }, 'Internal health check failed')
+    request.log.error({ error }, 'Detailed health check failed')
 
     const appError = createInternalServerError(
-      'Internal health check failed',
+      'Detailed health check failed',
       error instanceof Error ? error.message : 'Unknown error',
     ) as Error & {
       statusCode: number

@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeAll, afterAll, beforeEach, afterEach } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { createApp } from '../app'
-import { connectDatabase, disconnectDatabase } from '../shared/database/prisma.service'
+import { connectDatabase, disconnectDatabase } from '../shared/prisma.service'
 
 let app: FastifyInstance
 
@@ -55,8 +55,8 @@ describe('App Integration Tests', () => {
           // Readiness endpoint can return 200, 500, or 503 in real environments
           expect([200, 500, 503]).toContain(response.statusCode)
 
-          // Only check response body if it's not a 500 error
-          if (response.statusCode !== 500) {
+          // Only check response body if it's not a 500/503 error
+          if (response.statusCode === 200) {
             const data = JSON.parse(response.body)
             expect(['healthy', 'degraded']).toContain(data.status)
           }

@@ -15,12 +15,7 @@ import {
 import { createErrorResponse, isAppError } from '../shared/errors'
 import { HTTP_STATUS, MESSAGES } from '../shared/constants'
 import { toErrorWithStatusCode } from '../shared/type-guards'
-import type {
-  CreateUserRequest,
-  UpdateUserRequest,
-  UserListQuery,
-  UserIdParam,
-} from './user.schema'
+import type { CreateUserRequest, UpdateUserRequest, UserListQuery, UserIdParam } from './user.types'
 
 /**
  * Create a new user

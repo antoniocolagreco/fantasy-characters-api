@@ -9,11 +9,11 @@
  * - Environment setup utilities
  */
 
-import { vi, expect } from 'vitest'
-import Fastify, { type FastifyRequest, FastifyReply, FastifyInstance } from 'fastify'
-import { db } from '../database/index'
-import { hashPassword } from '../../auth/auth.service'
 import { Role } from '@prisma/client'
+import Fastify, { type FastifyRequest, FastifyInstance, FastifyReply } from 'fastify'
+import { expect, vi } from 'vitest'
+import { hashPassword } from '../../auth/auth.service'
+import { db } from '../prisma.service'
 
 // ====================
 // MOCK OBJECTS

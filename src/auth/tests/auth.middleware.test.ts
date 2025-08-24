@@ -59,7 +59,9 @@ describe('Auth Middleware', () => {
 
   describe('authenticateUser', () => {
     it('should authenticate user successfully', async () => {
-      mockRequest.headers = { authorization: 'Bearer valid-token' }
+      mockRequest.headers = {
+        authorization: 'Bearer valid-token',
+      }
       vi.mocked(jwtUtils.extractTokenFromHeader).mockReturnValue('valid-token')
       vi.mocked(jwtUtils.verifyAccessToken).mockReturnValue(mockJwtPayload)
       vi.mocked(authService.getUserProfile).mockResolvedValue(mockUser)
@@ -69,6 +71,7 @@ describe('Auth Middleware', () => {
       // The middleware converts UserProfileType to AuthUser (subset of fields)
       const expectedAuthUser = {
         id: mockUser.id,
+        email: mockUser.email,
         role: mockUser.role,
         isActive: mockUser.isActive,
         isEmailVerified: mockUser.isEmailVerified,
@@ -105,7 +108,9 @@ describe('Auth Middleware', () => {
 
   describe('optionalAuthentication', () => {
     it('should authenticate user when token is provided', async () => {
-      mockRequest.headers = { authorization: 'Bearer valid-token' }
+      mockRequest.headers = {
+        authorization: 'Bearer valid-token',
+      }
       vi.mocked(jwtUtils.extractTokenFromHeader).mockReturnValue('valid-token')
       vi.mocked(jwtUtils.verifyAccessToken).mockReturnValue(mockJwtPayload)
       vi.mocked(authService.getUserProfile).mockResolvedValue(mockUser)
@@ -115,6 +120,7 @@ describe('Auth Middleware', () => {
       // The middleware converts UserProfileType to AuthUser (subset of fields)
       const expectedAuthUser = {
         id: mockUser.id,
+        email: mockUser.email,
         role: mockUser.role,
         isActive: mockUser.isActive,
         isEmailVerified: mockUser.isEmailVerified,

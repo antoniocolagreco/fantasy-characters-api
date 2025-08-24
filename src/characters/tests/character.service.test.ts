@@ -3,19 +3,19 @@
  * Unit tests for character business logic
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import type { AuthUser } from '../../auth/auth.types'
+import { db } from '../../shared/prisma.service'
+import { cleanupTestData, createTestAdminUser, createTestUser } from '../../shared/tests/test-utils'
 import {
   createCharacter,
+  deleteCharacter,
   findCharacterById,
+  getCharacterStats,
   listCharacters,
   updateCharacter,
-  deleteCharacter,
-  getCharacterStats,
 } from '../character.service'
-import type { CreateCharacterData, UpdateCharacterData, CharacterFilters } from '../character.types'
-import { cleanupTestData, createTestUser, createTestAdminUser } from '../../shared/tests/test-utils'
+import type { CharacterFilters, CreateCharacterData, UpdateCharacterData } from '../character.types'
 
 describe('Character Service', () => {
   let testUser: AuthUser
@@ -34,6 +34,7 @@ describe('Character Service', () => {
     const userData = await createTestUser()
     testUser = {
       id: userData.user.id,
+      email: userData.user.email,
       role: userData.user.role,
       isActive: userData.user.isActive,
       isEmailVerified: userData.user.isEmailVerified,
@@ -42,6 +43,7 @@ describe('Character Service', () => {
     const adminData = await createTestAdminUser()
     adminUser = {
       id: adminData.user.id,
+      email: adminData.user.email,
       role: adminData.user.role,
       isActive: adminData.user.isActive,
       isEmailVerified: adminData.user.isEmailVerified,
@@ -233,6 +235,7 @@ describe('Character Service', () => {
       const otherUserData = await createTestUser({ email: 'other@example.com' })
       const otherUser: AuthUser = {
         id: otherUserData.user.id,
+        email: otherUserData.user.email,
         role: otherUserData.user.role,
         isActive: otherUserData.user.isActive,
         isEmailVerified: otherUserData.user.isEmailVerified,
@@ -314,6 +317,7 @@ describe('Character Service', () => {
       const otherUserData = await createTestUser({ email: 'other@example.com' })
       const otherUser: AuthUser = {
         id: otherUserData.user.id,
+        email: otherUserData.user.email,
         role: otherUserData.user.role,
         isActive: otherUserData.user.isActive,
         isEmailVerified: otherUserData.user.isEmailVerified,
@@ -385,6 +389,7 @@ describe('Character Service', () => {
       const otherUserData = await createTestUser({ email: 'other@example.com' })
       const otherUser: AuthUser = {
         id: otherUserData.user.id,
+        email: otherUserData.user.email,
         role: otherUserData.user.role,
         isActive: otherUserData.user.isActive,
         isEmailVerified: otherUserData.user.isEmailVerified,
@@ -427,6 +432,7 @@ describe('Character Service', () => {
       const otherUserData = await createTestUser({ email: 'other@example.com' })
       const otherUser: AuthUser = {
         id: otherUserData.user.id,
+        email: otherUserData.user.email,
         role: otherUserData.user.role,
         isActive: otherUserData.user.isActive,
         isEmailVerified: otherUserData.user.isEmailVerified,
@@ -483,6 +489,7 @@ describe('Character Service', () => {
       const otherUserData = await createTestUser({ email: 'other@example.com' })
       const otherUser: AuthUser = {
         id: otherUserData.user.id,
+        email: otherUserData.user.email,
         role: otherUserData.user.role,
         isActive: otherUserData.user.isActive,
         isEmailVerified: otherUserData.user.isEmailVerified,

@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // Mock the database module
-vi.mock('../../shared/database/index', () => ({
+vi.mock('../../shared/prisma.service', () => ({
   getDatabaseHealth: vi.fn(),
 }))
 
@@ -36,7 +36,7 @@ vi.mock('../../shared/config', () => ({
 const originalNodeEnv = process.env.NODE_ENV
 
 import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service'
-import { getDatabaseHealth } from '../../shared/database/index'
+import { getDatabaseHealth } from '../../shared/prisma.service'
 import { CacheConfig } from '../../shared/cache.middleware'
 
 describe('Health Service', () => {

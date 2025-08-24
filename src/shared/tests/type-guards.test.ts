@@ -3,24 +3,25 @@
  * Comprehensive tests for type safety utilities
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import {
-  isRole,
-  isVisibility,
-  toRole,
-  toVisibility,
-  isErrorWithStatusCode,
-  isErrorWithCode,
-  isNonNull,
-  isString,
-  isNumber,
-  isBoolean,
-  hasProperty,
   assertRole,
   assertVisibility,
+  hasProperty,
+  isBoolean,
+  isErrorWithCode,
+  isErrorWithStatusCode,
+  isNonNull,
+  isNumber,
+  isRole,
+  isString,
+  isVisibility,
   toErrorWithStatusCode,
+  toRole,
+  toVisibility,
+  type Role,
+  type Visibility,
 } from '../type-guards'
-import type { Role, Visibility } from '../types'
 
 describe('Type Guards', () => {
   describe('isRole', () => {

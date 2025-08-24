@@ -49,7 +49,7 @@ describe('Prisma Service Database Tests', () => {
     })
 
     it('should have database URL from environment', async () => {
-      const { environment } = await import('../../config')
+      const { environment } = await import('../config')
 
       expect(environment.DATABASE_URL).toBeDefined()
       expect(typeof environment.DATABASE_URL).toBe('string')

@@ -1,24 +1,24 @@
+import { Role } from '@prisma/client'
 import argon2 from 'argon2'
-import { db } from '../shared/database/index'
 import { argon2Config } from '../shared/config'
 import {
   createBadRequestError,
-  createUnauthorizedError,
-  createNotFoundError,
   createConflictError,
   createInternalServerError,
+  createNotFoundError,
+  createUnauthorizedError,
 } from '../shared/errors'
-import { Role } from '@prisma/client'
-import { verifyRefreshToken } from './jwt.utils'
+import { db } from '../shared/prisma.service'
 import type {
-  RegisterUserType,
-  LoginUserType,
   ChangePasswordType,
+  LoginUserType,
+  RefreshTokenType,
+  RegisterUserType,
+  TokenResponseType,
   UpdateProfileType,
   UserProfileType,
-  RefreshTokenType,
-  TokenResponseType,
-} from './auth.schema'
+} from './auth.types'
+import { verifyRefreshToken } from './jwt.utils'
 
 /**
  * Hash a password using Argon2

@@ -1,18 +1,19 @@
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import type { AuthUser } from '../../auth/auth.types'
+import { db } from '../../shared/prisma.service'
 import {
   getCharacterEquipment,
+  getEquipmentStats,
   updateCharacterEquipment,
   updateEquipmentSlot,
-  validateSlotCompatibility,
   validateEquipmentUpdate,
-  getEquipmentStats,
+  validateSlotCompatibility,
 } from '../equipment.service'
 
 // Test users
 const testUser: AuthUser = {
   id: 'test-user-equipment',
+  email: 'test@equipment.test',
   role: 'USER',
   isActive: true,
   isEmailVerified: true,
@@ -20,6 +21,7 @@ const testUser: AuthUser = {
 
 const anotherUser: AuthUser = {
   id: 'another-user-equipment',
+  email: 'another@equipment.test',
   role: 'USER',
   isActive: true,
   isEmailVerified: true,
@@ -27,6 +29,7 @@ const anotherUser: AuthUser = {
 
 const adminUser: AuthUser = {
   id: 'admin-user-equipment',
+  email: 'admin@equipment.test',
   role: 'ADMIN',
   isActive: true,
   isEmailVerified: true,
@@ -34,6 +37,7 @@ const adminUser: AuthUser = {
 
 const moderatorUser: AuthUser = {
   id: 'moderator-user-equipment',
+  email: 'moderator@equipment.test',
   role: 'MODERATOR',
   isActive: true,
   isEmailVerified: true,

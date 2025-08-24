@@ -5,7 +5,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { app } from '../../app'
-import { db } from '../../shared/database/index'
+import { db } from '../../shared/prisma.service'
 import { cleanupTestData, createTestUser, createTestAdminUser } from '../../shared/tests/test-utils'
 import * as characterService from '../character.service'
 

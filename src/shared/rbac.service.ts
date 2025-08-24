@@ -5,14 +5,11 @@
  */
 
 import type { Role, Visibility } from '@prisma/client'
+import type { AuthUser } from '../auth/auth.types'
 import { createForbiddenError, createUnauthorizedError } from './errors'
 
-export type AuthUser = {
-  id: string
-  role: Role
-  isActive: boolean
-  isEmailVerified: boolean
-}
+// Re-export AuthUser for backwards compatibility
+export type { AuthUser }
 
 export type ResourceOwnership = {
   ownerId: string | null

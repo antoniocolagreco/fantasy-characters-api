@@ -26,9 +26,10 @@ import {
   type ResourceOwnership,
 } from '../rbac.service'
 
-// Mock users for testing
+//Mock users for testing
 const mockUser: AuthUser = {
   id: 'user-123',
+  email: 'user@test.com',
   role: 'USER' as Role,
   isActive: true,
   isEmailVerified: true,
@@ -36,6 +37,7 @@ const mockUser: AuthUser = {
 
 const mockModerator: AuthUser = {
   id: 'mod-123',
+  email: 'moderator@test.com',
   role: 'MODERATOR' as Role,
   isActive: true,
   isEmailVerified: true,
@@ -43,6 +45,7 @@ const mockModerator: AuthUser = {
 
 const mockAdmin: AuthUser = {
   id: 'admin-123',
+  email: 'admin@test.com',
   role: 'ADMIN' as Role,
   isActive: true,
   isEmailVerified: true,

@@ -83,11 +83,11 @@ describe('Health Endpoint Security Tests', () => {
     })
   })
 
-  describe('Internal Health Endpoint (/api/internal/health)', () => {
+  describe('Detailed Health Endpoint (/api/health/detailed)', () => {
     it('should deny anonymous access', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/api/internal/health',
+        url: '/api/health/detailed',
       })
 
       expect(response.statusCode).toBe(401)
@@ -97,13 +97,13 @@ describe('Health Endpoint Security Tests', () => {
       const user = await createTestUser({
         email: 'test@example.com',
         name: 'Test User',
-        role: 'USER' as Role,
+        role: 'MODERATOR' as Role, // Changed to MODERATOR since it requires at least MODERATOR role
       })
       const { accessToken } = await loginUser(user.user.email, user.password)
 
       const response = await app.inject({
         method: 'GET',
-        url: '/api/internal/health',
+        url: '/api/health/detailed',
         headers: {
           authorization: `Bearer ${accessToken}`,
         },
@@ -116,13 +116,13 @@ describe('Health Endpoint Security Tests', () => {
       const user = await createTestUser({
         email: 'test@example.com',
         name: 'Test User',
-        role: 'USER' as Role,
+        role: 'MODERATOR' as Role, // Changed to MODERATOR since it requires at least MODERATOR role
       })
       const { accessToken } = await loginUser(user.user.email, user.password)
 
       const response = await app.inject({
         method: 'GET',
-        url: '/api/internal/health',
+        url: '/api/health/detailed',
         headers: {
           authorization: `Bearer ${accessToken}`,
         },
@@ -144,13 +144,13 @@ describe('Health Endpoint Security Tests', () => {
       const user = await createTestUser({
         email: 'test@example.com',
         name: 'Test User',
-        role: 'USER' as Role,
+        role: 'MODERATOR' as Role, // Changed to MODERATOR since it requires at least MODERATOR role
       })
       const { accessToken } = await loginUser(user.user.email, user.password)
 
       const response = await app.inject({
         method: 'GET',
-        url: '/api/internal/health',
+        url: '/api/health/detailed',
         headers: {
           authorization: `Bearer ${accessToken}`,
         },

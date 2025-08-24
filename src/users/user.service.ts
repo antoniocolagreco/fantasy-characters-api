@@ -3,26 +3,26 @@
  * Functional approach following project principles
  */
 
-import { User, Role, Prisma } from '@prisma/client'
-import { db } from '../shared/database/index'
-import { rbacService, enforcePermission, type AuthUser } from '../shared/rbac.service'
+import { Prisma, Role, User } from '@prisma/client'
+import { PAGINATION, VALIDATION } from '../shared/constants'
 import {
-  createNotFoundError,
   createConflictError,
-  createValidationError,
   createInternalServerError,
+  createNotFoundError,
+  createValidationError,
   isAppError,
 } from '../shared/errors'
-import { VALIDATION, PAGINATION } from '../shared/constants'
-import { toRole, isRole } from '../shared/type-guards'
+import { db } from '../shared/prisma.service'
+import { enforcePermission, rbacService, type AuthUser } from '../shared/rbac.service'
+import { isRole, toRole } from '../shared/type-guards'
 import type {
   CreateUserRequest,
   UpdateUserRequest,
   UserListQuery,
-  UserResponse,
   UserListResponse,
+  UserResponse,
   UserStatsResponse,
-} from './user.schema'
+} from './user.types'
 
 /**
  * Transform database user to API response format

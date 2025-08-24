@@ -23,7 +23,7 @@ import type {
   TokenResponseType,
   UserProfileType,
   SuccessMessageType,
-} from './auth.schema'
+} from './auth.types'
 
 /**
  * Register a new user

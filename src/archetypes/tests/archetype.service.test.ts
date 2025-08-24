@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
+import type { AuthUser } from '../../auth/auth.types'
+import { db } from '../../shared/prisma.service'
 import {
   createArchetype,
   deleteArchetype,
@@ -45,6 +45,7 @@ describe('Archetype Service', () => {
 
     mockUser = {
       id: createdUser.id,
+      email: createdUser.email,
       role: createdUser.role,
       isActive: createdUser.isActive,
       isEmailVerified: createdUser.isEmailVerified,
@@ -52,6 +53,7 @@ describe('Archetype Service', () => {
 
     mockAdmin = {
       id: createdAdmin.id,
+      email: createdAdmin.email,
       role: createdAdmin.role,
       isActive: createdAdmin.isActive,
       isEmailVerified: createdAdmin.isEmailVerified,
@@ -314,6 +316,7 @@ describe('Archetype Service', () => {
 
       const otherMockUser = {
         id: otherUser.id,
+        email: otherUser.email,
         role: otherUser.role,
         isActive: otherUser.isActive,
         isEmailVerified: otherUser.isEmailVerified,
@@ -384,6 +387,7 @@ describe('Archetype Service', () => {
 
       const otherMockUser = {
         id: otherUser.id,
+        email: otherUser.email,
         role: otherUser.role,
         isActive: otherUser.isActive,
         isEmailVerified: otherUser.isEmailVerified,

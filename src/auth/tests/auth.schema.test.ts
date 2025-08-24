@@ -13,17 +13,19 @@ import {
   SuccessMessageSchema,
   AuthParamsSchema,
   CommonAuthResponses,
-  type RegisterUserType,
-  type LoginUserType,
-  type ChangePasswordType,
-  type UpdateProfileType,
-  type RefreshTokenType,
-  type TokenResponseType,
-  type UserProfileType,
-  type AuthErrorType,
-  type SuccessMessageType,
-  type AuthParamsType,
 } from '../auth.schema'
+import type {
+  RegisterUserType,
+  LoginUserType,
+  ChangePasswordType,
+  UpdateProfileType,
+  RefreshTokenType,
+  TokenResponseType,
+  UserProfileType,
+  AuthErrorType,
+  SuccessMessageType,
+  AuthParamsType,
+} from '../auth.types'
 
 // Setup AJV with formats
 const ajv = new Ajv({ allErrors: true })

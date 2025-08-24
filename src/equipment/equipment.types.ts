@@ -1,4 +1,29 @@
+/**
+ * Equipment-specific TypeScript type definitions
+ * All equipment-related types including schema-derived types
+ */
+
 import type { Equipment, Item } from '@prisma/client'
+import { Static } from '@sinclair/typebox'
+import {
+  EquipmentResponseSchema,
+  EquipmentUpdateSchema,
+  EquipmentSlotPatchSchema,
+  EquipmentStatsSchema,
+} from './equipment.schema'
+
+// ============================================================================
+// SCHEMA-DERIVED TYPES
+// ============================================================================
+
+export type EquipmentResponse = Static<typeof EquipmentResponseSchema>
+export type EquipmentUpdate = Static<typeof EquipmentUpdateSchema>
+export type EquipmentSlotPatch = Static<typeof EquipmentSlotPatchSchema>
+export type EquipmentStatsResponse = Static<typeof EquipmentStatsSchema>
+
+// ============================================================================
+// BUSINESS LOGIC TYPES
+// ============================================================================
 
 /**
  * Equipment with loaded item relationships

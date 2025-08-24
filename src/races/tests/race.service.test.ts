@@ -7,8 +7,8 @@ import {
   listRaces,
   getRaceStats,
 } from '../race.service'
-import { db } from '../../shared/database/index'
-import type { AuthUser } from '../../shared/rbac.service'
+import { db } from '../../shared/prisma.service'
+import type { AuthUser } from '../../auth/auth.types'
 
 // Mock user for testing
 let mockUser: AuthUser
@@ -49,6 +49,7 @@ describe('Race Service', () => {
 
     mockUser = {
       id: createdUser.id,
+      email: createdUser.email,
       role: 'USER',
       isActive: true,
       isEmailVerified: true,
@@ -56,6 +57,7 @@ describe('Race Service', () => {
 
     mockAdmin = {
       id: createdAdmin.id,
+      email: createdAdmin.email,
       role: 'ADMIN',
       isActive: true,
       isEmailVerified: true,

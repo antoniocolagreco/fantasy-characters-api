@@ -3,8 +3,8 @@
  * TypeBox schemas for user-related endpoints
  */
 
-import { Type, type Static } from '@sinclair/typebox'
-import { ListPaginationQuerySchema } from '../shared/schemas/pagination.schema'
+import { Type } from '@sinclair/typebox'
+import { ListPaginationQuerySchema } from '../shared/pagination.schema'
 
 // User role enum schema
 export const UserRoleSchema = Type.String({
@@ -273,13 +273,3 @@ export const UserStatsResponseSchema = Type.Object(
     description: 'User statistics and metrics',
   },
 )
-
-// Type exports for use in controllers and services
-export type CreateUserRequest = Static<typeof CreateUserRequestSchema>
-export type UpdateUserRequest = Static<typeof UpdateUserRequestSchema>
-export type UserResponse = Static<typeof UserResponseSchema>
-export type UserListQuery = Static<typeof UserListQuerySchema>
-export type UserListResponse = Static<typeof UserListResponseSchema>
-export type UserIdParam = Static<typeof UserIdParamSchema>
-export type UserRole = Static<typeof UserRoleSchema>
-export type UserStatsResponse = Static<typeof UserStatsResponseSchema>
