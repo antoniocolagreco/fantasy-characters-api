@@ -15,6 +15,20 @@ import { authenticateUser } from '../auth/auth.middleware'
 import { BasicHealthResponseSchema, HealthResponseSchema, HealthErrorSchema } from './health.schema'
 
 export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+  // Add schemas to fastify for validation and documentation
+  fastify.addSchema({
+    $id: 'BasicHealthResponse',
+    ...BasicHealthResponseSchema,
+  })
+  fastify.addSchema({
+    $id: 'DetailedHealthResponse',
+    ...HealthResponseSchema,
+  })
+  fastify.addSchema({
+    $id: 'HealthError',
+    ...HealthErrorSchema,
+  })
+
   // Public health check endpoint (minimal information)
   fastify.get('/health', {
     schema: {
@@ -22,8 +36,8 @@ export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
       tags: ['Health'],
       summary: 'Public Health Check',
       response: {
-        200: BasicHealthResponseSchema,
-        500: HealthErrorSchema,
+        200: { $ref: 'BasicHealthResponse#' },
+        500: { $ref: 'HealthError#' },
       },
     },
     handler: getHealth,
@@ -38,8 +52,8 @@ export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
       summary: 'Detailed Health Check',
       security: [{ bearerAuth: [] }],
       response: {
-        200: HealthResponseSchema,
-        401: HealthErrorSchema,
+        200: { $ref: 'DetailedHealthResponse#' },
+        401: { $ref: 'HealthError#' },
       },
     },
     handler: getInternalHealth,
@@ -54,8 +68,8 @@ export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
       tags: ['Health'],
       summary: 'Health Check (K8s style)',
       response: {
-        200: BasicHealthResponseSchema,
-        500: HealthErrorSchema,
+        200: { $ref: 'BasicHealthResponse#' },
+        500: { $ref: 'HealthError#' },
       },
     },
     handler: getHealthz,
@@ -68,8 +82,8 @@ export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
       tags: ['Health'],
       summary: 'Readiness Check',
       response: {
-        200: BasicHealthResponseSchema,
-        503: HealthErrorSchema,
+        200: { $ref: 'BasicHealthResponse#' },
+        503: { $ref: 'HealthError#' },
       },
     },
     handler: getReadiness,
@@ -82,8 +96,8 @@ export const healthRoutes: FastifyPluginAsync = async (fastify: FastifyInstance)
       tags: ['Health'],
       summary: 'Liveness Check',
       response: {
-        200: BasicHealthResponseSchema,
-        500: HealthErrorSchema,
+        200: { $ref: 'BasicHealthResponse#' },
+        500: { $ref: 'HealthError#' },
       },
     },
     handler: getLiveness,
