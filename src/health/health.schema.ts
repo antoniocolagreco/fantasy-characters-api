@@ -1,6 +1,6 @@
 /**
  * Health check schemas
- * TypeBox schemas for health check endpoints
+ * TypeBox schemas for health check endpoints with precise type definitions
  */
 
 import { Type } from '@sinclair/typebox'
@@ -12,30 +12,96 @@ export const HealthStatusSchema = Type.Union([
   Type.Literal('degraded'),
 ])
 
-// Individual health check schema
-export const HealthCheckSchema = Type.Object({
-  name: Type.String(),
-  status: HealthStatusSchema,
-  timestamp: Type.String(),
-  details: Type.Optional(Type.Record(Type.String(), Type.Unknown())),
-})
+// Individual health check schema with flexible details
+export const HealthCheckSchema = Type.Object(
+  {
+    name: Type.String({
+      description: 'Name of the health check',
+    }),
+    status: HealthStatusSchema,
+    timestamp: Type.String({
+      description: 'ISO 8601 timestamp',
+    }),
+    details: Type.Optional(
+      Type.Record(Type.String(), Type.Unknown(), {
+        description: 'Optional details about the health check',
+      }),
+    ),
+    debugInfo: Type.Optional(
+      Type.Record(Type.String(), Type.Unknown(), {
+        description: 'Optional debug information',
+      }),
+    ),
+  },
+  {
+    additionalProperties: true,
+    description: 'Individual health check result',
+  },
+)
 
-// Health response schema
-export const HealthResponseSchema = Type.Object({
-  status: HealthStatusSchema,
-  timestamp: Type.String(),
-  uptime: Type.Number({ minimum: 0 }),
-  version: Type.String(),
-  environment: Type.String(),
-  checks: Type.Array(HealthCheckSchema),
-})
+// Complete health response schema
+export const HealthResponseSchema = Type.Object(
+  {
+    status: HealthStatusSchema,
+    timestamp: Type.String({
+      description: 'ISO 8601 timestamp',
+    }),
+    uptime: Type.Optional(
+      Type.Number({
+        minimum: 0,
+        description: 'Server uptime in seconds',
+      }),
+    ),
+    version: Type.Optional(
+      Type.String({
+        description: 'Application version',
+      }),
+    ),
+    environment: Type.Optional(
+      Type.String({
+        description: 'Environment name',
+      }),
+    ),
+    checks: Type.Optional(
+      Type.Array(HealthCheckSchema, {
+        description: 'Array of individual health checks',
+      }),
+    ),
+  },
+  {
+    additionalProperties: true,
+    description: 'Complete health check response',
+  },
+)
 
-// Error response schema
-export const HealthErrorSchema = Type.Object({
-  error: Type.Object({
-    code: Type.String(),
-    message: Type.String(),
-    timestamp: Type.String(),
-    path: Type.String(),
-  }),
-})
+// Basic health response (for public endpoints)
+export const BasicHealthResponseSchema = Type.Object(
+  {
+    status: HealthStatusSchema,
+    timestamp: Type.String({
+      description: 'ISO 8601 timestamp',
+    }),
+  },
+  {
+    additionalProperties: true,
+    description: 'Basic health status for public endpoints',
+  },
+)
+
+// Error response schema for health endpoints
+export const HealthErrorSchema = Type.Object(
+  {
+    error: Type.Object({
+      code: Type.String({ description: 'Error code' }),
+      message: Type.String({ description: 'Error message' }),
+      timestamp: Type.String({
+        description: 'ISO 8601 timestamp',
+      }),
+      path: Type.String({ description: 'API path' }),
+    }),
+  },
+  {
+    additionalProperties: true,
+    description: 'Error response for health check failures',
+  },
+)

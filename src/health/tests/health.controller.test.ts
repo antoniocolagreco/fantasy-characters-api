@@ -85,7 +85,7 @@ describe('Health Controller', () => {
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
 
-    it('should return 500 when health status is degraded', async () => {
+    it('should return 200 when health status is degraded', async () => {
       const mockHealthData = {
         status: 'degraded' as const,
         timestamp: '2023-01-01T00:00:00.000Z',
@@ -100,7 +100,7 @@ describe('Health Controller', () => {
       await getHealth(mockRequest as FastifyRequest, mockReply as FastifyReply)
 
       expect(mockedHealthService.getPublicHealthStatus).toHaveBeenCalledWith()
-      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.INTERNAL_SERVER_ERROR)
+      expect(mockReply.status).toHaveBeenCalledWith(HTTP_STATUS.OK)
       expect(mockReply.send).toHaveBeenCalledWith(mockHealthData)
     })
 

@@ -208,10 +208,21 @@ export const createAuditService = (logger: FastifyBaseLogger): AuditService => {
 
     // In production, you might also want to send to external audit systems
     if (environment.NODE_ENV === 'production') {
-      // TODO: Integrate with external audit/SIEM systems
-      // - Send to centralized logging (e.g., ELK stack)
-      // - Send to security monitoring (e.g., Splunk)
-      // - Send to compliance systems
+      // Production audit system integration examples:
+      // 1. ELK Stack: Use Elasticsearch client to send structured audit logs
+      // 2. Splunk: Use Splunk HTTP Event Collector for security monitoring
+      // 3. AWS CloudWatch: Use AWS SDK to send custom metrics and logs
+      // 4. Syslog: Use syslog protocol for centralized log management
+      // 5. SIEM Systems: Integration with security information and event management
+      //
+      // Example implementation patterns:
+      // - Use async queues to avoid blocking main thread
+      // - Implement retry logic for failed audit log sends
+      // - Consider batching audit events for performance
+      // - Ensure sensitive data is properly masked/encrypted
+      //
+      // Recommended approach: Create separate audit transport modules
+      // based on your infrastructure requirements
     }
   }
 

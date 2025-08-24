@@ -10,6 +10,13 @@ vi.mock('../../shared/database/index', () => ({
   getDatabaseHealth: vi.fn(),
 }))
 
+// Mock the cache middleware
+vi.mock('../../shared/cache.middleware', () => ({
+  CacheConfig: {
+    getStats: vi.fn(),
+  },
+}))
+
 // Mock the config module
 vi.mock('../../shared/config', () => ({
   healthConfig: {
@@ -18,6 +25,11 @@ vi.mock('../../shared/config', () => ({
     environment: 'test',
     enabled: true, // Enable health checks for testing
   },
+  cacheConfig: {
+    enabled: true,
+    defaultTtl: 300,
+    maxEntries: 1000,
+  },
 }))
 
 // Store original NODE_ENV
@@ -25,6 +37,7 @@ const originalNodeEnv = process.env.NODE_ENV
 
 import { getHealthStatus, getLivenessStatus, getReadinessStatus } from '../health.service'
 import { getDatabaseHealth } from '../../shared/database/index'
+import { CacheConfig } from '../../shared/cache.middleware'
 
 describe('Health Service', () => {
   beforeEach(() => {
@@ -33,6 +46,14 @@ describe('Health Service', () => {
     vi.spyOn(process, 'uptime').mockReturnValue(1000)
     // Set NODE_ENV to test for consistent environment detection
     process.env.NODE_ENV = 'test'
+
+    // Mock cache stats
+    vi.mocked(CacheConfig.getStats).mockReturnValue({
+      enabled: true,
+      hitRate: 75.5,
+      size: 100,
+      maxEntries: 1000,
+    })
   })
 
   afterEach(() => {
@@ -177,10 +198,11 @@ describe('Health Service', () => {
 
       const health = await getReadinessStatus()
 
-      expect(health.checks).toHaveLength(2)
+      expect(health.checks).toHaveLength(3) // database, memory, cache
       const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('database')
       expect(checkNames).toContain('memory')
+      expect(checkNames).toContain('cache')
     })
 
     it('should be unhealthy when database is not ready', async () => {
@@ -207,19 +229,21 @@ describe('Health Service', () => {
     it('should return basic health status', async () => {
       const health = await getHealthStatus('basic')
 
-      expect(health.checks).toHaveLength(2)
+      expect(health.checks).toHaveLength(3) // process, memory, cache
       const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('process')
       expect(checkNames).toContain('memory')
+      expect(checkNames).toContain('cache')
     })
 
     it('should return readiness health status', async () => {
       const health = await getHealthStatus('readiness')
 
-      expect(health.checks).toHaveLength(2)
+      expect(health.checks).toHaveLength(3) // database, memory, cache
       const checkNames = health.checks?.map(check => check.name)
       expect(checkNames).toContain('database')
       expect(checkNames).toContain('memory')
+      expect(checkNames).toContain('cache')
     })
 
     it('should return comprehensive health status', async () => {
@@ -331,6 +355,111 @@ describe('Health Service', () => {
       expect(health).toHaveProperty('environment')
       expect(health).toHaveProperty('checks')
       expect(Array.isArray(health.checks)).toBe(true)
+    })
+  })
+
+  describe('Cache health check integration', () => {
+    it('should include cache check in comprehensive health status', async () => {
+      vi.mocked(getDatabaseHealth).mockResolvedValue({
+        status: 'healthy',
+        connected: true,
+        version: '3.0.0',
+      })
+
+      const health = await getHealthStatus('comprehensive')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck).toBeDefined()
+      expect(cacheCheck?.status).toBe('healthy')
+      expect(cacheCheck?.details).toEqual({
+        enabled: true,
+        hitRate: 75.5,
+        size: 100,
+        maxEntries: 1000,
+        utilization: 10,
+      })
+    })
+
+    it('should show degraded cache status when hit rate is low', async () => {
+      vi.mocked(CacheConfig.getStats).mockReturnValue({
+        enabled: true,
+        hitRate: 15, // Low hit rate
+        size: 50,
+        maxEntries: 1000,
+      })
+
+      vi.mocked(getDatabaseHealth).mockResolvedValue({
+        status: 'healthy',
+        connected: true,
+        version: '3.0.0',
+      })
+
+      const health = await getHealthStatus('comprehensive')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck?.status).toBe('degraded')
+    })
+
+    it('should show degraded cache status when cache is disabled', async () => {
+      vi.mocked(CacheConfig.getStats).mockReturnValue({
+        enabled: false,
+        hitRate: 0,
+        size: 0,
+        maxEntries: 1000,
+      })
+
+      vi.mocked(getDatabaseHealth).mockResolvedValue({
+        status: 'healthy',
+        connected: true,
+        version: '3.0.0',
+      })
+
+      const health = await getHealthStatus('comprehensive')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck?.status).toBe('degraded')
+    })
+
+    it('should show degraded cache status when near capacity', async () => {
+      vi.mocked(CacheConfig.getStats).mockReturnValue({
+        enabled: true,
+        hitRate: 80,
+        size: 950, // Near max capacity (95%)
+        maxEntries: 1000,
+      })
+
+      vi.mocked(getDatabaseHealth).mockResolvedValue({
+        status: 'healthy',
+        connected: true,
+        version: '3.0.0',
+      })
+
+      const health = await getHealthStatus('comprehensive')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck?.status).toBe('degraded')
+    })
+
+    it('should include cache check in basic health status', async () => {
+      const health = await getHealthStatus('basic')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck).toBeDefined()
+      expect(cacheCheck?.status).toBe('healthy')
+    })
+
+    it('should include cache check in readiness probe', async () => {
+      vi.mocked(getDatabaseHealth).mockResolvedValue({
+        status: 'healthy',
+        connected: true,
+        version: '3.0.0',
+      })
+
+      const health = await getHealthStatus('readiness')
+      const cacheCheck = health.checks?.find(check => check.name === 'cache')
+
+      expect(cacheCheck).toBeDefined()
+      expect(cacheCheck?.status).toBe('healthy')
     })
   })
 })

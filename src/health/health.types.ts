@@ -1,26 +1,29 @@
-// Health check specific TypeScript type definitions
-export type HealthStatus = {
-  status: 'ok' | 'error'
-  timestamp: string
-  uptime: number
-}
+/**
+ * Health check type definitions
+ * All health-related types derived from TypeBox schemas
+ */
 
-export type DatabaseHealthStatus = {
-  status: 'connected' | 'disconnected' | 'error'
-  responseTime?: number
-}
+import { Static } from '@sinclair/typebox'
+import {
+  HealthStatusSchema,
+  HealthCheckSchema,
+  HealthResponseSchema,
+  BasicHealthResponseSchema,
+  HealthErrorSchema,
+} from './health.schema'
 
-export type ReadinessCheck = {
-  status: 'ready' | 'not_ready'
-  checks: {
-    database: DatabaseHealthStatus
-  }
-}
+// Core health types derived from schemas
+export type HealthStatus = Static<typeof HealthStatusSchema>
+export type HealthCheck = Static<typeof HealthCheckSchema>
+export type HealthResponse = Static<typeof HealthResponseSchema>
+export type BasicHealthResponse = Static<typeof BasicHealthResponseSchema>
+export type HealthError = Static<typeof HealthErrorSchema>
 
-export type LivenessCheck = {
-  status: 'alive' | 'dead'
-  checks: {
-    process: boolean
-    memory: boolean
-  }
-}
+// Health check levels for service logic
+export type HealthCheckLevel =
+  | 'basic'
+  | 'liveness'
+  | 'readiness'
+  | 'comprehensive'
+  | 'public'
+  | 'internal'

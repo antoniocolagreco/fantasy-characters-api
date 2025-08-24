@@ -15,8 +15,6 @@ import Fastify, { type FastifyInstance } from 'fastify'
 
 // Type declarations are automatically loaded from ambient modules
 
-import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
-import { initializeAuditService, getAuditService } from './shared/audit.service'
 import { archetypeRoutes } from './archetypes/archetype.route'
 import { authRoutes } from './auth/auth.route'
 import { characterRoutes } from './characters/character.route'
@@ -26,6 +24,8 @@ import { imageRoutes } from './images/image.route'
 import { itemRoutes } from './items/item.route'
 import { perkRoutes } from './perks/perk.route'
 import { raceRoutes } from './races/race.route'
+import { getAuditService, initializeAuditService } from './shared/audit.service'
+import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
 import { connectDatabase, disconnectDatabase } from './shared/database/index'
 import { errorHandler, notFoundHandler } from './shared/errors'
 import { skillRoutes } from './skills/skill.route'
@@ -254,8 +254,16 @@ export const createApp = async (): Promise<FastifyInstance> => {
         openapi: '3.0.0',
         info: {
           title: 'Fantasy Characters API',
-          description:
-            'A comprehensive RESTful API for managing fantasy characters with advanced security features including JWT authentication, RBAC authorization, comprehensive audit logging, and HTTP security headers. Features role-based access control with USER, MODERATOR, and ADMIN roles, data classification (PUBLIC, PRIVATE, HIDDEN), and complete CRUD operations for characters, races, archetypes, skills, perks, items, and equipment management.',
+          description: `
+A comprehensive RESTful API for managing fantasy characters with advanced security features including JWT authentication, RBAC authorization, comprehensive audit logging, and HTTP security headers. Features role-based access control with USER, MODERATOR, and ADMIN roles, data classification (PUBLIC, PRIVATE, HIDDEN), and complete CRUD operations for characters, races, archetypes, skills, perks, items, and equipment management.
+
+#### 🧪 Test Credentials (Seeded)
+
+- **ADMIN**: admin@fantasy-api.com / admin123 - Full system access
+- **MODERATOR**: moderator@fantasy-api.com / mod123 - Content moderation
+- **USER**: user@fantasy-api.com / user123 - Own content management
+- **USER**: designer@fantasy-api.com / design123 - Game designer role
+          `,
           version: '1.0.0',
           contact: {
             name: 'Antonio Colagreco',
@@ -2013,17 +2021,20 @@ export const createApp = async (): Promise<FastifyInstance> => {
       },
     })
 
-    // Swagger UI
-    // TODO: Review Swagger UI security configuration for production
-    // FIXME: CSP disabled and permissive settings for development
+    // Swagger UI configuration with production security considerations
     await app.register(swaggerUi, {
       routePrefix: '/docs',
       uiConfig: {
         docExpansion: 'list',
         deepLinking: false,
         supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
-        tryItOutEnabled: true, // Allow testing endpoints directly from UI
-        persistAuthorization: true, // Keep authorization between page reloads
+        tryItOutEnabled: environment.NODE_ENV !== 'production', // Disable testing in production
+        persistAuthorization: environment.NODE_ENV !== 'production', // No persistence in production
+        filter: environment.NODE_ENV === 'production', // Enable filtering in production
+        syntaxHighlight: {
+          activate: environment.NODE_ENV !== 'production',
+          theme: 'agate',
+        },
       },
       uiHooks: {
         onRequest: (_request, _reply, next) => {
@@ -2033,9 +2044,21 @@ export const createApp = async (): Promise<FastifyInstance> => {
           next()
         },
       },
-      staticCSP: false, // FIXME: CSP disabled for development - enable for production
-      transformStaticCSP: header => header,
-      transformSpecification: (swaggerObject, _request, _reply) => swaggerObject,
+      staticCSP: environment.NODE_ENV === 'production', // Enable CSP in production
+      transformStaticCSP: header => {
+        // In production, enforce strict CSP for Swagger UI
+        if (environment.NODE_ENV === 'production') {
+          return "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+        }
+        return header
+      },
+      transformSpecification: (swaggerObject, _request, _reply) => {
+        // Remove internal endpoints or sensitive information in production
+        if (environment.NODE_ENV === 'production') {
+          // Could filter out internal-only endpoints here if needed
+        }
+        return swaggerObject
+      },
       transformSpecificationClone: true,
     })
   }

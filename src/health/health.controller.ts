@@ -42,9 +42,10 @@ export const getHealth = async (request: FastifyRequest, reply: FastifyReply): P
 
     const healthData = await getPublicHealthStatus()
 
-    // Return appropriate HTTP status based on health
+    // Return HTTP 500 only for truly unhealthy systems (broken/failed)
+    // "degraded" means reduced performance but system still works → HTTP 200
     const httpStatus =
-      healthData.status === 'healthy' ? HTTP_STATUS.OK : HTTP_STATUS.INTERNAL_SERVER_ERROR
+      healthData.status === 'unhealthy' ? HTTP_STATUS.INTERNAL_SERVER_ERROR : HTTP_STATUS.OK
 
     // Add security headers (conditionally based on environment)
     addSecurityHeaders(reply)
@@ -86,9 +87,10 @@ export const getInternalHealth = async (
 
     const healthData = await getInternalHealthStatus()
 
-    // Return appropriate HTTP status based on health
+    // Return HTTP 500 only for truly unhealthy systems (broken/failed)
+    // "degraded" means reduced performance but system still works → HTTP 200
     const httpStatus =
-      healthData.status === 'healthy' ? HTTP_STATUS.OK : HTTP_STATUS.INTERNAL_SERVER_ERROR
+      healthData.status === 'unhealthy' ? HTTP_STATUS.INTERNAL_SERVER_ERROR : HTTP_STATUS.OK
 
     // Add security headers (conditionally based on environment)
     addSecurityHeaders(reply)
@@ -188,9 +190,12 @@ export const getReadiness = async (request: FastifyRequest, reply: FastifyReply)
     await reply.status(httpStatus).send(healthData)
   } catch (error) {
     request.log.error({ error }, 'Readiness check failed')
+    request.log.error({ error }, 'Readiness check failed')
 
+    // Readiness probes should never return 500, only 503 (not ready)
+    // This prevents Kubernetes from restarting the pod due to temporary issues
     const appError = createInternalServerError(
-      'Readiness check failed',
+      'Service not ready to serve traffic',
       error instanceof Error ? error.message : 'Unknown error',
     ) as Error & {
       statusCode: number
@@ -198,7 +203,15 @@ export const getReadiness = async (request: FastifyRequest, reply: FastifyReply)
       details?: unknown
     }
 
+    // Override status code to 503 for readiness checks
+    appError.statusCode = HTTP_STATUS.SERVICE_UNAVAILABLE
+    appError.code = 'READINESS_CHECK_FAILED'
+
     const errorResponse = createErrorResponse(appError, request.url)
-    await reply.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).send(errorResponse)
+
+    // Add security headers
+    addSecurityHeaders(reply)
+
+    await reply.status(HTTP_STATUS.SERVICE_UNAVAILABLE).send(errorResponse)
   }
 }

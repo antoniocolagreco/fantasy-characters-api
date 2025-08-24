@@ -55,6 +55,10 @@ export type CacheKeyOptions = {
 class CacheService {
   private cache = new Map<string, CacheEntry>()
   private config: CacheConfig
+  private stats = {
+    hits: 0,
+    misses: 0,
+  }
 
   constructor(config: CacheConfig) {
     this.config = config
@@ -83,12 +87,14 @@ class CacheService {
    */
   get(key: string): CacheEntry | undefined {
     if (!this.config.enabled) {
+      this.stats.misses++
       return undefined
     }
 
     const entry = this.cache.get(key)
 
     if (!entry) {
+      this.stats.misses++
       return undefined
     }
 
@@ -98,9 +104,11 @@ class CacheService {
 
     if (now > expiresAt) {
       this.cache.delete(key)
+      this.stats.misses++
       return undefined
     }
 
+    this.stats.hits++
     return entry
   }
 
@@ -181,11 +189,25 @@ class CacheService {
     hitRate: number
     enabled: boolean
   } {
+    const totalRequests = this.stats.hits + this.stats.misses
+    const hitRate = totalRequests > 0 ? this.stats.hits / totalRequests : 0
+
     return {
       size: this.cache.size,
       maxEntries: this.config.maxEntries,
-      hitRate: 0, // TODO: Implement hit rate tracking
+      hitRate: Math.round(hitRate * 10000) / 100, // Convert to percentage with 2 decimal places
       enabled: this.config.enabled,
+    }
+  }
+
+  /**
+   * Enable or disable caching
+   */
+  setEnabled(enabled: boolean): void {
+    this.config.enabled = enabled
+    if (!enabled) {
+      // Clear cache when disabling
+      this.clear()
     }
   }
 

@@ -194,10 +194,7 @@ export const CacheInvalidation = {
 export const CacheConfig = {
   /** Enable/disable caching */
   setEnabled: (enabled: boolean) => {
-    // TODO: Add proper method to CacheService to set enabled state
-    // For now, we cast to access private config property
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    ;(cacheService as any).config.enabled = enabled
+    cacheService.setEnabled(enabled)
   },
 
   /** Get cache statistics */

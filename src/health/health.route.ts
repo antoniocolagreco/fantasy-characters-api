@@ -1,6 +1,6 @@
 /**
  * Health check routes
- * Defines the health check endpoints with security controls
+ * Defines the health check endpoints with security controls and precise schemas
  */
 
 import { FastifyInstance, FastifyPluginOptions } from 'fastify'
@@ -12,6 +12,7 @@ import {
   getReadiness,
 } from './health.controller'
 import { authenticateUser } from '../auth/auth.middleware'
+import { BasicHealthResponseSchema, HealthResponseSchema, HealthErrorSchema } from './health.schema'
 
 export const healthRoutes = async (
   fastify: FastifyInstance,
@@ -24,14 +25,8 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Public Health Check',
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['healthy', 'unhealthy', 'degraded'] },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
-          required: ['status', 'timestamp'],
-        },
+        200: BasicHealthResponseSchema,
+        500: HealthErrorSchema,
       },
     },
     handler: getHealth,
@@ -46,30 +41,7 @@ export const healthRoutes = async (
       summary: 'Internal Health Check',
       security: [{ bearerAuth: [] }],
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['healthy', 'unhealthy', 'degraded'] },
-            timestamp: { type: 'string', format: 'date-time' },
-            uptime: { type: 'number' },
-            version: { type: 'string' },
-            environment: { type: 'string' },
-            checks: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string' },
-                  status: { type: 'string', enum: ['healthy', 'unhealthy', 'degraded'] },
-                  timestamp: { type: 'string', format: 'date-time' },
-                  details: { type: 'object' },
-                },
-                required: ['name', 'status', 'timestamp'],
-              },
-            },
-          },
-          required: ['status', 'timestamp'],
-        },
+        200: HealthResponseSchema,
         401: {
           type: 'object',
           properties: {
@@ -77,6 +49,7 @@ export const healthRoutes = async (
             message: { type: 'string' },
           },
         },
+        500: HealthErrorSchema,
       },
     },
     handler: getInternalHealth,
@@ -91,22 +64,8 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Health Check (K8s style)',
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['healthy', 'unhealthy', 'degraded'] },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
-          required: ['status', 'timestamp'],
-        },
-        500: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['unhealthy'] },
-            timestamp: { type: 'string', format: 'date-time' },
-            error: { type: 'string' },
-          },
-        },
+        200: BasicHealthResponseSchema,
+        500: HealthErrorSchema,
       },
     },
     handler: getHealthz,
@@ -119,22 +78,9 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Readiness Check',
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['ready'] },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
-          required: ['status', 'timestamp'],
-        },
-        503: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['not ready'] },
-            timestamp: { type: 'string', format: 'date-time' },
-            error: { type: 'string' },
-          },
-        },
+        200: HealthResponseSchema,
+        500: HealthErrorSchema,
+        503: HealthErrorSchema,
       },
     },
     handler: getReadiness,
@@ -147,22 +93,8 @@ export const healthRoutes = async (
       tags: ['Health'],
       summary: 'Liveness Check',
       response: {
-        200: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['alive'] },
-            timestamp: { type: 'string', format: 'date-time' },
-          },
-          required: ['status', 'timestamp'],
-        },
-        500: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', enum: ['dead'] },
-            timestamp: { type: 'string', format: 'date-time' },
-            error: { type: 'string' },
-          },
-        },
+        200: HealthResponseSchema,
+        500: HealthErrorSchema,
       },
     },
     handler: getLiveness,

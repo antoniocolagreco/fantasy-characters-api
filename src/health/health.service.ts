@@ -5,53 +5,34 @@
 
 import { healthConfig } from '../shared/config'
 import { getDatabaseHealth } from '../shared/database/index'
-
-export type HealthStatus = 'healthy' | 'unhealthy' | 'degraded'
-
-export type HealthCheck = {
-  readonly name: string
-  readonly status: HealthStatus
-  readonly timestamp: string
-  readonly details?: Record<string, unknown> | undefined
-}
-
-export type HealthResponse = {
-  readonly status: HealthStatus
-  readonly timestamp: string
-  readonly uptime?: number
-  readonly version?: string
-  readonly environment?: string
-  readonly checks?: HealthCheck[]
-}
-
-export type HealthCheckLevel =
-  | 'basic'
-  | 'liveness'
-  | 'readiness'
-  | 'comprehensive'
-  | 'public'
-  | 'internal'
+import { CacheConfig } from '../shared/cache.middleware'
+import { HealthStatus, HealthCheck, HealthResponse, HealthCheckLevel } from './health.types'
 
 // Individual health check functions
-const checkApplication = (includeDetails = false): HealthCheck => {
-  const base = {
-    name: 'application',
+const checkApplication = (includeDetails: boolean): HealthCheck => {
+  const name = 'application'
+  const timestamp = new Date().toISOString()
+
+  if (!includeDetails) {
+    return { name, status: 'healthy', timestamp }
+  }
+
+  const details = {
+    nodeVersion: process.version,
+    platform: process.platform,
+    architecture: process.arch,
+    uptime: process.uptime(),
+    pid: process.pid,
+  }
+
+  const result = {
+    name,
     status: 'healthy' as const,
-    timestamp: new Date().toISOString(),
+    timestamp,
+    details,
   }
 
-  if (includeDetails) {
-    return {
-      ...base,
-      details: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        architecture: process.arch,
-      },
-    }
-  }
-
-  return base
+  return result
 }
 
 const checkMemory = (includeDetails = false): HealthCheck => {
@@ -178,6 +159,63 @@ const checkDatabase = async (includeDetails = false): Promise<HealthCheck> => {
   }
 }
 
+// Cache health check
+const checkCache = (includeDetails = false): HealthCheck => {
+  try {
+    const cacheStats = CacheConfig.getStats()
+
+    // Determine cache health based on hit rate and status
+    let status: HealthStatus = 'healthy'
+
+    if (!cacheStats.enabled) {
+      status = 'degraded' // Cache disabled is degraded performance
+    } else if (cacheStats.hitRate < 20) {
+      status = 'degraded' // Very low hit rate indicates poor cache performance
+    } else if (cacheStats.size >= cacheStats.maxEntries * 0.9) {
+      status = 'degraded' // Cache near capacity
+    }
+
+    const base = {
+      name: 'cache',
+      status,
+      timestamp: new Date().toISOString(),
+    }
+
+    if (includeDetails) {
+      return {
+        ...base,
+        details: {
+          enabled: cacheStats.enabled,
+          hitRate: cacheStats.hitRate,
+          size: cacheStats.size,
+          maxEntries: cacheStats.maxEntries,
+          utilization: Math.round((cacheStats.size / cacheStats.maxEntries) * 10000) / 100, // percentage
+        },
+      }
+    }
+
+    return base
+  } catch (error) {
+    const base = {
+      name: 'cache',
+      status: 'unhealthy' as const,
+      timestamp: new Date().toISOString(),
+    }
+
+    if (includeDetails) {
+      return {
+        ...base,
+        details: {
+          enabled: false,
+          errorMessage: error instanceof Error ? error.message : 'Unknown cache error',
+        },
+      }
+    }
+
+    return base
+  }
+}
+
 // Format uptime in human-readable format
 const formatUptime = (seconds: number): string => {
   const days = Math.floor(seconds / 86400)
@@ -214,7 +252,7 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
 
     case 'basic':
       // Basic health check - minimal information for /healthz
-      return [checkProcess(), checkMemory()]
+      return [checkProcess(), checkMemory(), checkCache()]
 
     case 'liveness':
       // Liveness probe - ONLY process check (Kubernetes best practice)
@@ -224,7 +262,7 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
     case 'readiness':
       // Readiness probe - focus on external dependencies (Kubernetes best practice)
       // This determines if the app can serve traffic (database, external services)
-      return [await checkDatabase(), checkMemory()]
+      return [await checkDatabase(), checkMemory(), checkCache()]
 
     case 'internal':
       // Internal health check with detailed information for monitoring dashboards
@@ -234,6 +272,7 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
         checkMemory(true),
         checkUptime(true),
         await checkDatabase(true),
+        checkCache(true),
       ]
 
     case 'comprehensive':
@@ -245,6 +284,7 @@ const getChecksForLevel = async (level: HealthCheckLevel): Promise<HealthCheck[]
         checkMemory(true),
         checkUptime(true),
         await checkDatabase(true),
+        checkCache(true),
       ]
   }
 }
