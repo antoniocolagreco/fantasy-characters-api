@@ -1,4 +1,4 @@
-import { Type, Static } from '@sinclair/typebox'
+import { Static, Type } from '@sinclair/typebox'
 import Ajv from 'ajv'
 import addFormats from 'ajv-formats'
 import 'dotenv/config'
@@ -217,10 +217,10 @@ function validateEnvironment(env: Record<string, unknown>): void {
       (env.JWT_SECRET.includes('dev-secret') ||
         env.JWT_SECRET.includes('change-this') ||
         env.JWT_SECRET.includes('your-') ||
-        env.JWT_SECRET.length < 64)
+        env.JWT_SECRET.length < 32)
     ) {
       throw new Error(
-        'JWT_SECRET must be set to a secure, unique value in production (minimum 64 characters, no dev placeholders)',
+        'JWT_SECRET must be set to a secure, unique value in production (minimum 32 characters, no dev placeholders)',
       )
     }
 

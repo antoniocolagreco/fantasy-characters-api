@@ -567,7 +567,7 @@ describe('Error Handlers', () => {
 
       expect(mockReply.status).toHaveBeenCalledWith(500)
       expect(mockReply.send).toHaveBeenCalledWith({
-        message: 'Internal server error',
+        message: 'Something went wrong', // Updated to match our new error handling
         statusCode: 500,
         error: 'Internal Server Error',
       })

@@ -148,8 +148,32 @@ export const errorHandler = async (
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> => {
-  // Log the error
-  request.log.error(error, 'Request error')
+  // Determine if we're in production
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  // Log the error with appropriate detail level
+  if (isProduction) {
+    // In production, log error without stack trace for security
+    request.log.error(
+      {
+        error: {
+          name: error.name,
+          message: error.message,
+          statusCode: isAppError(error) ? error.statusCode : 500,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          code: (error as any).code,
+        },
+        url: request.url,
+        method: request.method,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        userAgent: (request.headers as any)?.['user-agent'] || 'unknown',
+      },
+      'Request error',
+    )
+  } else {
+    // In development/test, log full error including stack trace
+    request.log.error(error, 'Request error')
+  }
 
   // Handle rate limit errors specifically
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -165,9 +189,11 @@ export const errorHandler = async (
 
   // Handle different error types
   if (isAppError(error)) {
-    // Create a simple error response that Fastify can serialize properly
+    // In production, sanitize sensitive error messages
+    const sanitizedMessage = isProduction ? getSanitizedErrorMessage(error) : error.message
+
     const errorResponse = {
-      message: error.message,
+      message: sanitizedMessage,
       statusCode: error.statusCode,
       error: getHttpErrorName(error.statusCode),
     }
@@ -182,8 +208,9 @@ export const errorHandler = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (error as any).code === 'FST_ERR_VALIDATION'
   ) {
+    const message = isProduction ? 'Validation error' : error.message
     const errorResponse = {
-      message: error.message,
+      message,
       statusCode: 400,
       error: 'Bad Request',
     }
@@ -204,7 +231,7 @@ export const errorHandler = async (
 
   // Default to internal server error
   const errorResponse = {
-    message: 'Internal server error',
+    message: isProduction ? 'Internal server error' : error.message,
     statusCode: 500,
     error: 'Internal Server Error',
   }
@@ -231,6 +258,37 @@ const getHttpErrorName = (statusCode: number): string => {
       return 'Internal Server Error'
     default:
       return 'Error'
+  }
+}
+
+// Helper function to sanitize error messages for production
+const getSanitizedErrorMessage = (error: Error & { statusCode: number }): string => {
+  // Check for specific JWT-related messages that should be sanitized
+  if (
+    error.message.includes('Invalid token') ||
+    error.message.includes('Token has expired') ||
+    error.message.includes('Token verification failed') ||
+    error.message.includes('Authorization header')
+  ) {
+    return 'Authentication required'
+  }
+
+  switch (error.statusCode) {
+    case 400:
+      return 'Bad request'
+    case 401:
+      return 'Authentication required'
+    case 403:
+      return 'Access denied'
+    case 404:
+      return 'Resource not found'
+    case 409:
+      return 'Resource conflict'
+    case 429:
+      return 'Too many requests'
+    case 500:
+    default:
+      return 'Internal server error'
   }
 }
 

@@ -646,10 +646,10 @@ describe('Character Controller', () => {
 
           // Should handle the error gracefully and trigger catch block
           expect(response.statusCode).toBe(500)
-          // Error handler returns generic message for unknown errors
+          // Error handler now shows actual error message instead of generic
           expect(JSON.parse(response.body)).toEqual({
             error: 'Internal Server Error',
-            message: 'Internal server error',
+            message: 'Service error for testing',
             statusCode: 500,
           })
         } finally {
@@ -674,7 +674,7 @@ describe('Character Controller', () => {
           expect(response.statusCode).toBe(500)
           expect(JSON.parse(response.body)).toEqual({
             error: 'Internal Server Error',
-            message: 'Internal server error',
+            message: 'Create service error',
             statusCode: 500,
           })
         } finally {
@@ -764,7 +764,7 @@ describe('Character Controller', () => {
           if (response.statusCode === 500) {
             expect(JSON.parse(response.body)).toEqual({
               error: 'Internal Server Error',
-              message: 'Internal server error',
+              message: 'Stats service error',
               statusCode: 500,
             })
           } else {
