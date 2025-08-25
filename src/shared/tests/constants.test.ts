@@ -244,6 +244,7 @@ describe('Application Constants', () => {
       expect(LOG_LEVELS.INFO).toBe('info')
       expect(LOG_LEVELS.DEBUG).toBe('debug')
       expect(LOG_LEVELS.TRACE).toBe('trace')
+      expect(LOG_LEVELS.SILENT).toBe('silent')
     })
   })
 

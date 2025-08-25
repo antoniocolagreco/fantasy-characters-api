@@ -84,8 +84,8 @@ describe('Environment Configuration', () => {
 
   describe('logConfig', () => {
     it('should have default level', () => {
-      // In test environment, log level should be 'error' for cleaner output
-      expect(logConfig.level).toBe('error')
+      // In test environment, log level should be 'silent' for cleaner output
+      expect(logConfig.level).toBe('silent')
     })
 
     it('should have transport in development', () => {
@@ -99,7 +99,7 @@ describe('Environment Configuration', () => {
     })
 
     it('should be valid log level', () => {
-      const validLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace']
+      const validLevels = ['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']
       expect(validLevels).toContain(logConfig.level)
     })
   })

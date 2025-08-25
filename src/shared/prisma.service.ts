@@ -44,8 +44,6 @@ export const connectDatabase = async (): Promise<void> => {
   try {
     const client = getPrismaClient()
     await client.$connect()
-    // eslint-disable-next-line no-console
-    console.log('📦 Database connected successfully')
   } catch (error) {
     console.error('❌ Failed to connect to database:', error)
     throw error
@@ -61,8 +59,6 @@ export const disconnectDatabase = async (): Promise<void> => {
     if (prisma) {
       await prisma.$disconnect()
       prisma = undefined
-      // eslint-disable-next-line no-console
-      console.log('📦 Database disconnected successfully')
     }
   } catch (error) {
     console.error('❌ Failed to disconnect from database:', error)

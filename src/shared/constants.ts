@@ -167,6 +167,7 @@ export const LOG_LEVELS = {
   INFO: 'info',
   DEBUG: 'debug',
   TRACE: 'trace',
+  SILENT: 'silent',
 } as const
 
 // Freeze all constant objects for immutability

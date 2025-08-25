@@ -59,6 +59,7 @@ export const EnvironmentSchema = Type.Object({
       Type.Literal('info'),
       Type.Literal('debug'),
       Type.Literal('trace'),
+      Type.Literal('silent'),
     ],
     {
       default: 'info',
@@ -331,7 +332,7 @@ export const apiConfig = {
 }
 
 export const logConfig = {
-  level: environment.NODE_ENV === 'test' ? 'error' : environment.LOG_LEVEL,
+  level: environment.NODE_ENV === 'test' ? 'silent' : environment.LOG_LEVEL,
   transport:
     environment.NODE_ENV === 'development'
       ? {
