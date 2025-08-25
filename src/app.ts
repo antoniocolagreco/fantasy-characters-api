@@ -25,6 +25,7 @@ import { getAuditService, initializeAuditService } from './shared/audit.service'
 import { apiConfig, environment, logConfig, securityConfig, serverConfig } from './shared/config'
 import { errorHandler, notFoundHandler } from './shared/errors'
 import { connectDatabase, disconnectDatabase } from './shared/prisma.service'
+import { registerRequestLogging } from './shared/request-logging.middleware'
 import { skillRoutes } from './skills/skill.route'
 import { tagRoutes } from './tags/tag.route'
 import { userRoutes } from './users/user.route'
@@ -2138,6 +2139,9 @@ A comprehensive RESTful API for managing fantasy characters with advanced securi
     }
 
     await registerPlugins()
+
+    // Register request/response logging middleware (TASK-18.5)
+    registerRequestLogging(app)
 
     // Initialize audit service after logger is configured (skip in test environment)
     if (environment.NODE_ENV !== 'test') {
