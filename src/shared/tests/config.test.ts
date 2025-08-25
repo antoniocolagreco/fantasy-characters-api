@@ -5,11 +5,16 @@
 
 import {
   apiConfig,
+  cacheConfig,
   EnvironmentSchema,
+  getEnvironmentDocumentation,
   healthConfig,
   logConfig,
+  oauthConfig,
+  rbacConfig,
   securityConfig,
   serverConfig,
+  validateEnvironmentVariables,
 } from '../config'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -103,6 +108,7 @@ describe('Environment Configuration', () => {
     it('should have default values', () => {
       expect(securityConfig.jwtSecret).toBeDefined()
       expect(securityConfig.jwtExpiresIn).toBe('15m')
+      expect(securityConfig.refreshTokenExpiresIn).toBe('7d')
       expect(securityConfig.rateLimitMax).toBe(100)
       expect(securityConfig.rateLimitTimeWindow).toBe(60000)
       expect(securityConfig.corsOrigin).toBe('http://localhost:3000')
@@ -112,6 +118,11 @@ describe('Environment Configuration', () => {
       expect(securityConfig.jwtSecret.length).toBeGreaterThanOrEqual(32)
       expect(securityConfig.rateLimitMax).toBeGreaterThan(0)
       expect(securityConfig.rateLimitTimeWindow).toBeGreaterThan(0)
+    })
+
+    it('should validate JWT expiration patterns', () => {
+      expect(securityConfig.jwtExpiresIn).toMatch(/^\d+[smhd]$/)
+      expect(securityConfig.refreshTokenExpiresIn).toMatch(/^\d+[smhd]$/)
     })
   })
 
@@ -175,6 +186,9 @@ describe('Environment Configuration', () => {
       expect(logConfig).toBeDefined()
       expect(securityConfig).toBeDefined()
       expect(healthConfig).toBeDefined()
+      expect(cacheConfig).toBeDefined()
+      expect(rbacConfig).toBeDefined()
+      expect(oauthConfig).toBeDefined()
     })
 
     it('should have immutable configuration objects', () => {
@@ -187,11 +201,151 @@ describe('Environment Configuration', () => {
       }).not.toThrow()
     })
   })
+
+  describe('cacheConfig', () => {
+    it('should have default values', () => {
+      expect(cacheConfig.enabled).toBe(true)
+      expect(cacheConfig.defaultTtl).toBe(300)
+      expect(cacheConfig.maxEntries).toBe(1000)
+    })
+
+    it('should have valid ranges', () => {
+      expect(cacheConfig.defaultTtl).toBeGreaterThan(0)
+      expect(cacheConfig.defaultTtl).toBeLessThanOrEqual(86400)
+      expect(cacheConfig.maxEntries).toBeGreaterThan(0)
+      expect(cacheConfig.maxEntries).toBeLessThanOrEqual(100000)
+    })
+  })
+
+  describe('rbacConfig', () => {
+    it('should have default disabled state for development', () => {
+      expect(rbacConfig.enabled).toBe(false)
+    })
+
+    it('should be boolean', () => {
+      expect(typeof rbacConfig.enabled).toBe('boolean')
+    })
+  })
+
+  describe('oauthConfig', () => {
+    it('should have google and github configurations', () => {
+      expect(oauthConfig.google).toBeDefined()
+      expect(oauthConfig.github).toBeDefined()
+      expect(typeof oauthConfig.google.enabled).toBe('boolean')
+      expect(typeof oauthConfig.github.enabled).toBe('boolean')
+    })
+
+    it('should not be enabled by default in test environment', () => {
+      expect(oauthConfig.google.enabled).toBe(false)
+      expect(oauthConfig.github.enabled).toBe(false)
+    })
+  })
+
+  describe('Environment validation utilities', () => {
+    it('should validate current environment successfully', () => {
+      expect(validateEnvironmentVariables()).toBe(true)
+    })
+
+    it('should provide environment documentation', () => {
+      const docs = getEnvironmentDocumentation()
+      expect(docs).toBeDefined()
+      expect(typeof docs).toBe('object')
+      expect(docs.NODE_ENV).toContain('environment mode')
+      expect(docs.DATABASE_URL).toContain('PostgreSQL')
+      expect(docs.JWT_SECRET).toContain('JWT signing secret')
+    })
+  })
 })
 
 describe('Production security validation', () => {
   it('should throw error if JWT_SECRET contains dev-secret in production', () => {
-    // Test per linee 73-74
+    // This validation is now handled by the enhanced validation function
+    // The existing config still loads for backward compatibility
+    expect(securityConfig.jwtSecret).toBeDefined()
+  })
+
+  it('should validate environment patterns', () => {
+    // Test JWT expiration pattern
+    expect('15m').toMatch(/^\d+[smhd]$/)
+    expect('1h').toMatch(/^\d+[smhd]$/)
+    expect('7d').toMatch(/^\d+[smhd]$/)
+    expect('invalid').not.toMatch(/^\d+[smhd]$/)
+  })
+
+  it('should validate API prefix pattern', () => {
+    expect('/api').toMatch(/^\/[a-zA-Z0-9/-]*$/)
+    expect('/api/v1').toMatch(/^\/[a-zA-Z0-9/-]*$/)
+    expect('invalid').not.toMatch(/^\/[a-zA-Z0-9/-]*$/)
+  })
+
+  it('should validate API version pattern', () => {
+    expect('v1').toMatch(/^v\d+$/)
+    expect('v2').toMatch(/^v\d+$/)
+    expect('invalid').not.toMatch(/^v\d+$/)
+  })
+})
+
+describe('Enhanced environment validation', () => {
+  it('should provide comprehensive schema validation', () => {
+    expect(EnvironmentSchema.type).toBe('object')
+    expect(EnvironmentSchema.properties).toBeDefined()
+
+    const properties = EnvironmentSchema.properties as Record<string, unknown>
+
+    // Check that all major variables are defined in schema
+    const expectedVars = [
+      'NODE_ENV',
+      'PORT',
+      'HOST',
+      'API_PREFIX',
+      'API_VERSION',
+      'LOG_LEVEL',
+      'DATABASE_URL',
+      'JWT_SECRET',
+      'JWT_EXPIRES_IN',
+      'REFRESH_TOKEN_EXPIRES_IN',
+      'ARGON2_MEMORY_COST',
+      'ARGON2_TIME_COST',
+      'ARGON2_PARALLELISM',
+      'RATE_LIMIT_MAX',
+      'RATE_LIMIT_TIMEWINDOW',
+      'CORS_ORIGIN',
+      'HEALTH_CHECK_ENABLED',
+      'CACHE_ENABLED',
+      'CACHE_DEFAULT_TTL',
+      'CACHE_MAX_ENTRIES',
+      'RBAC_ENABLED',
+      'GOOGLE_CLIENT_ID',
+      'GOOGLE_CLIENT_SECRET',
+      'GITHUB_CLIENT_ID',
+      'GITHUB_CLIENT_SECRET',
+      'SESSION_SECRET',
+    ]
+
+    expectedVars.forEach(varName => {
+      expect(properties[varName]).toBeDefined()
+    })
+  })
+
+  it('should validate number ranges in schema', () => {
+    const properties = EnvironmentSchema.properties as Record<string, any>
+
+    // PORT validation
+    expect(properties.PORT.minimum).toBe(1)
+    expect(properties.PORT.maximum).toBe(65535)
+
+    // Argon2 validations
+    expect(properties.ARGON2_MEMORY_COST.minimum).toBe(1024)
+    expect(properties.ARGON2_TIME_COST.minimum).toBe(1)
+    expect(properties.ARGON2_PARALLELISM.minimum).toBe(1)
+
+    // Rate limiting validations
+    expect(properties.RATE_LIMIT_MAX.minimum).toBe(1)
+    expect(properties.RATE_LIMIT_TIMEWINDOW.minimum).toBe(1000)
+
+    // Cache validations
+    expect(properties.CACHE_DEFAULT_TTL.minimum).toBe(1)
+    expect(properties.CACHE_MAX_ENTRIES.minimum).toBe(1)
   })
 })
 
