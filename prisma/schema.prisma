@@ -100,6 +100,10 @@ model User {
 
     @@index([email])
     @@index([name])
+    @@index([role, isActive, createdAt(sort: Desc)], name: "idx_users_role_active_created")
+    @@index([email, isActive, isEmailVerified], name: "idx_users_email_status")
+    @@index([createdAt(sort: Desc)], name: "idx_users_created_at_desc")
+    @@index([lastLogin(sort: Desc)], name: "idx_users_last_login")
     @@map("users")
 }
 
@@ -124,6 +128,8 @@ model RefreshToken {
     @@index([token])
     @@index([userId])
     @@index([expiresAt])
+    @@index([token, isRevoked, expiresAt], name: "idx_refresh_tokens_token_active")
+    @@index([userId, isRevoked, expiresAt], name: "idx_refresh_tokens_user_active")
     @@map("refresh_tokens")
 }
 
@@ -160,6 +166,8 @@ model Image {
 
     @@index([ownerId])
     @@index([visibility])
+    @@index([ownerId, visibility, createdAt(sort: Desc)], name: "idx_images_owner_visibility")
+    @@index([visibility, createdAt(sort: Desc)], name: "idx_images_visibility_created")
     @@map("images")
 }
 
@@ -190,6 +198,7 @@ model Tag {
     @@index([name])
     @@index([ownerId])
     @@index([visibility])
+    @@index([ownerId, visibility, name], name: "idx_tags_owner_visibility")
     @@map("tags")
 }
 
@@ -232,6 +241,8 @@ model Race {
     @@index([name])
     @@index([ownerId])
     @@index([visibility])
+    @@index([ownerId, visibility, name], name: "idx_races_owner_visibility")
+    @@index([strengthModifier, constitutionModifier, dexterityModifier], name: "idx_races_modifiers")
     @@map("races")
 }
 
@@ -263,6 +274,7 @@ model Archetype {
     @@index([name])
     @@index([ownerId])
     @@index([visibility])
+    @@index([ownerId, visibility, name], name: "idx_archetypes_owner_visibility")
     @@map("archetypes")
 }
 
@@ -295,6 +307,8 @@ model Skill {
     @@index([name])
     @@index([ownerId])
     @@index([visibility])
+    @@index([requiredLevel, visibility, ownerId], name: "idx_skills_level_visibility")
+    @@index([ownerId, visibility, name], name: "idx_skills_owner_visibility")
     @@map("skills")
 }
 
@@ -326,6 +340,8 @@ model Perk {
     @@index([name])
     @@index([ownerId])
     @@index([visibility])
+    @@index([requiredLevel, visibility, ownerId], name: "idx_perks_level_visibility")
+    @@index([ownerId, visibility, name], name: "idx_perks_owner_visibility")
     @@map("perks")
 }
 
@@ -407,6 +423,10 @@ model Item {
     @@index([requiredLevel])
     @@index([ownerId])
     @@index([visibility])
+    @@index([rarity, slot, requiredLevel, visibility], name: "idx_items_rarity_slot_level")
+    @@index([ownerId, visibility, name], name: "idx_items_owner_visibility")
+    @@index([slot, requiredLevel], name: "idx_items_slot_level")
+    @@index([damage, defense], name: "idx_items_combat_stats")
     @@map("items")
 }
 
@@ -526,5 +546,9 @@ model Character {
     @@index([level])
     @@index([ownerId])
     @@index([visibility])
+    @@index([ownerId, visibility, level(sort: Desc), createdAt(sort: Desc)], name: "idx_characters_owner_visibility")
+    @@index([raceId, archetypeId, visibility], name: "idx_characters_race_archetype")
+    @@index([level, visibility, createdAt(sort: Desc)], name: "idx_characters_level_visibility")
+    @@index([level, experience, strength, constitution], name: "idx_characters_stats")
     @@map("characters")
 }

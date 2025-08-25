@@ -14,6 +14,8 @@ This documentation is organized into the following sections:
 - **[Technology Stack](./technology-stack.md)** - Backend technologies, frameworks, and libraries
 - **[PostgreSQL Configuration](./postgresql-configuration.md)** - Database setup, scaling, and
   optimization
+- **[Database Index Optimization](./database-index-optimization.md)** - Performance optimization
+  strategy and index design
 - **[Testing with PostgreSQL](./testing-with-postgresql.md)** - Testing setup and best practices
 - **[Authentication & Security](./authentication-security.md)** - JWT, OAuth, RBAC, and security
   measures
