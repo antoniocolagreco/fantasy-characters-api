@@ -1,413 +1,388 @@
-# Roadmap
+# Fantasy Characters API - Development Roadmap
 
-Goal: go from initial setup to final optimizations with milestones ordered by dependencies and difficulty. Each milestone lists which other milestones it depends on. Tasks aim to be independent; recommended execution is sequential, but di## M12 — Equipment (character equipment)
+## Overall Estimate
 
-Legend: Mx = Milestone x, Tyy = Task number within milestone, Gyy = Test gate
+- Total effort (sequential, 1 developer): 57–85 working days (~11–17 weeks)
+- Ranges include a small buffer for context switching and routine refactors
 
-Global rule
+### Assumptions
 
-- After each implementation task, write or update tests for that scope and run the full test suite before proceeding to the next task. Gates are explicitly listed as [ ] Gxx items.
+- Solo developer, 5-day work weeks; no holidays or external blockers
+- Scope is exactly what’s in this roadmap and linked docs (no new features mid-stream)
+- Local Docker for PostgreSQL; no cloud infra or production orchestration work
+- CI/CD uses GitHub Actions as outlined; no custom runners or compliance gates
+- Test coverage enforced globally at ~80% via CI; per-file dips allowed when justified
+- OAuth is optional and guarded by feature flag; TLS handled by a reverse proxy outside this repo
+- No heavy analytics/observability beyond what’s described in docs
 
-## M0 — Project base and infrastructure
-
-Depends on: none
-
-- [ ] M0-T01: Initialize repo (pnpm, strict TS, tsx) and folders (`docs`, `src`)
-- [ ] M0-T02: Configure Prettier + ESLint per `docs/code-style.md`
-- [ ] M0-T03: Minimal Fastify app with TypeBox provider; register base plugins: cors, helmet, sensible, swagger + swagger-ui, type-provider-typebox, etag
-  - [ ] M0-T03-A: Services setup
-  - [ ] M0-T03-B: Controllers setup
-  - [ ] M0-T03-C: Routes registration
-  - [ ] M0-T03-D: Tests for app bootstrap
-- [ ] M0-T04: Health endpoints `/api/v1/live` and `/api/v1/ready` with TypeBox schemas (`docs/health.md`)
-  - [ ] M0-T04-A: Schemas (LiveResponse, ReadyResponse)
-  - [ ] M0-T04-B: Controllers (health handlers)
-  - [ ] M0-T04-C: Routes registration
-  - [ ] M0-T04-D: Tests (unit + integration)
-- [ ] M0-T05: Config and secrets — `.env.example`, startup validation (`docs/secrets-and-config.md`)
-  - [ ] M0-T05-A: Config loader
-  - [ ] M0-T05-B: Validation schemas
-  - [ ] M0-T05-C: Tests for config validation
-- [ ] M0-T06: Minimal CI/CD (lint, typecheck, test, OpenAPI `/docs/json` validation) (`docs/ci-cd.md`)
-  - [ ] M0-T06-A: Lint configuration
-  - [ ] M0-T06-B: Typecheck setup
-  - [ ] M0-T06-C: Test runner setup
-  - [ ] M0-T06-D: OpenAPI validation job
-- [ ] M0-T07: Dockerize application — `Dockerfile` and `.dockerignore`
-  - [ ] M0-T07-A: Build image configuration
-  - [ ] M0-T07-B: Runtime environment wiring
-- [ ] M0-T08: Docker Compose — App + Postgres services
-  - [ ] M0-T08-A: `docker-compose.yml` with healthchecks
-  - [ ] M0-T08-B: `.env` integration for local development
-- [ ] M0-T09: Database bootstrap — Prisma init and seed scaffold
-  - [ ] M0-T09-A: Prisma init (empty schema allowed in M0)
-  - [ ] M0-T09-B: Seed framework + command wired (`pnpm seed`)
-  - [ ] M0-T09-C: Seed script placeholder (no-op or minimal defaults)
-- [ ] M0-T10: Container smoke test — build and run, verify health endpoints inside container
-  - [ ] M0-T10-A: GET `/api/v1/live` returns 200 with JSON
-  - [ ] M0-T10-B: GET `/api/v1/ready` returns 200 with JSON (may stub readiness in M0)
-  - [ ] M0-T10-C: CI job runs container smoke test
-- [ ] M0-T11: Swagger docs baseline online at `/docs`
-- [ ] M0-G12: Gate — all checks green (lint, typecheck, tests, container smoke) before M1
-
-## M1 — Errors, logging, minimal observability
-
-Depends on: M0
-
-- [ ] M1-T01: Global error handler + stable error codes (`docs/error-handling.md`)
-  - [ ] M1-T01-A: Services (error mapping helpers)
-  - [ ] M1-T01-B: Controllers (onError handler)
-  - [ ] M1-T01-C: Tests for error mapping
-- [ ] M1-T02: Pino logger with redaction and requestId (`docs/observability.md`)
-  - [ ] M1-T02-A: Logger configuration
-  - [ ] M1-T02-B: Redaction list setup
-  - [ ] M1-T02-C: Tests (redaction, requestId)
-- [ ] M1-T03: Health handlers hardening
-  - [ ] M1-T03-A: Add `Cache-Control: no-store` headers to health endpoints (prevents browser caching)
-  - [ ] M1-T03-B: Implement short timeouts
-  - [ ] M1-T03-C: Add onError logging
-  - [ ] M1-T03-D: Tests (timeouts, headers)
-- [ ] M1-T04: Swagger docs updated for M1
-- [ ] M1-G05: Gate — tests pass before M2
-
-## M2 — Authentication (JWT) + RBAC baseline
-
-Depends on: M0, M1
-
-- [ ] M2-T01: Auth endpoints (login/refresh/logout): short-lived access + rotating refresh cookie
-  - [ ] M2-T01-A: Schemas (login request/response, refresh, logout)
-  - [ ] M2-T01-B: Services (issue/rotate tokens)
-  - [ ] M2-T01-C: Controllers (auth handlers)
-  - [ ] M2-T01-D: Routes registration
-  - [ ] M2-T01-E: Tests (happy/expired/invalid flows)
-- [ ] M2-T02: Auth hook (Bearer token validation) and token error mapping
-  - [ ] M2-T02-A: Create PreHandler function to validate Bearer tokens
-  - [ ] M2-T02-B: Map JWT errors to user-friendly error messages
-  - [ ] M2-T02-C: Tests for auth validation
-- [ ] M2-T03: Role-based access control (RBAC) + policy system, deny-by-default
-  - [ ] M2-T03-A: Define permission rules (who can do what)
-  - [ ] M2-T03-B: Create PreHandler functions to check user permissions
-  - [ ] M2-T03-C: Tests (unit + integration)
-- [ ] M2-T04: Stricter rate limits on `/auth/*` (`docs/rate-limiting.md`)
-  - [ ] M2-T04-A: Rate limit configuration
-  - [ ] M2-T04-B: Tests (429 responses)
-- [ ] M2-T05: Swagger docs updated for M2
-- [ ] M2-G06: Gate — tests pass before M3
-
-## M3 — Users
-
-Depends on: M2
-
-- [ ] M3-T01: Prisma model + migration (profile fields, roles)
-  - [ ] M3-T01-A: Database migration
-  - [ ] M3-T01-B: Seed data (admin user)
-  - [ ] M3-T01-C: Tests (migration runs successfully)
-- [ ] M3-T02: Profile management
-  - [ ] M3-T02-A: Schemas (get profile, update profile, change password)
-  - [ ] M3-T02-B: Services (profile operations)
-  - [ ] M3-T02-C: Controllers (profile handlers)
-  - [ ] M3-T02-D: Routes (get/update profile, change password)
-  - [ ] M3-T02-E: Tests (unit/integration/E2E)
-- [ ] M3-T03: Admin role change; Moderator/Admin ban/unban with policy enforcement
-  - [ ] M3-T03-A: Schemas (role change, ban/unban)
-  - [ ] M3-T03-B: Services (admin operations)
-  - [ ] M3-T03-C: Controllers (admin handlers)
-  - [ ] M3-T03-D: Routes (role management, moderation)
-  - [ ] M3-T03-E: Tests (policy enforcement)
-- [ ] M3-T04: Swagger docs updated for M3 (no inline schemas)
-- [ ] M3-G05: Gate — tests pass before M4
-
-## M4 — Images
-
-Depends on: M2, M1
-
-- [ ] M4-T01: Upload functionality
-  - [ ] M4-T01-A: Schemas (multipart limits, validation)
-  - [ ] M4-T01-B: Services (upload validation)
-  - [ ] M4-T01-C: Controllers (upload handlers)
-  - [ ] M4-T01-D: Routes (upload endpoints)
-  - [ ] M4-T01-E: Tests (validation, limits)
-- [ ] M4-T02: Sharp pipeline — always WebP, resize 350x450, strip EXIF (`docs/photos.md`)
-  - [ ] M4-T02-A: Services (image processing pipeline)
-  - [ ] M4-T02-B: Tests (format conversion, resize, EXIF removal)
-- [ ] M4-T03: Storage system for processed images; fast retrieval with caching
-  - [ ] M4-T03-A: File storage operations (save/retrieve images)
-  - [ ] M4-T03-B: Image retrieval controllers
-  - [ ] M4-T03-C: GET routes for serving images
-  - [ ] M4-T03-D: Tests (verify cache headers, ETag behavior)
-- [ ] M4-T04: Swagger docs updated for M4
-- [ ] M4-G05: Gate — tests pass before M5
-
-## M5 — Tags (taxonomy)
-
-Depends on: M1, M2
-
-- [ ] M5-T01: Prisma model + migration
-  - [ ] M5-T01-A: Database migration
-  - [ ] M5-T01-B: Seed data (sample tags)
-  - [ ] M5-T01-C: Tests (migration runs)
-- [ ] M5-T02: CRUD with pagination and basic filters
-  - [ ] M5-T02-A: Schemas (create, read, update, delete, list)
-  - [ ] M5-T02-B: Services (tag operations)
-  - [ ] M5-T02-C: Controllers (tag handlers)
-  - [ ] M5-T02-D: Routes (CRUD endpoints)
-  - [ ] M5-T02-E: Tests (unit/integration)
-- [ ] M5-T03: Public GET caching headers; list limits
-  - [ ] M5-T03-A: Cache headers implementation
-  - [ ] M5-T03-B: Pagination limits
-  - [ ] M5-T03-C: Tests (headers, limits)
-- [ ] M5-T04: Swagger docs updated for M5
-- [ ] M5-G05: Gate — tests pass before M6
-
-## M6 — Skills (taxonomy)
-
-Depends on: M5
-
-- [ ] M6-T01: CRUD implementation
-  - [ ] M6-T01-A: Schemas (create, read, update, delete, list)
-  - [ ] M6-T01-B: Services (skill operations)
-  - [ ] M6-T01-C: Controllers (skill handlers)
-  - [ ] M6-T01-D: Routes (CRUD endpoints)
-  - [ ] M6-T01-E: Tests (unit/integration)
-- [ ] M6-T02: Swagger docs updated for M6
-- [ ] M6-G03: Gate — tests pass before M7
-
-## M7 — Perks (taxonomy)
-
-Depends on: M5
-
-- [ ] M7-T01: CRUD implementation
-  - [ ] M7-T01-A: Schemas (create, read, update, delete, list)
-  - [ ] M7-T01-B: Services (perk operations)
-  - [ ] M7-T01-C: Controllers (perk handlers)
-  - [ ] M7-T01-D: Routes (CRUD endpoints)
-  - [ ] M7-T01-E: Tests (unit/integration)
-- [ ] M7-T02: Swagger docs updated for M7
-- [ ] M7-G03: Gate — tests pass before M8
-
-## M8 — Races (taxonomy)
-
-Depends on: M5
-
-- [ ] M8-T01: CRUD implementation
-  - [ ] M8-T01-A: Schemas (create, read, update, delete, list)
-  - [ ] M8-T01-B: Services (race operations)
-  - [ ] M8-T01-C: Controllers (race handlers)
-  - [ ] M8-T01-D: Routes (CRUD endpoints)
-  - [ ] M8-T01-E: Tests (unit/integration)
-- [ ] M8-T02: Swagger docs updated for M8
-- [ ] M8-G03: Gate — tests pass before M9
-
-## M9 — Archetypes (taxonomy)
-
-Depends on: M5
-
-- [ ] M9-T01: CRUD implementation
-  - [ ] M9-T01-A: Schemas (create, read, update, delete, list)
-  - [ ] M9-T01-B: Services (archetype operations)
-  - [ ] M9-T01-C: Controllers (archetype handlers)
-  - [ ] M9-T01-D: Routes (CRUD endpoints)
-  - [ ] M9-T01-E: Tests (unit/integration)
-- [ ] M9-T02: Swagger docs updated for M9
-- [ ] M9-G03: Gate — tests pass before M10
-
-## M10 — Items
-
-Depends on: M5
-
-- [ ] M10-T01: CRUD + filters implementation
-  - [ ] M10-T01-A: Schemas (create, read, update, delete, list with filters)
-  - [ ] M10-T01-B: Services (item operations)
-  - [ ] M10-T01-C: Controllers (item handlers)
-  - [ ] M10-T01-D: Routes (CRUD endpoints)
-  - [ ] M10-T01-E: Tests (unit/integration)
-- [ ] M10-T02: Swagger docs updated for M10
-- [ ] M10-G03: Gate — tests pass before M11
-
-## M11 — Characters (depends on taxonomies)
-
-Depends on: M4, M5, M6, M7, M8, M9, M10
-
-- [ ] M11-T01: Prisma model with relations (tags/skills/perks/race/archetype), optional image association
-  - [ ] M11-T01-A: Database migration
-  - [ ] M11-T01-B: Seed data (sample characters)
-  - [ ] M11-T01-C: Tests (migration, relations)
-- [ ] M11-T02: CRUD with filters/pagination; stable sorting
-  - [ ] M11-T02-A: Schemas (create, read, update, delete, list with filters)
-  - [ ] M11-T02-B: Services (character operations)
-  - [ ] M11-T02-C: Controllers (character handlers)
-  - [ ] M11-T02-D: Routes (CRUD endpoints)
-  - [ ] M11-T02-E: Tests (unit + integration + E2E)
-- [ ] M11-T03: User permissions for character ownership and visibility
-  - [ ] M11-T03-A: Define permission rules (PUBLIC/PRIVATE/HIDDEN character visibility)
-  - [ ] M11-T03-B: Create permission check functions (who can access what)
-  - [ ] M11-T03-C: Tests (verify access control works correctly)
-- [ ] M11-T04: Performance optimizations
-  - [ ] M11-T04-A: Add micro-cache for expensive public character LIST endpoints
-  - [ ] M11-T04-B: Add ETag headers to GET character endpoint for browser caching
-  - [ ] M11-T04-C: Tests (verify cache headers present, check cache behavior)
-- [ ] M11-T05: Swagger docs updated for M11
-- [ ] M11-G06: Gate — tests pass before M12
-
-## M12 — Equipment (character equipment)
-
-Depends on: M10, M11
-
-- [ ] M12-T01: GET/PUT routes for a character's equipment
-  - [ ] M12-T01-A: Schemas (equipment assignment, updates)
-  - [ ] M12-T01-B: Services (equipment operations)
-  - [ ] M12-T01-C: Controllers (equipment handlers)
-  - [ ] M12-T01-D: Routes (equipment endpoints)
-  - [ ] M12-T01-E: Tests (integration scenarios)
-- [ ] M12-T02: User permissions for equipment access (consistent with character permissions)
-  - [ ] M12-T02-A: Extend permission rules for equipment
-  - [ ] M12-T02-B: Create equipment access control functions
-  - [ ] M12-T02-C: Tests (verify permission scenarios work)
-- [ ] M12-T03: Swagger docs updated for M12
-- [ ] M12-G04: Gate — tests pass before M13
-
-## M13 — Rate limiting & quotas (finalization)
-
-Depends on: M2
-
-- [ ] M13-T01: Confirm globals (anon 100/min per IP, auth 600/min per userId)
-  - [ ] M13-T01-A: Global rate limit configuration
-  - [ ] M13-T01-B: Tests (global limits enforcement)
-- [ ] M13-T02: Per-route overrides (search), `/auth/login` 10/min
-  - [ ] M13-T02-A: Route-specific configurations
-  - [ ] M13-T02-B: Tests (429 responses, override behavior)
-- [ ] M13-T03: Expose X-RateLimit-* headers
-  - [ ] M13-T03-A: Header implementation
-  - [ ] M13-T03-B: Tests (header presence and values)
-- [ ] M13-T04: Swagger docs updated for M13
-- [ ] M13-G05: Gate — tests pass before M14
-
-## M14 — Performance, caching, DB indexes
-
-Depends on: M11
-
-- [ ] M14-T01: Enable automatic browser caching for API responses
-  - [ ] M14-T01-A: Configure ETag headers (for cache validation)
-  - [ ] M14-T01-B: Tests (verify caching headers are present)
-- [ ] M14-T02: Server-side caching for expensive operations (10-60 second cache)
-  - [ ] M14-T02-A: Implement temporary caching system
-  - [ ] M14-T02-B: Tests (verify cache hits and cache clearing)
-- [ ] M14-T03: DB indexes for frequent queries; slow-query analysis
-  - [ ] M14-T03-A: Index migrations
-  - [ ] M14-T03-B: Tests (query performance validation)
-- [ ] M14-T04: Swagger docs updated for M14
-- [ ] M14-G05: Gate — tests pass before M15
-
-## M15 — OpenAPI completeness + Versioning/Deprecation
-
-Depends on: M0..M14
-
-- [ ] M15-T01: Verify all routes use exported TypeBox schemas (no inline)
-  - [ ] M15-T01-A: Schema audit and cleanup
-  - [ ] M15-T01-B: Tests (schema validation)
-- [ ] M15-T02: Validate `/docs/json` in CI; stable `$id` names
-  - [ ] M15-T02-A: CI validation step
-  - [ ] M15-T02-B: Tests (OpenAPI spec validation)
-- [ ] M15-T03: Versioning policy (`docs/versioning.md`): stable `/api/v1`, lightweight deprecation + Sunset
-  - [ ] M15-T03-A: Deprecation headers implementation
-  - [ ] M15-T03-B: Documentation updates
-  - [ ] M15-T03-C: Tests (versioning behavior)
-- [ ] M15-T04: Swagger docs updated for M15
-- [ ] M15-G05: Gate — tests pass before M16
-
-## M16 — Security and final hardening
-
-Depends on: M0..M15
-
-- [ ] M16-T01: Helmet policy + HSTS when safe
-  - [ ] M16-T01-A: Security headers configuration
-  - [ ] M16-T01-B: Tests (headers presence)
-- [ ] M16-T02: CORS allowlist in prod; SameSite/HttpOnly/Secure for refresh cookie
-  - [ ] M16-T02-A: CORS and cookie configuration
-  - [ ] M16-T02-B: Tests (CORS behavior, cookie security)
-- [ ] M16-T03: Audit-log sensitive events; PII scrub; backups and log rotation
-  - [ ] M16-T03-A: Audit logging implementation
-  - [ ] M16-T03-B: Tests (audit trail, PII redaction)
-- [ ] M16-T04: Swagger docs updated for M16
-- [ ] M16-G05: Gate — tests pass before M17
-
-## M17 — Observability and operations
-
-Depends on: M1..M16
-
-- [ ] M17-T01: Basic dashboard (RPS, error rate, p95, top endpoints by errors/latency)
-  - [ ] M17-T01-A: Dashboard implementation
-  - [ ] M17-T01-B: Tests/smoke checks
-- [ ] M17-T02: Minimal alerts (readiness down, sustained 5xx)
-  - [ ] M17-T02-A: Alerting implementation
-  - [ ] M17-T02-B: Tests/smoke checks
-- [ ] M17-T03: Swagger docs updated for M17
-- [ ] M17-G04: Gate — tests/smoke checks pass
+Testing and documentation are mandatory before any feature can be considered complete (target 80%+ global coverage with CI thresholds; aim for high per-file coverage without blocking delivery).
 
 ---
 
-## Ideal feature workflow
+## 1 🏗️ Project Setup and Infrastructure
 
-1. Planning
+Duration: 1-2 days
 
-- Define contract (inputs/outputs, expected errors, limits, required RBAC)
-
-1. Schemas and contracts
-
-- Write TypeBox schemas (request/response) with `$id` and limits (min/max, patterns)
-- Add/adjust Prisma migrations (additive phase); backfill if needed
-- [ ] WF-T-SCHEMAS: Tests — schema validations and example payloads
-
-1. Tests first
-
-- Unit: RBAC policy, services
-- Integration: routes via `fastify.inject`, happy and edge cases
-- [ ] WF-G-TESTS-1: Gate — tests run (expected to fail until implementation) before coding controllers/services
-
-1. Implementation
-
-- Services/DAO with clear timeouts; map errors to stable codes
-- Controllers/routes: wire schemas, auth/RBAC preHandlers, per-route rate-limits
-- Caching: Cache-Control/ETag; micro-cache only if public and expensive
-- [ ] WF-T-IMPL: Tests — update/add tests for implementation details
-- [ ] WF-G-IMPL: Gate — all tests green before docs
-
-1. Documentation and quality
-
-- OpenAPI: no inline schemas; `/docs/json` yields stable refs
-- Update docs (endpoints, RBAC notes, limits, examples)
-- Lint + typecheck; coverage ≥ 80% per file
-- [ ] WF-G-DOCS: Gate — linters/typecheck/coverage thresholds met before ops
-
-1. Operations
-
-- Structured logs with requestId/userId; redaction active
-- Health/ready no-store; probes updated
-- Feature flag/deprecation if the feature replaces existing routes
-- [ ] WF-G-OPS: Gate — smoke tests/health checks pass
-
-Note: Steps 2–4 can be parallelized by different people (schemas/migrations, services, API/tests) while respecting the integration order (schemas → services → routes). Gates enforce "tests first/green before next" at each boundary.
+- [ ] 1.01 Initialize repository with proper Git configuration
+- [ ] 1.02 Create base directory structure following [project-structure.md](./project-structure.md)
+- [ ] 1.03 Setup package.json with all required dependencies from [technology-stack.md](./technology-stack.md)
+- [ ] 1.04 Configure TypeScript with strict settings and path aliases
+- [ ] 1.05 Setup ESLint and Prettier with project standards from [code-style.md](./code-style.md)
+- [ ] 1.06 Set up Vitest for unit and integration testing
+- [ ] 1.07 Create environment configuration system with validation
+- [ ] 1.08 Document setup process in README.md
+- [ ] 1.09 Add package scripts from [package-scripts.md](./package-scripts.md) (dev, build, test, lint, type-check, docker)
 
 ---
 
-## Dependencies summary
+## 2 🚢 Docker and Database Setup (Dependencies: M1)
 
-- M0 → base for everything
-- M1 → requires M0
-- M2 → requires M0, M1
-- M3 → requires M2
-- M4 → requires M1, M2
-- M5 → requires M1, M2
-- M6, M7, M8, M9 → require M5 (can run in parallel)
-- M10 → requires M5
-- M11 → requires M4–M10 (Images before Characters, as requested)
-- M12 → requires M10, M11
-- M13 → requires M2
-- M14 → requires M11
-- M15 → requires M0..M14
-- M16 → requires M0..M15
-- M17 → requires M1..M16
+Duration: 4-6 days
+
+- [ ] 2.01 Create Docker configuration for PostgreSQL database
+- [ ] 2.02 Setup Docker Compose (database-only) for local development
+- [ ] 2.03 Initialize Prisma ORM with base configuration
+- [ ] 2.04 Implement all Prisma models from [data-models.md](./data-models.md)
+- [ ] 2.05 Create database migration system setup
+- [ ] 2.06 Validate DATABASE_URL and Prisma client configuration; document `.env(.example)` per [secrets-and-config.md](./secrets-and-config.md)
+- [ ] 2.07 If needed, use `connection_limit` in the PostgreSQL connection string; note PgBouncer as a future option (no per-client min/timeout in Prisma)
+- [ ] 2.08 Apply indexes exactly as specified in [data-models.md](./data-models.md) (no generic slug/type indexes)
+- [ ] 2.09 Ensure composite indexes support cursor pagination stability (createdAt/level with id tie-breaker) as per models doc
+- [ ] 2.10 Wire Prisma migrate/dev workflow and commit migrations; add seed scaffolding
+- [ ] 2.11 Implement and test shared cursor pagination/query helpers in `common` (see [query-templates.md](./query-templates.md))
+- [ ] 2.12 Create comprehensive seed data scripts for all models
+- [ ] 2.13 Setup test data generation utilities
+- [ ] 2.14 Document database setup procedures
 
 ---
 
-Estimates: to be defined together after scope validation per milestone.
+## 3 🔒 Security & Authorization Foundation (Dependencies: M1, M2)
+
+Duration: 4-6 days
+
+- [ ] 3.01 Implement JWT token system following [authentication.md](./authentication.md)
+- [ ] 3.02 Implement password hashing with Argon2
+- [ ] 3.03 Setup JWT middleware for route protection
+- [ ] 3.04 Configure Helmet security headers
+- [ ] 3.05 Setup CORS configuration following [cors.md](./cors.md)
+- [ ] 3.06 Implement rate limiting system following [rate-limiting.md](./rate-limiting.md)
+- [ ] 3.07 Create input sanitization middleware (use isomorphic-dompurify for HTML fields only; for plain strings prefer schema validation + normalization; avoid destructive sanitization)
+- [ ] 3.08 Setup request validation pipeline
+- [ ] 3.09 Implement RBAC: policy function, ownership resolver, and preHandler per [authorization.md](./authorization.md)
+- [ ] 3.10 Enforce RBAC again in services (defense in depth) and add tests
+- [ ] 3.11 Write comprehensive security and authorization tests (80%+ coverage target)
+
+---
+
+## 4 🌐 Core API Infrastructure (Dependencies: M1, M2, M3)
+
+Duration: 4-6 days
+
+- [ ] 4.01 Initialize Fastify server with plugins
+- [ ] 4.02 Configure OpenAPI/Swagger documentation
+- [ ] 4.03 Expose /docs and /docs/json with OpenAPI generated from TypeBox schemas
+- [ ] 4.04 Setup multipart file upload handling
+- [ ] 4.05 Create health check endpoint at `/api/health` (align with CI and [endpoints.md](./endpoints.md))
+- [ ] 4.06 Implement graceful shutdown
+- [ ] 4.07 Create TypeBox base response schemas from [response-templates.md](./response-templates.md)
+- [ ] 4.08 Implement pagination schemas and helpers from [query-templates.md](./query-templates.md)
+- [ ] 4.09 Enable response compression (gzip/brotli)
+- [ ] 4.10 Setup error handling following [error-handling.md](./error-handling.md)
+- [ ] 4.11 Implement UUID v7 generation utility
+- [ ] 4.12 Create base logging configuration with Pino
+- [ ] 4.13 Write server integration tests (80%+ coverage)
+
+---
+
+## 5 🚀 CI/CD & Deployment (Dependencies: M1, M2, M3, M4)
+
+Duration: 3-5 days
+
+- [ ] 5.01 Create multi-stage production Dockerfile and image
+- [ ] 5.02 Add Docker Compose for app + database for local test/integration (production orchestration is out of scope)
+- [ ] 5.03 Implement container health/readiness checks hitting `/api/health`
+- [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md): lint, type-check, tests with coverage, OpenAPI validate, Docker build, smoke tests
+- [ ] 5.05 Validate environment via config loader (see [secrets-and-config.md](./secrets-and-config.md)); commit `.env.example`
+- [ ] 5.06 Add deployment smoke tests stage (start container, hit `/api/health` and one read endpoint like `GET /api/v1/tags?limit=1` when available)
+- [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy; certificates managed outside app)
+
+---
+
+## 6 👤 User Management (Dependencies: M1-M5)
+
+Duration: 4-6 days
+
+- [ ] 6.01 Scaffold user management feature structure
+- [ ] 6.02 Create User and RefreshToken schemas (types derived from schemas)
+- [ ] 6.03 Implement User repository layer
+- [ ] 6.04 Implement RefreshToken repository layer
+- [ ] 6.05 Create user management service layer
+- [ ] 6.06 Implement `GET /api/v1/users` - List users (pagination, filtering)
+- [ ] 6.07 Implement `GET /api/v1/users/:id` - Get user by ID
+- [ ] 6.08 Implement `GET /api/v1/users/stats` - User statistics
+- [ ] 6.09 Implement `POST /api/v1/users` - Create user (admin flows)
+- [ ] 6.10 Implement `PUT /api/v1/users/:id` - Update user
+- [ ] 6.11 Implement `DELETE /api/v1/users/:id` - Delete user
+- [ ] 6.12 Implement `POST /api/v1/users/:id/ban` - Ban/Unban user
+- [ ] 6.13 Implement error handling for all user operations
+- [ ] 6.14 Write comprehensive user tests (80%+ coverage)
+- [ ] 6.15 Update OpenAPI docs for all user endpoints (schemas, params, responses)
+
+---
+
+## 7 🔐 Authentication System (Dependencies: M1-M6)
+
+Duration: 4-5 days
+
+- [ ] 7.01 Scaffold authentication feature structure
+- [ ] 7.02 Create authentication schemas (types derived from schemas)
+- [ ] 7.03 Implement authentication service layer
+- [ ] 7.04 Implement `POST /api/v1/auth/register` - Register new user
+- [ ] 7.05 Implement `POST /api/v1/auth/login` - User login
+- [ ] 7.06 Implement `POST /api/v1/auth/logout` - User logout
+- [ ] 7.07 Implement `POST /api/v1/auth/refresh` - Refresh JWT token with rotation (move from M3)
+- [ ] 7.08 Implement `GET /api/v1/auth/profile` - Get current user profile
+- [ ] 7.09 Implement `PUT /api/v1/auth/profile` - Update user profile
+- [ ] 7.10 Implement `PUT /api/v1/auth/password` - Change password
+- [ ] 7.11 Implement error handling for all auth operations
+- [ ] 7.12 Write comprehensive auth tests (80%+ coverage)
+- [ ] 7.13 Update OpenAPI docs for all authentication endpoints (schemas, params, responses)
+  - [ ] 7.14 Gate OAuth providers behind `OAUTH_ENABLED` flag and env vars (see [authentication.md](./authentication.md)); initial providers: GitHub, Google
+
+---
+
+## 8 🔑 OAuth2 Integration (Dependencies: M1-M7)
+
+Duration: 3-5 days
+
+- [ ] 8.01 Scaffold OAuth2 feature structure
+- [ ] 8.02 Create OAuth2 schemas (types derived from schemas)
+- [ ] 8.03 Implement OAuth2 service layer
+- [ ] 8.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to provider
+- [ ] 8.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle callback
+- [ ] 8.06 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
+- [ ] 8.07 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
+- [ ] 8.08 Implement error handling for OAuth operations
+- [ ] 8.09 Write comprehensive OAuth tests (80%+ coverage)
+- [ ] 8.10 Update OpenAPI docs for all OAuth endpoints (schemas, params, responses)
+
+---
+
+## 9 🖼️ Image Processing (Dependencies: M1-M8)
+
+Duration: 5-7 days
+
+- [ ] 9.01 Scaffold image management feature structure
+- [ ] 9.02 Create Image schemas (types derived from schemas)
+- [ ] 9.03 Implement Image repository layer
+- [ ] 9.04 Create image processing service with Sharp
+- [ ] 9.05 Implement WebP conversion pipeline
+- [ ] 9.06 Create image validation and security
+- [ ] 9.07 Implement `GET /api/v1/images` - List image metadata
+- [ ] 9.08 Implement `GET /api/v1/images/:id` - Get image metadata by ID
+- [ ] 9.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
+- [ ] 9.10 Implement `GET /api/v1/images/stats` - Image statistics
+- [ ] 9.11 Implement `POST /api/v1/images` - Upload new image
+- [ ] 9.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace file
+- [ ] 9.13 Implement `DELETE /api/v1/images/:id` - Delete image
+- [ ] 9.14 Implement error handling for all image operations
+- [ ] 9.15 Write comprehensive tests (80%+ coverage)
+- [ ] 9.16 Update OpenAPI docs for all image endpoints (schemas, params, responses)
+
+---
+
+## 10 🏷️ Tags System (Dependencies: M1-M9)
+
+Duration: 2-3 days
+
+- [ ] 10.01 Scaffold tags feature structure
+- [ ] 10.02 Create Tag schemas (types derived from schemas)
+- [ ] 10.03 Implement Tag repository layer
+- [ ] 10.04 Create tag service layer
+- [ ] 10.05 Implement `GET /api/v1/tags` - List tags
+- [ ] 10.06 Implement `GET /api/v1/tags/:id` - Get tag by ID
+- [ ] 10.07 Implement `GET /api/v1/tags/stats` - Tag statistics
+- [ ] 10.08 Implement `POST /api/v1/tags` - Create tag
+- [ ] 10.09 Implement `PUT /api/v1/tags/:id` - Update tag
+- [ ] 10.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
+- [ ] 10.11 Implement error handling for all tag operations
+- [ ] 10.12 Write comprehensive tests (80%+ coverage)
+- [ ] 10.13 Update OpenAPI docs for all tag endpoints (schemas, params, responses)
+
+---
+
+## 11 ⚡ Skills System (Dependencies: M1-M10)
+
+Duration: 2-3 days
+
+- [ ] 11.01 Scaffold skills feature structure
+- [ ] 11.02 Create Skill schemas (types derived from schemas)
+- [ ] 11.03 Implement Skill repository layer
+- [ ] 11.04 Create skill service layer
+- [ ] 11.05 Implement `GET /api/v1/skills` - List skills
+- [ ] 11.06 Implement `GET /api/v1/skills/:id` - Get skill by ID
+- [ ] 11.07 Implement `GET /api/v1/skills/stats` - Skill statistics
+- [ ] 11.08 Implement `POST /api/v1/skills` - Create skill
+- [ ] 11.09 Implement `PUT /api/v1/skills/:id` - Update skill
+- [ ] 11.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
+- [ ] 11.11 Implement error handling for all skill operations
+- [ ] 11.12 Write comprehensive tests (80%+ coverage)
+- [ ] 11.13 Update OpenAPI docs for all skill endpoints (schemas, params, responses)
+
+---
+
+## 12 🎯 Perks System (Dependencies: M1-M11)
+
+Duration: 2-3 days
+
+- [ ] 12.01 Scaffold perks feature structure
+- [ ] 12.02 Create Perk schemas (types derived from schemas)
+- [ ] 12.03 Implement Perk repository layer
+- [ ] 12.04 Create perk service layer
+- [ ] 12.05 Implement `GET /api/v1/perks` - List perks
+- [ ] 12.06 Implement `GET /api/v1/perks/:id` - Get perk by ID
+- [ ] 12.07 Implement `GET /api/v1/perks/stats` - Perk statistics
+- [ ] 12.08 Implement `POST /api/v1/perks` - Create perk
+- [ ] 12.09 Implement `PUT /api/v1/perks/:id` - Update perk
+- [ ] 12.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
+- [ ] 12.11 Implement error handling for all perk operations
+- [ ] 12.12 Write comprehensive tests (80%+ coverage)
+- [ ] 12.13 Update OpenAPI docs for all perk endpoints (schemas, params, responses)
+
+---
+
+## 13 🧬 Races System (Dependencies: M1-M12)
+
+Duration: 2-3 days
+
+- [ ] 13.01 Scaffold races feature structure
+- [ ] 13.02 Create Race schemas (types derived from schemas)
+- [ ] 13.03 Implement Race repository layer
+- [ ] 13.04 Create race service layer
+- [ ] 13.05 Implement `GET /api/v1/races` - List races
+- [ ] 13.06 Implement `GET /api/v1/races/:id` - Get race by ID
+- [ ] 13.07 Implement `GET /api/v1/races/stats` - Race statistics
+- [ ] 13.08 Implement `POST /api/v1/races` - Create race
+- [ ] 13.09 Implement `PUT /api/v1/races/:id` - Update race
+- [ ] 13.10 Implement `DELETE /api/v1/races/:id` - Delete race
+- [ ] 13.11 Implement error handling for all race operations
+- [ ] 13.12 Write comprehensive tests (80%+ coverage)
+- [ ] 13.13 Update OpenAPI docs for all race endpoints (schemas, params, responses)
+
+---
+
+## 14 🎭 Archetypes System (Dependencies: M1-M13)
+
+Duration: 2-3 days
+
+- [ ] 14.01 Scaffold archetypes feature structure
+- [ ] 14.02 Create Archetype schemas (types derived from schemas)
+- [ ] 14.03 Implement Archetype repository layer
+- [ ] 14.04 Create archetype service layer
+- [ ] 14.05 Implement `GET /api/v1/archetypes` - List archetypes
+- [ ] 14.06 Implement `GET /api/v1/archetypes/:id` - Get archetype by ID
+- [ ] 14.07 Implement `GET /api/v1/archetypes/stats` - Archetype statistics
+- [ ] 14.08 Implement `POST /api/v1/archetypes` - Create archetype
+- [ ] 14.09 Implement `PUT /api/v1/archetypes/:id` - Update archetype
+- [ ] 14.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
+- [ ] 14.11 Implement error handling for all archetype operations
+- [ ] 14.12 Write comprehensive tests (80%+ coverage)
+- [ ] 14.13 Update OpenAPI docs for all archetype endpoints (schemas, params, responses)
+
+---
+
+## 15 🗡️ Items System (Dependencies: M1-M14)
+
+Duration: 4-6 days
+
+- [ ] 15.01 Scaffold items feature structure
+- [ ] 15.02 Create Item schemas (types derived from schemas)
+- [ ] 15.03 Implement Item repository layer
+- [ ] 15.04 Create item service layer
+- [ ] 15.05 Implement `GET /api/v1/items` - List items
+- [ ] 15.06 Implement `GET /api/v1/items/:id` - Get item by ID
+- [ ] 15.07 Implement `GET /api/v1/items/stats` - Item statistics
+- [ ] 15.08 Implement `POST /api/v1/items` - Create item
+- [ ] 15.09 Implement `PUT /api/v1/items/:id` - Update item
+- [ ] 15.10 Implement `DELETE /api/v1/items/:id` - Delete item
+- [ ] 15.11 Implement error handling for all item operations
+- [ ] 15.12 Write comprehensive tests (80%+ coverage)
+- [ ] 15.13 Update OpenAPI docs for all item endpoints (schemas, params, responses)
+
+---
+
+## 16 👥 Characters Management (Dependencies: M1-M15)
+
+Duration: 5-7 days
+
+- [ ] 16.01 Scaffold characters feature structure
+- [ ] 16.02 Create Character schemas (types derived from schemas)
+- [ ] 16.03 Implement Character repository layer
+- [ ] 16.04 Create character service layer (prepare for derived stats later)
+- [ ] 16.05 Implement `GET /api/v1/characters` - List characters
+- [ ] 16.06 Implement `GET /api/v1/characters/:id` - Get character by ID
+- [ ] 16.07 Implement `GET /api/v1/characters/stats` - Character statistics
+- [ ] 16.08 Implement `POST /api/v1/characters` - Create character
+- [ ] 16.09 Implement `PUT /api/v1/characters/:id` - Update character
+- [ ] 16.10 Implement `DELETE /api/v1/characters/:id` - Delete character
+- [ ] 16.11 Implement error handling for all character operations
+- [ ] 16.12 Write comprehensive tests (80%+ coverage)
+- [ ] 16.13 Update OpenAPI docs for all character endpoints (schemas, params, responses)
+
+---
+
+## 17 ⚔️ Equipment System (Dependencies: M1-M16)
+
+Duration: 4-6 days
+
+- [ ] 17.01 Scaffold equipment feature structure
+- [ ] 17.02 Create Equipment schemas (types derived from schemas)
+- [ ] 17.03 Implement Equipment repository layer
+- [ ] 17.04 Create equipment service layer with slot validation
+- [ ] 17.05 Implement `GET /api/v1/characters/:id/equipment` - Get character equipment
+- [ ] 17.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character equipment
+- [ ] 17.07 Implement `GET /api/v1/equipment/stats` - Equipment statistics
+- [ ] 17.08 Implement error handling for all equipment operations
+- [ ] 17.09 Write comprehensive tests (80%+ coverage)
+- [ ] 17.10 Update OpenAPI docs for all equipment endpoints (schemas, params, responses)
+
+---
+
+## 18 📊 Caching (Dependencies: M1-M17)
+
+Duration: 2-3 days
+
+- [ ] 18.01 Implement ETag generation for cacheable responses following [caching.md](./caching.md) (exclude auth/non-cacheable endpoints)
+- [ ] 18.02 Create Cache-Control header management
+- [ ] 18.03 Add conditional request handling
+- [ ] 18.04 Implement cache invalidation strategies
+- [ ] 18.05 Write comprehensive caching tests (80%+ coverage)
+- [ ] 18.06 Document caching strategy
+
+---
+
+## 📋 Development Guidelines
+
+### Mandatory Workflow for Each Feature
+
+1. **Scaffold** → Create feature directory structure
+2. **Schema** → Create TypeBox validation schemas (types derived automatically)
+3. **Repository** → Set up Prisma models and database access
+4. **Service** → Implement business logic
+5. **Controller** → Create HTTP handlers
+6. **Errors** → Add custom error handling
+7. **Tests** → Write unit and integration tests (minimum 80% coverage)
+8. **Documentation** → Update API docs and guides
+
+### Quality Gates
+
+- [ ] All TypeScript types are strict (no `any` types)
+- [ ] All endpoints have comprehensive TypeBox schemas
+- [ ] Global coverage ≥ 80% (CI enforces); critical services aim for 80%+
+- [ ] All endpoints have integration tests
+- [ ] All features have proper error handling
+- [ ] OpenAPI schema validated in CI
+- [ ] RBAC checks applied in routes and services
+- [ ] All API changes are documented
+- [ ] All security requirements are met
+- [ ] All performance requirements are met

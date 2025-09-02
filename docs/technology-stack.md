@@ -1,4 +1,6 @@
-# Unicorn-Style Startup API Stack
+# Technology Stack
+
+Always use the latest stable versions of all dependencies. run `pnpm up --latest`.
 
 ## Backend Core
 
