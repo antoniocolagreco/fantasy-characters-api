@@ -1,137 +1,258 @@
-# API Query Templates (Requests)
+# AI Query & Validation Essentials
 
-This document contains some request payload templates and their TypeBox schemas for copy/paste.
+Essential patterns for schema-first query handling and validation using TypeBox.
 
----
+## Critical Rules
 
-## General guidance for query schemas (lists)
+Fundamental principles that must be followed to maintain code quality and consistency.
 
-All list endpoints share the same pagination, with optional filtering and sorting. Keep it consistent so clients can reuse components.
+1. **Always compose from base schemas** - `Type.Intersect([PaginationQuery, SortQuery, ...])`
+2. **Always derive types** - `type Params = Static<typeof Schema>`
+3. **Use query helpers** - `buildWhere()`, `applyCursor()`, `buildPagination()`
+4. **Always sort with tie-breaker** - Use `buildOrderBy()` for automatic `id` tie-breaker
+5. **Always validate business rules** - Check min/max relationships
+6. **Always apply RBAC** - Filter by user permissions in service
+7. **Never use `any` types** - Use Prisma generated types or proper unions
+8. **Never use type assertions** - Use type guards and explicit field access
 
-Conventions
+## Core Pattern
 
-- Pagination: cursor-based
-  - limit: 1..100 (default 20)
-  - cursor: opaque string (base64 JSON like { lastId, lastSort }, but treat as opaque in clients)
-- Sorting: prefer stable, indexed fields with a tie‑breaker
-  - Example default: createdAt DESC, id DESC
-  - Expose a small, controlled set of sort keys where needed (e.g., name, level)
-- Filtering: put common filters first in DB indexes (ownerId, visibility, taxonomy ids)
-  - Keep filter types simple (exact matches, small enums, ranges)
-- Validation: always bound numbers and lengths; whitelist sort keys and directions
+Schema-first approach eliminates type duplication and ensures runtime validation matches TypeScript types.
 
-Reusable TypeBox schemas
+Define once with TypeBox → Derive TypeScript types → Use everywhere
 
-```ts
-import { Type } from '@sinclair/typebox';
+```typescript
+// 1. Define schema
+export const CharactersListQuery = Type.Object({
+  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+  cursor: Type.Optional(Type.String()),
+  visibility: Type.Optional(Type.Union([
+    Type.Literal('PUBLIC'),
+    Type.Literal('PRIVATE'),
+    Type.Literal('HIDDEN'),
+  ])),
+  raceId: Type.Optional(Type.String({ format: 'uuid' })),
+})
 
-// Base list query shared by all endpoints
-export const PaginationQuery = Type.Object({
- limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
- cursor: Type.Optional(Type.String())
-});
+// 2. Derive types
+export type CharactersListParams = Static<typeof CharactersListQuery>
 
-// Optional common filters used across resources
-export const VisibilityQuery = Type.Object({
- visibility: Type.Optional(Type.Union([
-  Type.Literal('PUBLIC'),
-  Type.Literal('PRIVATE'),
-  Type.Literal('HIDDEN')
- ]))
-});
-
-export const OwnerQuery = Type.Object({
- ownerId: Type.Optional(Type.String()) // UUIDv7
-});
-
-// Typical sorting pattern: expose a small whitelist
-export const SortQuery = Type.Object({
- sortBy: Type.Optional(Type.Union([
-  Type.Literal('createdAt'),
-  Type.Literal('name'),
-  Type.Literal('level')
- ])),
- sortDir: Type.Optional(Type.Union([Type.Literal('asc'), Type.Literal('desc')]))
-});
-
-// Compose per-resource
-export const CharactersListQuery = Type.Intersect([
- PaginationQuery,
- VisibilityQuery,
- OwnerQuery,
- SortQuery,
- Type.Object({
-  raceId: Type.Optional(Type.String()),
-  archetypeId: Type.Optional(Type.String()),
-  minLevel: Type.Optional(Type.Integer({ minimum: 1 })),
-  maxLevel: Type.Optional(Type.Integer({ minimum: 1 }))
- })
-]);
-```
-
-Implementation notes (handler/service)
-
-- Set defaults in the handler: limit=20; sortBy=createdAt; sortDir=desc
-- Validate business rules: minLevel <= maxLevel when both present
-- Decode cursor server-side (try/catch); on invalid cursor, return 400
-- Build DB query with filters → orderBy [sortBy, id] with dir; apply pagination cursor
-- Return pagination.cursor.next when there are more records; prev optional
-
-Example (Fastify route snippet)
-
-```ts
-import { CharactersListQuery } from './schemas';
-
-app.get('/api/characters', {
- schema: {
-  querystring: CharactersListQuery,
-  response: { 200: CharactersListResponse }
- }
-}, async (req, reply) => {
- const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', ...filters } = req.query as any;
- // validate cross-field constraints here
- const page = await charactersService.list({ limit, cursor, sortBy, sortDir, filters });
- return reply.code(200).send(success(page.items, { pagination: page.pagination, requestId: req.id }));
-});
-```
-
-Edge cases to handle
-
-- Empty results with cursor provided → return empty array with pagination and no next
-- Very large limit → cap at 100 regardless of input
-- Invalid cursor → 400 with validation error details
-- Unauthorized filters (e.g., visibility=PRIVATE for non-owners) → ignore or 403, per endpoint policy
-
-## Ban/Unban user
-
-Request JSON body:
-
-```json
-{
- "isBanned": true,
- "banReason": "Abusive behavior",
- "bannedUntil": "2025-12-31T23:59:59Z"
+// 3. Use in service
+export async function listCharacters(params: CharactersListParams) {
+  // Implementation
 }
 ```
 
-Rules
+## Base Query Schemas
 
-- isBanned: boolean; if false, server clears banReason and bannedUntil
-- banReason: optional string; enforce max length (for example, 500 chars)
-- bannedUntil: optional ISO 8601 timestamp; must be in the future when isBanned=true
-- Server should set `bannedById = req.user.id` on ban
-- RBAC: Moderators may ban/unban only USER targets; Admins may ban/unban USER and MODERATOR; neither can act on ADMIN accounts
+Reusable building blocks for consistent query parameters across all endpoints.
 
-TypeBox schema (Fastify):
+```typescript
+// src/common/schemas/query.schemas.ts
+export const PaginationQuery = Type.Object({
+  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+  cursor: Type.Optional(Type.String()),
+})
 
-```ts
-import { Type } from '@sinclair/typebox';
+export const VisibilityQuery = Type.Object({
+  visibility: Type.Optional(Type.Union([
+    Type.Literal('PUBLIC'),
+    Type.Literal('PRIVATE'),
+    Type.Literal('HIDDEN'),
+  ])),
+})
 
-export const BanRequestBody = Type.Object({
- isBanned: Type.Boolean(),
- banReason: Type.Optional(Type.String({ maxLength: 500 })),
- bannedUntil: Type.Optional(Type.String({ format: 'date-time' }))
-});
+export const SortQuery = Type.Object({
+  sortBy: Type.Optional(Type.Union([
+    Type.Literal('createdAt'),
+    Type.Literal('name'),
+    Type.Literal('level'),
+  ])),
+  sortDir: Type.Optional(Type.Union([
+    Type.Literal('asc'),
+    Type.Literal('desc'),
+  ])),
+})
 
-// Optional: custom refinement in preValidation to ensure bannedUntil is in the future when isBanned=true
+// Derive types
+export type PaginationParams = Static<typeof PaginationQuery>
+export type VisibilityFilter = Static<typeof VisibilityQuery>
+export type SortParams = Static<typeof SortQuery>
+```
+
+## Route Implementation
+
+Fastify route registration with automatic TypeBox validation and typed request objects. For consistent response formatting, see [response-templates.md](./response-templates.md).
+
+```typescript
+// Register route with schema validation
+app.get('/characters', {
+  schema: {
+    tags: ['characters'],
+    querystring: CharactersListQuery,
+    response: { 200: CharactersListResponse },
+  },
+}, async (req, reply) => {
+  const query = req.query // Automatically typed
+  
+  // Validate business rules with reusable helper
+  validateRange(query.minLevel, query.maxLevel, 'minLevel', 'maxLevel')
+
+  const result = await listCharacters({ ...query, userId: req.user?.id })
+  return reply.send(success(result.items, { pagination: result.pagination }))
+})
+```
+
+## Query Helpers (Minimal Boilerplate)
+
+Generic utilities to transform query params into Prisma where conditions with zero repetitive code.
+
+```typescript
+// src/common/database/query-helpers.ts
+export function buildWhere<T extends Record<string, unknown>>(
+  filters: Partial<T>
+): T {
+  const where: Record<string, unknown> = {}
+  
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== null) {
+      where[key] = value
+    }
+  }
+  
+  return where as T
+}
+
+export function applyCursor<T extends Record<string, unknown>>(
+  where: T, 
+  cursor: string | null, 
+  sortBy: keyof T, 
+  sortDir: 'asc' | 'desc'
+): T {
+  if (!cursor) return where
+  
+  try {
+    const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
+    const op = sortDir === 'desc' ? 'lt' : 'gt'
+    
+    // Return Prisma-compatible where clause with cursor pagination
+    return { 
+      ...where,
+      OR: [
+        { [sortBy]: { [op]: lastValue } },
+        { [sortBy]: lastValue, id: { [op]: lastId } },
+      ]
+    } satisfies T
+  } catch {
+    throw err('VALIDATION_ERROR', 'Invalid cursor') // See error-handling.md for err() usage
+  }
+}
+
+export function buildOrderBy(sortBy: string, sortDir: 'asc' | 'desc') {
+  return [{ [sortBy]: sortDir }, { id: sortDir }] // Automatic tie-breaker
+}
+
+export function buildPagination<T extends { id: string }>(
+  items: T[], 
+  limit: number, 
+  sortField: keyof T
+): { items: T[]; hasNext: boolean; nextCursor?: string } {
+  const hasNext = items.length > limit
+  const finalItems = hasNext ? items.slice(0, limit) : items
+  
+  if (!hasNext || finalItems.length === 0) {
+    return { items: finalItems, hasNext: false }
+  }
+  
+  const lastItem = finalItems[finalItems.length - 1]
+  const nextCursor = Buffer.from(JSON.stringify({
+    lastValue: lastItem[sortField],
+    lastId: lastItem.id,
+  })).toString('base64')
+  
+  return { items: finalItems, hasNext, nextCursor }
+}
+```
+
+## Service Pattern (With Helpers)
+
+Clean service implementation using helper utilities for consistent query building and pagination.
+
+```typescript
+export async function listCharacters(params: ListCharactersParams): Promise<ListCharactersResult> {
+  const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
+
+  // Build where clause - zero boilerplate
+  const where = buildWhere<Prisma.CharacterWhereInput>({
+    visibility: params.visibility,
+    raceId: params.raceId,
+    archetypeId: params.archetypeId,
+    level: params.level && { gte: params.minLevel, lte: params.maxLevel },
+    ownerId: params.ownerId,
+  })
+
+  // Apply cursor pagination
+  const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
+
+  // Execute query
+  const items = await prisma.character.findMany({
+    where: whereWithCursor,
+    orderBy: buildOrderBy(sortBy, sortDir), // Automatic tie-breaker
+    take: limit + 1,
+  })
+
+  // Build response
+  const { items: finalItems, hasNext, nextCursor } = buildPagination(items, limit, sortBy)
+  
+  return {
+    items: finalItems,
+    pagination: { limit, cursor: { next: nextCursor } },
+  }
+}
+```
+
+## Advanced Query Helpers (Examples)
+
+Specialized utilities for complex filtering scenarios like ranges, search, and validation.
+
+```typescript
+// Range filters - returns Prisma-compatible filter object
+export function buildRangeFilter(min?: number, max?: number) {
+  if (!min && !max) return undefined
+  return { ...(min && { gte: min }), ...(max && { lte: max }) }
+}
+
+// Text search - returns Prisma-compatible OR clause
+export function buildTextSearch(search?: string, fields: string[] = ['name']) {
+  if (!search) return undefined
+  return { OR: fields.map(field => ({ [field]: { contains: search, mode: 'insensitive' } })) }
+}
+
+// Usage
+const where = buildWhere<Prisma.CharacterWhereInput>({
+  visibility: params.visibility,
+  level: buildRangeFilter(params.minLevel, params.maxLevel),
+  ...buildTextSearch(params.search, ['name', 'description']),
+})
+
+  // Range validation helper
+  export function validateRange(
+    min: number | undefined, 
+    max: number | undefined, 
+    minFieldName: string, 
+    maxFieldName: string
+  ): void {
+    if (min !== undefined && max !== undefined && min > max) {
+      throw err('VALIDATION_ERROR', `${minFieldName} cannot be greater than ${maxFieldName}`) // See error-handling.md
+    }
+    if (min !== undefined && min < 0) {
+      throw err('VALIDATION_ERROR', `${minFieldName} must be positive`)
+    }
+    if (max !== undefined && max < 0) {
+      throw err('VALIDATION_ERROR', `${maxFieldName} must be positive`)
+    }
+  }
+
+// Validate before query
+validateRange(params.minLevel, params.maxLevel, 'minLevel', 'maxLevel')
 ```

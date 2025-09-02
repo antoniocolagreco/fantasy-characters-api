@@ -1,120 +1,80 @@
-# Development principles (practical guide)
+# 🤖 AI Development Quick Reference
 
-Purpose
+## Key Principles
 
-- Align on how we build and review code.
-- Prefer simple choices; avoid accidental complexity.
-- Make assumptions explicit and easy to change.
+1. **Schema-First**: Define TypeBox schemas, derive TypeScript types
+2. **Single Source of Truth**: Never duplicate type definitions
+3. **Functional over OOP**: Pure functions for business logic
+4. **KISS**: Simplest code that works
+5. **YAGNI**: Only build what's needed right now
+6. **DRY**: Extract common code, don't over-abstract
 
-## Core principles
+## Schema-First Development Workflow
 
-- KISS, YAGNI, DRY. Start simple, extract when needed.
-- Single source of truth for data and schemas (TypeBox).
-- Fail fast in dev; be quiet and predictable in prod.
-- Small, cohesive modules; clear ownership per feature.
+This workflow aligns with our [project structure](./project-structure.md) and ensures consistent implementation across all features.
 
-## Defaults we chose
+### Plan → Scaffold → Schema → Types → Repository → Service → Controller → Errors → Tests → Docs
 
-- Runtime: Node 24+, Fastify 5+, TypeScript strict.
-- Validation: TypeBox + Ajv. No ad‑hoc validators.
-- Auth: short‑lived access JWT + rotating refresh cookie. OAuth2 optional.
-- RBAC: central policy function; deny by default (see `docs/api-rbac.md`).
-- Docs: OpenAPI from TypeBox; no inline Swagger (see `docs/documentation.md`).
-- CORS: allowlist + credentials only if needed (see `docs/cors.md`).
-- Caching: HTTP headers first; tiny micro‑cache for public GETs only (see `docs/caching.md`).
-- Code style: 4 spaces, no semicolons, 100 chars, kebab‑case, no `any` or assertions (see `docs/code-style.md`).
+1. **Plan** - Define feature requirements and API endpoints
+2. **Scaffold** - Generate versioned folders (`v1/`, `v2/`) + shared files  
+3. **Schema** - Create TypeBox validation schemas in each version
+4. **Types** - Define domain TypeScript types
+5. **Repository** - Set up Prisma models and database access layer
+6. **Service** - Implement business logic and coordinate repositories
+7. **Controller** - Create HTTP handlers calling services
+8. **Errors** - Add custom error handling (see [error-handling.md](./error-handling.md))
+9. **Tests** - Write unit and integration tests
+10. **Docs** - Document API endpoints and usage
 
-## API design
+```ts
+// 1. Define Schema (in feature-name.schema.ts)
+export const UserSchema = Type.Object({
+    id: Type.String({ format: 'uuid' }),
+    email: Type.String({ format: 'email' }),
+    name: Type.String({ minLength: 1, maxLength: 100 })
+})
 
-- Resource‑oriented, nouns for paths; verbs only for actions that are not CRUD.
-- Use cursor pagination with caps (see `docs/api-query-templates.md`).
-- Consistent 2xx/4xx/5xx and typed error body (see `docs/error-handling.md`).
-- Idempotent PUT/PATCH where applicable; avoid magic.
+// 2. Derive Types (in feature-name.types.ts)
+export type User = Static<typeof UserSchema>
+export const CreateUserSchema = Type.Omit(UserSchema, ['id'])
+export type CreateUserInput = Static<typeof CreateUserSchema>
 
-## Schemas and contracts
+// 3. Repository Layer (in feature-name.repository.ts)
+export async function createUserInDb(data: CreateUserInput): Promise<User> {
+    return prisma.user.create({ data: { ...data, id: generateUUIDv7() } })
+}
 
-- Define TypeBox once; reuse in routes, services, and tests.
-- Disallow additional properties unless explicitly needed.
-- Add `$id` to shared schemas to stabilize OpenAPI refs.
+// 4. Service Layer (in feature-name.service.ts)
+export async function createUser(data: CreateUserInput): Promise<User> {
+    // Business logic validation
+    const existingUser = await findUserByEmail(data.email)
+    if (existingUser) throw err('EMAIL_ALREADY_EXISTS', 'Email already exists') // See error-handling.md
+    
+    return createUserInDb(data)
+}
 
-## Errors
+// 5. Controller (in feature-name.controller.ts)
+export async function createUserHandler(req: FastifyRequest, reply: FastifyReply) {
+    const user = await createUser(req.body) // req.body is typed automatically
+    return reply.code(201).send(success(user, req.id)) // See response-templates.md for success()
+}
 
-- Don’t leak internals; map domain/service errors to typed HTTP errors.
-- Log details with requestId; return safe messages to clients.
+// 6. Register Routes (in feature-name.route.ts)
+app.post('/users', {
+    schema: { 
+        body: CreateUserSchema,           // Validates input
+        response: { 201: createResponseSchema(UserSchema) }  // See response-templates.md
+    }
+}, createUserHandler)
+```
 
-## Security
+## General Instructions
 
-- Helmet headers, rate limits, timeouts, body size limits (see `docs/security.md`).
-- Cookies: HttpOnly, Secure, SameSite=None when cross‑site.
-- No `console.*` in source; use Pino with redaction.
-
-## Data & persistence
-
-- Prisma as single DB access. No raw SQL unless reviewed.
-- Migrations per change; no drift. Backwards‑compatible deploys.
-- Soft delete only if required by product; otherwise hard delete with constraints.
-
-## Performance
-
-- Measure before optimizing. Add indexes before caches.
-- Use streaming/partial responses only when needed and test them.
-
-## Testing
-
-- Unit tests for policy and services; integration via Fastify.inject.
-- Fixtures live close to tests; keep tests deterministic and fast.
-- Minimum coverage: 80% per file (lines/branches/functions). Critical auth/security code should target 90%+.
-
-## Observability
-
-- Structured logs with correlation ids. Minimal health checks. No secrets in logs.
-
-## Documentation
-
-- Keep feature docs close to code. Update docs with code changes in the same PR.
-- Swagger reflects the code; avoid hand‑edited OpenAPI.
-
-## Code splitting for large files
-
-When to split
-
-- File grows beyond ~300–400 lines, or mixes multiple responsibilities.
-- More than ~8–10 exports, or deep nesting/complex functions (> 50 lines).
-- Imports balloon and become hard to reason about, or you see circular deps.
-
-How to split (by layers)
-
-- Schemas: `*.schema.ts` — TypeBox request/response/shared models only.
-- Routes: `*.routes.ts` — Fastify route defs; no business logic, no DB calls.
-- Controllers: `*.controller.ts` — HTTP orchestration; parse ctx, call services, map errors.
-- Services: `*.service.ts` — domain logic; call Prisma/repos; no HTTP types.
-- Repos (optional): `*.repo.ts` — complex DB access isolated behind functions.
-- Utils: `*.utils.ts` — pure helpers; keep in feature folder if used only there.
-
-Structure and naming
-
-- Keep files in the feature folder: `src/features/<feature>/...` in kebab-case.
-- Prefer named exports; avoid default exports to make refactors easier.
-- Use an `index.ts` per feature to re-export public API (schemas, routes, main service).
-
-Dependency rules (avoid tangles)
-
-- Controllers may depend on services and schemas. Services must not import controllers.
-- Services may depend on repos and shared utils, never on web/server code.
-- No file should import from a sibling's `index.ts` inside the same feature (import concrete files).
-- Break cycles immediately; introduce small interfaces if needed.
-
-Refactor steps (safe iteration)
-
-- Extract smallest cohesive part first (e.g., move TypeBox schemas to `*.schema.ts`).
-- Update imports; keep names the same to reduce churn.
-- Add/adjust tests that cover the moved code before and after the split.
-- Repeat for controllers/services until responsibilities are clean.
-
-Size targets (guidelines)
-
-- Route files: 100–300 lines.
-- Controller files: 150–400 lines.
-- Service files: 200–500 lines.
-- Schema files: 50–150 lines.
-- Utility files: 100–250 lines.
+- **Always validate inputs** using TypeBox schemas (see [query-templates.md](./query-templates.md))
+- **Keep business logic in services**, not controllers
+- **Use repositories for database access**, keep services clean
+- **Use transactions** for multi-step database operations
+- **Follow response patterns** from [response-templates.md](./response-templates.md)
+- **Handle errors properly** using patterns from [error-handling.md](./error-handling.md)
+- **Prefer explicit over implicit** - be clear about intentions
+- **Write code that fails fast** in development but handles errors gracefully in production

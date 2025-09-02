@@ -1,26 +1,10 @@
-# API Response Templates (Success Envelopes)
+# AI Response Patterns
 
-This spec defines consistent success response shapes for the API. It complements the error envelope defined in `docs/error-handling.md`.
+Essential response formats for consistent API development.
 
-## Goals
+## Core Response Structure
 
-- Predictable envelopes across endpoints
-- Clear pagination and linking
-- Minimal, safe metadata (requestId, timestamp)
-- Easy to type (TypeScript) and document (Swagger)
-
----
-
-## Envelope contract
-
-- Content type: `application/json`
-- Success responses always use `data` at top level
-- Error responses always use `error` at top level (see error-handling.md for complete specification)
-- Both success and error responses include `requestId` and `timestamp` for correlation
-- `pagination` field is included only for list/collection endpoints with cursor-based pagination
-- Single resource endpoints omit the `pagination` field
-
-Shape (generic):
+**Success (200/201):**
 
 ```json
 {
@@ -30,321 +14,210 @@ Shape (generic):
 }
 ```
 
-Common success envelope (use `pagination` when listing; omit it for single resources):
+**List with Pagination (200):**
 
 ```json
 {
-  "data": [{}, {}, {}],
+  "data": [],
   "pagination": { "limit": 20, "cursor": { "next": "abc123", "prev": "xyz987" } },
+  "requestId": "string", 
+  "timestamp": "string"
+}
+```
+
+**Error (4xx/5xx):**
+
+```json
+{
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Error message", 
+    "status": 400,
+    "details": [{ "path": "string", "message": "string" }],
+    "method": "string",
+    "path": "string"
+  },
   "requestId": "string",
   "timestamp": "string"
 }
 ```
 
----
+*See [error-handling.md](./error-handling.md) for complete error implementation patterns.*
 
-## Standard templates
+## Required Implementation
 
-### 1) Single resource (GET)
+### Helper Functions
 
-- 200 OK
-- `data` is the resource object
-
-Example:
-
-```json
-{
-  "data": { "id": 1, "name": "Aria Lightblade" },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 2) Collection (GET) with cursor-based pagination
-
-- 200 OK
-- `data` is an array
-- `pagination` contains cursor info
-
-```json
-{
-  "data": [ { "id": 1 }, { "id": 2 } ],
-  "pagination": { "limit": 20, "cursor": { "next": "abc123", "prev": "xyz987" } },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 3) Create (POST)
-
-- 201 Created
-- `Location` header → `/v1/characters/{id}`
-- Body includes created resource or a minimal payload
-
-Example (full):
-
-```json
-{
-  "data": { "id": 101, "name": "Nova Stormsong" },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 4) Update (PATCH/PUT)
-
-- 200 OK with updated resource, or 204 No Content
-- Prefer 200 when clients need the new state
-
-Example:
-
-```json
-{
-  "data": { "id": 101, "name": "Nova Stormsong", "title": "Archmage" },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 5) Delete (DELETE)
-
-- 204 No Content (no body) or 200 OK with confirmation
-- Prefer 200 when you need to return `requestId`/`timestamp` for tracking
-
-Example (200):
-
-```json
-{
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 6) Error Response Example
-
-Error responses use a different envelope structure. See `docs/error-handling.md` for complete error specification.
-
-Basic error shape:
-
-```json
-{
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Request validation failed",
-    "details": [
-      {
-        "path": "/body/name",
-        "message": "Name is required and must be at least 2 characters"
-      }
-    ]
-  },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 7) Bulk operations
-
-- 200 OK when processed synchronously
-- Returns `summary` and `results` at top level (different from normal `data` envelope)
-
-Example:
-
-```json
-{
-  "summary": { "successCount": 2, "failCount": 1 },
-  "results": [
-    { "ok": true,  "index": 0, "value": { "id": 101 } },
-    { "ok": false, "index": 1, "error": { "code": "VALIDATION_ERROR", "message": "Invalid name", "details": [{ "path": "/body/name", "message": "too short" }] } },
-    { "ok": true,  "index": 2, "value": { "id": 103 } }
-  ],
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
-### 8) Accepted/async processing
-
-- 202 Accepted for long-running tasks
-- Body returns an operation resource clients can poll
-
-Example:
-
-```json
-{
-  "data": {
-    "operationId": "op_01J...",
-    "status": "pending"
-  },
-  "requestId": "01HZZ...",
-  "timestamp": "2025-08-30T10:35:12.345Z"
-}
-```
-
----
-
-## TypeScript helpers (runtime building blocks)
-
-These are small helpers you can copy into `src/http/response.ts` (or similar). They use generics and can inject `requestId`/`timestamp`.
-
-```ts
-// src/http/response.ts
-export type BaseEnvelope = { requestId?: string; timestamp?: string };
-
-export type Pagination = { limit?: number; cursor?: { next?: string; prev?: string } } | undefined;
-
-// Common success envelope types (use across the app)
-export type SuccessEnvelope<T> = {
-  data: T;
-} & BaseEnvelope;
-
-export type PaginatedSuccessEnvelope<T> = {
-  data: T[];
-  pagination: Pagination; // usually present for list endpoints
-} & BaseEnvelope;
-
-// Pagination query type to reuse in route handlers
-export type PaginationQuery = {
-  limit?: number; // default/maximum enforced server-side
-  cursor?: string;
-};
-
-export function success<T>(data: T, opts?: { pagination?: Pagination; requestId?: string; ts?: Date }) {
-  const now = (opts?.ts ?? new Date()).toISOString();
+```typescript
+// src/common/utils/response.helpers.ts
+export function success<T>(data: T, requestId?: string) {
   return {
     data,
-    ...(opts?.pagination ? { pagination: opts.pagination } : {}),
-    requestId: opts?.requestId,
-    timestamp: now,
-  };
+    requestId,
+    timestamp: new Date().toISOString(),
+  }
 }
 
-export function paginated<T>(items: T[], pagination: Pagination, opts?: { requestId?: string; ts?: Date }) {
-  return success(items, { pagination, requestId: opts?.requestId, ts: opts?.ts });
+export function created<T>(data: T, location: string, requestId?: string) {
+  return {
+    response: {
+      data,
+      requestId,
+      timestamp: new Date().toISOString(),
+    },
+    headers: { Location: location }
+  }
 }
 
-export function accepted(op: { operationId: string; status: 'pending' | 'running' | 'completed' | 'failed' }, opts?: { requestId?: string; ts?: Date }) {
-  return success(op, { requestId: opts?.requestId, ts: opts?.ts });
-}
-```
-
-Usage inside a route (example):
-
-```ts
-const payload = success(character, { requestId: request.id });
-reply.code(200).send(payload);
-```
-
----
-
-## Base schemas (TypeBox) — copy/paste
-
-Register reusable schemas once and reference them in route `response` sections. Adjust to your needs.
-
-```ts
-// during bootstrap
-import { Type, TSchema } from '@sinclair/typebox';
-
-// Shared pagination schemas
-export const PaginationQuery = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
-  cursor: Type.Optional(Type.String())
-});
-
-export const PaginationResponse = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1 })),
-  cursor: Type.Optional(Type.Object({ next: Type.Optional(Type.String()), prev: Type.Optional(Type.String()) }))
-});
-
-// Base success envelope — compose with your route's data schema
-// Example usage below shows how to embed your own data shape.
-export const SuccessBase = Type.Object({
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.Optional(Type.String())
-});
-
-// Envelope builder — reuse for any data schema
-export function envelopeOf(dataSchema: TSchema, paginated = false) {
-  const core = paginated
-    ? Type.Object({ data: Type.Array(dataSchema), pagination: PaginationResponse })
-    : Type.Object({ data: dataSchema, pagination: Type.Optional(PaginationResponse) });
-  return Type.Intersect([core, SuccessBase]);
-}
-
-// Example: single Character and list responses
-const Character = Type.Object({ id: Type.Integer(), name: Type.String() });
-export const CharacterResponse = envelopeOf(Character);
-export const CharactersListResponse = envelopeOf(Character, true);
-
-// Bulk response (no top-level data; outcomes under result)
-export const BulkEntry = Type.Union([
-  Type.Object({ ok: Type.Literal(true), index: Type.Integer(), value: Character }),
-  Type.Object({ ok: Type.Literal(false), index: Type.Integer(), error: Type.Object({ code: Type.String(), message: Type.String() }) })
-]);
-
-export const BulkResponse = Type.Intersect([
-  Type.Object({
-    summary: Type.Object({ successCount: Type.Integer(), failCount: Type.Integer() }),
-    results: Type.Array(BulkEntry)
-  }),
-  SuccessBase
-]);
-```
-
-Then in a route schema (Fastify JSON schema):
-
-```ts
-schema: {
-  response: {
-    200: CharactersListResponse,
-    400: { $ref: 'ErrorEnvelope#' },
-    500: { $ref: 'ErrorEnvelope#' }
+export function paginated<T>(
+  items: T[], 
+  pagination: { limit?: number; cursor?: { next?: string; prev?: string } },
+  requestId?: string
+) {
+  return {
+    data: items,
+    pagination,
+    requestId,
+    timestamp: new Date().toISOString(),
   }
 }
 ```
 
----
+### HTTP Status Constants
 
-## Headers and conventions
+```typescript
+// src/common/constants/http-status.ts
+export const HTTP_STATUS = {
+  OK: 200,
+  CREATED: 201,
+  NO_CONTENT: 204,
+  BAD_REQUEST: 400,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  CONFLICT: 409,
+  INTERNAL_SERVER_ERROR: 500,
+} as const
 
-- `Location`: set on 201 Created with the new resource URL
-- Pagination headers (optional): use `Link` header for navigation (e.g., rel="next"; rel="prev"). Do not include URLs in the JSON body.
-- Correlation: include Fastify `request.id` in the body and logs
-- Timestamps: ISO-8601 in UTC
+export type HttpStatus = typeof HTTP_STATUS[keyof typeof HTTP_STATUS]
+```
 
----
+### TypeBox Schema Builder
 
-## Minimal examples (copy/paste)
+```typescript
+// src/common/schemas/response.schemas.ts
+import { Type } from '@sinclair/typebox'
 
-### Success Responses
+export const BaseEnvelopeSchema = Type.Object({
+  requestId: Type.Optional(Type.String()),
+  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+})
 
-- Single resource: `{ "data": { "id": 1 }, "requestId": "...", "timestamp": "..." }`
-- List (cursor): `{ "data": [ {"id":1} ], "pagination": { "limit": 10, "cursor": { "next": "abc123" } }, "requestId": "...", "timestamp": "..." }`
-- Created: status 201 + `Location` + `{ "data": { "id": 42 }, "requestId": "...", "timestamp": "..." }`
-- Deleted: status 200 + `{ "requestId": "...", "timestamp": "..." }` or 204 (no body)
-- Accepted: status 202 + `{ "data": { "operationId": "op_...", "status": "pending" }, "requestId": "...", "timestamp": "..." }`
-- Bulk: `{ "summary": { "successCount": 1, "failCount": 1 }, "results": [...], "requestId": "...", "timestamp": "..." }`
+export const PaginationSchema = Type.Object({
+  limit: Type.Optional(Type.Integer({ minimum: 1 })),
+  cursor: Type.Optional(Type.Object({
+    next: Type.Optional(Type.String()),
+    prev: Type.Optional(Type.String()),
+  })),
+})
 
-### Error Responses
+export function createResponseSchema<T>(dataSchema: T) {
+  return Type.Intersect([
+    Type.Object({ data: dataSchema }),
+    BaseEnvelopeSchema
+  ])
+}
 
-- Any error: `{ "error": { "code": "ERROR_CODE", "message": "Error message", "details": [] }, "requestId": "...", "timestamp": "..." }`
+export function createPaginatedResponseSchema<T>(dataSchema: T) {
+  return Type.Intersect([
+    Type.Object({ 
+      data: Type.Array(dataSchema), 
+      pagination: PaginationSchema 
+    }),
+    BaseEnvelopeSchema
+  ])
+}
+```
 
----
+## Usage Patterns
 
-## Interop with error handling
+### Controller Implementation
 
-- Success envelopes always use `data` at the top level (except bulk operations which use `summary`/`results`)
-- Error responses always use `error` at the top level
-- Never mix `data` and `error` in a single response
-- Both envelope types include `requestId` and `timestamp` for tracing
+```typescript
+import { HTTP_STATUS } from '../../common/constants/http-status'
 
----
+// Always use helpers for consistent format
+export async function getCharacter(request: FastifyRequest, reply: FastifyReply) {
+  const character = await characterService.getById(request.params.id)
+  return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
+}
 
-## Testing notes (Vitest)
+export async function createCharacter(request: FastifyRequest, reply: FastifyReply) {
+  const character = await characterService.create(request.body)
+  const { response, headers } = created(
+    character, 
+    `/api/v1/characters/${character.id}`, 
+    request.id
+  )
+  return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
+}
 
-- Ensure list endpoints return arrays and correct `pagination` fields
-- Verify `requestId`/`timestamp` presence in all responses
-- For 201, assert `Location` header and body shape
-- For bulk, assert `results` entries align with input order (check `index`)
-- Test that error responses use `error` envelope structure
-- Validate that success responses use `data` envelope structure
+export async function listCharacters(request: FastifyRequest, reply: FastifyReply) {
+  const { items, pagination } = await characterService.list(request.query)
+  return reply.code(HTTP_STATUS.OK).send(paginated(items, pagination, request.id))
+}
+```
+
+### Route Schema Definition
+
+```typescript
+// Define response schemas for all routes
+app.get('/characters/:id', {
+  schema: {
+    response: {
+      200: createResponseSchema(CharacterSchema),
+      404: { $ref: 'ErrorResponseSchema#' }, // See error-handling.md for ErrorResponseSchema
+      500: { $ref: 'ErrorResponseSchema#' },
+    },
+  },
+}, getCharacterHandler)
+
+app.post('/characters', {
+  schema: {
+    body: CreateCharacterSchema,
+    response: {
+      201: createResponseSchema(CharacterSchema),
+      400: { $ref: 'ErrorResponseSchema#' },
+      409: { $ref: 'ErrorResponseSchema#' },
+      500: { $ref: 'ErrorResponseSchema#' },
+    },
+  },
+}, createCharacterHandler)
+
+app.get('/characters', {
+  schema: {
+    response: {
+      200: createPaginatedResponseSchema(CharacterSchema),
+      400: { $ref: 'ErrorResponseSchema#' },
+      500: { $ref: 'ErrorResponseSchema#' },
+    },
+  },
+}, listCharactersHandler)
+```
+
+## HTTP Status Codes
+
+- **200 OK**: GET (single/list), PUT, PATCH
+- **201 Created**: POST (set `Location` header)
+- **204 No Content**: DELETE (no response body)
+- **4xx/5xx**: Use error envelope (see [error-handling.md](./error-handling.md))
+
+## Critical Rules
+
+1. **Always** include `requestId` and `timestamp`
+2. **Always** use `data` wrapper for success responses
+3. **Always** use cursor-based pagination for lists
+4. **Never** return raw objects - always use envelope
+5. **Always** use `HTTP_STATUS` constants instead of magic numbers
+6. **Always** use `$ref: 'ErrorResponseSchema#'` for error responses
+7. **Always** use `created()` helper for 201 responses with Location header

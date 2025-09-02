@@ -1,60 +1,72 @@
-# API versioning policy
+# API Versioning Quick Reference
 
-Goals
+URL versioning strategy for maintaining API compatibility.
 
-- Keep breaking changes isolated. Do not break existing clients without a new version.
-- Keep maintenance simple: one active version at a time in development; limited overlap in production.
+## Core Pattern
 
-Version scheme
+Use URL versioning with major versions only: `/api/v1/`, `/api/v2/`
 
-- Prefix all routes with a stable major: `/api/v1/...`.
-- Only bump the major when a breaking change is introduced.
-- Non-breaking additions (new fields, new endpoints) do not require a bump.
+## File Structure
 
-What is breaking
+Organize versioned code following [project-structure.md](./project-structure.md) patterns:
 
-- Removing a field or endpoint.
-- Changing field types or semantics.
-- Tightening validation (e.g., shorter maxLength) for existing inputs.
-- Changing default sort/order or pagination behavior in a way that changes responses for the same request.
+```typescript
+src/
+  features/
+    characters/
+      v1/
+        controller.ts    # v1-specific HTTP handling
+        schema.ts        # v1-specific validation schemas
+        route.ts         # v1 route definitions
+        adapter.ts       # Domain → v1 API conversion
+      v2/
+        controller.ts    # v2-specific HTTP handling
+        schema.ts        # v2-specific validation schemas
+        route.ts         # v2 route definitions
+        adapter.ts       # Domain → v2 API conversion
+      service.ts         # Shared business logic (version-agnostic)
+      repository.ts      # Database access layer
+      types.ts           # Domain types
+      index.ts           # Barrel exports
+```
 
-Non-breaking examples
+## Implementation Steps
 
-- Adding optional fields to responses.
-- Adding new endpoints or query parameters that are optional.
-- Increasing limits (e.g., maxLength from 80 → 120) while keeping old values valid.
+1. **Keep services version-agnostic** in feature root
+2. **Add version folders** within each feature for API contracts
+3. **Use adapters** to convert domain objects to version-specific formats
+4. **Register routes** by version in main app
 
-Process
+## Breaking vs Non-Breaking
 
-- New version starts at `/api/v2` with duplicated routes where changes are needed.
-- Keep `/api/v1` read-only when possible; critical fixes only.
-- Deprecate old endpoints with a `Deprecation` response header and documentation notes.
-- Maintain both versions during a sunset period, then remove `/api/v1` after communicated date.
+**Breaking (new version needed):**
 
-OpenAPI
+- Remove/change existing fields
+- Change field types
+- Remove endpoints
 
-- Each deployed major has its own OpenAPI server URL (e.g., `/api/v1`, `/api/v2`).
-- Schemas are shared where compatible; otherwise duplicate with new `$id`s.
+**Non-Breaking (same version OK):**
 
-Deprecation headers
+- Add optional fields
+- Add new endpoints
+- Add optional parameters
 
-- Add header on deprecated endpoints: `Deprecation: true` and optional `Sunset: <HTTP-date>`.
-- Optionally add `Link: <https://docs.example.com/migrate-to-v2>; rel="deprecation"`.
+## Key Code Pattern
 
-Minimal runtime behavior
+```ts
+// Service (shared, version-agnostic)
+async function getCharacter(id: string) { /* business logic */ }
 
-- Do not spam logs. Log a single startup warning listing deprecated routes.
-- Keep performance identical; deprecation shouldn’t slow requests.
-- Keep error shapes and success payloads stable until removal.
+// Repository (shared, version-agnostic)  
+async function findCharacterById(id: string) { /* database access */ }
 
-Communication (lightweight)
+// Adapter (version-specific)
+function toCharacterV1(domain: Character): CharacterV1 { return { /* v1 format */ } }
 
-- Add a short note in `docs/roadmap.md` with the sunset date and migration gist.
-- If you control a client app, surface a developer console warning when calling deprecated endpoints (optional).
-
-Checklist
-
-- [ ] Changes classified as breaking/non-breaking.
-- [ ] If breaking: duplicate route under `/api/v2` and update docs.
-- [ ] Add Deprecation/Sunset headers to old endpoints.
-- [ ] Communicate timeline in `docs/roadmap.md` and release notes.
+// Controller (version-specific)  
+async function getCharacterV1Handler(req, reply) {
+  const character = await getCharacter(req.params.id)
+  const v1Character = toCharacterV1(character)
+  return reply.send(success(v1Character)) // Uses response-templates.md patterns
+}
+```

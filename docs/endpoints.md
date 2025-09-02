@@ -30,6 +30,12 @@ POST   /api/v1/auth/refresh       # Refresh JWT token
 GET    /api/v1/auth/profile       # Get current user profile
 PUT    /api/v1/auth/profile       # Update user profile
 PUT    /api/v1/auth/password      # Change password
+
+# OAuth2 (Optional)
+GET    /api/v1/auth/oauth/:provider/start     # Redirect to provider (google, github)
+GET    /api/v1/auth/oauth/:provider/callback  # Handle callback
+POST   /api/v1/auth/oauth/link                # Link provider to account
+POST   /api/v1/auth/oauth/unlink              # Unlink provider
 ```
 
 ## 4. Images

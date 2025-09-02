@@ -1,147 +1,96 @@
-# Project Structure
+# AI Code Generation Essentials
 
-## Directory Structure (Feature-Based)
+## Complete Directory Structure with Versioning
 
-This file is an example of a feature-based directory structure and the project can differ from it.
-Every feature should encapsulate all related files, including controllers, services, schemas, and
-tests. The folder `shared` contains code that is shared across multiple features, such as utility
-functions, middleware, and common types.
-
-IMPORTANT: DO NOT CREATE FILES OR FOLDERS BEFORE THEY ARE NEEDED.
-
-```text
-root
-├── src/
-│   ├── features/                         # All CRUD features / business modules
-│   │   ├── featureName/
-│   │   │   ├── index.ts                  # Barrel exports for the feature
-│   │   │   ├── controller.ts             # HTTP request handling
-│   │   │   ├── service.ts                # Business logic and data access
-│   │   │   ├── route.ts                  # Fastify route definitions
-│   │   │   ├── schema.ts                 # TypeBox/Ajv schemas for validation
-│   │   │   └── types.ts                  # Feature-specific TypeScript types
-│   │   │
-│   │   └── ...                           # Other features
-│   │
-│   ├── common/                           # Reusable code
-│   │   ├── config/                       # Configuration and env
-│   │   │   └── index.ts
-│   │   ├── constants/                    # Constants and enums
-│   │   ├── errors/                       # Error handling
-│   │   │   ├── base.error.ts
-│   │   │   ├── handlers.ts               # Fastify error handlers
-│   │   │   ├── factories.ts              # Error factories
-│   │   │   └── classes.ts                # Custom classes
-│   │   ├── middleware/                   # Generic middleware
-│   │   │   └── index.ts
-│   │   ├── utils/                        # General utilities
-│   │   └── plugins/                      # Fastify plugins (Swagger, CORS, Health)
-│   │
-│   ├── infrastructure/                   # Technical layer (DB, cache, etc.)
-│   │   ├── database/
-│   │   │   ├── prisma.service.ts
-│   │   │   ├── connection.ts
-│   │   │   └── transaction.ts
-│   │   ├── cache/
-│   │   │   ├── redis.service.ts
-│   │   │   ├── cache.service.ts
-│   │   │   └── strategies.ts
-│   │   └── logging/                      # Audit/logging
-│   │
-│   └── tests/                            # General tests
-│       ├── features/                     # Feature unit & integration tests
-│       │   └── characters/               # Example feature tests
-│       │       ├── characters.service.test.ts
-│       │       ├── characters.route.test.ts
-│       │       └── feature.layer.test.ts
-│       ├── common/                       # Shared test utilities
-│       │   ├── setup.ts                  # Global test setup (spies, env)
-│       │   └── test-helpers.ts           # Helpers (e.g., buildServer)
-│       └── infrastructure/               # Infra-level tests/mocks
-│           └── prisma.mock.ts            # Prisma mock/factory
-│
-├── prisma/                               # Prisma schema & migrations
-│   ├── schema.prisma
-│   ├── seed.ts
-│   └── migrations/
-│
-├── vitest.config.ts                      # Test runner config (example)
-├── .github/
-├── assets/
-├── docs/
-└── coverage/
+```typescript
+src/
+├── features/                                # Feature-based modules
+│   ├── feature-name/
+│   │   ├── v1/                              # Version 1 API
+│   │   │   ├── feature-name.controller.ts   # v1 HTTP handling
+│   │   │   ├── feature-name.schema.ts       # v1 validation schemas
+│   │   │   ├── feature-name.route.ts        # v1 route definitions
+│   │   │   └── feature-name.adapter.ts      # Domain → v1 API conversion
+│   │   ├── v2/                              # Version 2 API
+│   │   │   ├── feature-name.controller.ts   # v2 HTTP handling
+│   │   │   ├── feature-name.schema.ts       # v2 validation schemas
+│   │   │   ├── feature-name.route.ts        # v2 route definitions
+│   │   │   └── feature-name.adapter.ts      # Domain → v2 API conversion
+│   │   ├── feature-name.service.ts          # Shared business logic (version-agnostic)
+│   │   ├── feature-name.repository.ts       # Database access layer
+│   │   ├── feature-name.types.ts            # Domain types
+│   │   └── index.ts                         # Barrel exports
+│   └── ...                                  # Other features
+├── infrastructure/                          # Technical layer
+│   ├── database/
+│   │   ├── prisma.service.ts
+│   │   └── connection.ts
+│   ├── cache/
+│   │   └── redis.service.ts
+│   ├── logging/
+│   │   ├── logger.service.ts
+│   │   └── log-transport.ts
+│   └── middleware/                          # App-specific middleware
+├── shared/                                  # Generic, reusable mini-toolbox
+│   ├── utils/                               # Pure helper functions
+│   ├── errors/                              # Custom error classes
+│   ├── types/                               # Shared TypeScript types
+│   ├── constants/                           # Shared constants
+│   └── plugins/                             # Generic wrappers only
+└── tests/
+    ├── features/
+    └── shared/
 ```
 
-## Request Flow (Fastify → TypeBox/Ajv → Prisma)
+## Key Rules
 
-- route.ts: registers endpoints and attaches schemas
-- schema.ts: defines TypeBox request/response schemas validated by Ajv
-- controller.ts: adapts HTTP to service calls; no DB access
-- service.ts: business logic; uses Prisma/infrastructure DB helpers
-- global error handler: maps domain errors to HTTP JSON
+- Use `kebab-case` for files/folders, include feature name in files
+- Only repositories access Prisma directly
+- Services coordinate business logic and call repositories
+- Controllers don't build error JSON
+- Keep files <500 lines
+- shared/ contains only generic, reusable utilities
 
-## File Responsibilities (Glossary)
+## Core File Responsibilities
 
-- route.ts: registers the feature routes; no business logic.
-- schema.ts: TypeBox schemas; export TS types via `Static<typeof Schema>`.
-- controller.ts: calls the service; does not use Prisma; does not craft error JSON.
-- service.ts: business logic and data access; no Fastify types here.
-- types.ts: feature-only TypeScript types.
-- index.ts: barrel exports; no logic.
+- **feature-name.route.ts**: Register endpoints, attach schemas
+- **feature-name.schema.ts**: TypeBox validation schemas, export TS types  
+- **feature-name.controller.ts**: HTTP → service calls, no DB access
+- **feature-name.service.ts**: Business logic, coordinates repositories
+- **feature-name.repository.ts**: Database access layer (Prisma operations)
+- **feature-name.adapter.ts**: Transform domain models to API responses
+- **feature-name.types.ts**: Domain TypeScript types
 
-## Create a New Feature (Checklist)
+## Feature Creation Workflow
 
-1. Create `src/features/<name>/`: `route.ts`, `controller.ts`, `service.ts`, `schema.ts`, `index.ts`.
-2. In `schema.ts`, define params/query/body/response with TypeBox; export TS types.
-3. In `controller.ts`, call the service; leave error formatting to the global handler.
-4. In `service.ts`, implement logic and use Prisma (or a thin repository) for DB.
-5. Register the feature’s route plugin in the app bootstrap.
-6. Add tests: unit (service with mocked Prisma), integration (routes using `fastify.inject`).
+### Plan → Scaffold → Schema → Types → Repo → Service → Controller → Errors → Tests → Docs
 
-## Conventions
+1. **Plan**: Define feature requirements and API endpoints
+2. **Scaffold**: Generate versioned folders (`v1/`, `v2/`) + shared files
+3. **Schema**: Create TypeBox validation schemas in each version
+4. **Types**: Define domain TypeScript types
+5. **Repository**: Set up Prisma models and database access layer
+6. **Service**: Implement business logic and coordinate repositories
+7. **Controller**: Create HTTP handlers calling services
+8. **Errors**: Add custom error handling
+9. **Tests**: Write unit and integration tests
+10. **Docs**: Document API endpoints and usage
 
-- Always use `kebab-case` for folders and files.
-- Route prefix per feature: `/<feature>`; one `route.ts` per feature.
-- Barrel `index.ts` files only re-export symbols.
-- Keep files small and single-responsibility.
+## File Splitting Policy
 
-### Splitting Large Files
+When files exceed 500 lines, split by operation/responsibility:
 
-When a file grows too large (>500 lines), split it by HTTP request/operation.
-Example:
+**Generic Pattern**: `feature-name.layer.operation.ts`
 
-```bash
-feature.service.list.ts` (list/search)
-feature.service.get.ts` (read by id)
-feature.service.post.ts` (create)
-feature.service.put.ts` (update)
-feature.service.delete.ts` (delete)
-feature_name.layer_name.operation_name.ts (generic example)
-```
+**Services**: Split by HTTP operation
 
-## Error Handling Rules
+- `feature-name.service.list.ts` (list/search operations)
+- `feature-name.service.get.ts` (read by ID)
+- `feature-name.service.post.ts` (create operations)
+- `feature-name.service.put.ts` (update operations)
+- `feature-name.service.delete.ts` (delete operations)
 
-- Services throw typed errors from `common/errors/*`; never throw strings.
-- Controllers do not build error JSON; delegate to the global error handler.
-- Only map the HTTP status when necessary; don’t duplicate the error format.
+**Repositories**: Split by entity operation
 
-## Data Access Rules
-
-- Only services (or repositories in the infra layer) access Prisma.
-- Use transactions for multi-step writes (`infrastructure/database/transaction.ts`).
-- No DB access in controllers, middleware, or route files.
-
-## Testing Quickstart
-
-- Location: `src/tests/features/<feature>/`.
-- Unit: test services with Prisma mocked.
-- Integration: use `fastify.inject` on routes; verify success and validation errors.
-- Cover one happy path and at least one error/validation case.
-
-## Guardrails for Junior/AI Coders
-
-- Don’t add dependencies or modify Prisma schema/auth without approval.
-- Don’t create files/folders “for later”; create only when needed.
-- Reuse existing utilities; don’t duplicate helpers.
-- Keep PRs small and focused; use semantic commits: feat/fix/docs/test/chore.
-- If unsure where logic belongs, put it in the service, not the controller.
+- `feature-name.repository.query.ts` (complex queries)
+- `feature-name.repository.mutation.ts` (create/update/delete)
