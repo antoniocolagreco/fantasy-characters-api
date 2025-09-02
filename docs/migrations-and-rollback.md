@@ -1,45 +1,87 @@
-# Database migrations and rollback
+# AI Database Migration
 
-Tooling
+Essential patterns for safe database migrations with Prisma in initial API development.
 
-- Prisma Migrate for schema changes.
+## Critical Migration Rules
 
-Principles
+1. **Always use Prisma migrate dev** for schema changes during development
+2. **Always make backward-compatible changes** - add, don't drop/rename
+3. **Always commit generated migrations** to version control
+4. **Never edit generated migration files** - create new ones instead
 
-- Forward-only in production: avoid down migrations that drop data.
-- Small, incremental migrations; one concern per migration file.
-- Backward-compatible changes first, then code switch, then cleanup.
+## Required Migration Workflow
 
-Workflow (safe pattern)
+Safe three-phase approach for database changes without breaking production.
 
-1. Additive phase (backward compatible)
+```bash
+# 1. Create and apply migration
+npx prisma migrate dev --name add_user_avatar
 
-- Add new columns/tables with defaults and nullability that keep old code working.
-- Backfill data via migration or a one-off script.
+# 2. Generate Prisma client
+npx prisma generate
 
-1. Application switch
+# 3. Commit both schema.prisma and migration files
+git add prisma/schema.prisma prisma/migrations/
+git commit -m "feat: add user avatar field"
+```
 
-- Deploy code that writes to both old and new fields or reads from the new shape.
-- Monitor for issues.
+## Required Safe Schema Changes
 
-1. Cleanup phase
+Always use backward-compatible patterns that don't break existing code.
 
-- Remove old columns/constraints in a later migration once traffic is on the new code.
+```prisma
+// ✅ Safe: Add new optional field
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatar    String?  // New optional field - safe
+  createdAt DateTime @default(now())
+}
 
-Rollback strategy
+// ✅ Safe: Add new table
+model Profile {
+  id     String @id @default(cuid())
+  userId String @unique
+  bio    String?
+  user   User   @relation(fields: [userId], references: [id])
+}
 
-- If a migration fails to apply: stop deploy; investigate; fix and re-run.
-- If code deployment has issues after a schema change: roll back app code first. Keep additive schema in place; it should be backward compatible.
-- For destructive changes (drops), use feature flags and ensure a prior deploy has removed dependencies before applying the drop.
+// ❌ Dangerous: Rename or drop fields
+// model User {
+//   email     String   @unique
+//   fullName  String   // Renamed from 'name' - breaks existing code
+// }
+```
 
-Local/dev
+## Required Development Commands
 
-- Use `prisma migrate dev` frequently; commit generated migrations.
-- Avoid editing generated migration SQL after commit. Create a follow-up migration instead.
+Essential Prisma commands for daily migration work.
 
-Checklist
+```bash
+# Create new migration
+npx prisma migrate dev --name describe_change
 
-- [ ] Migration is additive or has a clear compatibility plan.
-- [ ] Data backfill plan exists if needed.
-- [ ] App change and schema change are ordered safely across deploys.
-- [ ] Destructive changes guarded by feature flags and delayed cleanup.
+# Reset database (development only)
+npx prisma migrate reset
+
+# Check migration status
+npx prisma migrate status
+
+# Generate client after schema changes
+npx prisma generate
+```
+
+## Required Error Recovery
+
+Handle common migration failures during development.
+
+```bash
+# If migration fails to apply
+npx prisma migrate reset  # Reset database
+npx prisma migrate dev     # Re-apply all migrations
+
+# If schema and database are out of sync
+npx prisma db push         # Force sync (development only)
+npx prisma generate        # Regenerate client
+```

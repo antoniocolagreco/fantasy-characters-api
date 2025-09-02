@@ -1,38 +1,27 @@
-# Rate limiting and quotas
+# AI Rate Limiting
 
-Goals
+Essential patterns for protecting API from abuse with Fastify + TypeScript.
 
-- Protect the API from abuse and spikes.
-- Keep generous defaults for normal users; stricter for anonymous traffic.
+## Critical Rate Limiting Rules
 
-Plugin
+1. **Always enable global rate limiting** with @fastify/rate-limit
+2. **Always use different limits** for anonymous vs authenticated users
+3. **Always add stricter limits** for sensitive endpoints (auth, search)
+4. **Always return standard headers** (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)
 
-- Use `@fastify/rate-limit` globally, with per-route overrides when needed.
-
-Defaults (public API)
-
-- Window: 1 minute.
-- Anonymous (no auth): 100 requests/minute per IP.
-- Authenticated users: 600 requests/minute per userId (fallback to IP if userId not available).
-- Bursts: allow short spikes with `skipOnError: false` and in-memory token bucket.
-
-Fastify config (example)
+## Required Global Rate Limiting
 
 ```ts
 import rateLimit from '@fastify/rate-limit'
 
 await fastify.register(rateLimit, {
   global: true,
-  // IP-based key for anonymous
   keyGenerator: (req) => {
-    const auth = req.headers.authorization
     const userId = (req as any).user?.id
     return userId ? `user:${userId}` : `ip:${req.ip}`
   },
-  max: (req, key) => (key.startsWith('user:') ? 600 : 100),
+  max: (_req, key) => (key.startsWith('user:') ? 500 : 150),
   timeWindow: '1 minute',
-  ban: 0,
-  addHeadersOnExceeding: { 'x-ratelimit-remaining': true },
   addHeaders: {
     'x-ratelimit-limit': true,
     'x-ratelimit-remaining': true,
@@ -41,38 +30,93 @@ await fastify.register(rateLimit, {
 })
 ```
 
-Per-route overrides
+## Required Per-Route Overrides
+
+Stricter limits for sensitive or expensive endpoints.
 
 ```ts
-// Expensive search endpoint
-fastify.get('/api/v1/search', {
-  config: { rateLimit: { max: 60, timeWindow: '1 minute' } },
-}, handler)
+// Auth endpoints - prevent brute force attacks
+app.post('/auth/login', {
+  config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+}, loginHandler)
 
-// Auth endpoints: stricter
-fastify.post('/api/v1/auth/login', {
-  config: { rateLimit: { max: 10, timeWindow: '1 minute' } },
-}, handler)
+app.post('/auth/register', {
+  config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+}, registerHandler)
+
+app.post('/auth/forgot-password', {
+  config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
+}, forgotPasswordHandler)
+
+// CRUD endpoints - balance usability and protection
+app.post('/characters', {
+  config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
+}, createCharacterHandler)
+
+app.put('/characters/:id', {
+  config: { rateLimit: { max: 50, timeWindow: '1 minute' } },
+}, updateCharacterHandler)
+
+app.delete('/characters/:id', {
+  config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
+}, deleteCharacterHandler)
+
+// Expensive endpoints - prevent resource abuse
+app.get('/search', {
+  config: { rateLimit: { max: 40, timeWindow: '1 minute' } },
+}, searchHandler)
+
+app.post('/upload', {
+  config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
+}, uploadHandler)
+
+app.post('/characters/batch', {
+  config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+}, batchHandler)
 ```
 
-Quotas (business limits)
+## Required Business Quotas
 
-- For per-user plan limits (e.g., max characters, daily uploads), enforce in application logic and return `QUOTA_EXCEEDED` (429) with reset hints.
+Application-level limits enforced in services for user plans/features.
 
-Headers
+```ts
+export async function createCharacter(data: CreateCharacterInput, userId: string) {
+  // Check user quota
+  const characterCount = await prisma.character.count({ 
+    where: { ownerId: userId } 
+  })
+  
+  const userPlan = await getUserPlan(userId)
+  if (characterCount >= userPlan.maxCharacters) {
+    throw err('QUOTA_EXCEEDED', `Character limit reached (${userPlan.maxCharacters})`, {
+      resetHint: 'Upgrade plan or delete existing characters',
+      retryAfter: null,
+    })
+  }
+  
+  return createCharacterInDb(data)
+}
+```
 
-- The plugin returns 429 with standard headers. We expose:
-  - X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
-  - Retry-After on 429 responses
+## Required Error Handling
 
-Testing
+Handle rate limit errors with proper HTTP status and retry information.
 
-- Unit-test the keyGenerator (user vs IP).
-- E2E: hit a route > limit and assert 429 + headers.
-
-Checklist
-
-- [ ] Global rate limit registered with sane defaults.
-- [ ] Auth endpoints have stricter per-route limits.
-- [ ] Expensive endpoints override limits.
-- [ ] 429 maps to `RATE_LIMIT_EXCEEDED` in error handler (already covered).
+```ts
+// In global error handler
+app.setErrorHandler((error, request, reply) => {
+  if (error.statusCode === 429) {
+    return reply.code(429).send({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests',
+        status: 429,
+        retryAfter: error.retryAfter,
+      },
+      requestId: request.id,
+      timestamp: new Date().toISOString(),
+    })
+  }
+  // ... other error handling
+})
+```

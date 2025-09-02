@@ -1,42 +1,79 @@
-# Secrets and configuration
+# AI Secrets & Config
 
-Goals
+Essential patterns for secure configuration management in Fastify + TypeScript.
 
-- Keep secrets out of code and logs.
-- Easy local development; safe production.
+## Critical Config Rules
 
-Local development
+1. **Never hardcode secrets** in source code or logs
+2. **Always validate environment variables** at startup, fail fast if missing  
+3. **Always use `.env` for local development** with `.env.example` template
+4. **Always redact secrets** from logs and error responses
 
-- Use a `.env` file loaded by `dotenv`.
-- Do not commit `.env`.
-- Provide `.env.example` with non-sensitive placeholders.
+## Required Environment Validation (Example)
 
-Production
+```ts
+import { Type, type Static } from '@sinclair/typebox'
 
-- Prefer environment variables injected by the platform (container/VM). Avoid mounting `.env` files with real secrets.
-- For multi-env setups or rotation, consider a secret manager (AWS Secrets Manager, GCP Secret Manager, Vault). Cache values in memory with short TTL.
+export const ConfigSchema = Type.Object({
+  NODE_ENV: Type.Union([Type.Literal('development'), Type.Literal('production'), Type.Literal('test')]),
+  PORT: Type.Integer({ minimum: 1, maximum: 65535, default: 3000 }),
+  DATABASE_URL: Type.String({ minLength: 1 }),
+  JWT_SECRET: Type.String({ minLength: 32 }),
+  CORS_ORIGINS: Type.String({ default: 'http://localhost:3000' }),
+})
 
-Validation at startup
+export type Config = Static<typeof ConfigSchema>
 
-- Create a config module that reads all required env vars and validates them (TypeBox/Zod/simple checks). Fail fast if missing/invalid.
+export function loadConfig(): Config {
+  const rawConfig = {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+    DATABASE_URL: process.env.DATABASE_URL,
+    JWT_SECRET: process.env.JWT_SECRET,
+    CORS_ORIGINS: process.env.CORS_ORIGINS || 'http://localhost:3000',
+  }
 
-Recommended variables (examples)
+  const result = Value.Check(ConfigSchema, rawConfig)
+  if (!result) {
+    const errors = [...Value.Errors(ConfigSchema, rawConfig)]
+    throw new Error(`Invalid config: ${errors.map(e => `${e.path}: ${e.message}`).join(', ')}`)
+  }
 
-- NODE_ENV, PORT
-- DATABASE_URL
-- JWT_SECRET (rotate periodically)
-- CORS_ORIGINS, CORS_CREDENTIALS
-- RATE_LIMIT_MAX_ANON, RATE_LIMIT_MAX_AUTH (optional overrides)
-- OAUTH_* (only if OAuth enabled)
+  return rawConfig satisfies Config
+}
+```
 
-Handling
+## Required Secrets Redaction
 
-- Never log secrets. Redact Authorization, Set-Cookie, tokens.
-- When rotating JWT secrets, support key IDs (kid) and keep old keys until all tokens expire.
+```ts
+export const logger = pino({
+  redact: {
+    paths: ['req.headers.authorization', 'password', 'token', 'JWT_SECRET', 'DATABASE_URL'],
+    remove: true,
+  },
+})
+```
 
-Checklist
+## Required Development Setup
 
-- [ ] `.env` ignored; `.env.example` present.
-- [ ] Config validated on boot; process exits if invalid.
-- [ ] Secrets are not printed or stored in logs.
-- [ ] Rotation plan for JWT and OAuth client secrets.
+```bash
+# .env.example (commit this)
+NODE_ENV=development
+PORT=3000
+DATABASE_URL=postgresql://user:password@localhost:5432/fantasy_characters_dev
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters
+CORS_ORIGINS=http://localhost:3000
+```
+
+```ts
+// Load config at startup
+import 'dotenv/config'
+export const config = loadConfig()
+```
+
+## Quick Checklist
+
+- [ ] TypeBox schema validates all config at startup
+- [ ] `.env.example` committed, `.env` in `.gitignore`  
+- [ ] Secrets redacted from logs with Pino
+- [ ] Environment variables injected in production (no `.env` files)

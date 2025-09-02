@@ -1,53 +1,98 @@
-# Observability (lightweight)
+# AI Observability
 
-Goals
+Essential patterns for basic logging and debugging in initial API development.
 
-- See problems early and debug quickly without heavy tooling.
-- Start small; add depth only when needed.
+## Critical Observability Rules
 
-Core signals
+1. **Always use structured JSON logging** with Pino and requestId correlation
+2. **Always implement basic health check** for service availability
+3. **Never log passwords or tokens** - keep other logging simple for demo/development
+4. **Always use consistent log levels** (info/warn/error mapping)
 
-- Logs (mandatory)
-  - Use Pino JSON logs with requestId and userId when present.
-  - Levels: info for normal ops, warn for 4xx auth/permissions, error for 5xx.
-  - Redact secrets and tokens.
-- Health checks (mandatory)
-  - `/api/v1/live`: process is up (no dependencies).
-  - `/api/v1/ready`: checks DB and critical integrations with short timeouts.
-- Metrics (optional, recommended)
-  - Expose `/metrics` in non-prod or behind auth. Prometheus text format.
-  - Counters: requests_total{route,status}, errors_total{code}.
-  - Gauges: up, db_pool_in_use.
-  - Summaries/Histograms: request_duration_seconds{route,method,status} (low-cardinality labels).
-- Tracing (optional)
-  - Use W3C Trace-Context headers (traceparent). Propagate if present.
-  - Add minimal spans around external calls if using OpenTelemetry.
+## Required Structured Logging
 
-Implementation hints
+Simple Pino setup for development and demo - minimal redaction, focus on request correlation.
 
-- Fastify logger already injects requestId; use `req.id` in structured logs.
-- Wrap DB/external calls with short timeouts and log duration on slow (>500ms).
-- Add a global onError hook to log failures with code, status, requestId.
+```ts
+import pino from 'pino'
 
-Redaction policy
+export const logger = pino({
+  level: process.env.LOG_LEVEL || 'info',
+  // Minimal redaction - just sensitive auth data
+  redact: ['req.body.password', 'req.headers.authorization'],
+})
 
-- Redact: Authorization, Set-Cookie, password, token, refreshToken, email (optional mask), any secret env.
+// Fastify integration
+const app = fastify({ 
+  logger,
+  genReqId: () => generateUUIDv7(), // Consistent with other IDs
+})
+```
 
-Dashboards (starter)
+## Required Health Check
 
-- Requests per minute, error rate (4xx vs 5xx), p95 latency.
-- Top endpoints by latency and by errors.
-- DB pool saturation and slow queries count (if available from driver/Prisma logs).
+Single health endpoint - simple database connectivity check for basic monitoring.
 
-Alerting (when ready)
+```ts
+app.get('/health', async (req, reply) => {
+  try {
+    // Quick DB check
+    await prisma.$queryRaw`SELECT 1`
+    
+    return reply.code(200).send({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+    })
+  } catch (error) {
+    return reply.code(503).send({
+      status: 'error',
+      error: 'Database connection failed',
+      timestamp: new Date().toISOString(),
+    })
+  }
+})
+```
 
-- Page on sustained 5xx rate or p95 > target for 5+ minutes.
-- Ticket on readiness check failing.
+## Required Error Logging
 
-Checklist
+Centralize error handling with appropriate log levels and structured error information.
 
-- [ ] Logs are structured and redacted.
-- [ ] Live/ready endpoints implemented with timeouts.
-- [ ] Optional /metrics behind auth or disabled in prod by default.
-- [ ] Trace headers propagated if present.
-- [ ] Basic dashboards configured.
+```ts
+// Global error handler with structured logging
+app.setErrorHandler((error, request, reply) => {
+  const statusCode = error.statusCode || 500
+  const isServerError = statusCode >= 500
+  
+  // Log server errors, warn for auth issues, skip client validation errors
+  if (isServerError) {
+    request.log.error({
+      error: {
+        message: error.message,
+        stack: error.stack,
+        code: error.code,
+      },
+      requestId: request.id,
+      userId: (request as any).user?.id,
+      url: request.url,
+      method: request.method,
+    }, 'Server error occurred')
+  } else if ([401, 403].includes(statusCode)) {
+    request.log.warn({
+      errorCode: error.code,
+      requestId: request.id,
+      url: request.url,
+    }, 'Authentication/authorization error')
+  }
+  
+  // Return error response (see error-handling.md)
+  return reply.code(statusCode).send({
+    error: {
+      code: error.code || 'INTERNAL_SERVER_ERROR',
+      message: isServerError ? 'Internal server error' : error.message,
+      status: statusCode,
+    },
+    requestId: request.id,
+    timestamp: new Date().toISOString(),
+  })
+})
+```

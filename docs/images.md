@@ -1,48 +1,173 @@
-# Image processing
+# AI Image Processing
 
-Policy
+Essential patterns for handling image uploads and processing with Sharp + Fastify.
 
-- All uploaded photos are converted to WebP.
-- Target size: 350px width x 450px height.
-- Maintain aspect ratio with smart fit: cover with center crop to 350x450, or pad with transparent background if cropping is unacceptable for that asset type.
-- Strip metadata (EXIF) by default.
+## Critical Image Rules
 
-Accepted inputs
+1. **Always convert uploads to WebP** for consistent format and smaller size
+2. **Always validate file type and size** before processing
+3. **Always use server-generated IDs** - never trust user filenames
+4. **Always strip metadata** for privacy and security
+5. **Use ID as filename** for security - no original filenames stored
 
-- MIME types: image/jpeg, image/png, image/webp.
-- Max size: 5 MB per file (adjust if needed; see security docs for bodyLimit).
-- Max dimensions accepted: up to 4096 x 4096; larger images are downscaled before processing.
+## Required Image Upload Handler
 
-Processing pipeline (Sharp)
+Handle multipart file uploads with validation, WebP conversion and database storage.
 
-- Decode → resize to 350x450 (cover) → webp({ quality: 80 }) → output buffer or stream.
-- If transparency is present (PNG/WebP), keep it.
+```ts
+import multipart from '@fastify/multipart'
+import sharp from 'sharp'
 
-Storage
+// Register multipart support
+await app.register(multipart, {
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max
+  },
+})
 
-- Store final files as `<id>.webp`.
-- Keep original uploads only if there’s a clear business need; otherwise discard to save space and simplify privacy.
-- Do not trust user file names; generate IDs (UUID/CUID) server-side.
+app.post('/api/v1/images', async (req, reply) => {
+  const file = await req.file()
+  
+  if (!file) {
+    throw err('VALIDATION_ERROR', 'No file provided')
+  }
+  
+  // Validate MIME type
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+  if (!allowedTypes.includes(file.mimetype)) {
+    throw err('INVALID_FILE_FORMAT', 'Only JPEG, PNG, and WebP files are allowed')
+  }
+  
+  try {
+    // Process image with Sharp
+    const processedBuffer = await sharp(await file.toBuffer())
+      .resize(350, 450, { fit: 'cover', position: 'center' })
+      .webp({ quality: 80 })
+      .toBuffer()
+    
+    // Save image directly to database
+    const image = await prisma.image.create({
+      data: {
+        blob: processedBuffer,
+        mimeType: 'image/webp',
+        size: processedBuffer.length,
+        width: 350,
+        height: 450,
+        ownerId: (req as any).user?.id,
+      },
+    })
+    
+    return reply.code(201).send(success(image, req.id))
+  } catch (error) {
+    throw err('UPLOAD_FAILED', 'Failed to process image')
+  }
+})
+```
 
-HTTP delivery
+## Required Image Serving Handler
 
-- Content-Type: image/webp.
-- Cache-Control: public, max-age=31536000, immutable (filenames must be versioned by ID).
-- ETag: enabled (via @fastify/etag or static file server).
+Serve images directly from database with proper caching headers.
 
-Endpoint contract (example)
+```ts
+app.get('/api/v1/images/:id/file', async (req, reply) => {
+  const { id } = req.params
+  
+  // Get image from database with binary data
+  const image = await prisma.image.findUnique({ 
+    where: { id },
+    select: { blob: true, mimeType: true, size: true }
+  })
+  
+  if (!image) {
+    throw err('NOT_FOUND', 'Image not found')
+  }
+  
+  // Set caching headers
+  reply.header('Content-Type', image.mimeType)
+  reply.header('Cache-Control', 'public, max-age=31536000, immutable')
+  reply.header('Content-Length', image.size)
+  
+  return reply.send(image.blob)
+})
+```
 
-- Upload: `POST /api/v1/images` (multipart, field name `file`). Returns image id and metadata.
-- Download: `GET /api/v1/images/:id/file` → returns `image/webp` 350x450.
+## Required Image Schema
 
-Errors
+TypeBox schemas for image upload and metadata.
 
-- INVALID_FILE_FORMAT, FILE_TOO_LARGE, FILE_CORRUPTED, UPLOAD_FAILED (see error-handling).
+```ts
+import { Type } from '@sinclair/typebox'
 
-Checklist
+export const ImageSchema = Type.Object({
+  id: Type.String({ format: 'uuid' }),
+  blob: Type.Any(), // Binary data - excluded from API responses
+  description: Type.Optional(Type.String()),
+  size: Type.Number(),
+  mimeType: Type.String(),
+  width: Type.Number(),
+  height: Type.Number(),
+  ownerId: Type.Optional(Type.String({ format: 'uuid' })),
+  visibility: Type.Union([
+    Type.Literal('PUBLIC'),
+    Type.Literal('PRIVATE'), 
+    Type.Literal('HIDDEN')
+  ]),
+  createdAt: Type.String({ format: 'date-time' }),
+  updatedAt: Type.String({ format: 'date-time' }),
+}, { $id: 'ImageSchema' })
 
-- [ ] Input mime/size validated before processing.
-- [ ] Resize to 350x450 and convert to WebP.
-- [ ] Strip EXIF/metadata by default.
-- [ ] Random filenames; originals discarded unless explicitly required.
-- [ ] Cache headers set for GET of image files.
+// API response schema (without blob data)
+export const ImageMetadataSchema = Type.Omit(ImageSchema, ['blob'])
+
+export const ImageUploadResponse = Type.Object({
+  data: ImageMetadataSchema,
+  requestId: Type.String(),
+  timestamp: Type.String({ format: 'date-time' }),
+})
+
+export type Image = Static<typeof ImageSchema>
+export type ImageMetadata = Static<typeof ImageMetadataSchema>
+```
+
+## Required Prisma Model
+
+Database model for storing images as BLOB data.
+
+```prisma
+model Image {
+  // Core fields
+  id          String  @id @db.Uuid @default(dbgenerated("uuid_generate_v7()"))
+  blob        Bytes // Binary data for the image
+  description String? // Optional description of the image
+  size        Int // Size in bytes
+  mimeType    String // e.g., "image/png", "image/jpeg"
+  width       Int // Image width in pixels
+  height      Int // Image height in pixels
+
+  // Owner
+  ownerId String?
+  owner   User?   @relation("UserImages", fields: [ownerId], references: [id], onDelete: SetNull)
+
+  // Optional profile picture relation
+  userProfile User? @relation("UserProfilePicture")
+
+  // Relations
+  characters Character[] @relation("CharacterImages")
+  races      Race[]      @relation("RaceImages")
+  archetypes Archetype[] @relation("ArchetypeImages")
+  skills     Skill[]     @relation("SkillImages")
+  items      Item[]      @relation("ItemImages")
+  perks      Perk[]      @relation("PerkImages")
+
+  // Visibility and metadata
+  visibility Visibility @default(PUBLIC)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([ownerId])
+  @@index([visibility])
+  @@index([ownerId, visibility, createdAt(sort: Desc), id(sort: Desc)], name: "idx_images_owner_visibility_recent")
+  @@index([visibility, createdAt(sort: Desc), id(sort: Desc)], name: "idx_images_visibility_recent")
+  @@map("images")
+}
+```

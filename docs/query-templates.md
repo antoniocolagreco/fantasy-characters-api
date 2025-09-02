@@ -1,4 +1,4 @@
-# AI Query & Validation Essentials
+# AI Query & Validation
 
 Essential patterns for schema-first query handling and validation using TypeBox.
 

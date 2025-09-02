@@ -3,8 +3,7 @@
 ## 1. Utility / health checks
 
 ```http
-GET /api/v1/live     # Process is alive
-GET /api/v1/ready    # Ready: performs DB and external service checks
+GET /api/health   # Health check with database connectivity
 ```
 
 ## 2. Users

@@ -1,77 +1,79 @@
-# Health endpoints and schemas
+# AI Health Check
 
-Goal
+Essential patterns for basic API health monitoring with a single endpoint.
 
-- Define consistent shapes for liveness and readiness. Keep payloads minimal and cache-safe.
+## Critical Health Check Rules
 
-Endpoints
+1. **Always implement single health endpoint** at `/health`
+2. **Always check database connectivity** with short timeout
+3. **Always return consistent JSON format** with status and timestamp
+4. **Never cache health responses** - use `Cache-Control: no-store`
 
-- GET `/api/v1/live` — process is running; no external checks.
-- GET `/api/v1/ready` — checks DB and critical integrations; short timeouts.
+## Required Health Endpoint
 
-Schemas (TypeBox)
+Simple health check with database connectivity test for monitoring and load balancers.
 
 ```ts
-// src/features/health/health.schema.ts
+app.get('/health', async (req, reply) => {
+  try {
+    // Quick DB check with timeout
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Timeout')), 3000)
+      ),
+    ])
+    
+    reply.header('Cache-Control', 'no-store')
+    return reply.code(200).send({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    })
+  } catch (error) {
+    reply.header('Cache-Control', 'no-store')
+    return reply.code(503).send({
+      status: 'error',
+      error: 'Database connection failed',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    })
+  }
+})
+```
+
+## Required Health Schema
+
+TypeBox schema for consistent health response validation.
+
+```ts
 import { Type } from '@sinclair/typebox'
 
-export const LiveResponse = Type.Object({
-  status: Type.Literal('ok'),
-  uptime: Type.Number(), // seconds
+export const HealthResponseSchema = Type.Object({
+  status: Type.Union([Type.Literal('ok'), Type.Literal('error')]),
   timestamp: Type.String({ format: 'date-time' }),
-}, { $id: 'LiveResponse' })
+  uptime: Type.Number(),
+  error: Type.Optional(Type.String()),
+}, { $id: 'HealthResponseSchema' })
 
-export const ReadyResponse = Type.Object({
-  status: Type.Union([Type.Literal('ok'), Type.Literal('degraded')]),
-  checks: Type.Object({
-    db: Type.Union([Type.Literal('up'), Type.Literal('down')]),
-    external: Type.Optional(Type.Union([Type.Literal('up'), Type.Literal('down')]))
-  }),
-  version: Type.Optional(Type.String()),
-  timestamp: Type.String({ format: 'date-time' }),
-}, { $id: 'ReadyResponse' })
+export type HealthResponse = Static<typeof HealthResponseSchema>
 ```
 
-Routes (example)
+## Required Route Registration
+
+Register health endpoint with proper schema validation and documentation.
 
 ```ts
-// src/features/health/health.routes.ts
-import type { FastifyPluginAsync } from 'fastify'
-import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
-import * as S from './health.schema'
-
-export const healthRoutes: FastifyPluginAsync = async (app) => {
-  app.withTypeProvider<TypeBoxTypeProvider>()
-
-  app.get('/live', {
-    schema: { tags: ['health'], response: { 200: S.LiveResponse } }
-  }, async (req, reply) => {
-    reply.header('Cache-Control', 'no-store')
-    return { status: 'ok', uptime: process.uptime(), timestamp: new Date().toISOString() }
-  })
-
-  app.get('/ready', {
-    schema: { tags: ['health'], response: { 200: S.ReadyResponse } }
-  }, async (req, reply) => {
-    const start = Date.now()
-    const checks = { db: 'down' as const }
-    try {
-      await app.prisma.$queryRaw`SELECT 1`
-      checks.db = 'up'
-    } catch {}
-    const status = checks.db === 'up' ? 'ok' : 'degraded'
-    reply.header('Cache-Control', 'no-store')
-    return { status, checks, version: process.env.APP_VERSION, timestamp: new Date().toISOString() }
-  })
-}
+app.get('/health', {
+  schema: {
+    tags: ['health'],
+    description: 'Health check endpoint for monitoring and load balancers',
+    response: {
+      200: HealthResponseSchema,
+      503: HealthResponseSchema,
+    },
+  },
+}, async (req, reply) => {
+  // Implementation above
+})
 ```
-
-OpenAPI
-
-- Register the plugin under `/api/v1` base so the above routes are served as `/api/v1/live` and `/api/v1/ready`.
-- No inline schemas; reuse `LiveResponse` and `ReadyResponse` via TypeBox.
-
-Notes
-
-- Keep readiness checks fast (<500 ms). Do not call slow externals here; prefer a lightweight “ping.”
-- Always set `Cache-Control: no-store`.

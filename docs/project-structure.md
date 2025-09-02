@@ -1,4 +1,4 @@
-# AI Code Generation Essentials
+# AI Code Generation
 
 ## Complete Directory Structure with Versioning
 

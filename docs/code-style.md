@@ -1,4 +1,4 @@
-# AI Code Style Essentials
+# AI Code Style
 
 ## Critical Rules for Initial Code
 
