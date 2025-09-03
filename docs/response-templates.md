@@ -238,6 +238,33 @@ app.get(
 - **204 No Content**: DELETE (no response body)
 - **4xx/5xx**: Use error envelope (see [error-handling.md](./error-handling.md))
 
+## Response Compression
+
+**Automatic compression** is handled transparently by `@fastify/compress` plugin:
+
+- **JSON/Text responses** are automatically compressed (Brotli or gzip) based on client's `Accept-Encoding` header
+- **Binary responses** (images, files) are excluded from compression to avoid overhead
+- **Headers added automatically**: `Content-Encoding`, `Vary: Accept-Encoding`
+- **Threshold**: Only responses > 1KB are compressed to skip tiny payloads
+
+```typescript
+// Plugin configuration (register early in app setup)
+await app.register(compress, {
+  global: true,
+  threshold: 1024, // Skip responses smaller than 1KB
+  customTypes: /^(text\/.*|application\/json|application\/.*\+json)$/i,
+})
+```
+
+**Client negotiation examples:**
+
+- `Accept-Encoding: br` → `Content-Encoding: br` (Brotli)
+- `Accept-Encoding: gzip` → `Content-Encoding: gzip`
+- `Accept-Encoding: identity` → No compression
+- Image endpoints → Always uncompressed regardless of Accept-Encoding
+
+**Your response helpers work unchanged** - compression happens automatically after your controller returns the response envelope.
+
 ## Critical Rules
 
 1. **Always** include `requestId` and `timestamp`
@@ -247,3 +274,4 @@ app.get(
 5. **Always** use `HTTP_STATUS` constants instead of magic numbers
 6. **Always** use `$ref: 'ErrorResponseSchema#'` for error responses
 7. **Always** use `created()` helper for 201 responses with Location header
+8. **Always** register compression plugin before routes for automatic JSON/text compression
