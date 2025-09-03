@@ -2,7 +2,7 @@
 /* eslint-disable no-console */
 
 import { PrismaClient, Rarity, Role, Sex, Slot, Visibility } from '@prisma/client'
-import { generateUUIDv7 } from '../../shared/utils/uuid'
+import { generateUUIDv7 } from '../../shared/utils'
 
 const prisma = new PrismaClient()
 

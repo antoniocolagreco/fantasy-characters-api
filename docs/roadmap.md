@@ -147,7 +147,8 @@ Duration: 3-5 days
 
 Duration: 4-6 days
 
-Cross-links: see [feature-dependencies.md](./feature-dependencies.md) — User is the base layer for Auth and RBAC.
+Cross-links: see [feature-dependencies.md](./feature-dependencies.md) — User is
+the base layer for Auth and RBAC.
 
 - [ ] 6.01 Scaffold user management feature structure
 - [ ] 6.02 Create User and RefreshToken schemas (types derived from schemas)
@@ -172,7 +173,8 @@ Cross-links: see [feature-dependencies.md](./feature-dependencies.md) — User i
 
 Duration: 4-5 days
 
-Cross-links: [feature-dependencies.md](./feature-dependencies.md), [authentication.md](./authentication.md)
+Cross-links: [feature-dependencies.md](./feature-dependencies.md),
+[authentication.md](./authentication.md)
 
 - [x] 7.01 Scaffold authentication feature structure
 - [x] 7.02 Create authentication schemas (types derived from schemas)
@@ -203,13 +205,15 @@ Cross-links: [feature-dependencies.md](./feature-dependencies.md), [authenticati
 
 Duration: 2-3 days
 
-Cross-links: [feature-dependencies.md](./feature-dependencies.md), [authorization.md](./authorization.md)
+Cross-links: [feature-dependencies.md](./feature-dependencies.md),
+[authorization.md](./authorization.md)
 
 - [x] 8.01 Implement RBAC: policy function, ownership resolver, and preHandler
       per [authorization.md](./authorization.md)
 - [ ] 8.02 Apply RBAC checks in routes (preHandler)
 - [ ] 8.03 Enforce RBAC again in services (defense in depth)
-- [ ] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests exist; middleware/route tests pending)
+- [ ] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests
+      exist; middleware/route tests pending)
 - [ ] 8.05 Update authorization docs and note protected endpoints in
       [endpoints.md](./endpoints.md)
 
@@ -250,8 +254,8 @@ Duration: 5-7 days
 - [ ] 10.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
 - [ ] 10.10 Implement `GET /api/v1/images/stats` - Image statistics
 - [ ] 10.11 Implement `POST /api/v1/images` - Upload new image
-- [ ] 10.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace
-      file
+- [ ] 10.12 Implement `PUT /api/v1/images/:id` - Update image metadata or
+      replace file
 - [ ] 10.13 Implement `DELETE /api/v1/images/:id` - Delete image
 - [ ] 10.14 Implement error handling for all image operations
 - [ ] 10.15 Write comprehensive tests (80%+ coverage)

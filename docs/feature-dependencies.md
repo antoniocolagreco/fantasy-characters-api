@@ -28,7 +28,8 @@ user.service ✗ auth.service // NO!
 **Authentication**: middleware verifies JWT → calls `auth.service`
 **Authorization**: RBAC middleware checks permissions → calls `rbac.service`
 
-Controllers and services remain clean, without knowing anything about tokens or permissions.
+Controllers and services remain clean, without knowing anything about tokens or
+permissions.
 
 ## Example Login + Authorization Flow
 
@@ -43,8 +44,8 @@ Controllers and services remain clean, without knowing anything about tokens or 
 
 - **User feature** → user data management (base)
 - **Auth feature** → login, tokens, credential verification (depends on User)
-- **RBAC feature** → role/permission management, called by middleware (depends on
-  Auth)
+- **RBAC feature** → role/permission management, called by middleware (depends
+  on Auth)
 - **Other features** → Characters, Items, etc. (protected by RBAC)
 
 ## Implementation Order

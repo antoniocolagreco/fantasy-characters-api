@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest'
-import { prisma } from '@/infrastructure/database/prisma.service'
+import { prisma } from '@/infrastructure/database'
 
 describe('Prisma Service', () => {
     test('should export prisma client instance', () => {

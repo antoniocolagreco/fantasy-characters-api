@@ -1,5 +1,5 @@
-import type { AuthenticatedUser } from '../../features/auth/auth.schema'
 import type { PrismaClient } from '@prisma/client'
+import type { AuthenticatedUser } from '../../features/auth'
 
 declare module 'fastify' {
     interface FastifyRequest {

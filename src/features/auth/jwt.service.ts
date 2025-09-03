@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { generateUUIDv7 } from '../../shared/utils/uuid'
+import { generateUUIDv7 } from '../../shared/utils'
 import type { JwtClaims, AuthenticatedUser, JwtConfig } from './auth.schema'
 
 /**
