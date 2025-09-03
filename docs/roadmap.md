@@ -82,27 +82,19 @@ Duration: 4-6 days
 
 ---
 
-## 3 🔒 Security & Authorization Foundation (Dependencies: M1, M2)
+## 3 �️ Security Baseline (Dependencies: M1, M2)
 
-Duration: 4-6 days
+Duration: 2-3 days
 
-- [ ] 3.01 Implement JWT token system following
-      [authentication.md](./authentication.md)
-- [ ] 3.02 Implement password hashing with Argon2
-- [ ] 3.03 Setup JWT middleware for route protection
-- [ ] 3.04 Configure Helmet security headers
-- [ ] 3.05 Setup CORS configuration following [cors.md](./cors.md)
-- [ ] 3.06 Implement rate limiting system following
+- [x] 3.01 Configure Helmet security headers
+- [x] 3.02 Setup CORS configuration following [cors.md](./cors.md)
+- [x] 3.03 Implement rate limiting system following
       [rate-limiting.md](./rate-limiting.md)
-- [ ] 3.07 Create input sanitization middleware (use isomorphic-dompurify for
+- [x] 3.04 Create input sanitization middleware (use isomorphic-dompurify for
       HTML fields only; for plain strings prefer schema validation +
       normalization; avoid destructive sanitization)
-- [ ] 3.08 Setup request validation pipeline
-- [ ] 3.09 Implement RBAC: policy function, ownership resolver, and preHandler
-      per [authorization.md](./authorization.md)
-- [ ] 3.10 Enforce RBAC again in services (defense in depth) and add tests
-- [ ] 3.11 Write comprehensive security and authorization tests (80%+ coverage
-      target)
+- [x] 3.05 Setup request validation pipeline
+- [x] 3.06 Write comprehensive security tests (80%+ coverage target)
 
 ---
 
@@ -155,6 +147,8 @@ Duration: 3-5 days
 
 Duration: 4-6 days
 
+Cross-links: see [feature-dependencies.md](./feature-dependencies.md) — User is the base layer for Auth and RBAC.
+
 - [ ] 6.01 Scaffold user management feature structure
 - [ ] 6.02 Create User and RefreshToken schemas (types derived from schemas)
 - [ ] 6.03 Implement User repository layer
@@ -178,250 +172,272 @@ Duration: 4-6 days
 
 Duration: 4-5 days
 
-- [ ] 7.01 Scaffold authentication feature structure
-- [ ] 7.02 Create authentication schemas (types derived from schemas)
-- [ ] 7.03 Implement authentication service layer
-- [ ] 7.04 Implement `POST /api/v1/auth/register` - Register new user
-- [ ] 7.05 Implement `POST /api/v1/auth/login` - User login
-- [ ] 7.06 Implement `POST /api/v1/auth/logout` - User logout
-- [ ] 7.07 Implement `POST /api/v1/auth/refresh` - Refresh JWT token with
-      rotation (move from M3)
-- [ ] 7.08 Implement `GET /api/v1/auth/profile` - Get current user profile
-- [ ] 7.09 Implement `PUT /api/v1/auth/profile` - Update user profile
-- [ ] 7.10 Implement `PUT /api/v1/auth/password` - Change password
-- [ ] 7.11 Implement error handling for all auth operations
-- [ ] 7.12 Write comprehensive auth tests (80%+ coverage)
-- [ ] 7.13 Update OpenAPI docs for all authentication endpoints (schemas,
+Cross-links: [feature-dependencies.md](./feature-dependencies.md), [authentication.md](./authentication.md)
+
+- [x] 7.01 Scaffold authentication feature structure
+- [x] 7.02 Create authentication schemas (types derived from schemas)
+- [x] 7.03 Implement JWT token system following
+      [authentication.md](./authentication.md)
+- [x] 7.04 Implement password hashing with Argon2
+- [x] 7.05 Setup JWT middleware for route protection
+- [ ] 7.06 Implement authentication service layer
+- [ ] 7.07 Implement `POST /api/v1/auth/register` - Register new user
+- [ ] 7.08 Implement `POST /api/v1/auth/login` - User login
+- [ ] 7.09 Implement `POST /api/v1/auth/logout` - User logout
+- [ ] 7.10 Implement `POST /api/v1/auth/refresh` - Refresh JWT token with
+      rotation
+- [ ] 7.11 Implement `GET /api/v1/auth/profile` - Get current user profile
+- [ ] 7.12 Implement `PUT /api/v1/auth/profile` - Update user profile
+- [ ] 7.13 Implement `PUT /api/v1/auth/password` - Change password
+- [ ] 7.14 Implement error handling for all auth operations
+- [ ] 7.15 Write comprehensive auth tests (80%+ coverage)
+- [ ] 7.16 Update OpenAPI docs for all authentication endpoints (schemas,
       params, responses)
-  - [ ] 7.14 Gate OAuth providers behind `OAUTH_ENABLED` flag and env vars (see
+  - [ ] 7.17 Gate OAuth providers behind `OAUTH_ENABLED` flag and env vars (see
         [authentication.md](./authentication.md)); initial providers: GitHub,
         Google
 
 ---
 
-## 8 🔑 OAuth2 Integration (Dependencies: M1-M7)
+## 8 🛂 RBAC Authorization (Dependencies: M1-M7)
+
+Duration: 2-3 days
+
+Cross-links: [feature-dependencies.md](./feature-dependencies.md), [authorization.md](./authorization.md)
+
+- [x] 8.01 Implement RBAC: policy function, ownership resolver, and preHandler
+      per [authorization.md](./authorization.md)
+- [ ] 8.02 Apply RBAC checks in routes (preHandler)
+- [ ] 8.03 Enforce RBAC again in services (defense in depth)
+- [ ] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests exist; middleware/route tests pending)
+- [ ] 8.05 Update authorization docs and note protected endpoints in
+      [endpoints.md](./endpoints.md)
+
+---
+
+## 9 🔑 OAuth2 Integration (Dependencies: M1-M7)
 
 Duration: 3-5 days
 
-- [ ] 8.01 Scaffold OAuth2 feature structure
-- [ ] 8.02 Create OAuth2 schemas (types derived from schemas)
-- [ ] 8.03 Implement OAuth2 service layer
-- [ ] 8.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to
+- [ ] 9.01 Scaffold OAuth2 feature structure
+- [ ] 9.02 Create OAuth2 schemas (types derived from schemas)
+- [ ] 9.03 Implement OAuth2 service layer
+- [ ] 9.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to
       provider
-- [ ] 8.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle
+- [ ] 9.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle
       callback
-- [ ] 8.06 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
-- [ ] 8.07 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
-- [ ] 8.08 Implement error handling for OAuth operations
-- [ ] 8.09 Write comprehensive OAuth tests (80%+ coverage)
-- [ ] 8.10 Update OpenAPI docs for all OAuth endpoints (schemas, params,
+- [ ] 9.06 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
+- [ ] 9.07 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
+- [ ] 9.08 Implement error handling for OAuth operations
+- [ ] 9.09 Write comprehensive OAuth tests (80%+ coverage)
+- [ ] 9.10 Update OpenAPI docs for all OAuth endpoints (schemas, params,
       responses)
 
 ---
 
-## 9 🖼️ Image Processing (Dependencies: M1-M8)
+## 10 🖼️ Image Processing (Dependencies: M1-M8)
 
 Duration: 5-7 days
 
-- [ ] 9.01 Scaffold image management feature structure
-- [ ] 9.02 Create Image schemas (types derived from schemas)
-- [ ] 9.03 Implement Image repository layer
-- [ ] 9.04 Create image processing service with Sharp
-- [ ] 9.05 Implement WebP conversion pipeline
-- [ ] 9.06 Create image validation and security
-- [ ] 9.07 Implement `GET /api/v1/images` - List image metadata
-- [ ] 9.08 Implement `GET /api/v1/images/:id` - Get image metadata by ID
-- [ ] 9.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
-- [ ] 9.10 Implement `GET /api/v1/images/stats` - Image statistics
-- [ ] 9.11 Implement `POST /api/v1/images` - Upload new image
-- [ ] 9.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace
+- [ ] 10.01 Scaffold image management feature structure
+- [ ] 10.02 Create Image schemas (types derived from schemas)
+- [ ] 10.03 Implement Image repository layer
+- [ ] 10.04 Create image processing service with Sharp
+- [ ] 10.05 Implement WebP conversion pipeline
+- [ ] 10.06 Create image validation and security
+- [ ] 10.07 Implement `GET /api/v1/images` - List image metadata
+- [ ] 10.08 Implement `GET /api/v1/images/:id` - Get image metadata by ID
+- [ ] 10.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
+- [ ] 10.10 Implement `GET /api/v1/images/stats` - Image statistics
+- [ ] 10.11 Implement `POST /api/v1/images` - Upload new image
+- [ ] 10.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace
       file
-- [ ] 9.13 Implement `DELETE /api/v1/images/:id` - Delete image
-- [ ] 9.14 Implement error handling for all image operations
-- [ ] 9.15 Write comprehensive tests (80%+ coverage)
-- [ ] 9.16 Update OpenAPI docs for all image endpoints (schemas, params,
+- [ ] 10.13 Implement `DELETE /api/v1/images/:id` - Delete image
+- [ ] 10.14 Implement error handling for all image operations
+- [ ] 10.15 Write comprehensive tests (80%+ coverage)
+- [ ] 10.16 Update OpenAPI docs for all image endpoints (schemas, params,
       responses)
 
 ---
 
-## 10 🏷️ Tags System (Dependencies: M1-M9)
+## 11 🏷️ Tags System (Dependencies: M1-M10)
 
 Duration: 2-3 days
 
-- [ ] 10.01 Scaffold tags feature structure
-- [ ] 10.02 Create Tag schemas (types derived from schemas)
-- [ ] 10.03 Implement Tag repository layer
-- [ ] 10.04 Create tag service layer
-- [ ] 10.05 Implement `GET /api/v1/tags` - List tags
-- [ ] 10.06 Implement `GET /api/v1/tags/:id` - Get tag by ID
-- [ ] 10.07 Implement `GET /api/v1/tags/stats` - Tag statistics
-- [ ] 10.08 Implement `POST /api/v1/tags` - Create tag
-- [ ] 10.09 Implement `PUT /api/v1/tags/:id` - Update tag
-- [ ] 10.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
-- [ ] 10.11 Implement error handling for all tag operations
-- [ ] 10.12 Write comprehensive tests (80%+ coverage)
-- [ ] 10.13 Update OpenAPI docs for all tag endpoints (schemas, params,
-      responses)
-
----
-
-## 11 ⚡ Skills System (Dependencies: M1-M10)
-
-Duration: 2-3 days
-
-- [ ] 11.01 Scaffold skills feature structure
-- [ ] 11.02 Create Skill schemas (types derived from schemas)
-- [ ] 11.03 Implement Skill repository layer
-- [ ] 11.04 Create skill service layer
-- [ ] 11.05 Implement `GET /api/v1/skills` - List skills
-- [ ] 11.06 Implement `GET /api/v1/skills/:id` - Get skill by ID
-- [ ] 11.07 Implement `GET /api/v1/skills/stats` - Skill statistics
-- [ ] 11.08 Implement `POST /api/v1/skills` - Create skill
-- [ ] 11.09 Implement `PUT /api/v1/skills/:id` - Update skill
-- [ ] 11.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
-- [ ] 11.11 Implement error handling for all skill operations
+- [ ] 11.01 Scaffold tags feature structure
+- [ ] 11.02 Create Tag schemas (types derived from schemas)
+- [ ] 11.03 Implement Tag repository layer
+- [ ] 11.04 Create tag service layer
+- [ ] 11.05 Implement `GET /api/v1/tags` - List tags
+- [ ] 11.06 Implement `GET /api/v1/tags/:id` - Get tag by ID
+- [ ] 11.07 Implement `GET /api/v1/tags/stats` - Tag statistics
+- [ ] 11.08 Implement `POST /api/v1/tags` - Create tag
+- [ ] 11.09 Implement `PUT /api/v1/tags/:id` - Update tag
+- [ ] 11.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
+- [ ] 11.11 Implement error handling for all tag operations
 - [ ] 11.12 Write comprehensive tests (80%+ coverage)
-- [ ] 11.13 Update OpenAPI docs for all skill endpoints (schemas, params,
+- [ ] 11.13 Update OpenAPI docs for all tag endpoints (schemas, params,
       responses)
 
 ---
 
-## 12 🎯 Perks System (Dependencies: M1-M11)
+## 12 ⚡ Skills System (Dependencies: M1-M11)
 
 Duration: 2-3 days
 
-- [ ] 12.01 Scaffold perks feature structure
-- [ ] 12.02 Create Perk schemas (types derived from schemas)
-- [ ] 12.03 Implement Perk repository layer
-- [ ] 12.04 Create perk service layer
-- [ ] 12.05 Implement `GET /api/v1/perks` - List perks
-- [ ] 12.06 Implement `GET /api/v1/perks/:id` - Get perk by ID
-- [ ] 12.07 Implement `GET /api/v1/perks/stats` - Perk statistics
-- [ ] 12.08 Implement `POST /api/v1/perks` - Create perk
-- [ ] 12.09 Implement `PUT /api/v1/perks/:id` - Update perk
-- [ ] 12.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
-- [ ] 12.11 Implement error handling for all perk operations
+- [ ] 12.01 Scaffold skills feature structure
+- [ ] 12.02 Create Skill schemas (types derived from schemas)
+- [ ] 12.03 Implement Skill repository layer
+- [ ] 12.04 Create skill service layer
+- [ ] 12.05 Implement `GET /api/v1/skills` - List skills
+- [ ] 12.06 Implement `GET /api/v1/skills/:id` - Get skill by ID
+- [ ] 12.07 Implement `GET /api/v1/skills/stats` - Skill statistics
+- [ ] 12.08 Implement `POST /api/v1/skills` - Create skill
+- [ ] 12.09 Implement `PUT /api/v1/skills/:id` - Update skill
+- [ ] 12.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
+- [ ] 12.11 Implement error handling for all skill operations
 - [ ] 12.12 Write comprehensive tests (80%+ coverage)
-- [ ] 12.13 Update OpenAPI docs for all perk endpoints (schemas, params,
+- [ ] 12.13 Update OpenAPI docs for all skill endpoints (schemas, params,
       responses)
 
 ---
 
-## 13 🧬 Races System (Dependencies: M1-M12)
+## 13 🎯 Perks System (Dependencies: M1-M12)
 
 Duration: 2-3 days
 
-- [ ] 13.01 Scaffold races feature structure
-- [ ] 13.02 Create Race schemas (types derived from schemas)
-- [ ] 13.03 Implement Race repository layer
-- [ ] 13.04 Create race service layer
-- [ ] 13.05 Implement `GET /api/v1/races` - List races
-- [ ] 13.06 Implement `GET /api/v1/races/:id` - Get race by ID
-- [ ] 13.07 Implement `GET /api/v1/races/stats` - Race statistics
-- [ ] 13.08 Implement `POST /api/v1/races` - Create race
-- [ ] 13.09 Implement `PUT /api/v1/races/:id` - Update race
-- [ ] 13.10 Implement `DELETE /api/v1/races/:id` - Delete race
-- [ ] 13.11 Implement error handling for all race operations
+- [ ] 13.01 Scaffold perks feature structure
+- [ ] 13.02 Create Perk schemas (types derived from schemas)
+- [ ] 13.03 Implement Perk repository layer
+- [ ] 13.04 Create perk service layer
+- [ ] 13.05 Implement `GET /api/v1/perks` - List perks
+- [ ] 13.06 Implement `GET /api/v1/perks/:id` - Get perk by ID
+- [ ] 13.07 Implement `GET /api/v1/perks/stats` - Perk statistics
+- [ ] 13.08 Implement `POST /api/v1/perks` - Create perk
+- [ ] 13.09 Implement `PUT /api/v1/perks/:id` - Update perk
+- [ ] 13.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
+- [ ] 13.11 Implement error handling for all perk operations
 - [ ] 13.12 Write comprehensive tests (80%+ coverage)
-- [ ] 13.13 Update OpenAPI docs for all race endpoints (schemas, params,
+- [ ] 13.13 Update OpenAPI docs for all perk endpoints (schemas, params,
       responses)
 
 ---
 
-## 14 🎭 Archetypes System (Dependencies: M1-M13)
+## 14 🧬 Races System (Dependencies: M1-M13)
 
 Duration: 2-3 days
 
-- [ ] 14.01 Scaffold archetypes feature structure
-- [ ] 14.02 Create Archetype schemas (types derived from schemas)
-- [ ] 14.03 Implement Archetype repository layer
-- [ ] 14.04 Create archetype service layer
-- [ ] 14.05 Implement `GET /api/v1/archetypes` - List archetypes
-- [ ] 14.06 Implement `GET /api/v1/archetypes/:id` - Get archetype by ID
-- [ ] 14.07 Implement `GET /api/v1/archetypes/stats` - Archetype statistics
-- [ ] 14.08 Implement `POST /api/v1/archetypes` - Create archetype
-- [ ] 14.09 Implement `PUT /api/v1/archetypes/:id` - Update archetype
-- [ ] 14.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
-- [ ] 14.11 Implement error handling for all archetype operations
+- [ ] 14.01 Scaffold races feature structure
+- [ ] 14.02 Create Race schemas (types derived from schemas)
+- [ ] 14.03 Implement Race repository layer
+- [ ] 14.04 Create race service layer
+- [ ] 14.05 Implement `GET /api/v1/races` - List races
+- [ ] 14.06 Implement `GET /api/v1/races/:id` - Get race by ID
+- [ ] 14.07 Implement `GET /api/v1/races/stats` - Race statistics
+- [ ] 14.08 Implement `POST /api/v1/races` - Create race
+- [ ] 14.09 Implement `PUT /api/v1/races/:id` - Update race
+- [ ] 14.10 Implement `DELETE /api/v1/races/:id` - Delete race
+- [ ] 14.11 Implement error handling for all race operations
 - [ ] 14.12 Write comprehensive tests (80%+ coverage)
-- [ ] 14.13 Update OpenAPI docs for all archetype endpoints (schemas, params,
+- [ ] 14.13 Update OpenAPI docs for all race endpoints (schemas, params,
       responses)
 
 ---
 
-## 15 🗡️ Items System (Dependencies: M1-M14)
+## 15 🎭 Archetypes System (Dependencies: M1-M14)
+
+Duration: 2-3 days
+
+- [ ] 15.01 Scaffold archetypes feature structure
+- [ ] 15.02 Create Archetype schemas (types derived from schemas)
+- [ ] 15.03 Implement Archetype repository layer
+- [ ] 15.04 Create archetype service layer
+- [ ] 15.05 Implement `GET /api/v1/archetypes` - List archetypes
+- [ ] 15.06 Implement `GET /api/v1/archetypes/:id` - Get archetype by ID
+- [ ] 15.07 Implement `GET /api/v1/archetypes/stats` - Archetype statistics
+- [ ] 15.08 Implement `POST /api/v1/archetypes` - Create archetype
+- [ ] 15.09 Implement `PUT /api/v1/archetypes/:id` - Update archetype
+- [ ] 15.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
+- [ ] 15.11 Implement error handling for all archetype operations
+- [ ] 15.12 Write comprehensive tests (80%+ coverage)
+- [ ] 15.13 Update OpenAPI docs for all archetype endpoints (schemas, params,
+      responses)
+
+---
+
+## 16 🗡️ Items System (Dependencies: M1-M15)
 
 Duration: 4-6 days
 
-- [ ] 15.01 Scaffold items feature structure
-- [ ] 15.02 Create Item schemas (types derived from schemas)
-- [ ] 15.03 Implement Item repository layer
-- [ ] 15.04 Create item service layer
-- [ ] 15.05 Implement `GET /api/v1/items` - List items
-- [ ] 15.06 Implement `GET /api/v1/items/:id` - Get item by ID
-- [ ] 15.07 Implement `GET /api/v1/items/stats` - Item statistics
-- [ ] 15.08 Implement `POST /api/v1/items` - Create item
-- [ ] 15.09 Implement `PUT /api/v1/items/:id` - Update item
-- [ ] 15.10 Implement `DELETE /api/v1/items/:id` - Delete item
-- [ ] 15.11 Implement error handling for all item operations
-- [ ] 15.12 Write comprehensive tests (80%+ coverage)
-- [ ] 15.13 Update OpenAPI docs for all item endpoints (schemas, params,
+- [ ] 16.01 Scaffold items feature structure
+- [ ] 16.02 Create Item schemas (types derived from schemas)
+- [ ] 16.03 Implement Item repository layer
+- [ ] 16.04 Create item service layer
+- [ ] 16.05 Implement `GET /api/v1/items` - List items
+- [ ] 16.06 Implement `GET /api/v1/items/:id` - Get item by ID
+- [ ] 16.07 Implement `GET /api/v1/items/stats` - Item statistics
+- [ ] 16.08 Implement `POST /api/v1/items` - Create item
+- [ ] 16.09 Implement `PUT /api/v1/items/:id` - Update item
+- [ ] 16.10 Implement `DELETE /api/v1/items/:id` - Delete item
+- [ ] 16.11 Implement error handling for all item operations
+- [ ] 16.12 Write comprehensive tests (80%+ coverage)
+- [ ] 16.13 Update OpenAPI docs for all item endpoints (schemas, params,
       responses)
 
 ---
 
-## 16 👥 Characters Management (Dependencies: M1-M15)
+## 17 👥 Characters Management (Dependencies: M1-M16)
 
 Duration: 5-7 days
 
-- [ ] 16.01 Scaffold characters feature structure
-- [ ] 16.02 Create Character schemas (types derived from schemas)
-- [ ] 16.03 Implement Character repository layer
-- [ ] 16.04 Create character service layer (prepare for derived stats later)
-- [ ] 16.05 Implement `GET /api/v1/characters` - List characters
-- [ ] 16.06 Implement `GET /api/v1/characters/:id` - Get character by ID
-- [ ] 16.07 Implement `GET /api/v1/characters/stats` - Character statistics
-- [ ] 16.08 Implement `POST /api/v1/characters` - Create character
-- [ ] 16.09 Implement `PUT /api/v1/characters/:id` - Update character
-- [ ] 16.10 Implement `DELETE /api/v1/characters/:id` - Delete character
-- [ ] 16.11 Implement error handling for all character operations
-- [ ] 16.12 Write comprehensive tests (80%+ coverage)
-- [ ] 16.13 Update OpenAPI docs for all character endpoints (schemas, params,
+- [ ] 17.01 Scaffold characters feature structure
+- [ ] 17.02 Create Character schemas (types derived from schemas)
+- [ ] 17.03 Implement Character repository layer
+- [ ] 17.04 Create character service layer (prepare for derived stats later)
+- [ ] 17.05 Implement `GET /api/v1/characters` - List characters
+- [ ] 17.06 Implement `GET /api/v1/characters/:id` - Get character by ID
+- [ ] 17.07 Implement `GET /api/v1/characters/stats` - Character statistics
+- [ ] 17.08 Implement `POST /api/v1/characters` - Create character
+- [ ] 17.09 Implement `PUT /api/v1/characters/:id` - Update character
+- [ ] 17.10 Implement `DELETE /api/v1/characters/:id` - Delete character
+- [ ] 17.11 Implement error handling for all character operations
+- [ ] 17.12 Write comprehensive tests (80%+ coverage)
+- [ ] 17.13 Update OpenAPI docs for all character endpoints (schemas, params,
       responses)
 
 ---
 
-## 17 ⚔️ Equipment System (Dependencies: M1-M16)
+## 18 ⚔️ Equipment System (Dependencies: M1-M17)
 
 Duration: 4-6 days
 
-- [ ] 17.01 Scaffold equipment feature structure
-- [ ] 17.02 Create Equipment schemas (types derived from schemas)
-- [ ] 17.03 Implement Equipment repository layer
-- [ ] 17.04 Create equipment service layer with slot validation
-- [ ] 17.05 Implement `GET /api/v1/characters/:id/equipment` - Get character
+- [ ] 18.01 Scaffold equipment feature structure
+- [ ] 18.02 Create Equipment schemas (types derived from schemas)
+- [ ] 18.03 Implement Equipment repository layer
+- [ ] 18.04 Create equipment service layer with slot validation
+- [ ] 18.05 Implement `GET /api/v1/characters/:id/equipment` - Get character
       equipment
-- [ ] 17.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character
+- [ ] 18.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character
       equipment
-- [ ] 17.07 Implement `GET /api/v1/equipment/stats` - Equipment statistics
-- [ ] 17.08 Implement error handling for all equipment operations
-- [ ] 17.09 Write comprehensive tests (80%+ coverage)
-- [ ] 17.10 Update OpenAPI docs for all equipment endpoints (schemas, params,
+- [ ] 18.07 Implement `GET /api/v1/equipment/stats` - Equipment statistics
+- [ ] 18.08 Implement error handling for all equipment operations
+- [ ] 18.09 Write comprehensive tests (80%+ coverage)
+- [ ] 18.10 Update OpenAPI docs for all equipment endpoints (schemas, params,
       responses)
 
 ---
 
-## 18 📊 Caching (Dependencies: M1-M17)
+## 19 📊 Caching (Dependencies: M1-M18)
 
 Duration: 2-3 days
 
-- [ ] 18.01 Implement ETag generation for cacheable responses following
+- [ ] 19.01 Implement ETag generation for cacheable responses following
       [caching.md](./caching.md) (exclude auth/non-cacheable endpoints)
-- [ ] 18.02 Create Cache-Control header management
-- [ ] 18.03 Add conditional request handling
-- [ ] 18.04 Implement cache invalidation strategies
-- [ ] 18.05 Write comprehensive caching tests (80%+ coverage)
-- [ ] 18.06 Document caching strategy
+- [ ] 19.02 Create Cache-Control header management
+- [ ] 19.03 Add conditional request handling
+- [ ] 19.04 Implement cache invalidation strategies
+- [ ] 19.05 Write comprehensive caching tests (80%+ coverage)
+- [ ] 19.06 Document caching strategy
 
 ---
 

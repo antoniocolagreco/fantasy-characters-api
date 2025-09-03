@@ -53,6 +53,9 @@ dependencies:
   fastify:
     specifier: ^4.28.1
     version: 4.29.1
+  fastify-plugin:
+    specifier: ^5.0.1
+    version: 5.0.1
   isomorphic-dompurify:
     specifier: ^2.15.0
     version: 2.26.0
@@ -2563,6 +2566,10 @@ packages:
 
   /fastify-plugin@4.5.1:
     resolution: {integrity: sha512-stRHYGeuqpEZTL1Ef0Ovr2ltazUT9g844X5z/zEBFLG8RYlpDiOCIG+ATvYEp+/zmc7sN29mcIMp8gvYplYPIQ==}
+    dev: false
+
+  /fastify-plugin@5.0.1:
+    resolution: {integrity: sha512-HCxs+YnRaWzCl+cWRYFnHmeRFyR5GVnJTAaCJQiYzQSDwK9MgJdyAsuL3nh0EWRCYMgQ5MeziymvmAhUHYHDUQ==}
     dev: false
 
   /fastify@4.29.1:

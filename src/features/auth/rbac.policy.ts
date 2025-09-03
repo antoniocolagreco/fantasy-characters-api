@@ -1,0 +1,98 @@
+import type { RbacContext, Action, Resource, RbacUser, UserCanOptions } from './rbac.schema'
+
+/**
+ * Core RBAC policy function that determines if a user can perform an action
+ * Based on the RBAC specification in docs/authorization.md
+ */
+export function can(ctx: RbacContext): boolean {
+    const { user, resource, action, ownerId, visibility, ownerRole, targetUserRole } = ctx
+    const role = user?.role
+
+    // 1) Anonymous users - only read PUBLIC content
+    if (!role) {
+        return action === 'read' && visibility === 'PUBLIC'
+    }
+
+    // 2) Admin - can do everything except modify other admins and manage own role
+    if (role === 'ADMIN') {
+        // Cannot modify/delete other ADMIN accounts or change their roles
+        if (
+            resource === 'users' &&
+            (action === 'update' || action === 'delete' || action === 'manage')
+        ) {
+            const targetIsAdmin = targetUserRole === 'ADMIN'
+            const actingOnSelf = !!user && !!ownerId && user.id === ownerId
+
+            // Cannot manage (change roles) even on own account
+            if (action === 'manage' && actingOnSelf) {
+                return false
+            }
+
+            // Cannot modify other admins
+            if (targetIsAdmin && !actingOnSelf) {
+                return false
+            }
+        }
+        return true
+    }
+
+    // 3) Owner - can do most things with their own content
+    const isOwner = !!user && !!ownerId && user.id === ownerId
+    if (isOwner) {
+        // Users cannot manage (change roles, etc.) even on their own account
+        if (resource === 'users' && action === 'manage') {
+            return false
+        }
+        // Allow all other actions on owned content
+        return action !== 'manage'
+    }
+
+    // 4) Moderator (non-owner) - special content management powers
+    if (role === 'MODERATOR') {
+        // Can read anything
+        if (action === 'read') {
+            return true
+        }
+
+        // Users resource: can only manage bans for USER targets
+        if (resource === 'users') {
+            if (action === 'manage') {
+                return targetUserRole === 'USER'
+            }
+            return false
+        }
+
+        // Content resources: can update/delete USER-owned or orphaned content
+        const isOrphan = ownerId == null
+        const ownedByUser = ownerRole === 'USER'
+        if ((action === 'update' || action === 'delete') && (isOrphan || ownedByUser)) {
+            return true
+        }
+
+        return false
+    }
+
+    // 5) Regular user (non-owner) - can only read PUBLIC content
+    return action === 'read' && visibility === 'PUBLIC'
+}
+
+/**
+ * Check if a user can perform an action on a resource
+ * Convenience wrapper with defaults
+ */
+export function userCan(
+    user: RbacUser | undefined,
+    action: Action,
+    resource: Resource,
+    options: UserCanOptions = {}
+): boolean {
+    return can({
+        user,
+        action,
+        resource,
+        ownerId: options.ownerId ?? undefined,
+        visibility: options.visibility,
+        ownerRole: options.ownerRole,
+        targetUserRole: options.targetUserRole,
+    })
+}

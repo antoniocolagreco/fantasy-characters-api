@@ -12,6 +12,8 @@
   and file responsibilities
 - [💡 Development Principles](../docs/development-principles.md) - Coding
   standards and best practices
+- [🧩 Feature Dependencies](../docs/feature-dependencies.md) - Managing
+    dependencies between features with clear and unidirectional rules.
 
 ### 🔧 **Setup & Configuration**
 

@@ -1,0 +1,61 @@
+import type { FastifyRequest, FastifyReply } from 'fastify'
+import { verifyAccessToken } from './jwt.service'
+import type { JwtConfig } from './auth.schema'
+
+export function createAuthMiddleware(jwtConfig: JwtConfig) {
+    return function authMiddleware(request: FastifyRequest, _reply: FastifyReply) {
+        const { authorization } = request.headers
+
+        if (!authorization) {
+            throw new Error('UNAUTHORIZED')
+        }
+
+        if (!authorization.startsWith('Bearer ')) {
+            throw new Error('UNAUTHORIZED')
+        }
+
+        const token = authorization.slice(7) // Remove "Bearer " prefix
+
+        try {
+            const claims = verifyAccessToken(token, jwtConfig)
+
+            // Attach user info to request
+            request.user = {
+                id: claims.sub,
+                role: claims.role,
+                email: '', // Will be populated by user service if needed
+            }
+        } catch (error) {
+            if (error instanceof Error) {
+                throw new Error(error.message)
+            }
+            throw new Error('UNAUTHORIZED')
+        }
+    }
+}
+
+export function createOptionalAuthMiddleware(jwtConfig: JwtConfig) {
+    return function optionalAuthMiddleware(request: FastifyRequest, _reply: FastifyReply) {
+        const { authorization } = request.headers
+
+        if (!authorization?.startsWith('Bearer ')) {
+            // No auth provided, continue without user
+            return
+        }
+
+        const token = authorization.slice(7)
+
+        try {
+            const claims = verifyAccessToken(token, jwtConfig)
+
+            request.user = {
+                id: claims.sub,
+                role: claims.role,
+                email: '',
+            }
+        } catch {
+            // Invalid token, continue without user (don't throw)
+            // This allows public endpoints to work with optional auth
+        }
+    }
+}
