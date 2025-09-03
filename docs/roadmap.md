@@ -1,6 +1,8 @@
 # Fantasy Characters API — Development Roadmap (v1)
 
-This roadmap is structured as independent, junior-friendly tasks with clear milestones. It follows the project’s documented principles and uses the same checkbox style as the original.
+This roadmap is structured as independent, junior-friendly tasks with clear
+milestones. It follows the project’s documented principles and uses the same
+checkbox style as the original.
 
 Notes
 
@@ -32,15 +34,19 @@ Notes
 
 Duration: 1–2 days
 
-- [ ] 1.01 Initialize repository with proper Git configuration
-- [ ] 1.02 Create base directory structure following [project-structure.md](./project-structure.md)
-- [ ] 1.03 Set up package.json with dependencies from [technology-stack.md](./technology-stack.md)
-- [ ] 1.04 Configure TypeScript (strict) and path aliases
-- [ ] 1.05 Configure ESLint and Prettier per [code-style.md](./code-style.md)
-- [ ] 1.06 Add Vitest setup for unit/integration testing
-- [ ] 1.07 Implement environment configuration loader with validation ([secrets-and-config.md](./secrets-and-config.md))
-- [ ] 1.08 Add package scripts from [package-scripts.md](./package-scripts.md) (dev, build, test, lint, type-check, docker)
-- [ ] 1.09 Document local setup in README.md
+- [x] 1.01 Initialize repository with proper Git configuration
+- [x] 1.02 Create base directory structure following
+      [project-structure.md](./project-structure.md)
+- [x] 1.03 Set up package.json with dependencies from
+      [technology-stack.md](./technology-stack.md)
+- [x] 1.04 Configure TypeScript (strict) and path aliases
+- [x] 1.05 Configure ESLint and Prettier per [code-style.md](./code-style.md)
+- [x] 1.06 Add Vitest setup for unit/integration testing
+- [x] 1.07 Implement environment configuration loader with validation
+      ([secrets-and-config.md](./secrets-and-config.md))
+- [x] 1.08 Add package scripts from [package-scripts.md](./package-scripts.md)
+      (dev, build, test, lint, type-check, docker)
+- [x] 1.09 Document local setup in README.md
 
 ---
 
@@ -48,14 +54,17 @@ Duration: 1–2 days
 
 Duration: 3–5 days
 
-- [ ] 2.01 Add Docker configuration for PostgreSQL (docker-compose + Dockerfile)
-- [ ] 2.02 Initialize Prisma with base configuration
-- [ ] 2.03 Implement all Prisma models and enums from [data-models.md](./data-models.md) (including indexes)
-- [ ] 2.04 Apply initial migration and commit migrations
-- [ ] 2.05 Implement shared cursor pagination/query helpers in shared ([query-templates.md](./query-templates.md))
-- [ ] 2.06 Create seed data scripts covering all models
+- [x] 2.01 Add Docker configuration for PostgreSQL (docker-compose + Dockerfile)
+- [x] 2.02 Initialize Prisma with base configuration
+- [x] 2.03 Implement all Prisma models and enums from
+      [data-models.md](./data-models.md) (including indexes)
+- [x] 2.04 Apply initial migration and commit migrations
+- [x] 2.05 Implement shared cursor pagination/query helpers in shared
+      ([query-templates.md](./query-templates.md))
+- [x] 2.06 Create seed data scripts covering all models
 - [ ] 2.07 Create test data generation utilities
-- [ ] 2.08 Document DB workflow (migrations, generate, reset) in docs/[migrations-and-rollback.md](./migrations-and-rollback.md) notes
+- [x] 2.08 Document DB workflow (migrations, generate, reset) in
+      docs/[migrations-and-rollback.md](./migrations-and-rollback.md) notes
 
 ---
 
@@ -63,11 +72,13 @@ Duration: 3–5 days
 
 Duration: 2–3 days
 
-- [ ] 3.01 Register Helmet security headers ([security.md](./security.md))
-- [ ] 3.02 Configure CORS according to [cors.md](./cors.md) (explicit allowlist)
-- [ ] 3.03 Configure global rate limiting ([rate-limiting.md](./rate-limiting.md))
-- [ ] 3.04 Create request validation pipeline with TypeBox + Ajv ([development-principles.md](./development-principles.md))
-- [ ] 3.05 Add input sanitization utilities (strings + HTML only where needed)
+- [x] 3.01 Register Helmet security headers ([security.md](./security.md))
+- [x] 3.02 Configure CORS according to [cors.md](./cors.md) (explicit allowlist)
+- [x] 3.03 Configure global rate limiting
+      ([rate-limiting.md](./rate-limiting.md))
+- [x] 3.04 Create request validation pipeline with TypeBox + Ajv
+      ([development-principles.md](./development-principles.md))
+- [x] 3.05 Add input sanitization utilities (strings + HTML only where needed)
 - [ ] 3.06 Write security tests (80%+ coverage target)
 
 ---
@@ -77,15 +88,21 @@ Duration: 2–3 days
 Duration: 4–6 days
 
 - [ ] 4.01 Initialize Fastify server with TypeBox type provider
-- [ ] 4.02 Register global plugins: logging (Pino), error handler plugin ([error-handling.md](./error-handling.md))
-- [ ] 4.03 Register Swagger/OpenAPI plugin and expose /docs and /docs/json (see [documentation.md](./documentation.md))
+- [ ] 4.02 Register global plugins: logging (Pino), error handler plugin
+      ([error-handling.md](./error-handling.md))
+- [ ] 4.03 Register Swagger/OpenAPI plugin and expose /docs and /docs/json (see
+      [documentation.md](./documentation.md))
 - [ ] 4.04 Enable response compression (gzip/brotli)
 - [ ] 4.05 Setup multipart file upload handling
-- [ ] 4.06 Add health check endpoint at /api/health (align with [endpoints.md](./endpoints.md) and CI)
+- [ ] 4.06 Add health check endpoint at /api/health (align with
+      [endpoints.md](./endpoints.md) and CI)
 - [ ] 4.07 Implement graceful shutdown
-- [ ] 4.08 Add TypeBox base response schemas ([response-templates.md](./response-templates.md))
-- [ ] 4.09 Add pagination schemas and query helpers ([query-templates.md](./query-templates.md))
-- [ ] 4.10 Setup centralized error handling ([error-handling.md](./error-handling.md))
+- [ ] 4.08 Add TypeBox base response schemas
+      ([response-templates.md](./response-templates.md))
+- [ ] 4.09 Add pagination schemas and query helpers
+      ([query-templates.md](./query-templates.md))
+- [ ] 4.10 Setup centralized error handling
+      ([error-handling.md](./error-handling.md))
 - [ ] 4.11 Implement UUID v7 utility in shared/utils
 - [ ] 4.12 Configure base logging with Pino (redaction, requestId)
 - [ ] 4.13 Write server integration tests (≥ 80% coverage)
@@ -99,9 +116,13 @@ Duration: 3–5 days
 - [ ] 5.01 Create multi-stage production Dockerfile and image
 - [ ] 5.02 Add Docker Compose for app + database for local integration
 - [ ] 5.03 Implement container health/readiness checks hitting /api/health
-- [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md) (lint, type-check, tests with coverage, OpenAPI validate, Docker build, smoke tests)
-- [ ] 5.05 Validate environment via config loader; commit .env.example ([secrets-and-config.md](./secrets-and-config.md))
-- [ ] 5.06 Add deployment smoke tests (start container, hit /api/health and one read endpoint when available)
+- [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md) (lint,
+      type-check, tests with coverage, OpenAPI validate, Docker build, smoke
+      tests)
+- [ ] 5.05 Validate environment via config loader; commit .env.example
+      ([secrets-and-config.md](./secrets-and-config.md))
+- [ ] 5.06 Add deployment smoke tests (start container, hit /api/health and one
+      read endpoint when available)
 - [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy)
 
 ---
@@ -148,7 +169,8 @@ Duration: 4–5 days
 - [ ] 7.14 Add error handling for all auth operations
 - [ ] 7.15 Write auth tests (≥ 80% coverage)
 - [ ] 7.16 Update OpenAPI docs for all auth endpoints
-- [ ] 7.17 Gate OAuth providers behind OAUTH_ENABLED flag and env vars (optional)
+- [ ] 7.17 Gate OAuth providers behind OAUTH_ENABLED flag and env vars
+      (optional)
 
 ---
 
