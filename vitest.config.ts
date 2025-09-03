@@ -5,6 +5,7 @@ export default defineConfig({
     test: {
         globals: true,
         environment: 'node',
+        reporters: ['verbose'],
         setupFiles: ['./tests/setup.ts'],
         include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
         exclude: ['node_modules', 'dist', 'coverage', '**/*.d.ts', '**/index.ts', '**/*.schema.ts'],
@@ -22,6 +23,10 @@ export default defineConfig({
                 'src/infrastructure/database/migrations/**',
                 'src/infrastructure/database/seed.ts',
                 'scripts/**',
+                // Test data generation utilities (exclude from coverage)
+                '**/*.generators.ts',
+                '**/*.fixtures.ts',
+                '**/*.mocks.ts',
             ],
             thresholds: {
                 global: {

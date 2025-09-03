@@ -58,27 +58,27 @@ Duration: 1-2 days
 
 Duration: 4-6 days
 
-- [ ] 2.01 Create Docker configuration for PostgreSQL database
-- [ ] 2.02 Setup Docker Compose (database-only) for local development
-- [ ] 2.03 Initialize Prisma ORM with base configuration
-- [ ] 2.04 Implement all Prisma models from [data-models.md](./data-models.md)
-- [ ] 2.05 Create database migration system setup
-- [ ] 2.06 Validate DATABASE_URL and Prisma client configuration; document
+- [x] 2.01 Create Docker configuration for PostgreSQL database
+- [x] 2.02 Setup Docker Compose (database-only) for local development
+- [x] 2.03 Initialize Prisma ORM with base configuration
+- [x] 2.04 Implement all Prisma models from [data-models.md](./data-models.md)
+- [x] 2.05 Create database migration system setup
+- [x] 2.06 Validate DATABASE_URL and Prisma client configuration; document
       `.env(.example)` per [secrets-and-config.md](./secrets-and-config.md)
-- [ ] 2.07 If needed, use `connection_limit` in the PostgreSQL connection
+- [x] 2.07 If needed, use `connection_limit` in the PostgreSQL connection
       string; note PgBouncer as a future option (no per-client min/timeout in
       Prisma)
-- [ ] 2.08 Apply indexes exactly as specified in
+- [x] 2.08 Apply indexes exactly as specified in
       [data-models.md](./data-models.md) (no generic slug/type indexes)
-- [ ] 2.09 Ensure composite indexes support cursor pagination stability
+- [x] 2.09 Ensure composite indexes support cursor pagination stability
       (createdAt/level with id tie-breaker) as per models doc
-- [ ] 2.10 Wire Prisma migrate/dev workflow and commit migrations; add seed
+- [x] 2.10 Wire Prisma migrate/dev workflow and commit migrations; add seed
       scaffolding
-- [ ] 2.11 Implement and test shared cursor pagination/query helpers in `common`
+- [x] 2.11 Implement and test shared cursor pagination/query helpers in `common`
       (see [query-templates.md](./query-templates.md))
-- [ ] 2.12 Create comprehensive seed data scripts for all models
-- [ ] 2.13 Setup test data generation utilities
-- [ ] 2.14 Document database setup procedures
+- [x] 2.12 Create comprehensive seed data scripts for all models
+- [x] 2.13 Setup test data generation utilities
+- [x] 2.14 Document database setup procedures
 
 ---
 
