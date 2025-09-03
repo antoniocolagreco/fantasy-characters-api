@@ -1,10 +1,11 @@
 # AI CORS
 
-Essential CORS configuration for browser-based API access with explicit origin allowlisting and credential support.
+Essential CORS configuration for browser-based API access with explicit origin
+allowlisting and credential support.
 
 ## Critical CORS Rules
 
-1. **Always use explicit origin allowlist** - Never use "*" in production
+1. **Always use explicit origin allowlist** - Never use "\*" in production
 2. **Always allow Authorization header** - Required for JWT authentication
 3. **Always allow Content-Type header** - Required for JSON requests
 4. **Enable credentials only when needed** - For cookie-based refresh tokens
@@ -12,7 +13,8 @@ Essential CORS configuration for browser-based API access with explicit origin a
 
 ## Required CORS Plugin
 
-Safe CORS configuration with environment-based origin allowlisting and dev defaults.
+Safe CORS configuration with environment-based origin allowlisting and dev
+defaults.
 
 ```ts
 import fp from 'fastify-plugin'
@@ -28,43 +30,43 @@ function parseOrigins(envString?: string): string[] {
 
 export default fp(async function corsPlugin(fastify) {
   const isProd = process.env.NODE_ENV === 'production'
-  
+
   // Development defaults for local frontends
   const devOrigins = [
-    'http://localhost:5173',  // Vite
-    'http://localhost:3000',  // Next.js
-    'http://localhost:4321',  // Astro
+    'http://localhost:5173', // Vite
+    'http://localhost:3000', // Next.js
+    'http://localhost:4321', // Astro
     'http://127.0.0.1:5173',
     'http://127.0.0.1:3000',
   ]
-  
+
   const envOrigins = parseOrigins(process.env.CORS_ORIGINS)
   const allowedOrigins = isProd ? envOrigins : [...envOrigins, ...devOrigins]
-  
+
   await fastify.register(cors, {
     origin: (origin, callback) => {
       // Allow non-browser tools (Postman, curl, etc.)
       if (!origin) return callback(null, true)
-      
+
       // Block null origins (file://, sandboxed frames)
       if (origin === 'null') {
         return callback(new Error('CORS: null origin not allowed'), false)
       }
-      
+
       const isAllowed = allowedOrigins.includes(origin)
       if (!isAllowed) {
         return callback(new Error(`CORS: origin not allowed: ${origin}`), false)
       }
-      
+
       callback(null, true)
     },
     credentials: process.env.CORS_CREDENTIALS !== 'false', // Default true
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
-      'Authorization',     // JWT tokens
-      'Content-Type',      // JSON requests
-      'X-Requested-With',  // AJAX requests
-      'X-Request-Id',      // Request tracking
+      'Authorization', // JWT tokens
+      'Content-Type', // JSON requests
+      'X-Requested-With', // AJAX requests
+      'X-Request-Id', // Request tracking
     ],
     exposedHeaders: [
       // Only add if using custom pagination headers
@@ -104,7 +106,7 @@ NODE_ENV=development
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 CORS_CREDENTIALS=true
 
-# .env.production  
+# .env.production
 NODE_ENV=production
 CORS_ORIGINS=https://app.example.com,https://admin.example.com
 CORS_CREDENTIALS=true
@@ -124,7 +126,7 @@ await fetch('/api/v1/auth/refresh', {
 // Frontend: Standard API calls with Authorization header
 await fetch('/api/v1/characters', {
   headers: {
-    'Authorization': `Bearer ${accessToken}`,
+    Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   },
   credentials: 'include', // Include if using refresh token cookies
@@ -138,7 +140,7 @@ await fetch('/api/v1/images', {
   method: 'POST',
   body: formData,
   headers: {
-    'Authorization': `Bearer ${accessToken}`,
+    Authorization: `Bearer ${accessToken}`,
     // Don't set Content-Type for FormData - browser sets it with boundary
   },
   credentials: 'include',
@@ -149,9 +151,9 @@ await fetch('/api/v1/images', {
 
 Simple rules for different types of API access patterns.
 
-| Scenario        | Origin Policy                 | Credentials | Headers                           |
-|-----------------|-------------------------------|-------------|-----------------------------------|
-| Solo JWT        | Lista esplicita di origini    | false       | Authorization, Content-Type       |
-| Cookie + JWT    | Lista esplicita di origini    | true        | Authorization, Content-Type       |
-| Caricamento file| Lista esplicita di origini    | true        | Authorization, (Content-Type auto)|
-| API pubblica    | Lista esplicita di origini    | false       | Solo Content-Type                 |
+| Scenario         | Origin Policy              | Credentials | Headers                            |
+| ---------------- | -------------------------- | ----------- | ---------------------------------- |
+| Solo JWT         | Lista esplicita di origini | false       | Authorization, Content-Type        |
+| Cookie + JWT     | Lista esplicita di origini | true        | Authorization, Content-Type        |
+| Caricamento file | Lista esplicita di origini | true        | Authorization, (Content-Type auto) |
+| API pubblica     | Lista esplicita di origini | false       | Solo Content-Type                  |

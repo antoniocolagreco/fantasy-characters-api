@@ -1,6 +1,7 @@
 # AI Security
 
-Essential security patterns for initial API code development with Fastify + TypeScript.
+Essential security patterns for initial API code development with Fastify +
+TypeScript.
 
 ## Critical Web Application Security Risks
 
@@ -8,58 +9,77 @@ Understanding and mitigating the most critical web application security risks.
 
 ### 1. Broken Access Control
 
-**Problem**: Users can access resources they shouldn't have permission to view or modify.  
-**Solution**: Implement RBAC with deny-by-default policy, check permissions in both controllers and services.
+**Problem**: Users can access resources they shouldn't have permission to view
+or modify.  
+**Solution**: Implement RBAC with deny-by-default policy, check permissions in
+both controllers and services.
 
 ### 2. Cryptographic Failures
 
-**Problem**: Sensitive data exposed due to weak encryption, missing HTTPS, or poor key management.  
-**Solution**: HTTPS enforcement, secure JWT secrets, encrypted cookies, proper TLS configuration.
+**Problem**: Sensitive data exposed due to weak encryption, missing HTTPS, or
+poor key management.  
+**Solution**: HTTPS enforcement, secure JWT secrets, encrypted cookies, proper
+TLS configuration.
 
 ### 3. Injection
 
-**Problem**: Untrusted data sent to interpreters as part of commands or queries (SQL, XSS, etc.).  
-**Solution**: TypeBox input validation + sanitization + parameterized queries (Prisma handles SQL).
+**Problem**: Untrusted data sent to interpreters as part of commands or queries
+(SQL, XSS, etc.).  
+**Solution**: TypeBox input validation + sanitization + parameterized queries
+(Prisma handles SQL).
 
 ### 4. Insecure Design
 
-**Problem**: Missing or ineffective security controls in application architecture.  
-**Solution**: Security-by-default configurations, fail-safe patterns, security review in design phase.
+**Problem**: Missing or ineffective security controls in application
+architecture.  
+**Solution**: Security-by-default configurations, fail-safe patterns, security
+review in design phase.
 
 ### 5. Security Misconfiguration
 
-**Problem**: Insecure default configurations, incomplete setups, or exposed error messages.  
-**Solution**: Helmet security headers, CSP, remove debug endpoints in production, proper environment separation.
+**Problem**: Insecure default configurations, incomplete setups, or exposed
+error messages.  
+**Solution**: Helmet security headers, CSP, remove debug endpoints in
+production, proper environment separation.
 
 ### 6. Vulnerable and Outdated Components
 
 **Problem**: Using components with known vulnerabilities or outdated versions.  
-**Solution**: Automated dependency scanning, lockfile management, regular updates, CI/CD security pipeline.
+**Solution**: Automated dependency scanning, lockfile management, regular
+updates, CI/CD security pipeline.
 
 ### 7. Identification and Authentication Failures
 
-**Problem**: Weak authentication mechanisms, session management flaws, credential stuffing.  
-**Solution**: Short JWT TTL, rotating refresh tokens, secure session cookies, rate limiting login attempts.
+**Problem**: Weak authentication mechanisms, session management flaws,
+credential stuffing.  
+**Solution**: Short JWT TTL, rotating refresh tokens, secure session cookies,
+rate limiting login attempts.
 
 ### 8. Software and Data Integrity Failures
 
-**Problem**: Code and infrastructure that doesn't protect against integrity violations.  
-**Solution**: Input validation, audit logging, integrity checks, secure CI/CD pipeline.
+**Problem**: Code and infrastructure that doesn't protect against integrity
+violations.  
+**Solution**: Input validation, audit logging, integrity checks, secure CI/CD
+pipeline.
 
 ### 9. Security Logging and Monitoring Failures
 
-**Problem**: Insufficient logging and monitoring to detect and respond to breaches.  
-**Solution**: Structured audit logs with correlation IDs, security event monitoring, alerting.
+**Problem**: Insufficient logging and monitoring to detect and respond to
+breaches.  
+**Solution**: Structured audit logs with correlation IDs, security event
+monitoring, alerting.
 
 ### 10. Server-Side Request Forgery (SSRF)
 
-**Problem**: Web application fetches remote resources without validating user-supplied URLs.  
-**Solution**: URL validation, blocked private networks, external request filtering.
+**Problem**: Web application fetches remote resources without validating
+user-supplied URLs.  
+**Solution**: URL validation, blocked private networks, external request
+filtering.
 
 ## Critical Setup Rules
 
 1. **Always use HTTPS** in production environments
-2. **Always validate all inputs** with TypeBox schemas  
+2. **Always validate all inputs** with TypeBox schemas
 3. **Always set security headers** via @fastify/helmet
 4. **Always implement rate limiting** per IP and user
 5. **Always use parameterized queries** (Prisma handles this)
@@ -106,15 +126,21 @@ if (process.env.NODE_ENV === 'production') {
 // Main HTTPS app with enforced TLS
 const app = fastify({
   logger: true,
-  https: process.env.NODE_ENV === 'production' ? {
-    key: fs.readFileSync(process.env.TLS_KEY_PATH),
-    cert: fs.readFileSync(process.env.TLS_CERT_PATH),
-  } : undefined,
+  https:
+    process.env.NODE_ENV === 'production'
+      ? {
+          key: fs.readFileSync(process.env.TLS_KEY_PATH),
+          cert: fs.readFileSync(process.env.TLS_CERT_PATH),
+        }
+      : undefined,
 })
 
 // Enforce HTTPS in production (for reverse proxy setups)
 app.addHook('onRequest', async (request, reply) => {
-  if (process.env.NODE_ENV === 'production' && !request.headers['x-forwarded-proto']?.includes('https')) {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    !request.headers['x-forwarded-proto']?.includes('https')
+  ) {
     const httpsUrl = `https://${request.hostname}${request.url}`
     return reply.code(301).redirect(httpsUrl)
   }
@@ -128,7 +154,8 @@ import rateLimit from '@fastify/rate-limit'
 
 await fastify.register(rateLimit, {
   global: true,
-  keyGenerator: (req) => ((req as any).user?.id ? `user:${(req as any).user.id}` : `ip:${req.ip}`),
+  keyGenerator: req =>
+    (req as any).user?.id ? `user:${(req as any).user.id}` : `ip:${req.ip}`,
   max: (_req, key) => (key.startsWith('user:') ? 600 : 100),
   timeWindow: '1 minute',
 })
@@ -150,16 +177,20 @@ Always include `maxLength` and `additionalProperties: false` for all schemas.
 ```ts
 import { Type } from '@sinclair/typebox'
 
-export const CreateCharacterBody = Type.Object({
-  name: Type.String({ minLength: 1, maxLength: 80 }),
-  bio: Type.Optional(Type.String({ maxLength: 2000 })),
-  avatarUrl: Type.Optional(Type.String({ format: 'uri', maxLength: 2048 })),
-}, { additionalProperties: false })
+export const CreateCharacterBody = Type.Object(
+  {
+    name: Type.String({ minLength: 1, maxLength: 80 }),
+    bio: Type.Optional(Type.String({ maxLength: 2000 })),
+    avatarUrl: Type.Optional(Type.String({ format: 'uri', maxLength: 2048 })),
+  },
+  { additionalProperties: false }
+)
 ```
 
 ## Required JWT Configuration
 
-Access tokens: 5-15 minutes. Refresh tokens: rotate on every use, store only hash in DB. Cookies: HttpOnly, Secure, SameSite=None for cross-site.
+Access tokens: 5-15 minutes. Refresh tokens: rotate on every use, store only
+hash in DB. Cookies: HttpOnly, Secure, SameSite=None for cross-site.
 
 ```ts
 const jwtOptions = {
@@ -170,12 +201,19 @@ const jwtOptions = {
 
 ## Required Error Handling
 
-Never expose stack traces or internal details in production. Always use generic error messages for client responses. Always log full details server-side with request ID.
+Never expose stack traces or internal details in production. Always use generic
+error messages for client responses. Always log full details server-side with
+request ID.
 
 ```ts
 const logger = pino({
   redact: {
-    paths: ['req.headers.authorization', 'res.headers.set-cookie', 'password', 'token'],
+    paths: [
+      'req.headers.authorization',
+      'res.headers.set-cookie',
+      'password',
+      'token',
+    ],
     remove: true,
   },
 })
@@ -183,7 +221,8 @@ const logger = pino({
 
 ## Required Authorization Pattern
 
-Always deny by default, allow only what policy grants. Always re-check ownership in services before data mutations.
+Always deny by default, allow only what policy grants. Always re-check ownership
+in services before data mutations.
 
 ```ts
 export async function enforceOwnership(userId: string, resourceId: string) {
@@ -191,7 +230,7 @@ export async function enforceOwnership(userId: string, resourceId: string) {
     where: { id: resourceId, ownerId: userId },
     select: { id: true },
   })
-  
+
   if (!resource) {
     throw err('FORBIDDEN', 'Resource not found or access denied')
   }
@@ -214,7 +253,8 @@ for (const envVar of requiredEnvVars) {
 
 ## Required RBAC Implementation
 
-Always check permissions in both controllers and services. Deny by default, allow only what policy grants.
+Always check permissions in both controllers and services. Deny by default,
+allow only what policy grants.
 
 ```ts
 import { can } from './rbac.policy'
@@ -231,7 +271,14 @@ export function rbacPreHandler(resource: string, action: string) {
 // Service-level check (always re-check)
 export async function updateCharacter(id: string, data: any, user: any) {
   const character = await prisma.character.findUnique({ where: { id } })
-  if (!can({ user, resource: 'characters', action: 'update', ownerId: character.ownerId })) {
+  if (
+    !can({
+      user,
+      resource: 'characters',
+      action: 'update',
+      ownerId: character.ownerId,
+    })
+  ) {
     throw err('FORBIDDEN', 'Not allowed')
   }
   return prisma.character.update({ where: { id }, data })
@@ -247,9 +294,9 @@ import DOMPurify from 'isomorphic-dompurify'
 
 // HTML content sanitization
 export function sanitizeHtml(input: string): string {
-  return DOMPurify.sanitize(input, { 
+  return DOMPurify.sanitize(input, {
     ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-    ALLOWED_ATTR: []
+    ALLOWED_ATTR: [],
   })
 }
 
@@ -266,7 +313,7 @@ export async function createCharacterHandler(req: any, reply: any) {
   const sanitizedData = {
     ...req.body,
     name: sanitizeString(req.body.name),
-    bio: req.body.bio ? sanitizeHtml(req.body.bio) : undefined
+    bio: req.body.bio ? sanitizeHtml(req.body.bio) : undefined,
   }
   const character = await createCharacter(sanitizedData, req.user)
   return reply.send(success(character, req.id))
@@ -283,14 +330,14 @@ import csrf from '@fastify/csrf-protection'
 // For cookie-based refresh tokens
 await fastify.register(csrf, {
   sessionPlugin: '@fastify/secure-session',
-  cookieOpts: { signed: true, httpOnly: true, sameSite: 'none', secure: true }
+  cookieOpts: { signed: true, httpOnly: true, sameSite: 'none', secure: true },
 })
 
 // Double-submit cookie pattern for SPA clients
 export function validateCSRFToken(req: any) {
   const headerToken = req.headers['x-csrf-token']
   const cookieToken = req.cookies['csrf-token']
-  
+
   if (!headerToken || !cookieToken || headerToken !== cookieToken) {
     throw err('FORBIDDEN', 'Invalid CSRF token')
   }
@@ -308,7 +355,7 @@ await fastify.register(helmet, {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", 'data:', 'https:'],
       connectSrc: ["'self'"],
       fontSrc: ["'self'"],
       objectSrc: ["'none'"],
@@ -332,17 +379,17 @@ const BLOCKED_PORTS = [22, 23, 25, 53, 80, 110, 143, 443, 993, 995]
 export function validateExternalUrl(urlString: string): boolean {
   try {
     const url = new URL(urlString)
-    
+
     // Block private/internal networks
     if (BLOCKED_HOSTS.includes(url.hostname)) return false
     if (url.hostname.startsWith('192.168.')) return false
     if (url.hostname.startsWith('10.')) return false
     if (url.hostname.match(/^172\.(1[6-9]|2[0-9]|3[01])\./)) return false
-    
+
     // Block dangerous ports
     const port = parseInt(url.port) || (url.protocol === 'https:' ? 443 : 80)
     if (BLOCKED_PORTS.includes(port)) return false
-    
+
     return true
   } catch {
     return false
@@ -364,20 +411,25 @@ export function auditLog(event: string, details: any, req: any) {
     requestId: req.id,
     ip: req.ip,
     userAgent: req.headers['user-agent'],
-    details
+    details,
   })
 }
 
 // Usage examples
 auditLog('USER_LOGIN', { userId: user.id }, req)
-auditLog('CHARACTER_DELETE', { characterId: id, ownerId: character.ownerId }, req)
+auditLog(
+  'CHARACTER_DELETE',
+  { characterId: id, ownerId: character.ownerId },
+  req
+)
 auditLog('ROLE_CHANGE', { targetUserId: id, oldRole, newRole }, req)
 auditLog('AUTH_FAILURE', { reason: 'invalid_token' }, req)
 ```
 
 ## File Upload Security (If Enabled)
 
-Always limit size, validate MIME type, generate random filenames, and scan for malware.
+Always limit size, validate MIME type, generate random filenames, and scan for
+malware.
 
 ```ts
 import sharp from 'sharp'
@@ -390,24 +442,27 @@ await fastify.register(multipart, {
   limits: { fileSize: MAX_FILE_SIZE },
 })
 
-export async function processImageUpload(data: Buffer, mimetype: string): Promise<string> {
+export async function processImageUpload(
+  data: Buffer,
+  mimetype: string
+): Promise<string> {
   // Validate MIME type
   if (!ALLOWED_MIME_TYPES.includes(mimetype)) {
     throw err('VALIDATION_ERROR', 'Invalid file type')
   }
-  
+
   // Generate secure filename using UUIDv7
   const filename = generateUUIDv7() + '.webp'
-  
+
   // Re-encode image to strip metadata and ensure format
   const processedImage = await sharp(data)
     .webp({ quality: 85 })
     .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
     .toBuffer()
-  
+
   // Save to secure location outside web root
   await fs.writeFile(`/secure/uploads/${filename}`, processedImage)
-  
+
   return filename
 }
 ```
@@ -450,7 +505,8 @@ COPY --from=security /app/node_modules ./node_modules
 
 **Implementation Checklist:**
 
-- [ ] HTTPS enforcement: redirect server running on port 80, TLS certificates configured
+- [ ] HTTPS enforcement: redirect server running on port 80, TLS certificates
+      configured
 - [ ] Helmet security headers enabled with CSP
 - [ ] Rate limiting configured (100/min anon, 600/min auth)
 - [ ] Body size limit set (1MB default) and request timeout (15s)
@@ -460,19 +516,23 @@ COPY --from=security /app/node_modules ./node_modules
 - [ ] CSRF protection for cookie-based authentication
 - [ ] JWT tokens have short TTL (15min) with proper aud/iss claims
 - [ ] Refresh tokens rotate and store only hashes in database
-- [ ] Error responses are generic, full details logged server-side with request ID
+- [ ] Error responses are generic, full details logged server-side with request
+      ID
 - [ ] All secrets loaded from environment variables with startup validation
 - [ ] Audit logging for security events (auth, RBAC, admin actions)
 - [ ] File uploads validated, re-encoded, and stored outside web root
 - [ ] External URL validation prevents SSRF attacks
-- [ ] Automated dependency scanning: `pnpm audit`, Snyk integration, CI/CD security pipeline
+- [ ] Automated dependency scanning: `pnpm audit`, Snyk integration, CI/CD
+      security pipeline
 - [ ] Multi-stage Docker build with security scanning
 - [ ] Package lockfile committed and frozen installs in production
 
 ## Integration with Other Docs
 
-- Follow [response-templates.md](./response-templates.md) for error response format
+- Follow [response-templates.md](./response-templates.md) for error response
+  format
 - Use [error-handling.md](./error-handling.md) patterns for security exceptions
 - Apply [query-templates.md](./query-templates.md) validation for all endpoints
-- Follow [development-principles.md](./development-principles.md) schema-first approach
+- Follow [development-principles.md](./development-principles.md) schema-first
+  approach
 - Implement detailed RBAC from [authorization.md](./authorization.md)

@@ -1,8 +1,11 @@
 # Role-Based Access Control (RBAC) — Complete Specification
 
-This document defines how authorization works in the Fantasy Characters API. It is the single source of truth for who can do what, providing both theoretical foundation and practical implementation guidance.
+This document defines how authorization works in the Fantasy Characters API. It
+is the single source of truth for who can do what, providing both theoretical
+foundation and practical implementation guidance.
 
-**Non-goals**: authentication, OAuth, password policies, or general security hardening — see other docs for those.
+**Non-goals**: authentication, OAuth, password policies, or general security
+hardening — see other docs for those.
 
 ---
 
@@ -17,7 +20,8 @@ This document defines how authorization works in the Fantasy Characters API. It 
 
 ### Resources
 
-- `users`, `characters`, `images`, `tags`, `items`, `races`, `archetypes`, `skills`, `perks`, `equipment`
+- `users`, `characters`, `images`, `tags`, `items`, `races`, `archetypes`,
+  `skills`, `perks`, `equipment`
 
 ### Actions
 
@@ -38,14 +42,15 @@ This document defines how authorization works in the Fantasy Characters API. It 
 
 ## Permission Matrix by Role
 
-| Role         | Own Content | Others' PUBLIC | Others' PRIVATE/HIDDEN | USER Content (MOD) | ADMIN Content (MOD) |
-|--------------|:-----------:|:--------------:|:----------------------:|:------------------:|:-------------------:|
-| **ADMIN**    | ✅ All      | ✅ All         | ✅ All                 | ✅ All             | ✅ Read-only*       |
-| **MODERATOR**| ✅ All      | ✅ All         | ✅ Read-only           | ✅ Update/Delete   | ❌ Read-only        |
-| **USER**     | ✅ All      | ✅ Read-only   | ❌ Denied              | ❌ Denied          | ❌ Denied           |
-| **Anonymous**| ❌ N/A      | ✅ Read-only   | ❌ Denied              | ❌ Denied          | ❌ Denied           |
+| Role          | Own Content | Others' PUBLIC | Others' PRIVATE/HIDDEN | USER Content (MOD) | ADMIN Content (MOD) |
+| ------------- | :---------: | :------------: | :--------------------: | :----------------: | :-----------------: |
+| **ADMIN**     |   ✅ All    |     ✅ All     |         ✅ All         |       ✅ All       |   ✅ Read-only\*    |
+| **MODERATOR** |   ✅ All    |     ✅ All     |      ✅ Read-only      |  ✅ Update/Delete  |    ❌ Read-only     |
+| **USER**      |   ✅ All    |  ✅ Read-only  |       ❌ Denied        |     ❌ Denied      |      ❌ Denied      |
+| **Anonymous** |   ❌ N/A    |  ✅ Read-only  |       ❌ Denied        |     ❌ Denied      |      ❌ Denied      |
 
-*_Exception: ADMIN cannot modify/delete other ADMIN accounts or change other ADMIN roles_
+\*_Exception: ADMIN cannot modify/delete other ADMIN accounts or change other
+ADMIN roles_
 
 ---
 
@@ -115,19 +120,22 @@ This document defines how authorization works in the Fantasy Characters API. It 
 
 The permission evaluation follows this order:
 
-1. **Anonymous**: Allow `read` only on `PUBLIC` resources; deny all other actions
+1. **Anonymous**: Allow `read` only on `PUBLIC` resources; deny all other
+   actions
 
 2. **ADMIN**: Allow all actions on all resources, **except**:
    - Cannot modify/delete other ADMIN accounts
    - Cannot change other ADMIN roles
 
-3. **Owner**: If `user.id === ownerId`, allow `read/create/update/delete` on own resources, **except**:
+3. **Owner**: If `user.id === ownerId`, allow `read/create/update/delete` on own
+   resources, **except**:
    - Never allow `manage` on `users` resource (no role changes)
 
 4. **MODERATOR** (non-owner):
    - `read`: Allowed on any resource
    - For content resources (not `users`):
-     - `update`/`delete` allowed when `ownerId` is `null` (orphaned) or `ownerRole = USER`
+     - `update`/`delete` allowed when `ownerId` is `null` (orphaned) or
+       `ownerRole = USER`
      - Read-only when `ownerRole ∈ {MODERATOR, ADMIN}`
    - For `users` resource:
      - `manage` (ban/unban) allowed only on `USER` targets
@@ -147,19 +155,26 @@ The permission evaluation follows this order:
 
 ### Visibility Lock
 
-- When an entity is set to `HIDDEN`, only MODERATOR/ADMIN can restore it to `PUBLIC`/`PRIVATE`
+- When an entity is set to `HIDDEN`, only MODERATOR/ADMIN can restore it to
+  `PUBLIC`/`PRIVATE`
 - USER owners cannot unhide their own content
 
 ### Users Resource Specifics
 
-- **Self-service**: Users can read/update their own profile except protected fields (`role`, `isBanned`, `isActive`)
-- **Moderators**: Can ban/unban USER accounts via dedicated endpoints; cannot change roles or edit other profile fields; cannot act on MODERATOR or ADMIN accounts
-- **Admins**: Can manage roles/ban flags for USER and MODERATOR accounts; cannot modify/delete other ADMIN accounts or change other ADMIN roles
+- **Self-service**: Users can read/update their own profile except protected
+  fields (`role`, `isBanned`, `isActive`)
+- **Moderators**: Can ban/unban USER accounts via dedicated endpoints; cannot
+  change roles or edit other profile fields; cannot act on MODERATOR or ADMIN
+  accounts
+- **Admins**: Can manage roles/ban flags for USER and MODERATOR accounts; cannot
+  modify/delete other ADMIN accounts or change other ADMIN roles
 
 ### Ownership Transfer
 
-- Owners may transfer ownership of their entities to another user (server validates target)
-- Owners may abandon ownership by setting `ownerId` to `null` (creates orphaned content)
+- Owners may transfer ownership of their entities to another user (server
+  validates target)
+- Owners may abandon ownership by setting `ownerId` to `null` (creates orphaned
+  content)
 
 ---
 
@@ -170,8 +185,18 @@ The permission evaluation follows this order:
 ```ts
 export type Role = 'ADMIN' | 'MODERATOR' | 'USER'
 export type Action = 'read' | 'create' | 'update' | 'delete' | 'manage'
-export type Resource = 'users'|'characters'|'images'|'tags'|'items'|'races'|'archetypes'|'skills'|'perks'|'equipment'
-export type Visibility = 'PUBLIC'|'PRIVATE'|'HIDDEN'
+export type Resource =
+  | 'users'
+  | 'characters'
+  | 'images'
+  | 'tags'
+  | 'items'
+  | 'races'
+  | 'archetypes'
+  | 'skills'
+  | 'perks'
+  | 'equipment'
+export type Visibility = 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
 
 export interface RbacContext {
   user?: { id: string; role: Role }
@@ -179,8 +204,8 @@ export interface RbacContext {
   action: Action
   ownerId?: string
   visibility?: Visibility
-  ownerRole?: Role       // Role of the resource owner
-  targetUserRole?: Role  // For user operations (bans, role changes)
+  ownerRole?: Role // Role of the resource owner
+  targetUserRole?: Role // For user operations (bans, role changes)
 }
 ```
 
@@ -189,7 +214,15 @@ export interface RbacContext {
 ```ts
 // src/common/middleware/rbac.policy.ts
 export function can(ctx: RbacContext): boolean {
-  const { user, resource, action, ownerId, visibility, ownerRole, targetUserRole } = ctx
+  const {
+    user,
+    resource,
+    action,
+    ownerId,
+    visibility,
+    ownerRole,
+    targetUserRole,
+  } = ctx
   const role = user?.role
 
   // 1) Anonymous
@@ -198,7 +231,10 @@ export function can(ctx: RbacContext): boolean {
   // 2) Admin
   if (role === 'ADMIN') {
     // Cannot modify/delete other ADMIN accounts or change their roles
-    if (resource === 'users' && (action === 'update' || action === 'delete' || action === 'manage')) {
+    if (
+      resource === 'users' &&
+      (action === 'update' || action === 'delete' || action === 'manage')
+    ) {
       const targetIsAdmin = targetUserRole === 'ADMIN'
       const actingOnSelf = !!user && !!ownerId && user.id === ownerId
       if (targetIsAdmin && !actingOnSelf) return false
@@ -226,7 +262,10 @@ export function can(ctx: RbacContext): boolean {
     // Content resources: can update/delete USER-owned or orphaned content
     const isOrphan = ownerId == null
     const ownedByUser = ownerRole === 'USER'
-    if ((action === 'update' || action === 'delete') && (isOrphan || ownedByUser)) {
+    if (
+      (action === 'update' || action === 'delete') &&
+      (isOrphan || ownedByUser)
+    ) {
       return true
     }
 
@@ -257,7 +296,10 @@ export function can(ctx: RbacContext): boolean {
 
 ```ts
 // src/common/middleware/rbac.resolve.ts
-export async function resolveOwnership(req: any, resource: string): Promise<{
+export async function resolveOwnership(
+  req: any,
+  resource: string
+): Promise<{
   ownerId?: string
   visibility?: Visibility
   ownerRole?: Role
@@ -268,16 +310,16 @@ export async function resolveOwnership(req: any, resource: string): Promise<{
     const { id } = req.params
     const row = await req.prisma.character.findUnique({
       where: { id },
-      select: { 
-        ownerId: true, 
-        visibility: true, 
-        owner: { select: { role: true } } 
-      }
+      select: {
+        ownerId: true,
+        visibility: true,
+        owner: { select: { role: true } },
+      },
     })
-    return { 
-      ownerId: row?.ownerId, 
-      visibility: row?.visibility, 
-      ownerRole: row?.owner?.role 
+    return {
+      ownerId: row?.ownerId,
+      visibility: row?.visibility,
+      ownerRole: row?.owner?.role,
     }
   }
 
@@ -286,15 +328,15 @@ export async function resolveOwnership(req: any, resource: string): Promise<{
     const { id } = req.params
     const row = await req.prisma.user.findUnique({
       where: { id },
-      select: { id: true, role: true }
+      select: { id: true, role: true },
     })
     return { ownerId: row?.id, targetUserRole: row?.role }
   }
 
   // Fallback for creation routes
-  return { 
-    ownerId: req.body?.ownerId, 
-    visibility: req.body?.visibility 
+  return {
+    ownerId: req.body?.ownerId,
+    visibility: req.body?.visibility,
   }
 }
 ```
@@ -316,9 +358,10 @@ export function rbacPreHandler(resource: Resource, action: Action) {
     }
 
     const meta = req.routeOptions?.config?.rbac || {}
-    const resolved = meta.ownerId || meta.visibility
-      ? meta
-      : await resolveOwnership(req, resource)
+    const resolved =
+      meta.ownerId || meta.visibility
+        ? meta
+        : await resolveOwnership(req, resource)
 
     const ok = can({
       user: req.user,
@@ -338,15 +381,23 @@ export function rbacPreHandler(resource: Resource, action: Action) {
 ### Route Registration Example
 
 ```ts
-app.post('/v1/characters', {
-  config: { rbac: { resource: 'characters', action: 'create' } },
-  preHandler: [authPreHandler, rbacPreHandler('characters', 'create')]
-}, controller.createCharacter)
+app.post(
+  '/v1/characters',
+  {
+    config: { rbac: { resource: 'characters', action: 'create' } },
+    preHandler: [authPreHandler, rbacPreHandler('characters', 'create')],
+  },
+  controller.createCharacter
+)
 
-app.put('/v1/characters/:id', {
-  config: { rbac: { resource: 'characters', action: 'update' } },
-  preHandler: [authPreHandler, rbacPreHandler('characters', 'update')]
-}, controller.updateCharacter)
+app.put(
+  '/v1/characters/:id',
+  {
+    config: { rbac: { resource: 'characters', action: 'update' } },
+    preHandler: [authPreHandler, rbacPreHandler('characters', 'update')],
+  },
+  controller.updateCharacter
+)
 ```
 
 ---
@@ -426,14 +477,14 @@ PUT /api/v1/characters/char-456
 
 ## Error Codes
 
-| Scenario                  | HTTP | Code                           | Message              |
-|---------------------------|------|--------------------------------|----------------------|
-| No JWT token              | 401  | `UNAUTHORIZED`                 | "Login required"     |
-| Invalid/expired token     | 401  | `TOKEN_INVALID`/`TOKEN_EXPIRED`| "Invalid token"      |
-| Insufficient permissions  | 403  | `FORBIDDEN`                    | "Not allowed"        |
-| Resource not found        | 404  | `RESOURCE_NOT_FOUND`           | "Resource not found" |
-| Owner mismatch            | 403  | `FORBIDDEN`                    | "Not allowed"        |
-| Try to ban admin          | 403  | `FORBIDDEN`                    | "Not allowed"        |
+| Scenario                 | HTTP | Code                            | Message              |
+| ------------------------ | ---- | ------------------------------- | -------------------- |
+| No JWT token             | 401  | `UNAUTHORIZED`                  | "Login required"     |
+| Invalid/expired token    | 401  | `TOKEN_INVALID`/`TOKEN_EXPIRED` | "Invalid token"      |
+| Insufficient permissions | 403  | `FORBIDDEN`                     | "Not allowed"        |
+| Resource not found       | 404  | `RESOURCE_NOT_FOUND`            | "Resource not found" |
+| Owner mismatch           | 403  | `FORBIDDEN`                     | "Not allowed"        |
+| Try to ban admin         | 403  | `FORBIDDEN`                     | "Not allowed"        |
 
 ---
 
@@ -443,25 +494,27 @@ Always re-check permissions in services, even if route preHandlers are present:
 
 ```ts
 async function updateCharacter(id: string, data: any, user: User) {
-  const character = await prisma.character.findUnique({ 
+  const character = await prisma.character.findUnique({
     where: { id },
-    include: { owner: { select: { role: true } } }
+    include: { owner: { select: { role: true } } },
   })
-  
+
   if (!character) throw err('RESOURCE_NOT_FOUND')
-  
+
   // RBAC check
-  if (!can({ 
-    user, 
-    resource: 'characters', 
-    action: 'update', 
-    ownerId: character.ownerId, 
-    visibility: character.visibility,
-    ownerRole: character.owner?.role
-  })) {
+  if (
+    !can({
+      user,
+      resource: 'characters',
+      action: 'update',
+      ownerId: character.ownerId,
+      visibility: character.visibility,
+      ownerRole: character.owner?.role,
+    })
+  ) {
     throw err('FORBIDDEN')
   }
-  
+
   return prisma.character.update({ where: { id }, data })
 }
 ```
@@ -474,16 +527,16 @@ Filter responses based on permissions:
 function filterUserProfile(user: User, viewer: User | null) {
   const isOwner = viewer?.id === user.id
   const isModerator = viewer?.role === 'MODERATOR' || viewer?.role === 'ADMIN'
-  
+
   if (isOwner || isModerator) {
     return user // Full profile
   }
-  
+
   // Public fields only
   return {
     id: user.id,
     name: user.name,
-    createdAt: user.createdAt
+    createdAt: user.createdAt,
   }
 }
 ```

@@ -1,6 +1,7 @@
 # AI Database Migration
 
-Essential patterns for safe database migrations with Prisma in initial API development.
+Essential patterns for safe database migrations with Prisma in initial API
+development.
 
 ## Critical Migration Rules
 

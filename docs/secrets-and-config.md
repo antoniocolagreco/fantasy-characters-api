@@ -5,7 +5,7 @@ Essential patterns for secure configuration management in Fastify + TypeScript.
 ## Critical Config Rules
 
 1. **Never hardcode secrets** in source code or logs
-2. **Always validate environment variables** at startup, fail fast if missing  
+2. **Always validate environment variables** at startup, fail fast if missing
 3. **Always use `.env` for local development** with `.env.example` template
 4. **Always redact secrets** from logs and error responses
 
@@ -15,7 +15,11 @@ Essential patterns for secure configuration management in Fastify + TypeScript.
 import { Type, type Static } from '@sinclair/typebox'
 
 export const ConfigSchema = Type.Object({
-  NODE_ENV: Type.Union([Type.Literal('development'), Type.Literal('production'), Type.Literal('test')]),
+  NODE_ENV: Type.Union([
+    Type.Literal('development'),
+    Type.Literal('production'),
+    Type.Literal('test'),
+  ]),
   PORT: Type.Integer({ minimum: 1, maximum: 65535, default: 3000 }),
   DATABASE_URL: Type.String({ minLength: 1 }),
   JWT_SECRET: Type.String({ minLength: 32 }),
@@ -36,7 +40,9 @@ export function loadConfig(): Config {
   const result = Value.Check(ConfigSchema, rawConfig)
   if (!result) {
     const errors = [...Value.Errors(ConfigSchema, rawConfig)]
-    throw new Error(`Invalid config: ${errors.map(e => `${e.path}: ${e.message}`).join(', ')}`)
+    throw new Error(
+      `Invalid config: ${errors.map(e => `${e.path}: ${e.message}`).join(', ')}`
+    )
   }
 
   return rawConfig satisfies Config
@@ -48,7 +54,13 @@ export function loadConfig(): Config {
 ```ts
 export const logger = pino({
   redact: {
-    paths: ['req.headers.authorization', 'password', 'token', 'JWT_SECRET', 'DATABASE_URL'],
+    paths: [
+      'req.headers.authorization',
+      'password',
+      'token',
+      'JWT_SECRET',
+      'DATABASE_URL',
+    ],
     remove: true,
   },
 })
@@ -74,6 +86,6 @@ export const config = loadConfig()
 ## Quick Checklist
 
 - [ ] TypeBox schema validates all config at startup
-- [ ] `.env.example` committed, `.env` in `.gitignore`  
+- [ ] `.env.example` committed, `.env` in `.gitignore`
 - [ ] Secrets redacted from logs with Pino
 - [ ] Environment variables injected in production (no `.env` files)

@@ -1,18 +1,22 @@
 # AI Caching
 
-Essential caching patterns for initial API development with HTTP headers and simple in-memory cache.
+Essential caching patterns for initial API development with HTTP headers and
+simple in-memory cache.
 
 ## Critical Caching Rules
 
-1. **Always set Cache-Control headers** - Public for public data, no-store for auth/sensitive
-2. **Always use ETag for JSON responses** - Enables 304 Not Modified responses  
+1. **Always set Cache-Control headers** - Public for public data, no-store for
+   auth/sensitive
+2. **Always use ETag for JSON responses** - Enables 304 Not Modified responses
 3. **Never cache user-specific data** across different users
-4. **Always use short TTLs** - 30-60 seconds for public data, immediate invalidation
+4. **Always use short TTLs** - 30-60 seconds for public data, immediate
+   invalidation
 5. **Always invalidate on mutations** - Clear cache when data changes
 
 ## Required ETag Setup
 
-Automatic ETag generation for all JSON responses to enable efficient client caching.
+Automatic ETag generation for all JSON responses to enable efficient client
+caching.
 
 ```ts
 import fp from 'fastify-plugin'
@@ -98,27 +102,28 @@ export function invalidateByPrefix(prefix: string): void {
 
 ## Required Cache Usage Pattern
 
-Use micro-cache only for expensive public queries with proper key generation and invalidation.
+Use micro-cache only for expensive public queries with proper key generation and
+invalidation.
 
 ```ts
 // Example: Cached public list endpoint
 app.get('/api/v1/characters', async (req, reply) => {
   // Generate unique cache key including all query parameters
   const cacheKey = `characters:list:${JSON.stringify(req.query)}`
-  
+
   // Try cache first
   const cached = getCache<CharacterListResult>(cacheKey)
   if (cached) {
     reply.header('Cache-Control', 'public, max-age=30')
     return reply.send(cached)
   }
-  
+
   // Query database
   const result = await characterService.list(req.query)
-  
+
   // Cache for 30 seconds
   setCache(cacheKey, result, 30_000)
-  
+
   reply.header('Cache-Control', 'public, max-age=30')
   return reply.send(result)
 })
@@ -126,10 +131,10 @@ app.get('/api/v1/characters', async (req, reply) => {
 // Invalidate cache on mutations
 app.post('/api/v1/characters', async (req, reply) => {
   const character = await characterService.create(req.body, req.user.id)
-  
+
   // Clear all character list caches
   invalidateByPrefix('characters:list:')
-  
+
   reply.header('Cache-Control', 'no-store')
   return reply.code(201).send(success(character, req.id))
 })
@@ -139,10 +144,10 @@ app.post('/api/v1/characters', async (req, reply) => {
 
 Simple rules for what to cache and how long based on data access patterns.
 
-| Data Type | Cache-Control | TTL | ETag | Notes |
-|-----------|---------------|-----|------|-------|
-| **Public Resources** | `public, max-age=60` | 60s | ✅ | Characters, items, races |
-| **Public Lists** | `public, max-age=30` | 30s | ✅ | Paginated results |
-| **Static Images** | `public, max-age=31536000, immutable` | 1 year | ❌ | Use ID as filename |
-| **User Data** | `no-store` | Never | ❌ | Profile, private resources |
-| **Mutations** | `no-store` | Never | ❌ | POST/PUT/PATCH/DELETE |
+| Data Type            | Cache-Control                         | TTL    | ETag | Notes                      |
+| -------------------- | ------------------------------------- | ------ | ---- | -------------------------- |
+| **Public Resources** | `public, max-age=60`                  | 60s    | ✅   | Characters, items, races   |
+| **Public Lists**     | `public, max-age=30`                  | 30s    | ✅   | Paginated results          |
+| **Static Images**    | `public, max-age=31536000, immutable` | 1 year | ❌   | Use ID as filename         |
+| **User Data**        | `no-store`                            | Never  | ❌   | Profile, private resources |
+| **Mutations**        | `no-store`                            | Never  | ❌   | POST/PUT/PATCH/DELETE      |

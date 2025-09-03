@@ -1,10 +1,12 @@
 # AI Error Handling Reference
 
-Complete implementation guide for centralized error handling in Fastify + TypeScript.
+Complete implementation guide for centralized error handling in Fastify +
+TypeScript.
 
 ## Error Response Format
 
-Standard error envelope that integrates with [response-templates.md](./response-templates.md) patterns:
+Standard error envelope that integrates with
+[response-templates.md](./response-templates.md) patterns:
 
 ```json
 {
@@ -24,37 +26,37 @@ Standard error envelope that integrates with [response-templates.md](./response-
 ## Error Codes
 
 ```typescript
-export type ErrorCode = 
-  | 'INVALID_CREDENTIALS'       // 401
-  | 'EMAIL_ALREADY_EXISTS'      // 409
-  | 'TOKEN_EXPIRED'             // 401
-  | 'TOKEN_INVALID'             // 401
-  | 'UNAUTHORIZED'              // 401
-  | 'FORBIDDEN'                 // 403
-  | 'VALIDATION_ERROR'          // 400
-  | 'REQUIRED_FIELD_MISSING'    // 400
-  | 'INVALID_FORMAT'            // 400
-  | 'VALUE_OUT_OF_RANGE'        // 400
-  | 'INVALID_TYPE'              // 400
-  | 'RESOURCE_NOT_FOUND'        // 404
-  | 'RESOURCE_CONFLICT'         // 409
-  | 'RESOURCE_LOCKED'           // 423
-  | 'RESOURCE_EXPIRED'          // 410
-  | 'INVALID_FILE_FORMAT'       // 400
-  | 'FILE_TOO_LARGE'            // 413
-  | 'FILE_CORRUPTED'            // 400
-  | 'UPLOAD_FAILED'             // 500
-  | 'OPERATION_NOT_ALLOWED'     // 400
-  | 'INSUFFICIENT_RESOURCES'    // 400
-  | 'DEPENDENCY_CONFLICT'       // 409
-  | 'BUSINESS_RULE_VIOLATION'   // 422
-  | 'DATABASE_ERROR'            // 500
-  | 'CASCADE_DELETE_ERROR'      // 409
-  | 'INTERNAL_SERVER_ERROR'     // 500
-  | 'SERVICE_UNAVAILABLE'       // 503
-  | 'EXTERNAL_SERVICE_ERROR'    // 502
-  | 'RATE_LIMIT_EXCEEDED'       // 429
-  | 'QUOTA_EXCEEDED'            // 429
+export type ErrorCode =
+  | 'INVALID_CREDENTIALS' // 401
+  | 'EMAIL_ALREADY_EXISTS' // 409
+  | 'TOKEN_EXPIRED' // 401
+  | 'TOKEN_INVALID' // 401
+  | 'UNAUTHORIZED' // 401
+  | 'FORBIDDEN' // 403
+  | 'VALIDATION_ERROR' // 400
+  | 'REQUIRED_FIELD_MISSING' // 400
+  | 'INVALID_FORMAT' // 400
+  | 'VALUE_OUT_OF_RANGE' // 400
+  | 'INVALID_TYPE' // 400
+  | 'RESOURCE_NOT_FOUND' // 404
+  | 'RESOURCE_CONFLICT' // 409
+  | 'RESOURCE_LOCKED' // 423
+  | 'RESOURCE_EXPIRED' // 410
+  | 'INVALID_FILE_FORMAT' // 400
+  | 'FILE_TOO_LARGE' // 413
+  | 'FILE_CORRUPTED' // 400
+  | 'UPLOAD_FAILED' // 500
+  | 'OPERATION_NOT_ALLOWED' // 400
+  | 'INSUFFICIENT_RESOURCES' // 400
+  | 'DEPENDENCY_CONFLICT' // 409
+  | 'BUSINESS_RULE_VIOLATION' // 422
+  | 'DATABASE_ERROR' // 500
+  | 'CASCADE_DELETE_ERROR' // 409
+  | 'INTERNAL_SERVER_ERROR' // 500
+  | 'SERVICE_UNAVAILABLE' // 503
+  | 'EXTERNAL_SERVICE_ERROR' // 502
+  | 'RATE_LIMIT_EXCEEDED' // 429
+  | 'QUOTA_EXCEEDED' // 429
   | 'CONCURRENT_LIMIT_EXCEEDED' // 429
 ```
 
@@ -126,8 +128,13 @@ export class AppError extends Error {
   readonly code: ErrorCode
   readonly status: number
   readonly details?: ErrorDetail[]
-  
-  constructor(code: ErrorCode, message: string, details?: ErrorDetail[], status?: number) {
+
+  constructor(
+    code: ErrorCode,
+    message: string,
+    details?: ErrorDetail[],
+    status?: number
+  ) {
     super(message)
     this.name = 'AppError'
     this.code = code
@@ -136,7 +143,11 @@ export class AppError extends Error {
   }
 }
 
-export function err(code: ErrorCode, message?: string, details?: ErrorDetail[]): AppError {
+export function err(
+  code: ErrorCode,
+  message?: string,
+  details?: ErrorDetail[]
+): AppError {
   return new AppError(code, message ?? code, details)
 }
 ```
@@ -163,9 +174,13 @@ interface FastifyValidationError {
 }
 
 function isPrismaError(e: unknown): e is PrismaError {
-  return typeof e === 'object' && e !== null && 'code' in e && 
-         typeof (e as PrismaError).code === 'string' &&
-         (e as PrismaError).code.startsWith('P')
+  return (
+    typeof e === 'object' &&
+    e !== null &&
+    'code' in e &&
+    typeof (e as PrismaError).code === 'string' &&
+    (e as PrismaError).code.startsWith('P')
+  )
 }
 
 function isJWTError(e: unknown): e is JWTError {
@@ -186,25 +201,28 @@ export function normalizeError(e: unknown): AppError {
       }
       return err('RESOURCE_CONFLICT', 'Unique constraint violation')
     }
-    if (e.code === 'P2014') return err('CASCADE_DELETE_ERROR', 'Cannot delete due to dependencies')
+    if (e.code === 'P2014')
+      return err('CASCADE_DELETE_ERROR', 'Cannot delete due to dependencies')
     if (e.code === 'P2025') return err('RESOURCE_NOT_FOUND', 'Record not found')
     return err('DATABASE_ERROR', 'Database operation failed')
   }
-  
+
   if (isJWTError(e)) {
-    if (e.name === 'TokenExpiredError') return err('TOKEN_EXPIRED', 'Token has expired')
-    if (e.name === 'JsonWebTokenError') return err('TOKEN_INVALID', 'Invalid token')
+    if (e.name === 'TokenExpiredError')
+      return err('TOKEN_EXPIRED', 'Token has expired')
+    if (e.name === 'JsonWebTokenError')
+      return err('TOKEN_INVALID', 'Invalid token')
     return err('TOKEN_INVALID', 'Token error')
   }
-  
+
   if (isValidationError(e)) {
-    const details = e.validation.map(v => ({ 
-      path: v.instancePath || v.dataPath || '', 
-      message: v.message || 'Invalid value' 
+    const details = e.validation.map(v => ({
+      path: v.instancePath || v.dataPath || '',
+      message: v.message || 'Invalid value',
     }))
     return err('VALIDATION_ERROR', 'Request validation failed', details)
   }
-  
+
   return err('INTERNAL_SERVER_ERROR', 'Unexpected error occurred')
 }
 ```
@@ -217,7 +235,10 @@ import type { FastifyRequest } from 'fastify'
 import type { AppError } from '../errors/app-error'
 import type { ErrorResponse } from '../types/error.types'
 
-export function formatErrorResponse(error: AppError, request: FastifyRequest): ErrorResponse {
+export function formatErrorResponse(
+  error: AppError,
+  request: FastifyRequest
+): ErrorResponse {
   return {
     error: {
       code: error.code,
@@ -242,16 +263,21 @@ import { AppError, err } from '../common/errors/app-error'
 import { formatErrorResponse } from '../common/utils/format-error'
 import { normalizeError } from '../common/utils/normalize-error'
 
-export const errorPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) => {
+export const errorPlugin: FastifyPluginAsync = async (
+  fastify: FastifyInstance
+) => {
   fastify.setNotFoundHandler((request, reply) => {
     const error = err('RESOURCE_NOT_FOUND', 'Resource not found')
     const response = formatErrorResponse(error, request)
-    
-    request.log.info({ 
-      requestId: request.id,
-      code: error.code, 
-      path: request.url 
-    }, 'Resource not found')
+
+    request.log.info(
+      {
+        requestId: request.id,
+        code: error.code,
+        path: request.url,
+      },
+      'Resource not found'
+    )
     reply.code(error.status).send(response)
   })
 
@@ -259,15 +285,24 @@ export const errorPlugin: FastifyPluginAsync = async (fastify: FastifyInstance) 
     const appError = normalizeError(error)
     const response = formatErrorResponse(appError, request)
 
-    const logLevel = appError.status >= 500 ? 'error' : 
-                    ['UNAUTHORIZED', 'FORBIDDEN', 'INVALID_CREDENTIALS'].includes(appError.code) ? 'warn' : 'info'
-    
-    request.log[logLevel]({ 
-      requestId: request.id,
-      err: error, 
-      code: appError.code, 
-      status: appError.status 
-    }, `Request failed: ${appError.message}`)
+    const logLevel =
+      appError.status >= 500
+        ? 'error'
+        : ['UNAUTHORIZED', 'FORBIDDEN', 'INVALID_CREDENTIALS'].includes(
+              appError.code
+            )
+          ? 'warn'
+          : 'info'
+
+    request.log[logLevel](
+      {
+        requestId: request.id,
+        err: error,
+        code: appError.code,
+        status: appError.status,
+      },
+      `Request failed: ${appError.message}`
+    )
 
     reply.code(appError.status).send(response)
   })
@@ -347,18 +382,22 @@ if (character.userId !== request.user.id) {
 await prisma.user.create({ data: { email } }) // P2002 → EMAIL_ALREADY_EXISTS
 
 // Route schemas
-app.get('/characters/:id', {
-  schema: {
-    response: {
-      200: CharacterResponseSchema,
-      400: ErrorResponseSchema,
-      401: ErrorResponseSchema,
-      403: ErrorResponseSchema,
-      404: ErrorResponseSchema,
-      500: ErrorResponseSchema,
+app.get(
+  '/characters/:id',
+  {
+    schema: {
+      response: {
+        200: CharacterResponseSchema,
+        400: ErrorResponseSchema,
+        401: ErrorResponseSchema,
+        403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+      },
     },
   },
-}, handler)
+  handler
+)
 ```
 
 ## Server Setup

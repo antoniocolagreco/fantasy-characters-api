@@ -54,7 +54,7 @@ src/
 ## Core File Responsibilities
 
 - **feature-name.route.ts**: Register endpoints, attach schemas
-- **feature-name.schema.ts**: TypeBox validation schemas, export TS types  
+- **feature-name.schema.ts**: TypeBox validation schemas, export TS types
 - **feature-name.controller.ts**: HTTP → service calls, no DB access
 - **feature-name.service.ts**: Business logic, coordinates repositories
 - **feature-name.repository.ts**: Database access layer (Prisma operations)

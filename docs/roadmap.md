@@ -8,14 +8,29 @@
 ### Assumptions
 
 - Solo developer, 5-day work weeks; no holidays or external blockers
-- Scope is exactly what’s in this roadmap and linked docs (no new features mid-stream)
+- Scope is exactly what’s in this roadmap and linked docs (no new features
+  mid-stream)
 - Local Docker for PostgreSQL; no cloud infra or production orchestration work
 - CI/CD uses GitHub Actions as outlined; no custom runners or compliance gates
-- Test coverage enforced globally at ~80% via CI; per-file dips allowed when justified
-- OAuth is optional and guarded by feature flag; TLS handled by a reverse proxy outside this repo
+- Test coverage enforced globally at ~80% via CI; per-file dips allowed when
+  justified
+- OAuth is optional and guarded by feature flag; TLS handled by a reverse proxy
+  outside this repo
 - No heavy analytics/observability beyond what’s described in docs
 
-Testing and documentation are mandatory before any feature can be considered complete (target 80%+ global coverage with CI thresholds; aim for high per-file coverage without blocking delivery).
+Testing and documentation are mandatory before any feature can be considered
+complete (target 80%+ global coverage with CI thresholds; aim for high per-file
+coverage without blocking delivery).
+
+### Milestone completation gates
+
+- Zero type check errors or warnings.
+- Zero linting errors or warnings.
+- All tests pass with a minimum 80% coverage per file.
+
+### Note
+
+- Update the checkboxes tasks as you complete each one.
 
 ---
 
@@ -23,15 +38,19 @@ Testing and documentation are mandatory before any feature can be considered com
 
 Duration: 1-2 days
 
-- [ ] 1.01 Initialize repository with proper Git configuration
-- [ ] 1.02 Create base directory structure following [project-structure.md](./project-structure.md)
-- [ ] 1.03 Setup package.json with all required dependencies from [technology-stack.md](./technology-stack.md)
-- [ ] 1.04 Configure TypeScript with strict settings and path aliases
-- [ ] 1.05 Setup ESLint and Prettier with project standards from [code-style.md](./code-style.md)
-- [ ] 1.06 Set up Vitest for unit and integration testing
-- [ ] 1.07 Create environment configuration system with validation
-- [ ] 1.08 Document setup process in README.md
-- [ ] 1.09 Add package scripts from [package-scripts.md](./package-scripts.md) (dev, build, test, lint, type-check, docker)
+- [x] 1.01 Initialize repository with proper Git configuration
+- [x] 1.02 Create base directory structure following
+      [project-structure.md](./project-structure.md)
+- [x] 1.03 Setup package.json with all required dependencies from
+      [technology-stack.md](./technology-stack.md)
+- [x] 1.04 Configure TypeScript with strict settings and path aliases
+- [x] 1.05 Setup ESLint and Prettier with project standards from
+      [code-style.md](./code-style.md)
+- [x] 1.06 Set up Vitest for unit and integration testing
+- [x] 1.07 Create environment configuration system with validation
+- [x] 1.08 Document setup process in README.md
+- [x] 1.09 Add package scripts from [package-scripts.md](./package-scripts.md)
+      (dev, build, test, lint, type-check, docker)
 
 ---
 
@@ -44,12 +63,19 @@ Duration: 4-6 days
 - [ ] 2.03 Initialize Prisma ORM with base configuration
 - [ ] 2.04 Implement all Prisma models from [data-models.md](./data-models.md)
 - [ ] 2.05 Create database migration system setup
-- [ ] 2.06 Validate DATABASE_URL and Prisma client configuration; document `.env(.example)` per [secrets-and-config.md](./secrets-and-config.md)
-- [ ] 2.07 If needed, use `connection_limit` in the PostgreSQL connection string; note PgBouncer as a future option (no per-client min/timeout in Prisma)
-- [ ] 2.08 Apply indexes exactly as specified in [data-models.md](./data-models.md) (no generic slug/type indexes)
-- [ ] 2.09 Ensure composite indexes support cursor pagination stability (createdAt/level with id tie-breaker) as per models doc
-- [ ] 2.10 Wire Prisma migrate/dev workflow and commit migrations; add seed scaffolding
-- [ ] 2.11 Implement and test shared cursor pagination/query helpers in `common` (see [query-templates.md](./query-templates.md))
+- [ ] 2.06 Validate DATABASE_URL and Prisma client configuration; document
+      `.env(.example)` per [secrets-and-config.md](./secrets-and-config.md)
+- [ ] 2.07 If needed, use `connection_limit` in the PostgreSQL connection
+      string; note PgBouncer as a future option (no per-client min/timeout in
+      Prisma)
+- [ ] 2.08 Apply indexes exactly as specified in
+      [data-models.md](./data-models.md) (no generic slug/type indexes)
+- [ ] 2.09 Ensure composite indexes support cursor pagination stability
+      (createdAt/level with id tie-breaker) as per models doc
+- [ ] 2.10 Wire Prisma migrate/dev workflow and commit migrations; add seed
+      scaffolding
+- [ ] 2.11 Implement and test shared cursor pagination/query helpers in `common`
+      (see [query-templates.md](./query-templates.md))
 - [ ] 2.12 Create comprehensive seed data scripts for all models
 - [ ] 2.13 Setup test data generation utilities
 - [ ] 2.14 Document database setup procedures
@@ -60,17 +86,23 @@ Duration: 4-6 days
 
 Duration: 4-6 days
 
-- [ ] 3.01 Implement JWT token system following [authentication.md](./authentication.md)
+- [ ] 3.01 Implement JWT token system following
+      [authentication.md](./authentication.md)
 - [ ] 3.02 Implement password hashing with Argon2
 - [ ] 3.03 Setup JWT middleware for route protection
 - [ ] 3.04 Configure Helmet security headers
 - [ ] 3.05 Setup CORS configuration following [cors.md](./cors.md)
-- [ ] 3.06 Implement rate limiting system following [rate-limiting.md](./rate-limiting.md)
-- [ ] 3.07 Create input sanitization middleware (use isomorphic-dompurify for HTML fields only; for plain strings prefer schema validation + normalization; avoid destructive sanitization)
+- [ ] 3.06 Implement rate limiting system following
+      [rate-limiting.md](./rate-limiting.md)
+- [ ] 3.07 Create input sanitization middleware (use isomorphic-dompurify for
+      HTML fields only; for plain strings prefer schema validation +
+      normalization; avoid destructive sanitization)
 - [ ] 3.08 Setup request validation pipeline
-- [ ] 3.09 Implement RBAC: policy function, ownership resolver, and preHandler per [authorization.md](./authorization.md)
+- [ ] 3.09 Implement RBAC: policy function, ownership resolver, and preHandler
+      per [authorization.md](./authorization.md)
 - [ ] 3.10 Enforce RBAC again in services (defense in depth) and add tests
-- [ ] 3.11 Write comprehensive security and authorization tests (80%+ coverage target)
+- [ ] 3.11 Write comprehensive security and authorization tests (80%+ coverage
+      target)
 
 ---
 
@@ -80,14 +112,19 @@ Duration: 4-6 days
 
 - [ ] 4.01 Initialize Fastify server with plugins
 - [ ] 4.02 Configure OpenAPI/Swagger documentation
-- [ ] 4.03 Expose /docs and /docs/json with OpenAPI generated from TypeBox schemas
+- [ ] 4.03 Expose /docs and /docs/json with OpenAPI generated from TypeBox
+      schemas
 - [ ] 4.04 Setup multipart file upload handling
-- [ ] 4.05 Create health check endpoint at `/api/health` (align with CI and [endpoints.md](./endpoints.md))
+- [ ] 4.05 Create health check endpoint at `/api/health` (align with CI and
+      [endpoints.md](./endpoints.md))
 - [ ] 4.06 Implement graceful shutdown
-- [ ] 4.07 Create TypeBox base response schemas from [response-templates.md](./response-templates.md)
-- [ ] 4.08 Implement pagination schemas and helpers from [query-templates.md](./query-templates.md)
+- [ ] 4.07 Create TypeBox base response schemas from
+      [response-templates.md](./response-templates.md)
+- [ ] 4.08 Implement pagination schemas and helpers from
+      [query-templates.md](./query-templates.md)
 - [ ] 4.09 Enable response compression (gzip/brotli)
-- [ ] 4.10 Setup error handling following [error-handling.md](./error-handling.md)
+- [ ] 4.10 Setup error handling following
+      [error-handling.md](./error-handling.md)
 - [ ] 4.11 Implement UUID v7 generation utility
 - [ ] 4.12 Create base logging configuration with Pino
 - [ ] 4.13 Write server integration tests (80%+ coverage)
@@ -99,12 +136,18 @@ Duration: 4-6 days
 Duration: 3-5 days
 
 - [ ] 5.01 Create multi-stage production Dockerfile and image
-- [ ] 5.02 Add Docker Compose for app + database for local test/integration (production orchestration is out of scope)
+- [ ] 5.02 Add Docker Compose for app + database for local test/integration
+      (production orchestration is out of scope)
 - [ ] 5.03 Implement container health/readiness checks hitting `/api/health`
-- [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md): lint, type-check, tests with coverage, OpenAPI validate, Docker build, smoke tests
-- [ ] 5.05 Validate environment via config loader (see [secrets-and-config.md](./secrets-and-config.md)); commit `.env.example`
-- [ ] 5.06 Add deployment smoke tests stage (start container, hit `/api/health` and one read endpoint like `GET /api/v1/tags?limit=1` when available)
-- [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy; certificates managed outside app)
+- [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md): lint,
+      type-check, tests with coverage, OpenAPI validate, Docker build, smoke
+      tests
+- [ ] 5.05 Validate environment via config loader (see
+      [secrets-and-config.md](./secrets-and-config.md)); commit `.env.example`
+- [ ] 5.06 Add deployment smoke tests stage (start container, hit `/api/health`
+      and one read endpoint like `GET /api/v1/tags?limit=1` when available)
+- [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy;
+      certificates managed outside app)
 
 ---
 
@@ -126,7 +169,8 @@ Duration: 4-6 days
 - [ ] 6.12 Implement `POST /api/v1/users/:id/ban` - Ban/Unban user
 - [ ] 6.13 Implement error handling for all user operations
 - [ ] 6.14 Write comprehensive user tests (80%+ coverage)
-- [ ] 6.15 Update OpenAPI docs for all user endpoints (schemas, params, responses)
+- [ ] 6.15 Update OpenAPI docs for all user endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -140,14 +184,18 @@ Duration: 4-5 days
 - [ ] 7.04 Implement `POST /api/v1/auth/register` - Register new user
 - [ ] 7.05 Implement `POST /api/v1/auth/login` - User login
 - [ ] 7.06 Implement `POST /api/v1/auth/logout` - User logout
-- [ ] 7.07 Implement `POST /api/v1/auth/refresh` - Refresh JWT token with rotation (move from M3)
+- [ ] 7.07 Implement `POST /api/v1/auth/refresh` - Refresh JWT token with
+      rotation (move from M3)
 - [ ] 7.08 Implement `GET /api/v1/auth/profile` - Get current user profile
 - [ ] 7.09 Implement `PUT /api/v1/auth/profile` - Update user profile
 - [ ] 7.10 Implement `PUT /api/v1/auth/password` - Change password
 - [ ] 7.11 Implement error handling for all auth operations
 - [ ] 7.12 Write comprehensive auth tests (80%+ coverage)
-- [ ] 7.13 Update OpenAPI docs for all authentication endpoints (schemas, params, responses)
-  - [ ] 7.14 Gate OAuth providers behind `OAUTH_ENABLED` flag and env vars (see [authentication.md](./authentication.md)); initial providers: GitHub, Google
+- [ ] 7.13 Update OpenAPI docs for all authentication endpoints (schemas,
+      params, responses)
+  - [ ] 7.14 Gate OAuth providers behind `OAUTH_ENABLED` flag and env vars (see
+        [authentication.md](./authentication.md)); initial providers: GitHub,
+        Google
 
 ---
 
@@ -158,13 +206,16 @@ Duration: 3-5 days
 - [ ] 8.01 Scaffold OAuth2 feature structure
 - [ ] 8.02 Create OAuth2 schemas (types derived from schemas)
 - [ ] 8.03 Implement OAuth2 service layer
-- [ ] 8.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to provider
-- [ ] 8.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle callback
+- [ ] 8.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to
+      provider
+- [ ] 8.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle
+      callback
 - [ ] 8.06 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
 - [ ] 8.07 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
 - [ ] 8.08 Implement error handling for OAuth operations
 - [ ] 8.09 Write comprehensive OAuth tests (80%+ coverage)
-- [ ] 8.10 Update OpenAPI docs for all OAuth endpoints (schemas, params, responses)
+- [ ] 8.10 Update OpenAPI docs for all OAuth endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -183,11 +234,13 @@ Duration: 5-7 days
 - [ ] 9.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
 - [ ] 9.10 Implement `GET /api/v1/images/stats` - Image statistics
 - [ ] 9.11 Implement `POST /api/v1/images` - Upload new image
-- [ ] 9.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace file
+- [ ] 9.12 Implement `PUT /api/v1/images/:id` - Update image metadata or replace
+      file
 - [ ] 9.13 Implement `DELETE /api/v1/images/:id` - Delete image
 - [ ] 9.14 Implement error handling for all image operations
 - [ ] 9.15 Write comprehensive tests (80%+ coverage)
-- [ ] 9.16 Update OpenAPI docs for all image endpoints (schemas, params, responses)
+- [ ] 9.16 Update OpenAPI docs for all image endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -207,7 +260,8 @@ Duration: 2-3 days
 - [ ] 10.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
 - [ ] 10.11 Implement error handling for all tag operations
 - [ ] 10.12 Write comprehensive tests (80%+ coverage)
-- [ ] 10.13 Update OpenAPI docs for all tag endpoints (schemas, params, responses)
+- [ ] 10.13 Update OpenAPI docs for all tag endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -227,7 +281,8 @@ Duration: 2-3 days
 - [ ] 11.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
 - [ ] 11.11 Implement error handling for all skill operations
 - [ ] 11.12 Write comprehensive tests (80%+ coverage)
-- [ ] 11.13 Update OpenAPI docs for all skill endpoints (schemas, params, responses)
+- [ ] 11.13 Update OpenAPI docs for all skill endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -247,7 +302,8 @@ Duration: 2-3 days
 - [ ] 12.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
 - [ ] 12.11 Implement error handling for all perk operations
 - [ ] 12.12 Write comprehensive tests (80%+ coverage)
-- [ ] 12.13 Update OpenAPI docs for all perk endpoints (schemas, params, responses)
+- [ ] 12.13 Update OpenAPI docs for all perk endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -267,7 +323,8 @@ Duration: 2-3 days
 - [ ] 13.10 Implement `DELETE /api/v1/races/:id` - Delete race
 - [ ] 13.11 Implement error handling for all race operations
 - [ ] 13.12 Write comprehensive tests (80%+ coverage)
-- [ ] 13.13 Update OpenAPI docs for all race endpoints (schemas, params, responses)
+- [ ] 13.13 Update OpenAPI docs for all race endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -287,7 +344,8 @@ Duration: 2-3 days
 - [ ] 14.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
 - [ ] 14.11 Implement error handling for all archetype operations
 - [ ] 14.12 Write comprehensive tests (80%+ coverage)
-- [ ] 14.13 Update OpenAPI docs for all archetype endpoints (schemas, params, responses)
+- [ ] 14.13 Update OpenAPI docs for all archetype endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -307,7 +365,8 @@ Duration: 4-6 days
 - [ ] 15.10 Implement `DELETE /api/v1/items/:id` - Delete item
 - [ ] 15.11 Implement error handling for all item operations
 - [ ] 15.12 Write comprehensive tests (80%+ coverage)
-- [ ] 15.13 Update OpenAPI docs for all item endpoints (schemas, params, responses)
+- [ ] 15.13 Update OpenAPI docs for all item endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -327,7 +386,8 @@ Duration: 5-7 days
 - [ ] 16.10 Implement `DELETE /api/v1/characters/:id` - Delete character
 - [ ] 16.11 Implement error handling for all character operations
 - [ ] 16.12 Write comprehensive tests (80%+ coverage)
-- [ ] 16.13 Update OpenAPI docs for all character endpoints (schemas, params, responses)
+- [ ] 16.13 Update OpenAPI docs for all character endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -339,12 +399,15 @@ Duration: 4-6 days
 - [ ] 17.02 Create Equipment schemas (types derived from schemas)
 - [ ] 17.03 Implement Equipment repository layer
 - [ ] 17.04 Create equipment service layer with slot validation
-- [ ] 17.05 Implement `GET /api/v1/characters/:id/equipment` - Get character equipment
-- [ ] 17.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character equipment
+- [ ] 17.05 Implement `GET /api/v1/characters/:id/equipment` - Get character
+      equipment
+- [ ] 17.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character
+      equipment
 - [ ] 17.07 Implement `GET /api/v1/equipment/stats` - Equipment statistics
 - [ ] 17.08 Implement error handling for all equipment operations
 - [ ] 17.09 Write comprehensive tests (80%+ coverage)
-- [ ] 17.10 Update OpenAPI docs for all equipment endpoints (schemas, params, responses)
+- [ ] 17.10 Update OpenAPI docs for all equipment endpoints (schemas, params,
+      responses)
 
 ---
 
@@ -352,7 +415,8 @@ Duration: 4-6 days
 
 Duration: 2-3 days
 
-- [ ] 18.01 Implement ETag generation for cacheable responses following [caching.md](./caching.md) (exclude auth/non-cacheable endpoints)
+- [ ] 18.01 Implement ETag generation for cacheable responses following
+      [caching.md](./caching.md) (exclude auth/non-cacheable endpoints)
 - [ ] 18.02 Create Cache-Control header management
 - [ ] 18.03 Add conditional request handling
 - [ ] 18.04 Implement cache invalidation strategies

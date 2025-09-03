@@ -1,6 +1,7 @@
 # Fantasy Characters API - Data Models
 
-This document outlines the data models for the Fantasy Characters API using Prisma schema format.
+This document outlines the data models for the Fantasy Characters API using
+Prisma schema format.
 
 ## Database Configuration
 
@@ -19,7 +20,8 @@ datasource db {
 
 Why UUIDv7:
 
-- Time-ordered (monotonic) IDs improve index locality and cursor pagination stability
+- Time-ordered (monotonic) IDs improve index locality and cursor pagination
+  stability
 - Still globally unique without coordination
 
 Options:
@@ -28,21 +30,23 @@ Options:
 
 ```ts
 // install: pnpm add uuidv7
-import { uuidv7 } from 'uuidv7';
+import { uuidv7 } from 'uuidv7'
 
-const id = uuidv7();
-await prisma.character.create({ data: { id, name: 'Aria', /* ... */ } });
+const id = uuidv7()
+await prisma.character.create({ data: { id, name: 'Aria' /* ... */ } })
 ```
 
 1. Database-generated (PostgreSQL)
 
-Requires a function like `uuid_generate_v7()` (via an extension such as pg_uuidv7). Then set Prisma defaults to use it:
+Requires a function like `uuid_generate_v7()` (via an extension such as
+pg_uuidv7). Then set Prisma defaults to use it:
 
 ```prisma
 id String @id @db.Uuid @default(dbgenerated("uuid_generate_v7()"))
 ```
 
-If you don't have a v7 function available, use application generation (option 1).
+If you don't have a v7 function available, use application generation (option
+1).
 
 ## Enums
 
@@ -112,8 +116,10 @@ enum Visibility {
 
 Cursor pagination guidance:
 
-- Use stable, indexed sort keys with a unique tie-breaker: typically `(createdAt DESC, id DESC)` or `(level DESC, createdAt DESC, id DESC)`.
-- Include filter columns (e.g., ownerId, visibility, archetypeId, raceId) before sort keys in composite indexes.
+- Use stable, indexed sort keys with a unique tie-breaker: typically
+  `(createdAt DESC, id DESC)` or `(level DESC, createdAt DESC, id DESC)`.
+- Include filter columns (e.g., ownerId, visibility, archetypeId, raceId) before
+  sort keys in composite indexes.
 - Avoid relying on text fields like `description` for ordering or filtering.
 
 ### User
@@ -173,7 +179,8 @@ model User {
 
 Index notes (User):
 
-- idx_users_created_at_desc, idx_users_last_login: speed up lists of users by recency; good cursor ordering with createdAt/lastLogin.
+- idx_users_created_at_desc, idx_users_last_login: speed up lists of users by
+  recency; good cursor ordering with createdAt/lastLogin.
 
 ### RefreshToken
 
@@ -209,7 +216,9 @@ model RefreshToken {
 
 Index notes (RefreshToken):
 
-- idx_refresh_tokens_user_active: speeds up queries like “tokens for user ordered by expiresAt desc/asc”; id ensures a stable cursor with identical expiry times.
+- idx_refresh_tokens_user_active: speeds up queries like “tokens for user
+  ordered by expiresAt desc/asc”; id ensures a stable cursor with identical
+  expiry times.
 
 ### Image
 
@@ -256,8 +265,10 @@ model Image {
 
 Index notes (Image):
 
-- idx_images_owner_visibility_recent: fast owner galleries filtered by visibility, newest first; id provides deterministic pagination.
-- idx_images_visibility_recent: efficient public gallery lists by recency with stable cursor.
+- idx_images_owner_visibility_recent: fast owner galleries filtered by
+  visibility, newest first; id provides deterministic pagination.
+- idx_images_visibility_recent: efficient public gallery lists by recency with
+  stable cursor.
 
 ### Tag
 
@@ -298,8 +309,10 @@ model Tag {
 
 Index notes (Tag):
 
-- idx_tags_visibility_name: supports public tag browsing with A-Z ordering; id for tie-break ensures cursor stability.
-- idx_tags_owner_visibility_name: supports owner-specific tag management with predictable ordering.
+- idx_tags_visibility_name: supports public tag browsing with A-Z ordering; id
+  for tie-break ensures cursor stability.
+- idx_tags_owner_visibility_name: supports owner-specific tag management with
+  predictable ordering.
 
 ### Race
 
@@ -354,8 +367,10 @@ model Race {
 
 Index notes (Race):
 
-- idx_races_owner_visibility_name: fast owner views and admin lists; name order for UX; id for cursor.
-- idx_races_visibility_recent: efficient public race listings by newest with stable pagination.
+- idx_races_owner_visibility_name: fast owner views and admin lists; name order
+  for UX; id for cursor.
+- idx_races_visibility_recent: efficient public race listings by newest with
+  stable pagination.
 
 ### Archetype
 
@@ -398,8 +413,10 @@ model Archetype {
 
 Index notes (Archetype):
 
-- idx_archetypes_owner_visibility_name: owner/admin lists with A-Z order and stable cursor.
-- idx_archetypes_visibility_recent: public archetype feed by recency with deterministic pagination.
+- idx_archetypes_owner_visibility_name: owner/admin lists with A-Z order and
+  stable cursor.
+- idx_archetypes_visibility_recent: public archetype feed by recency with
+  deterministic pagination.
 
 ### Skill
 
@@ -443,8 +460,10 @@ model Skill {
 
 Index notes (Skill):
 
-- idx_skills_level_visibility: fast filtering by required level within owner/visibility; id enables stable cursor order.
-- idx_skills_owner_visibility_name: owner lists sorted A-Z; deterministic pagination with id.
+- idx_skills_level_visibility: fast filtering by required level within
+  owner/visibility; id enables stable cursor order.
+- idx_skills_owner_visibility_name: owner lists sorted A-Z; deterministic
+  pagination with id.
 
 ### Perk
 
@@ -487,7 +506,8 @@ model Perk {
 
 Index notes (Perk):
 
-- idx_perks_level_visibility: speeds up perk browsing by required level under visibility/owner constraints; id = cursor tie-breaker.
+- idx_perks_level_visibility: speeds up perk browsing by required level under
+  visibility/owner constraints; id = cursor tie-breaker.
 - idx_perks_owner_visibility_name: consistent A-Z ordering for owner’s perks.
 
 ### Item
@@ -583,9 +603,12 @@ model Item {
 
 Index notes (Item):
 
-- idx_items_owner_recent: common “my items” list by newest; id supports stable cursor.
-- idx_items_owner_visibility_name: fast filtering + A-Z sort for owner inventories.
-- idx_items_rarity_slot_level: multi-facet filter lists (rarity/slot/level) for browsing and shop pages.
+- idx_items_owner_recent: common “my items” list by newest; id supports stable
+  cursor.
+- idx_items_owner_visibility_name: fast filtering + A-Z sort for owner
+  inventories.
+- idx_items_rarity_slot_level: multi-facet filter lists (rarity/slot/level) for
+  browsing and shop pages.
 
 ### Equipment
 
@@ -705,7 +728,7 @@ model Character {
     visibility Visibility @default(PUBLIC)
     createdAt  DateTime   @default(now())
     updatedAt  DateTime   @updatedAt
-    
+
     @@index([ownerId, visibility, createdAt(sort: Desc), id(sort: Desc)], name: "idx_characters_owner_recent")
     @@index([ownerId, visibility, archetypeId, raceId, level(sort: Desc), createdAt(sort: Desc), id(sort: Desc)], name: "idx_characters_search_core")
     @@index([archetypeId, raceId, visibility, level(sort: Desc), createdAt(sort: Desc), id(sort: Desc)], name: "idx_characters_taxonomy")
@@ -715,6 +738,9 @@ model Character {
 
 Index notes (Character):
 
-- idx_characters_owner_recent: speeds up “my characters” views (owner + visibility) ordered by newest; id ensures deterministic cursor.
-- idx_characters_search_core: common filtered lists by owner + archetype + race + level desc → ideal for cursor-based infinite scroll.
-- idx_characters_taxonomy: public browsing by archetype/race with level desc and recency; id keeps pagination stable.
+- idx_characters_owner_recent: speeds up “my characters” views (owner +
+  visibility) ordered by newest; id ensures deterministic cursor.
+- idx_characters_search_core: common filtered lists by owner + archetype +
+  race + level desc → ideal for cursor-based infinite scroll.
+- idx_characters_taxonomy: public browsing by archetype/race with level desc and
+  recency; id keeps pagination stable.

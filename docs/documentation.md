@@ -1,12 +1,16 @@
 # AI API Documentation
 
-Comprehensive guide to create consistent OpenAPI documentation using TypeBox schemas as the single source of truth.
+Comprehensive guide to create consistent OpenAPI documentation using TypeBox
+schemas as the single source of truth.
 
 ## Documentation Philosophy
 
-This system eliminates documentation drift by generating OpenAPI specs directly from the same TypeBox schemas used for runtime validation. No manual JSON Schema writing, no duplication, no inconsistencies.
+This system eliminates documentation drift by generating OpenAPI specs directly
+from the same TypeBox schemas used for runtime validation. No manual JSON Schema
+writing, no duplication, no inconsistencies.
 
-**Core Principle**: Write schemas once in TypeBox → Auto-generate OpenAPI → Auto-validate requests → Auto-type TypeScript
+**Core Principle**: Write schemas once in TypeBox → Auto-generate OpenAPI →
+Auto-validate requests → Auto-type TypeScript
 
 ## Critical Documentation Rules
 
@@ -18,7 +22,8 @@ This system eliminates documentation drift by generating OpenAPI specs directly 
 
 ## OpenAPI Plugin Setup
 
-Install and configure Swagger with TypeBox integration for automatic schema generation.
+Install and configure Swagger with TypeBox integration for automatic schema
+generation.
 
 ```ts
 // src/plugins/swagger.ts
@@ -32,19 +37,20 @@ export default fp(async function swaggerPlugin(app) {
       info: {
         title: 'Fantasy Characters API',
         version: '1.0.0',
-        description: 'RESTful API for managing fantasy characters, items, and game data',
+        description:
+          'RESTful API for managing fantasy characters, items, and game data',
         contact: {
           name: 'API Support',
-          email: 'support@example.com'
+          email: 'support@example.com',
         },
         license: {
           name: 'MIT',
-          url: 'https://opensource.org/licenses/MIT'
-        }
+          url: 'https://opensource.org/licenses/MIT',
+        },
       },
       servers: [
         { url: '/api/v1', description: 'API v1' },
-        { url: 'https://api.example.com/v1', description: 'Production' }
+        { url: 'https://api.example.com/v1', description: 'Production' },
       ],
       components: {
         securitySchemes: {
@@ -52,18 +58,18 @@ export default fp(async function swaggerPlugin(app) {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
-            description: 'JWT Access Token'
-          }
-        }
-      }
+            description: 'JWT Access Token',
+          },
+        },
+      },
     },
     hideUntagged: false,
     refResolver: {
       buildLocalReference(json, _baseUri, _fragment, i) {
         // Create stable component references for schema deduplication
         return json.$id || json.title || `schema-${i}`
-      }
-    }
+      },
+    },
   })
 
   await app.register(swaggerUi, {
@@ -72,15 +78,16 @@ export default fp(async function swaggerPlugin(app) {
     uiConfig: {
       docExpansion: 'list',
       deepLinking: false,
-      displayRequestDuration: true
-    }
+      displayRequestDuration: true,
+    },
   })
 })
 ```
 
 ## Schema Organization Template
 
-**File Structure**: Each feature gets its own schema file with consistent exports.
+**File Structure**: Each feature gets its own schema file with consistent
+exports.
 
 ```ts
 // src/features/{feature}/{feature}.schema.ts
@@ -260,54 +267,75 @@ Create reusable schema components to maintain consistency across all features.
 import { Type } from '@sinclair/typebox'
 
 // Pagination Schemas
-export const PaginationQuerySchema = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
-  cursor: Type.Optional(Type.String()),
-}, { $id: 'PaginationQuery' })
+export const PaginationQuerySchema = Type.Object(
+  {
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 100, default: 20 })
+    ),
+    cursor: Type.Optional(Type.String()),
+  },
+  { $id: 'PaginationQuery' }
+)
 
-export const PaginationResponseSchema = Type.Object({
-  limit: Type.Integer(),
-  cursor: Type.Optional(Type.Object({
-    next: Type.Optional(Type.String()),
-    prev: Type.Optional(Type.String()),
-  })),
-}, { $id: 'PaginationResponse' })
+export const PaginationResponseSchema = Type.Object(
+  {
+    limit: Type.Integer(),
+    cursor: Type.Optional(
+      Type.Object({
+        next: Type.Optional(Type.String()),
+        prev: Type.Optional(Type.String()),
+      })
+    ),
+  },
+  { $id: 'PaginationResponse' }
+)
 
 // Sorting Schemas
-export const SortQuerySchema = Type.Object({
-  sortBy: Type.Optional(Type.Union([
-    Type.Literal('createdAt'),
-    Type.Literal('name'),
-    Type.Literal('updatedAt'),
-  ])),
-  sortDir: Type.Optional(Type.Union([
-    Type.Literal('asc'),
-    Type.Literal('desc'),
-  ], { default: 'desc' })),
-}, { $id: 'SortQuery' })
+export const SortQuerySchema = Type.Object(
+  {
+    sortBy: Type.Optional(
+      Type.Union([
+        Type.Literal('createdAt'),
+        Type.Literal('name'),
+        Type.Literal('updatedAt'),
+      ])
+    ),
+    sortDir: Type.Optional(
+      Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
+        default: 'desc',
+      })
+    ),
+  },
+  { $id: 'SortQuery' }
+)
 
 // Visibility Schema
-export const VisibilitySchema = Type.Union([
-  Type.Literal('PUBLIC'),
-  Type.Literal('PRIVATE'),
-  Type.Literal('HIDDEN')
-], { $id: 'Visibility' })
+export const VisibilitySchema = Type.Union(
+  [Type.Literal('PUBLIC'), Type.Literal('PRIVATE'), Type.Literal('HIDDEN')],
+  { $id: 'Visibility' }
+)
 
 // Base Entity Fields
-export const BaseEntitySchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  createdAt: Type.String({ format: 'date-time' }),
-  updatedAt: Type.String({ format: 'date-time' }),
-}, { $id: 'BaseEntity' })
+export const BaseEntitySchema = Type.Object(
+  {
+    id: Type.String({ format: 'uuid' }),
+    createdAt: Type.String({ format: 'date-time' }),
+    updatedAt: Type.String({ format: 'date-time' }),
+  },
+  { $id: 'BaseEntity' }
+)
 
-// Ownership Fields  
-export const OwnedEntitySchema = Type.Intersect([
-  BaseEntitySchema,
-  Type.Object({
-    ownerId: Type.String({ format: 'uuid' }),
-    visibility: VisibilitySchema,
-  })
-], { $id: 'OwnedEntity' })
+// Ownership Fields
+export const OwnedEntitySchema = Type.Intersect(
+  [
+    BaseEntitySchema,
+    Type.Object({
+      ownerId: Type.String({ format: 'uuid' }),
+      visibility: VisibilitySchema,
+    }),
+  ],
+  { $id: 'OwnedEntity' }
+)
 ```
 
 ## Error Response Schema
@@ -318,24 +346,30 @@ Standardized error responses for consistent API documentation.
 // src/common/schemas/error.schema.ts
 import { Type } from '@sinclair/typebox'
 
-export const ErrorDetailSchema = Type.Object({
-  path: Type.Optional(Type.String()),
-  field: Type.Optional(Type.String()),
-  message: Type.Optional(Type.String()),
-}, { $id: 'ErrorDetail' })
-
-export const ErrorResponseSchema = Type.Object({
-  error: Type.Object({
-    code: Type.String(),
-    message: Type.String(),
-    status: Type.Integer(),
-    details: Type.Optional(Type.Array(ErrorDetailSchema)),
-    method: Type.Optional(Type.String()),
+export const ErrorDetailSchema = Type.Object(
+  {
     path: Type.Optional(Type.String()),
-  }),
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.String({ format: 'date-time' }),
-}, { $id: 'ErrorResponse' })
+    field: Type.Optional(Type.String()),
+    message: Type.Optional(Type.String()),
+  },
+  { $id: 'ErrorDetail' }
+)
+
+export const ErrorResponseSchema = Type.Object(
+  {
+    error: Type.Object({
+      code: Type.String(),
+      message: Type.String(),
+      status: Type.Integer(),
+      details: Type.Optional(Type.Array(ErrorDetailSchema)),
+      method: Type.Optional(Type.String()),
+      path: Type.Optional(Type.String()),
+    }),
+    requestId: Type.Optional(Type.String()),
+    timestamp: Type.String({ format: 'date-time' }),
+  },
+  { $id: 'ErrorResponse' }
+)
 ```
 
 ## AI Coding Instructions
@@ -405,22 +439,24 @@ npx @apidevtools/swagger-parser validate openapi.json
 test('OpenAPI spec generation', async () => {
   const response = await app.inject({
     method: 'GET',
-    url: '/docs/json'
+    url: '/docs/json',
   })
-  
+
   expect(response.statusCode).toBe(200)
   const spec = response.json()
-  
+
   // Validate required sections
   expect(spec.openapi).toBeDefined()
   expect(spec.info).toBeDefined()
   expect(spec.paths).toBeDefined()
   expect(spec.components.schemas).toBeDefined()
-  
+
   // Validate schema references
   expect(spec.components.schemas.Character).toBeDefined()
   expect(spec.components.schemas.ErrorResponse).toBeDefined()
 })
 ```
 
-This system ensures every API feature has complete, consistent, and automatically validated documentation that stays in sync with the actual implementation.
+This system ensures every API feature has complete, consistent, and
+automatically validated documentation that stays in sync with the actual
+implementation.

@@ -1,12 +1,14 @@
 # Technology Stack
 
-Always use the latest stable versions of all dependencies. run `pnpm up --latest`.
+Always use the latest stable versions of all dependencies. run
+`pnpm up --latest`.
 
 ## Backend Core
 
 - **Node.js v24+**: High-performance JavaScript runtime
 - **TypeScript**: Adds static typing for safer, maintainable code
-- **Fastify v5+**: Lightweight, fast web framework with built-in schema validation
+- **Fastify v5+**: Lightweight, fast web framework with built-in schema
+  validation
 
 ## File Upload
 
@@ -20,7 +22,8 @@ Always use the latest stable versions of all dependencies. run `pnpm up --latest
 
 - **TypeBox**: TypeScript-first schema definitions compatible with JSON Schema
 - **Ajv**: High-performance runtime JSON Schema validation
-- **@fastify/type-provider-typebox**: First-class TypeBox integration for Fastify route schemas
+- **@fastify/type-provider-typebox**: First-class TypeBox integration for
+  Fastify route schemas
 
 ## Documentation
 
@@ -29,18 +32,23 @@ Always use the latest stable versions of all dependencies. run `pnpm up --latest
 
 ## Database
 
-- **PostgreSQL**: Reliable relational database with connection pooling and ACID compliance
-  
+- **PostgreSQL**: Reliable relational database with connection pooling and ACID
+  compliance
+
 ## ORM
 
 - **Prisma ORM**: Type-safe database client with migrations
 
 ## Authentication
 
-- **JWT (@fastify/jwt)**: Fastify JWT plugin for signing/verification and request decorators
-- **jsonwebtoken**: Low-level JWT utilities (sign/verify) if used outside Fastify decorators
-- **OAuth (optional, via @fastify/oauth2)**: Server-side OAuth2 code flow (Google/GitHub) with backend JWT issuance
-- **@fastify/session** (optional): Session-based auth when needed (e.g., admin panels); not used for stateless API JWT
+- **JWT (@fastify/jwt)**: Fastify JWT plugin for signing/verification and
+  request decorators
+- **jsonwebtoken**: Low-level JWT utilities (sign/verify) if used outside
+  Fastify decorators
+- **OAuth (optional, via @fastify/oauth2)**: Server-side OAuth2 code flow
+  (Google/GitHub) with backend JWT issuance
+- **@fastify/session** (optional): Session-based auth when needed (e.g., admin
+  panels); not used for stateless API JWT
 
 ## Security
 
@@ -56,11 +64,13 @@ Always use the latest stable versions of all dependencies. run `pnpm up --latest
 
 ## Caching
 
-- **@fastify/etag**: Generates HTTP ETag headers for JSON responses to enable conditional GETs (304) and efficient caching
+- **@fastify/etag**: Generates HTTP ETag headers for JSON responses to enable
+  conditional GETs (304) and efficient caching
 
 ## Error Handling
 
-- **Custom Global Error Handler**: Captures unhandled exceptions and returns Google-style JSON errors.
+- **Custom Global Error Handler**: Captures unhandled exceptions and returns
+  Google-style JSON errors.
 
 ## Testing
 
@@ -87,5 +97,7 @@ Always use the latest stable versions of all dependencies. run `pnpm up --latest
 
 ## Notes
 
-- **Ready for frontend consumption**: Works seamlessly with Next.js, Nuxt, SvelteKit, HTMX, or other clients
-- **Flexible auth**: Supports classic username/password or OAuth login (server-side via @fastify/oauth2) + backend JWT issuance
+- **Ready for frontend consumption**: Works seamlessly with Next.js, Nuxt,
+  SvelteKit, HTMX, or other clients
+- **Flexible auth**: Supports classic username/password or OAuth login
+  (server-side via @fastify/oauth2) + backend JWT issuance

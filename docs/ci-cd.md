@@ -1,11 +1,12 @@
 # AI CI/CD
 
-Essential CI/CD pipeline configuration for automated quality checks and safe deployments.
+Essential CI/CD pipeline configuration for automated quality checks and safe
+deployments.
 
 ## Critical CI/CD Rules
 
 1. **Always run lint and typecheck** - Block merge on any warnings
-2. **Always require test coverage** - Minimum 80% per file  
+2. **Always require test coverage** - Minimum 80% per file
 3. **Always validate OpenAPI schema** - Ensure API documentation accuracy
 4. **Always test Docker builds** - Verify containerized deployment
 5. **Always run smoke tests** - Basic health checks on built artifacts
@@ -31,7 +32,7 @@ env:
 jobs:
   quality-checks:
     runs-on: ubuntu-latest
-    
+
     services:
       postgres:
         image: postgres:15
@@ -40,41 +41,39 @@ jobs:
           POSTGRES_USER: test
           POSTGRES_DB: test
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s
           --health-retries 5
         ports:
           - 5432:5432
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      
+
       - name: Lint check
         run: pnpm lint
-      
+
       - name: Type check
         run: pnpm type-check
-      
+
       - name: Run tests with coverage
         run: pnpm test:coverage
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://test:test@localhost:5432/test
           JWT_SECRET: test-secret-for-ci-only
-      
+
       - name: Validate OpenAPI schema
         run: |
           pnpm build
@@ -82,13 +81,13 @@ jobs:
           sleep 10
           curl -f http://localhost:3000/docs/json > openapi.json
           npx @apidevtools/swagger-parser validate openapi.json
-      
+
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports
           path: coverage/
-      
+
       - name: Upload OpenAPI schema
         uses: actions/upload-artifact@v4
         with:
@@ -99,13 +98,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-checks
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      
+
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -114,7 +113,7 @@ jobs:
           tags: fantasy-api:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
+
       - name: Run smoke tests
         run: |
           docker run -d --name api-test 
@@ -123,15 +122,15 @@ jobs:
             -e DATABASE_URL=postgresql://test:test@host.docker.internal:5432/test 
             -e JWT_SECRET=test-secret 
             fantasy-api:${{ github.sha }}
-          
+
           sleep 15
-          
+
           # Health check
           curl -f http://localhost:3000/api/health
-          
+
           # Basic API test
           curl -f http://localhost:3000/api/v1/characters
-          
+
           docker stop api-test
 ```
 
@@ -201,7 +200,7 @@ EXPOSE 3000
 ENV NODE_ENV=production
 ENV PORT=3000
 
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3
   CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["node", "dist/server.js"]
@@ -227,19 +226,19 @@ export default defineConfig({
           branches: 80,
           functions: 80,
           lines: 80,
-          statements: 80
-        }
+          statements: 80,
+        },
       },
       exclude: [
         'coverage/**',
         'dist/**',
         'node_modules/**',
         '**/*.config.*',
-        '**/*.test.*'
-      ]
+        '**/*.test.*',
+      ],
     },
-    setupFiles: ['./src/test/setup.ts']
-  }
+    setupFiles: ['./src/test/setup.ts'],
+  },
 })
 ```
 
@@ -260,11 +259,11 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 
 Pipeline stages that must pass before code can be merged or deployed.
 
-| Stage           | Command             | Threshold       | Blocking |
-|-----------------|---------------------|-----------------|----------|
-| **Lint**        | `pnpm lint`         | 0 warnings      | ✅       |
-| **Type Check**  | `pnpm type-check`   | 0 errors        | ✅       |
-| **Tests**       | `pnpm test:coverage`| 80% coverage    | ✅       |
-| **OpenAPI**     | Schema validation   | Valid spec      | ✅       |
-| **Docker Build**| Multi-stage build   | Successful      | ✅       |
-| **Smoke Test**  | Health + API calls  | All pass        | ✅       |
+| Stage            | Command              | Threshold    | Blocking |
+| ---------------- | -------------------- | ------------ | -------- |
+| **Lint**         | `pnpm lint`          | 0 warnings   | ✅       |
+| **Type Check**   | `pnpm type-check`    | 0 errors     | ✅       |
+| **Tests**        | `pnpm test:coverage` | 80% coverage | ✅       |
+| **OpenAPI**      | Schema validation    | Valid spec   | ✅       |
+| **Docker Build** | Multi-stage build    | Successful   | ✅       |
+| **Smoke Test**   | Health + API calls   | All pass     | ✅       |

@@ -8,7 +8,8 @@ Use URL versioning with major versions only: `/api/v1/`, `/api/v2/`
 
 ## File Structure
 
-Organize versioned code following [project-structure.md](./project-structure.md) patterns:
+Organize versioned code following [project-structure.md](./project-structure.md)
+patterns:
 
 ```typescript
 src/
@@ -55,15 +56,23 @@ src/
 
 ```ts
 // Service (shared, version-agnostic)
-async function getCharacter(id: string) { /* business logic */ }
+async function getCharacter(id: string) {
+  /* business logic */
+}
 
-// Repository (shared, version-agnostic)  
-async function findCharacterById(id: string) { /* database access */ }
+// Repository (shared, version-agnostic)
+async function findCharacterById(id: string) {
+  /* database access */
+}
 
 // Adapter (version-specific)
-function toCharacterV1(domain: Character): CharacterV1 { return { /* v1 format */ } }
+function toCharacterV1(domain: Character): CharacterV1 {
+  return {
+    /* v1 format */
+  }
+}
 
-// Controller (version-specific)  
+// Controller (version-specific)
 async function getCharacterV1Handler(req, reply) {
   const character = await getCharacter(req.params.id)
   const v1Character = toCharacterV1(character)

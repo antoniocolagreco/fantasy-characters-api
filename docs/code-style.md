@@ -4,7 +4,8 @@
 
 ### File & Formatting
 
-- **Files**: kebab-case.ts (e.g., `user-service.ts`) - see [project-structure.md](./project-structure.md) for complete file organization
+- **Files**: kebab-case.ts (e.g., `user-service.ts`) - see
+  [project-structure.md](./project-structure.md) for complete file organization
 - **Indentation**: 4 spaces, never tabs
 - **Semicolons**: None at line endings
 - **Line length**: 100 characters max
@@ -47,7 +48,7 @@ import { Type, type Static } from '@sinclair/typebox'
 export const UserSchema = Type.Object({
   id: Type.String({ format: 'uuid' }),
   email: Type.String({ format: 'email' }),
-  name: Type.String()
+  name: Type.String(),
 })
 
 export type User = Static<typeof UserSchema>

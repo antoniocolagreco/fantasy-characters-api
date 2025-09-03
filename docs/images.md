@@ -1,6 +1,7 @@
 # AI Image Processing
 
-Essential patterns for handling image uploads and processing with Sharp + Fastify.
+Essential patterns for handling image uploads and processing with Sharp +
+Fastify.
 
 ## Critical Image Rules
 
@@ -12,7 +13,8 @@ Essential patterns for handling image uploads and processing with Sharp + Fastif
 
 ## Required Image Upload Handler
 
-Handle multipart file uploads with validation, WebP conversion and database storage.
+Handle multipart file uploads with validation, WebP conversion and database
+storage.
 
 ```ts
 import multipart from '@fastify/multipart'
@@ -27,24 +29,27 @@ await app.register(multipart, {
 
 app.post('/api/v1/images', async (req, reply) => {
   const file = await req.file()
-  
+
   if (!file) {
     throw err('VALIDATION_ERROR', 'No file provided')
   }
-  
+
   // Validate MIME type
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
   if (!allowedTypes.includes(file.mimetype)) {
-    throw err('INVALID_FILE_FORMAT', 'Only JPEG, PNG, and WebP files are allowed')
+    throw err(
+      'INVALID_FILE_FORMAT',
+      'Only JPEG, PNG, and WebP files are allowed'
+    )
   }
-  
+
   try {
     // Process image with Sharp
     const processedBuffer = await sharp(await file.toBuffer())
       .resize(350, 450, { fit: 'cover', position: 'center' })
       .webp({ quality: 80 })
       .toBuffer()
-    
+
     // Save image directly to database
     const image = await prisma.image.create({
       data: {
@@ -56,7 +61,7 @@ app.post('/api/v1/images', async (req, reply) => {
         ownerId: (req as any).user?.id,
       },
     })
-    
+
     return reply.code(201).send(success(image, req.id))
   } catch (error) {
     throw err('UPLOAD_FAILED', 'Failed to process image')
@@ -71,22 +76,22 @@ Serve images directly from database with proper caching headers.
 ```ts
 app.get('/api/v1/images/:id/file', async (req, reply) => {
   const { id } = req.params
-  
+
   // Get image from database with binary data
-  const image = await prisma.image.findUnique({ 
+  const image = await prisma.image.findUnique({
     where: { id },
-    select: { blob: true, mimeType: true, size: true }
+    select: { blob: true, mimeType: true, size: true },
   })
-  
+
   if (!image) {
     throw err('NOT_FOUND', 'Image not found')
   }
-  
+
   // Set caching headers
   reply.header('Content-Type', image.mimeType)
   reply.header('Cache-Control', 'public, max-age=31536000, immutable')
   reply.header('Content-Length', image.size)
-  
+
   return reply.send(image.blob)
 })
 ```
@@ -98,23 +103,26 @@ TypeBox schemas for image upload and metadata.
 ```ts
 import { Type } from '@sinclair/typebox'
 
-export const ImageSchema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  blob: Type.Any(), // Binary data - excluded from API responses
-  description: Type.Optional(Type.String()),
-  size: Type.Number(),
-  mimeType: Type.String(),
-  width: Type.Number(),
-  height: Type.Number(),
-  ownerId: Type.Optional(Type.String({ format: 'uuid' })),
-  visibility: Type.Union([
-    Type.Literal('PUBLIC'),
-    Type.Literal('PRIVATE'), 
-    Type.Literal('HIDDEN')
-  ]),
-  createdAt: Type.String({ format: 'date-time' }),
-  updatedAt: Type.String({ format: 'date-time' }),
-}, { $id: 'ImageSchema' })
+export const ImageSchema = Type.Object(
+  {
+    id: Type.String({ format: 'uuid' }),
+    blob: Type.Any(), // Binary data - excluded from API responses
+    description: Type.Optional(Type.String()),
+    size: Type.Number(),
+    mimeType: Type.String(),
+    width: Type.Number(),
+    height: Type.Number(),
+    ownerId: Type.Optional(Type.String({ format: 'uuid' })),
+    visibility: Type.Union([
+      Type.Literal('PUBLIC'),
+      Type.Literal('PRIVATE'),
+      Type.Literal('HIDDEN'),
+    ]),
+    createdAt: Type.String({ format: 'date-time' }),
+    updatedAt: Type.String({ format: 'date-time' }),
+  },
+  { $id: 'ImageSchema' }
+)
 
 // API response schema (without blob data)
 export const ImageMetadataSchema = Type.Omit(ImageSchema, ['blob'])

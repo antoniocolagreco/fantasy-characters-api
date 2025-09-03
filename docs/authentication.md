@@ -1,6 +1,7 @@
 # Authentication — JWT and OAuth2 (Google/GitHub)
 
-This spec explains how clients authenticate and how we wire it server‑side. Keep it predictable and minimal.
+This spec explains how clients authenticate and how we wire it server‑side. Keep
+it predictable and minimal.
 
 ---
 
@@ -17,11 +18,13 @@ This spec explains how clients authenticate and how we wire it server‑side. Ke
 - Local (JWT):
   - POST /api/auth/register → create user (email, password)
   - POST /api/auth/login → returns accessToken + refreshToken
-  - POST /api/auth/refresh → returns new accessToken (+ optionally new refreshToken)
+  - POST /api/auth/refresh → returns new accessToken (+ optionally new
+    refreshToken)
   - POST /api/auth/logout → revoke refresh token
   - GET /api/auth/profile, PUT /api/auth/profile, PUT /api/auth/password
 - OAuth2 (Google/GitHub):
-  - GET /api/auth/oauth/:provider/start → redirect to provider (provider ∈ {google, github})
+  - GET /api/auth/oauth/:provider/start → redirect to provider (provider ∈
+    {google, github})
   - GET /api/auth/oauth/:provider/callback → finalize login; set/return tokens
   - Optional: POST /api/auth/oauth/link → link provider to logged‑in user
   - Optional: POST /api/auth/oauth/unlink → unlink provider from logged‑in user
@@ -31,7 +34,8 @@ This spec explains how clients authenticate and how we wire it server‑side. Ke
 ## Tokens and lifetimes
 
 - Access token: JWT signed (HS256); lifetime 15 minutes
-- Refresh token: opaque UUIDv7 stored in DB (RefreshToken model); lifetime 30 days; rotate on use
+- Refresh token: opaque UUIDv7 stored in DB (RefreshToken model); lifetime 30
+  days; rotate on use
 - Where to send:
   - Access token: Authorization: Bearer `<jwt>`
   - Refresh token: HTTP‑only cookie (preferred) or body on refresh/logout
@@ -46,71 +50,82 @@ This spec explains how clients authenticate and how we wire it server‑side. Ke
 TypeScript (one-line type):
 
 ```ts
-export type JwtClaims = { sub: string; role: 'USER'|'MODERATOR'|'ADMIN'; iat: number; exp: number; jti?: string };
+export type JwtClaims = {
+  sub: string
+  role: 'USER' | 'MODERATOR' | 'ADMIN'
+  iat: number
+  exp: number
+  jti?: string
+}
 ```
 
 TypeBox schema (for route validation / docs):
 
 ```ts
-import { Type } from '@sinclair/typebox';
+import { Type } from '@sinclair/typebox'
 
 export const JwtClaimsSchema = Type.Object({
- sub: Type.String(),
- role: Type.Union([Type.Literal('USER'), Type.Literal('MODERATOR'), Type.Literal('ADMIN')]),
- iat: Type.Integer(),
- exp: Type.Integer(),
- jti: Type.Optional(Type.String())
-});
+  sub: Type.String(),
+  role: Type.Union([
+    Type.Literal('USER'),
+    Type.Literal('MODERATOR'),
+    Type.Literal('ADMIN'),
+  ]),
+  iat: Type.Integer(),
+  exp: Type.Integer(),
+  jti: Type.Optional(Type.String()),
+})
 ```
 
-Note: always verify the JWT signature and `exp` server-side; use `jti`+revocation list when you need immediate token invalidation.
+Note: always verify the JWT signature and `exp` server-side; use
+`jti`+revocation list when you need immediate token invalidation.
 
 ---
 
 ## Local flow (JWT)
 
-1) Register
+1. Register
    - Input: email, password (min length; strong hashing via Argon2)
-   - If email already used with OAuth only, allow setting password to enable both modes
+   - If email already used with OAuth only, allow setting password to enable
+     both modes
 
-2) Login
+2. Login
    - Verify password; deny if user.isBanned or !isActive
    - Issue accessToken (JWT) + refreshToken (DB row)
    - Store token device info (ip, userAgent)
 
-3) Refresh
+3. Refresh
    - Validate refresh token (not revoked, not expired)
    - Rotate: revoke old, issue new refresh + access tokens
    - Return new access token (and optionally set cookie for refresh)
 
-4) Logout
+4. Logout
    - Revoke the refresh token; access token expires naturally
 
 ---
 
 ## OAuth2 flow (Google/GitHub)
 
-1) Start
-
-   - Client hits /oauth/:provider/start → Fastify redirects to provider with scopes:
+1. Start
+   - Client hits /oauth/:provider/start → Fastify redirects to provider with
+     scopes:
      - Google: openid email profile
      - GitHub: read:user user:email
 
-2) Callback
+2. Callback
+   - Exchange code for provider tokens
+   - Fetch user profile (id, email, name, avatar)
+   - Link or create user:
+     - If a user exists with (oauthProvider, oauthId) → use it
+     - Else if email matches an existing user → link provider to that user
+     - Else create new user (email verified = true)
+   - Apply business checks: isBanned/isActive
+   - Issue access + refresh tokens as in local login
 
-    - Exchange code for provider tokens
-    - Fetch user profile (id, email, name, avatar)
-    - Link or create user:
-      - If a user exists with (oauthProvider, oauthId) → use it
-      - Else if email matches an existing user → link provider to that user
-      - Else create new user (email verified = true)
-    - Apply business checks: isBanned/isActive
-    - Issue access + refresh tokens as in local login
-
-3) Optional link/unlink
-
-    - Link requires logged‑in user; store oauthProvider+oauthId in user record
-    - Unlink allowed when user still has another login method (password or other provider)
+3. Optional link/unlink
+   - Link requires logged‑in user; store oauthProvider+oauthId in user record
+   - Unlink allowed when user still has another login method (password or other
+     provider)
 
 ---
 
@@ -126,44 +141,45 @@ Environment variables
 - GITHUB_CLIENT_SECRET
 - GITHUB_CALLBACK_URL
 
-Quick register snippet (scaffold — see `src/features/auth/oauth.plugin.ts` in the repo):
+Quick register snippet (scaffold — see `src/features/auth/oauth.plugin.ts` in
+the repo):
 
 ```ts
 // plugin registers providers behind feature flag; start/callback routes are exposed only when enabled
-import fastifyOauth2 from '@fastify/oauth2';
+import fastifyOauth2 from '@fastify/oauth2'
 export default async function oauthPlugin(fastify) {
-  const disabled = process.env.OAUTH_ENABLED !== 'true';
-  if (disabled) return;
+  const disabled = process.env.OAUTH_ENABLED !== 'true'
+  if (disabled) return
 
   // Google
   await fastify.register(fastifyOauth2, {
-   name: 'googleOAuth2',
-   scope: ['openid', 'email', 'profile'],
-   credentials: {
-    client: {
-     id: process.env.GOOGLE_CLIENT_ID,
-     secret: process.env.GOOGLE_CLIENT_SECRET
+    name: 'googleOAuth2',
+    scope: ['openid', 'email', 'profile'],
+    credentials: {
+      client: {
+        id: process.env.GOOGLE_CLIENT_ID,
+        secret: process.env.GOOGLE_CLIENT_SECRET,
+      },
+      auth: fastifyOauth2.GOOGLE_CONFIGURATION,
     },
-    auth: fastifyOauth2.GOOGLE_CONFIGURATION
-   },
-   startRedirectPath: '/api/auth/oauth/google/start',
-   callbackUri: process.env.GOOGLE_CALLBACK_URL
-  });
+    startRedirectPath: '/api/auth/oauth/google/start',
+    callbackUri: process.env.GOOGLE_CALLBACK_URL,
+  })
 
   // GitHub (similar)
   await fastify.register(fastifyOauth2, {
-   name: 'githubOAuth2',
-   scope: ['read:user', 'user:email'],
-   credentials: {
-    client: {
-     id: process.env.GITHUB_CLIENT_ID,
-     secret: process.env.GITHUB_CLIENT_SECRET
+    name: 'githubOAuth2',
+    scope: ['read:user', 'user:email'],
+    credentials: {
+      client: {
+        id: process.env.GITHUB_CLIENT_ID,
+        secret: process.env.GITHUB_CLIENT_SECRET,
+      },
+      auth: fastifyOauth2.GITHUB_CONFIGURATION,
     },
-    auth: fastifyOauth2.GITHUB_CONFIGURATION
-   },
-   startRedirectPath: '/api/auth/oauth/github/start',
-   callbackUri: process.env.GITHUB_CALLBACK_URL
-  });
+    startRedirectPath: '/api/auth/oauth/github/start',
+    callbackUri: process.env.GITHUB_CALLBACK_URL,
+  })
 
   // Callback routes: exchange code, fetch profile, link/create user, set HttpOnly refresh cookie and redirect to SPA
   // See scaffold for implementation details and helpers (jwtSign, createRefreshToken)
@@ -172,9 +188,12 @@ export default async function oauthPlugin(fastify) {
 
 Notes
 
-- Plugin is a scaffold: real logic must create/lookup users, check `isBanned`/`isActive`, persist refresh token, and set cookie.
-- Keep providers disabled by default (`OAUTH_ENABLED=false`) so enabling is a config change only.
-- We prefer server-side exchange (no client secret in browser). Use PKCE if you later move the exchange to the client.
+- Plugin is a scaffold: real logic must create/lookup users, check
+  `isBanned`/`isActive`, persist refresh token, and set cookie.
+- Keep providers disabled by default (`OAUTH_ENABLED=false`) so enabling is a
+  config change only.
+- We prefer server-side exchange (no client secret in browser). Use PKCE if you
+  later move the exchange to the client.
 
 ## Account model alignment (see data-models.md)
 
@@ -198,8 +217,10 @@ Notes
 - Always HTTP‑only, Secure cookies for refresh tokens (sameSite=lax/strict)
 - Rate‑limit login, refresh, and callback endpoints
 - Hash passwords with Argon2
-- Rotate refresh tokens on each refresh; revoke on logout and suspicious activity
-- Do not trust provider email unless `email_verified` is true (Google) or confirmed via API (GitHub primary verified email)
+- Rotate refresh tokens on each refresh; revoke on logout and suspicious
+  activity
+- Do not trust provider email unless `email_verified` is true (Google) or
+  confirmed via API (GitHub primary verified email)
 - Enforce JWT audience/issuer if used across services
 
 ---
@@ -222,7 +243,8 @@ Outputs
 
 Errors
 
-- 400 validation; 401 invalid credentials/token; 403 banned/inactive; 429 rate limit
+- 400 validation; 401 invalid credentials/token; 403 banned/inactive; 429 rate
+  limit
 
 ---
 

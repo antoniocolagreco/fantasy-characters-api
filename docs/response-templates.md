@@ -19,8 +19,11 @@ Essential response formats for consistent API development.
 ```json
 {
   "data": [],
-  "pagination": { "limit": 20, "cursor": { "next": "abc123", "prev": "xyz987" } },
-  "requestId": "string", 
+  "pagination": {
+    "limit": 20,
+    "cursor": { "next": "abc123", "prev": "xyz987" }
+  },
+  "requestId": "string",
   "timestamp": "string"
 }
 ```
@@ -31,7 +34,7 @@ Essential response formats for consistent API development.
 {
   "error": {
     "code": "ERROR_CODE",
-    "message": "Error message", 
+    "message": "Error message",
     "status": 400,
     "details": [{ "path": "string", "message": "string" }],
     "method": "string",
@@ -42,7 +45,8 @@ Essential response formats for consistent API development.
 }
 ```
 
-*See [error-handling.md](./error-handling.md) for complete error implementation patterns.*
+_See [error-handling.md](./error-handling.md) for complete error implementation
+patterns._
 
 ## Required Implementation
 
@@ -65,12 +69,12 @@ export function created<T>(data: T, location: string, requestId?: string) {
       requestId,
       timestamp: new Date().toISOString(),
     },
-    headers: { Location: location }
+    headers: { Location: location },
   }
 }
 
 export function paginated<T>(
-  items: T[], 
+  items: T[],
   pagination: { limit?: number; cursor?: { next?: string; prev?: string } },
   requestId?: string
 ) {
@@ -99,7 +103,7 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 } as const
 
-export type HttpStatus = typeof HTTP_STATUS[keyof typeof HTTP_STATUS]
+export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]
 ```
 
 ### TypeBox Schema Builder
@@ -115,26 +119,25 @@ export const BaseEnvelopeSchema = Type.Object({
 
 export const PaginationSchema = Type.Object({
   limit: Type.Optional(Type.Integer({ minimum: 1 })),
-  cursor: Type.Optional(Type.Object({
-    next: Type.Optional(Type.String()),
-    prev: Type.Optional(Type.String()),
-  })),
+  cursor: Type.Optional(
+    Type.Object({
+      next: Type.Optional(Type.String()),
+      prev: Type.Optional(Type.String()),
+    })
+  ),
 })
 
 export function createResponseSchema<T>(dataSchema: T) {
-  return Type.Intersect([
-    Type.Object({ data: dataSchema }),
-    BaseEnvelopeSchema
-  ])
+  return Type.Intersect([Type.Object({ data: dataSchema }), BaseEnvelopeSchema])
 }
 
 export function createPaginatedResponseSchema<T>(dataSchema: T) {
   return Type.Intersect([
-    Type.Object({ 
-      data: Type.Array(dataSchema), 
-      pagination: PaginationSchema 
+    Type.Object({
+      data: Type.Array(dataSchema),
+      pagination: PaginationSchema,
     }),
-    BaseEnvelopeSchema
+    BaseEnvelopeSchema,
   ])
 }
 ```
@@ -147,24 +150,35 @@ export function createPaginatedResponseSchema<T>(dataSchema: T) {
 import { HTTP_STATUS } from '../../common/constants/http-status'
 
 // Always use helpers for consistent format
-export async function getCharacter(request: FastifyRequest, reply: FastifyReply) {
+export async function getCharacter(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
   const character = await characterService.getById(request.params.id)
   return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
 }
 
-export async function createCharacter(request: FastifyRequest, reply: FastifyReply) {
+export async function createCharacter(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
   const character = await characterService.create(request.body)
   const { response, headers } = created(
-    character, 
-    `/api/v1/characters/${character.id}`, 
+    character,
+    `/api/v1/characters/${character.id}`,
     request.id
   )
   return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
 }
 
-export async function listCharacters(request: FastifyRequest, reply: FastifyReply) {
+export async function listCharacters(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
   const { items, pagination } = await characterService.list(request.query)
-  return reply.code(HTTP_STATUS.OK).send(paginated(items, pagination, request.id))
+  return reply
+    .code(HTTP_STATUS.OK)
+    .send(paginated(items, pagination, request.id))
 }
 ```
 
@@ -172,37 +186,49 @@ export async function listCharacters(request: FastifyRequest, reply: FastifyRepl
 
 ```typescript
 // Define response schemas for all routes
-app.get('/characters/:id', {
-  schema: {
-    response: {
-      200: createResponseSchema(CharacterSchema),
-      404: { $ref: 'ErrorResponseSchema#' }, // See error-handling.md for ErrorResponseSchema
-      500: { $ref: 'ErrorResponseSchema#' },
+app.get(
+  '/characters/:id',
+  {
+    schema: {
+      response: {
+        200: createResponseSchema(CharacterSchema),
+        404: { $ref: 'ErrorResponseSchema#' }, // See error-handling.md for ErrorResponseSchema
+        500: { $ref: 'ErrorResponseSchema#' },
+      },
     },
   },
-}, getCharacterHandler)
+  getCharacterHandler
+)
 
-app.post('/characters', {
-  schema: {
-    body: CreateCharacterSchema,
-    response: {
-      201: createResponseSchema(CharacterSchema),
-      400: { $ref: 'ErrorResponseSchema#' },
-      409: { $ref: 'ErrorResponseSchema#' },
-      500: { $ref: 'ErrorResponseSchema#' },
+app.post(
+  '/characters',
+  {
+    schema: {
+      body: CreateCharacterSchema,
+      response: {
+        201: createResponseSchema(CharacterSchema),
+        400: { $ref: 'ErrorResponseSchema#' },
+        409: { $ref: 'ErrorResponseSchema#' },
+        500: { $ref: 'ErrorResponseSchema#' },
+      },
     },
   },
-}, createCharacterHandler)
+  createCharacterHandler
+)
 
-app.get('/characters', {
-  schema: {
-    response: {
-      200: createPaginatedResponseSchema(CharacterSchema),
-      400: { $ref: 'ErrorResponseSchema#' },
-      500: { $ref: 'ErrorResponseSchema#' },
+app.get(
+  '/characters',
+  {
+    schema: {
+      response: {
+        200: createPaginatedResponseSchema(CharacterSchema),
+        400: { $ref: 'ErrorResponseSchema#' },
+        500: { $ref: 'ErrorResponseSchema#' },
+      },
     },
   },
-}, listCharactersHandler)
+  listCharactersHandler
+)
 ```
 
 ## HTTP Status Codes

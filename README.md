@@ -1,6 +1,7 @@
 # Fantasy Characters API
 
-A modern, type-safe REST API for managing fantasy characters, built with Node.js, TypeScript, and Fastify.
+A modern, type-safe REST API for managing fantasy characters, built with
+Node.js, TypeScript, and Fastify.
 
 ## 🚀 Quick Start
 
@@ -22,35 +23,45 @@ pnpm dev
 
 ### 🏗️ **Project Foundation**
 
-- [📋 Roadmap](docs/roadmap.md) - Complete development roadmap with milestones and dependencies
-- [🛠️ Technology Stack](docs/technology-stack.md) - Technologies, libraries, and tools used
-- [📁 Project Structure](docs/project-structure.md) - Directory organization and file responsibilities
-- [💡 Development Principles](docs/development-principles.md) - Coding standards and best practices
+- [📋 Roadmap](docs/roadmap.md) - Complete development roadmap with milestones
+  and dependencies
+- [🛠️ Technology Stack](docs/technology-stack.md) - Technologies, libraries, and
+  tools used
+- [📁 Project Structure](docs/project-structure.md) - Directory organization and
+  file responsibilities
+- [💡 Development Principles](docs/development-principles.md) - Coding standards
+  and best practices
 
 ### 🔧 **Setup & Configuration**
 
-- [🔐 Secrets & Config](docs/secrets-and-config.md) - Environment variables and configuration management
+- [🔐 Secrets & Config](docs/secrets-and-config.md) - Environment variables and
+  configuration management
 - [📦 Package Scripts](docs/package-scripts.md) - Available npm/pnpm scripts
 - [🚀 CI/CD](docs/ci-cd.md) - Continuous integration and deployment pipeline
 
 ### 🏛️ **Architecture & Design**
 
 - [📊 Data Models](docs/data-models.md) - Database schema and Prisma models
-- [🔀 Migrations & Rollback](docs/migrations-and-rollback.md) - Database migration strategies
-- [📋 Code Style](docs/code-style.md) - Linting, formatting, and coding conventions
+- [🔀 Migrations & Rollback](docs/migrations-and-rollback.md) - Database
+  migration strategies
+- [📋 Code Style](docs/code-style.md) - Linting, formatting, and coding
+  conventions
 
 ### 🔐 **Security & Authentication**
 
 - [🛡️ Security](docs/security.md) - Security best practices and implementations
 - [🔑 Authentication](docs/authentication.md) - JWT-based authentication system
-- [🚪 Authorization & RBAC](docs/authorization.md) - Complete role-based access control specification
+- [🚪 Authorization & RBAC](docs/authorization.md) - Complete role-based access
+  control specification
 - [🌐 CORS](docs/cors.md) - Cross-origin resource sharing configuration
 
 ### 🌐 **API Documentation**
 
 - [� Endpoints](docs/endpoints.md) - Detailed endpoint specifications
-- [🔍 Query Templates](docs/query-templates.md) - Database query patterns and examples
-- [📋 Response Templates](docs/response-templates.md) - Response format standards
+- [🔍 Query Templates](docs/query-templates.md) - Database query patterns and
+  examples
+- [📋 Response Templates](docs/response-templates.md) - Response format
+  standards
 - [� Documentation](docs/documentation.md) - API documentation generation
 
 ### 🎯 **Features & Functionality**
@@ -62,9 +73,11 @@ pnpm dev
 ### ⚡ **Performance & Operations**
 
 - [💾 Caching](docs/caching.md) - Caching strategies and implementation
-- [🚦 Rate Limiting](docs/rate-limiting.md) - Request throttling and abuse prevention
+- [🚦 Rate Limiting](docs/rate-limiting.md) - Request throttling and abuse
+  prevention
 - [📊 Observability](docs/observability.md) - Logging, monitoring, and metrics
-- [🚨 Error Handling](docs/error-handling.md) - Error management and user feedback
+- [🚨 Error Handling](docs/error-handling.md) - Error management and user
+  feedback
 
 ### 🔄 **Versioning & Evolution**
 
@@ -77,7 +90,7 @@ This API manages fantasy characters with rich taxonomies and relationships:
 
 - **👤 Users** - Authentication, profiles, and role management
 - **🏷️ Tags** - Flexible categorization system
-- **⚔️ Skills** - Character abilities and proficiencies  
+- **⚔️ Skills** - Character abilities and proficiencies
 - **✨ Perks** - Special traits and advantages
 - **🧝 Races** - Fantasy races with attribute modifiers
 - **🛡️ Archetypes** - Character classes and roles
@@ -126,7 +139,8 @@ Once running, visit:
 
 ## 🤝 Contributing
 
-Please read the [Development Principles](docs/development-principles.md) and [Code Style](docs/code-style.md) before contributing.
+Please read the [Development Principles](docs/development-principles.md) and
+[Code Style](docs/code-style.md) before contributing.
 
 ## 👨‍💻 Author
 
@@ -135,7 +149,8 @@ Please read the [Development Principles](docs/development-principles.md) and [Co
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.
 
 ---
 
