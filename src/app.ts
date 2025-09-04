@@ -9,7 +9,7 @@ import helmetPlugin from './shared/plugins/helmet.plugin'
 import loggingPlugin from './shared/plugins/logging.plugin'
 import { multipartPlugin } from './shared/plugins/multipart.plugin'
 import rateLimitPlugin from './shared/plugins/rate-limit.plugin'
-import sanitizationPlugin from './shared/plugins/sanitization.plugin'
+// import sanitizationPlugin from './shared/plugins/sanitization.plugin' // Temporarily disabled
 import { swaggerPlugin } from './shared/plugins/swagger.plugin'
 import { generateUUIDv7 } from './shared/utils/uuid'
 
@@ -52,7 +52,7 @@ export function buildApp(): FastifyInstance {
         await fastify.register(helmetPlugin)
         await fastify.register(corsPlugin)
         await fastify.register(rateLimitPlugin)
-        await fastify.register(sanitizationPlugin)
+        // fastify.register(sanitizationPlugin) // Temporarily disabled
 
         // Documentation plugin
         await fastify.register(swaggerPlugin)

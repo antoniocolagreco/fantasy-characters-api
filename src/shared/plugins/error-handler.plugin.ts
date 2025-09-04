@@ -7,6 +7,27 @@ import type { ErrorDetail, ErrorResponse } from '../schemas/error.schemas'
  * Handles both AppError instances and generic errors
  */
 export function errorHandlerPlugin(fastify: FastifyInstance): void {
+    // Handle 404 not found errors with consistent format
+    fastify.setNotFoundHandler(async (request, reply) => {
+        const requestId = request.id
+        const timestamp = new Date().toISOString()
+
+        const errorResponse: ErrorResponse = {
+            error: {
+                code: 'RESOURCE_NOT_FOUND',
+                message: `Route ${request.method}:${request.url} not found`,
+                status: 404,
+                method: request.method,
+                path: request.url,
+            },
+            requestId,
+            timestamp,
+        }
+
+        request.log.warn({ error: errorResponse }, 'Route not found')
+        return reply.status(404).send(errorResponse)
+    })
+
     fastify.setErrorHandler(async (error: FastifyError, request, reply) => {
         const requestId = request.id
         const timestamp = new Date().toISOString()
