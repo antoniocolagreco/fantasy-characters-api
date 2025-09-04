@@ -113,7 +113,7 @@ Duration: 4–6 days
 
 Duration: 3–5 days
 
-- [ ] 5.01 Create multi-stage production Dockerfile and image
+- [x] 5.01 Create multi-stage production Dockerfile and image
 - [ ] 5.02 Add Docker Compose for app + database for local integration
 - [ ] 5.03 Implement container health/readiness checks hitting /api/health
 - [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md) (lint,

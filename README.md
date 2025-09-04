@@ -123,6 +123,8 @@ This API manages fantasy characters with rich taxonomies and relationships:
 
 ## 🚀 Getting Started
 
+### Local Development
+
 1. **Prerequisites**: Node.js 24+, PostgreSQL, pnpm
 2. **Install**: `pnpm install`
 3. **Configure**: Copy `.env.example` to `.env` and configure
@@ -130,6 +132,44 @@ This API manages fantasy characters with rich taxonomies and relationships:
 5. **Develop**: `pnpm dev`
 6. **Test**: `pnpm test`
 7. **Build**: `pnpm build`
+
+### Docker Deployment
+
+#### Development with Docker
+
+```bash
+# Start PostgreSQL only
+pnpm docker:compose
+
+# Run API locally against containerized DB
+pnpm dev
+```
+
+#### Production Deployment
+
+```bash
+# Build and start complete stack
+pnpm docker:compose:prod
+
+# Or step by step
+pnpm docker:build
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Docker Commands
+
+- `pnpm docker:build` - Build production image
+- `pnpm docker:run` - Run container locally
+- `pnpm docker:compose` - Start development stack (DB only)
+- `pnpm docker:compose:prod` - Start production stack (API + DB)
+- `pnpm docker:compose:down` - Stop all containers
+
+The production image is optimized with:
+
+- Multi-stage build for minimal size (~261MB)
+- Non-root user for security
+- Health checks for monitoring
+- Production dependencies only
 
 ## 📖 API Documentation
 

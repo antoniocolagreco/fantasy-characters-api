@@ -5,6 +5,7 @@
     "module": "ESNext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
+    "allowJs": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": false,
@@ -12,6 +13,7 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "removeComments": true,
     "sourceMap": true,
     "importHelpers": false,
@@ -65,8 +67,8 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*", "tests/**/*", "scripts/**/*", "*.config.ts", "*.config.js"],
-  "exclude": ["node_modules", "dist", "coverage"],
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "coverage", "tests/**/*"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"
