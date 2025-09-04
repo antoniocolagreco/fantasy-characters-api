@@ -31,13 +31,13 @@ const app = fastify({
 })
 ```
 
-## Required Health Check
+## Required Health Checks
 
-Single health endpoint - simple database connectivity check for basic
-monitoring.
+Health endpoint for monitoring and readiness endpoint for orchestration.
 
 ```ts
-app.get('/health', async (req, reply) => {
+// Basic health check for monitoring
+app.get('/api/health', async (req, reply) => {
   try {
     // Quick DB check
     await prisma.$queryRaw`SELECT 1`
@@ -53,6 +53,13 @@ app.get('/health', async (req, reply) => {
       timestamp: new Date().toISOString(),
     })
   }
+})
+
+// Readiness check for orchestration
+app.get('/api/ready', async (req, reply) => {
+  // Check database and migrations readiness
+  // Returns 200 if ready, 503 if not ready
+  // See health.md for full implementation
 })
 ```
 

@@ -3,7 +3,8 @@
 ## 1. Utility / health checks
 
 ```http
-GET /api/health   # Health check with database connectivity
+GET /api/health   # Basic health check for monitoring and load balancers
+GET /api/ready    # Readiness check for orchestration (database + migrations)
 ```
 
 ## 2. Users

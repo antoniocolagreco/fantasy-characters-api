@@ -1,21 +1,22 @@
-# AI Health Check
+# Health and Readiness Checks
 
-Essential patterns for basic API health monitoring with a single endpoint.
+Essential patterns for API monitoring with health and readiness endpoints.
 
-## Critical Health Check Rules
+## Critical Rules
 
-1. **Always implement single health endpoint** at `/health`
-2. **Always check database connectivity** with short timeout
-3. **Always return consistent JSON format** with status and timestamp
-4. **Never cache health responses** - use `Cache-Control: no-store`
+1. **Always implement health endpoint** at `/api/health` for basic monitoring
+2. **Always implement readiness endpoint** at `/api/ready` for orchestration
+3. **Health checks should be fast** with short timeout (3s max)
+4. **Readiness checks can be thorough** with longer timeout (5s max)
+5. **Never cache responses** - use `Cache-Control: no-store`
 
-## Required Health Endpoint
+## Health Endpoint (`/api/health`)
 
-Simple health check with database connectivity test for monitoring and load
-balancers.
+Basic health check for monitoring and load balancers. Returns `200` if service
+is alive, `503` if database is unreachable.
 
 ```ts
-app.get('/health', async (req, reply) => {
+app.get('/api/health', async (req, reply) => {
   try {
     // Quick DB check with timeout
     await Promise.race([
@@ -41,6 +42,121 @@ app.get('/health', async (req, reply) => {
     })
   }
 })
+```
+
+## Readiness Endpoint (`/api/ready`)
+
+Comprehensive readiness check for container orchestration. Returns `200` if
+service is ready to accept traffic, `503` if not ready (missing migrations, etc).
+
+```ts
+app.get('/api/ready', async (req, reply) => {
+  let isReady = true
+  const checks = {
+    database: { status: 'not_ready', responseTime: 0 },
+    migrations: { status: 'not_ready' }
+  }
+
+  // Check database connectivity
+  try {
+    const dbStart = Date.now()
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), 5000)
+      ),
+    ])
+    checks.database = { 
+      status: 'ready', 
+      responseTime: Date.now() - dbStart 
+    }
+  } catch (error) {
+    isReady = false
+  }
+
+  // Check migrations (simplified - check if tables exist)
+  try {
+    await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
+    checks.migrations.status = 'ready'
+  } catch (error) {
+    if (process.env.NODE_ENV === 'production') {
+      isReady = false
+    }
+  }
+
+  const statusCode = isReady ? 200 : 503
+  reply.header('Cache-Control', 'no-store')
+  return reply.code(statusCode).send({
+    status: isReady ? 'ready' : 'not_ready',
+    timestamp: new Date().toISOString(),
+    checks
+  })
+})
+```
+
+## Required Schemas
+
+TypeBox schemas for consistent health and readiness response validation.
+
+```ts
+import { Type } from '@sinclair/typebox'
+
+export const HealthResponseSchema = Type.Object(
+  {
+    status: Type.Union([Type.Literal('ok'), Type.Literal('error')]),
+    timestamp: Type.String({ format: 'date-time' }),
+    uptime: Type.Number(),
+    error: Type.Optional(Type.String()),
+  },
+  { $id: 'HealthResponse' }
+)
+
+export const ReadinessResponseSchema = Type.Object(
+  {
+    status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
+    timestamp: Type.String({ format: 'date-time' }),
+    checks: Type.Object({
+      database: Type.Object({
+        status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
+        responseTime: Type.Number(),
+      }),
+      migrations: Type.Object({
+        status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
+      }),
+    }),
+  },
+  { $id: 'ReadinessResponse' }
+)
+```
+
+## Route Registration
+
+Register both endpoints with proper schema validation and documentation.
+
+```ts
+// Health endpoint
+app.get('/api/health', {
+  schema: {
+    tags: ['Health'],
+    description: 'Basic health check for monitoring and load balancers',
+    response: {
+      200: HealthResponseSchema,
+      503: HealthResponseSchema,
+    },
+  },
+}, healthHandler)
+
+// Readiness endpoint  
+app.get('/api/ready', {
+  schema: {
+    tags: ['Health'],
+    description: 'Readiness check for container orchestration',
+    response: {
+      200: ReadinessResponseSchema,
+      503: ReadinessResponseSchema,
+    },
+  },
+}, readinessHandler)
 ```
 
 ## Required Health Schema
