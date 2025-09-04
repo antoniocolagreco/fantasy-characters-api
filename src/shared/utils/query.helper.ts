@@ -1,26 +1,4 @@
-import { Type, type Static } from '@sinclair/typebox'
 import { err } from '../errors'
-
-// Base pagination query schema
-export const PaginationQuerySchema = Type.Object({
-    limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
-    cursor: Type.Optional(Type.String()),
-})
-
-export type PaginationQuery = Static<typeof PaginationQuerySchema>
-
-// Base pagination response schema
-export const PaginationResponseSchema = Type.Object({
-    limit: Type.Integer(),
-    cursor: Type.Optional(
-        Type.Object({
-            next: Type.Optional(Type.String()),
-            prev: Type.Optional(Type.String()),
-        })
-    ),
-})
-
-export type PaginationResponse = Static<typeof PaginationResponseSchema>
 
 // Generic query building functions
 export function buildWhere<T extends Record<string, unknown>>(filters: Partial<T>): T {

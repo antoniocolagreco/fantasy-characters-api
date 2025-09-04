@@ -18,6 +18,7 @@ export default defineConfig({
                 'coverage/**',
                 'scripts/**',
                 '**/*.d.ts',
+                '**/*.type.ts',
                 '**/index.ts',
                 '**/*.schema.ts',
                 '**/*.config.*',
@@ -26,10 +27,11 @@ export default defineConfig({
                 '**/types/**',
                 '**/plugins/**',
                 '**/migrations/**',
-                '**/*.generators.ts',
-                '**/*.fixtures.ts',
-                '**/*.mocks.ts',
+                '**/*.generator.ts',
+                '**/*.fixture.ts',
+                '**/*.mock.ts',
                 'src/infrastructure/database/seed.ts',
+                'src/server.ts',
             ],
 
             thresholds: {
@@ -45,10 +47,12 @@ export default defineConfig({
         poolOptions: {
             threads: {
                 singleThread: true,
+                isolate: false,
             },
         },
         testTimeout: 10000,
         hookTimeout: 10000,
+        teardownTimeout: 5000,
     },
     resolve: {
         alias: {

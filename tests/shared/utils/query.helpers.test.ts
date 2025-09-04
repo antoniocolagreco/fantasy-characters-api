@@ -5,9 +5,8 @@ import {
     buildOrderBy,
     buildPagination,
     validateRange,
-    PaginationQuerySchema,
-    PaginationResponseSchema,
-} from '@/shared/utils/query.helpers'
+} from '@/shared/utils/query.helper'
+import { PaginationQuerySchema } from '@/shared/schemas'
 
 describe('Query Helpers', () => {
     describe('buildWhere', () => {
@@ -230,12 +229,6 @@ describe('Query Helpers', () => {
             // Test schema structure exists and has expected properties
             expect(PaginationQuerySchema).toBeDefined()
             expect(PaginationQuerySchema.type).toBe('object')
-        })
-
-        test('PaginationResponseSchema should be properly defined', () => {
-            // Test schema structure exists and has expected properties
-            expect(PaginationResponseSchema).toBeDefined()
-            expect(PaginationResponseSchema.type).toBe('object')
         })
     })
 })

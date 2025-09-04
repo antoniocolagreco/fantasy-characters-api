@@ -15,4 +15,8 @@ beforeEach(() => {
 
 afterAll(() => {
     // Cleanup after all tests
+    // Force garbage collection if available
+    if (global.gc) {
+        global.gc()
+    }
 })

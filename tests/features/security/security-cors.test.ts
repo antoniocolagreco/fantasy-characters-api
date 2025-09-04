@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { FastifyInstance } from 'fastify'
 import { buildApp } from '../../../src/app'
-import type { ErrorResponse } from '../../../src/shared/schemas/error.schemas'
+import type { ErrorResponse } from '../../../src/shared/schemas/error.schema'
 
 describe('CORS Protection Tests', () => {
     let app: FastifyInstance

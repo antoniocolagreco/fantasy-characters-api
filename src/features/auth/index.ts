@@ -18,4 +18,4 @@ export type {
 } from './rbac.schema'
 
 // Re-export common types
-export type { Role as RbacRole, Visibility } from '../../shared/schemas/common.schemas'
+export type { Role as RbacRole, Visibility } from '../../shared/schemas/common.schema'

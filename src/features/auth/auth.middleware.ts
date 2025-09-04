@@ -1,7 +1,7 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { verifyAccessToken } from './jwt.service'
 import type { JwtConfig } from './auth.schema'
-import { err } from '../../shared/errors'
+import { AppError, err } from '../../shared/errors'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
     return function authMiddleware(request: FastifyRequest, _reply: FastifyReply) {
@@ -27,9 +27,14 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
                 email: '', // Will be populated by user service if needed
             }
         } catch (error) {
+            // Re-throw AppError instances as-is (preserves specific error codes)
+            if (error instanceof AppError) {
+                throw error
+            }
             if (error instanceof Error) {
                 throw err('TOKEN_INVALID', error.message)
             }
+            // Handle non-Error exceptions (e.g., strings, objects)
             throw err('UNAUTHORIZED', 'Token verification failed')
         }
     }

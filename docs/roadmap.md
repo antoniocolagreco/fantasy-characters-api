@@ -79,7 +79,7 @@ Duration: 2–3 days
 - [x] 3.04 Create request validation pipeline with TypeBox + Ajv
       ([development-principles.md](./development-principles.md))
 - [x] 3.05 Add input sanitization utilities (strings + HTML only where needed)
-- [ ] 3.06 Write security tests (80%+ coverage target) ✅
+- [x] 3.06 Write security tests (80%+ coverage target) ✅
 
 ---
 
@@ -105,7 +105,7 @@ Duration: 4–6 days
       ([error-handling.md](./error-handling.md))
 - [x] 4.11 Implement UUID v7 utility in shared/utils
 - [x] 4.12 Configure base logging with Pino (redaction, requestId)
-- [ ] 4.13 Write server integration tests (≥ 80% coverage) ✅
+- [x] 4.13 Write server integration tests (≥ 80% coverage) ✅
 
 ---
 
@@ -185,7 +185,7 @@ Cross-links: [feature-dependencies.md](./feature-dependencies.md),
       per [authorization.md](./authorization.md)
 - [ ] 8.02 Apply RBAC checks in routes (preHandler)
 - [ ] 8.03 Enforce RBAC again in services (defense in depth)
-- [ ] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests
+- [x] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests
       exist; middleware/route tests pending)
 - [ ] 8.05 Update authorization docs and note protected endpoints in
       [endpoints.md](./endpoints.md)

@@ -1,4 +1,4 @@
-import type { ErrorCode, ErrorDetail } from '../schemas/error.schemas'
+import type { ErrorCode, ErrorDetail } from '../schemas'
 
 const DEFAULT_STATUS: Record<ErrorCode, number> = {
     INVALID_CREDENTIALS: 401,

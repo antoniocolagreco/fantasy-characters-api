@@ -1,18 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import { Type } from '@sinclair/typebox'
 import prismaService from '../../infrastructure/database/prisma.service'
-
-const HealthResponseSchema = Type.Object({
-    status: Type.Literal('healthy'),
-    timestamp: Type.String({ format: 'date-time' }),
-    version: Type.String(),
-    uptime: Type.Number(),
-    environment: Type.String(),
-    database: Type.Object({
-        status: Type.Union([Type.Literal('connected'), Type.Literal('disconnected')]),
-        responseTime: Type.Number(),
-    }),
-})
+import { HealthResponseSchema } from '../schemas/health.schema'
 
 /**
  * Health check plugin

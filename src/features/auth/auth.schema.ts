@@ -1,5 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
-import { RoleSchema } from '../../shared/schemas/common.schemas'
+import { RoleSchema } from '../../shared/schemas'
 
 // JWT Claims Schema
 export const JwtClaimsSchema = Type.Object(

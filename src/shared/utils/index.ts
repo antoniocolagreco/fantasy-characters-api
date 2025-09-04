@@ -1,2 +1,2 @@
-export * from './query.helpers'
+export * from './query.helper'
 export * from './uuid'

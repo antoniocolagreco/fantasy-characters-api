@@ -1,5 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
-import { RoleSchema, VisibilitySchema } from '../../shared/schemas/common.schemas'
+import { RoleSchema, VisibilitySchema } from '../../shared/schemas'
 
 // RBAC Types
 

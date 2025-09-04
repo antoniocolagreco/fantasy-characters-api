@@ -1,4 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
+import { VisibilitySchema } from './common.schema'
 
 /**
  * Standard pagination query parameters
@@ -38,9 +39,7 @@ export const SortQuerySchema = Type.Object(
  */
 export const VisibilityQuerySchema = Type.Object(
     {
-        visibility: Type.Optional(
-            Type.Union([Type.Literal('PUBLIC'), Type.Literal('PRIVATE'), Type.Literal('HIDDEN')])
-        ),
+        visibility: Type.Optional(VisibilitySchema),
     },
     { $id: 'VisibilityQuery' }
 )
