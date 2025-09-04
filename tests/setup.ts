@@ -2,6 +2,7 @@ import { beforeAll, afterAll, beforeEach } from 'vitest'
 
 // Test environment setup
 process.env.NODE_ENV = 'test'
+process.env.LOG_LEVEL = 'silent'
 
 beforeAll(() => {
     // Setup will be added in future milestones

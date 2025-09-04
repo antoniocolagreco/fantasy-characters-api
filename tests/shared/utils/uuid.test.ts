@@ -38,8 +38,13 @@ describe('UUID v7 Utility', () => {
         })
 
         it('should validate standard UUID formats', () => {
-            expect(isValidUUIDv7('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
-            expect(isValidUUIDv7('01234567-89ab-1def-8123-456789abcdef')).toBe(true)
+            // These are not UUID v7 format, so they should return false
+            expect(isValidUUIDv7('123e4567-e89b-12d3-a456-426614174000')).toBe(false) // UUID v1
+            expect(isValidUUIDv7('01234567-89ab-1def-8123-456789abcdef')).toBe(false) // UUID v1
+
+            // But these UUID v7 examples should return true
+            expect(isValidUUIDv7('01890a5d-ac96-774b-b5eb-63b79d4b5c1a')).toBe(true) // Valid UUID v7
+            expect(isValidUUIDv7('01890a5d-ac96-7000-8000-000000000000')).toBe(true) // Valid UUID v7
         })
 
         it('should reject invalid formats', () => {

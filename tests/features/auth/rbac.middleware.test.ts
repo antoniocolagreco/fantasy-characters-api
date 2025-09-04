@@ -6,6 +6,7 @@ import {
     resolveOwnership,
 } from '../../../src/features/auth/rbac.middleware'
 import { can } from '../../../src/features/auth/rbac.policy'
+import { AppError } from '../../../src/shared/errors'
 
 // Mock the RBAC policy
 vi.mock('../../../src/features/auth/rbac.policy')
@@ -58,7 +59,9 @@ describe('RBAC Middleware', () => {
             header: vi.fn().mockReturnThis(),
         }
 
+        // Clear all mocks including the can function
         vi.clearAllMocks()
+        mockCan.mockReset()
     })
 
     afterEach(() => {
@@ -201,11 +204,26 @@ describe('RBAC Middleware', () => {
 
             await expect(
                 middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).rejects.toThrow('UNAUTHORIZED')
+            ).rejects.toThrow(AppError)
+
+            try {
+                await middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('UNAUTHORIZED')
+            }
         })
 
         it('should allow read actions without user (anonymous)', async () => {
             mockRequest.user = undefined
+
+            // Set up mock character data for ownership resolution
+            const mockCharacter = {
+                ownerId: 'owner-123',
+                visibility: 'PUBLIC',
+                owner: { role: 'USER' },
+            }
+            mockPrismaClient.character.findUnique.mockResolvedValue(mockCharacter)
             mockCan.mockReturnValue(true)
 
             const middleware = createRbacMiddleware('characters', 'read')
@@ -214,13 +232,14 @@ describe('RBAC Middleware', () => {
                 middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
             ).resolves.toBeUndefined()
 
+            // The test was passing wrong expected values - corrected the expected call
             expect(mockCan).toHaveBeenCalledWith({
                 user: undefined,
                 resource: 'characters',
                 action: 'read',
                 ownerId: 'owner-123',
                 visibility: 'PUBLIC',
-                ownerRole: undefined,
+                ownerRole: 'USER',
                 targetUserRole: undefined,
             })
         })
@@ -290,7 +309,14 @@ describe('RBAC Middleware', () => {
 
             await expect(
                 middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).rejects.toThrow('FORBIDDEN')
+            ).rejects.toThrow(AppError)
+
+            try {
+                await middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('FORBIDDEN')
+            }
         })
 
         it('should handle empty route config correctly', async () => {

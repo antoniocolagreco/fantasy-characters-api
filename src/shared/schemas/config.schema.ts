@@ -45,6 +45,7 @@ export const ConfigSchema = Type.Object(
                 Type.Literal('info'),
                 Type.Literal('debug'),
                 Type.Literal('trace'),
+                Type.Literal('silent'),
             ],
             { default: 'info' }
         ),

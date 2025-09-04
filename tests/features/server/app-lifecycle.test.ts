@@ -22,13 +22,13 @@ describe('Application Lifecycle Tests', () => {
     test('should register all required plugins', () => {
         const plugins = app.printPlugins()
 
-        // Core plugins should be registered
+        // Core plugins should be registered (check for patterns due to dynamic naming)
         expect(plugins).toContain('logging-plugin')
         expect(plugins).toContain('healthCheckPlugin')
         expect(plugins).toContain('swaggerPlugin')
-        expect(plugins).toContain('helmetPlugin-auto-7')
-        expect(plugins).toContain('corsPlugin-auto-6')
-        expect(plugins).toContain('rateLimitPlugin-auto-8')
+        expect(plugins).toMatch(/helmetPlugin-auto-\d+/)
+        expect(plugins).toMatch(/corsPlugin-auto-\d+/)
+        expect(plugins).toMatch(/rateLimitPlugin-auto-\d+/)
         expect(plugins).toContain('compressionPlugin')
         expect(plugins).toContain('multipartPlugin')
     })
@@ -36,10 +36,10 @@ describe('Application Lifecycle Tests', () => {
     test('should have proper plugin registration order', () => {
         const plugins = app.printPlugins()
 
-        // Verify security plugins are loaded early
-        const helmetIndex = plugins.indexOf('helmetPlugin-auto-7')
-        const corsIndex = plugins.indexOf('corsPlugin-auto-6')
-        const rateLimitIndex = plugins.indexOf('rateLimitPlugin-auto-8')
+        // Verify security plugins are loaded early (check for patterns due to dynamic naming)
+        const helmetIndex = plugins.search(/helmetPlugin-auto-\d+/)
+        const corsIndex = plugins.search(/corsPlugin-auto-\d+/)
+        const rateLimitIndex = plugins.search(/rateLimitPlugin-auto-\d+/)
 
         expect(helmetIndex).toBeGreaterThan(-1)
         expect(corsIndex).toBeGreaterThan(-1)

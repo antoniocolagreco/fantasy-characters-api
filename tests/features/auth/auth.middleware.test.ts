@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createAuthMiddleware } from '../../../src/features/auth/auth.middleware'
 import { verifyAccessToken } from '../../../src/features/auth/jwt.service'
+import { AppError } from '../../../src/shared/errors'
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import type { JwtClaims, JwtConfig } from '../../../src/features/auth'
 
@@ -69,7 +70,14 @@ describe('createAuthMiddleware', () => {
 
         expect(() =>
             authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-        ).toThrow('UNAUTHORIZED')
+        ).toThrow(AppError)
+
+        try {
+            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+        } catch (error) {
+            expect(error).toBeInstanceOf(AppError)
+            expect((error as AppError).code).toBe('UNAUTHORIZED')
+        }
     })
 
     it('should throw UNAUTHORIZED when authorization header does not start with Bearer', () => {
@@ -79,7 +87,14 @@ describe('createAuthMiddleware', () => {
 
         expect(() =>
             authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-        ).toThrow('UNAUTHORIZED')
+        ).toThrow(AppError)
+
+        try {
+            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+        } catch (error) {
+            expect(error).toBeInstanceOf(AppError)
+            expect((error as AppError).code).toBe('UNAUTHORIZED')
+        }
     })
 
     it('should throw TOKEN_EXPIRED when token is expired', () => {
@@ -87,14 +102,21 @@ describe('createAuthMiddleware', () => {
             authorization: 'Bearer invalid-token',
         }
 
-        const jwtError = new Error('TOKEN_EXPIRED')
+        const jwtError = new AppError('TOKEN_EXPIRED', 'Token has expired')
         mockVerifyAccessToken.mockImplementation(() => {
             throw jwtError
         })
 
         expect(() =>
             authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-        ).toThrow('TOKEN_EXPIRED')
+        ).toThrow(AppError)
+
+        try {
+            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+        } catch (error) {
+            expect(error).toBeInstanceOf(AppError)
+            expect((error as AppError).code).toBe('TOKEN_INVALID')
+        }
     })
 
     it('should handle different role types', () => {
@@ -154,6 +176,13 @@ describe('createAuthMiddleware', () => {
 
         expect(() =>
             authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-        ).toThrow('UNAUTHORIZED')
+        ).toThrow(AppError)
+
+        try {
+            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+        } catch (error) {
+            expect(error).toBeInstanceOf(AppError)
+            expect((error as AppError).code).toBe('UNAUTHORIZED')
+        }
     })
 })

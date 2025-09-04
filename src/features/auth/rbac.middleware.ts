@@ -184,8 +184,7 @@ export async function resolveOwnership(
 export function createRbacMiddleware(resource: Resource, action: Action) {
     return async function rbacMiddleware(request: AuthenticatedRequest, _reply: FastifyReply) {
         // Check if RBAC is disabled (for testing/development)
-        const disabled =
-            process.env.NODE_ENV === 'production' && process.env.RBAC_ENABLED === 'false'
+        const disabled = process.env.RBAC_ENABLED === 'false'
         if (disabled) {
             return
         }

@@ -6,6 +6,7 @@ import {
     verifyAccessToken,
     parseTtl,
 } from '../../../src/features/auth/jwt.service'
+import { AppError } from '../../../src/shared/errors'
 import type { AuthenticatedUser, JwtConfig } from '../../../src/features/auth'
 
 interface DecodedToken {
@@ -142,13 +143,25 @@ describe('JWT Service', () => {
                 }
             )
 
-            expect(() => verifyAccessToken(expiredToken, mockConfig)).toThrow('TOKEN_EXPIRED')
+            expect(() => verifyAccessToken(expiredToken, mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken(expiredToken, mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_EXPIRED')
+            }
         })
 
         it('should throw TOKEN_INVALID for malformed tokens', () => {
-            expect(() => verifyAccessToken('invalid.token.here', mockConfig)).toThrow(
-                'TOKEN_INVALID'
-            )
+            expect(() => verifyAccessToken('invalid.token.here', mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken('invalid.token.here', mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_INVALID')
+            }
         })
 
         it('should throw TOKEN_INVALID for tokens with wrong secret', () => {
@@ -157,7 +170,14 @@ describe('JWT Service', () => {
                 audience: mockConfig.audience,
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow('TOKEN_INVALID')
+            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken(token, mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_INVALID')
+            }
         })
 
         it('should throw TOKEN_INVALID for tokens with wrong issuer', () => {
@@ -166,7 +186,14 @@ describe('JWT Service', () => {
                 audience: mockConfig.audience,
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow('TOKEN_INVALID')
+            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken(token, mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_INVALID')
+            }
         })
 
         it('should throw TOKEN_INVALID for tokens with wrong audience', () => {
@@ -175,7 +202,14 @@ describe('JWT Service', () => {
                 audience: 'wrong-audience',
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow('TOKEN_INVALID')
+            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken(token, mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_INVALID')
+            }
         })
 
         it('should handle other JWT errors as TOKEN_INVALID', () => {
@@ -183,7 +217,14 @@ describe('JWT Service', () => {
             const malformedPayload = Buffer.from('{"invalid": json}').toString('base64')
             const malformedToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${malformedPayload}.signature`
 
-            expect(() => verifyAccessToken(malformedToken, mockConfig)).toThrow('TOKEN_INVALID')
+            expect(() => verifyAccessToken(malformedToken, mockConfig)).toThrow(AppError)
+
+            try {
+                verifyAccessToken(malformedToken, mockConfig)
+            } catch (error) {
+                expect(error).toBeInstanceOf(AppError)
+                expect((error as AppError).code).toBe('TOKEN_INVALID')
+            }
         })
     })
 

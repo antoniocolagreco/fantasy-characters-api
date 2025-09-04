@@ -90,6 +90,24 @@ export function errorHandlerPlugin(fastify: FastifyInstance): void {
             return reply.status(error.status).send(errorResponse)
         }
 
+        // Handle CORS errors specifically
+        if (error.message?.startsWith('CORS:')) {
+            const errorResponse: ErrorResponse = {
+                error: {
+                    code: 'FORBIDDEN',
+                    message: error.message,
+                    status: 403,
+                    method: request.method,
+                    path: request.url,
+                },
+                requestId,
+                timestamp,
+            }
+
+            request.log.warn({ error: errorResponse }, 'CORS error')
+            return reply.status(403).send(errorResponse)
+        }
+
         // Handle Fastify errors
         if (error.statusCode) {
             const errorResponse: ErrorResponse = {
