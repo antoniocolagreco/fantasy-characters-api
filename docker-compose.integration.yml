@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+    # Application service for integration testing
+    api:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        environment:
+            NODE_ENV: development
+            PORT: 3000
+            DATABASE_URL: postgresql://fantasy_user:fantasy_password@postgres:5432/fantasy_characters_dev
+            JWT_SECRET: development-secret-key-for-integration-testing-only
+            JWT_REFRESH_SECRET: development-refresh-secret-key-for-integration-testing
+            CORS_ORIGINS: 'http://localhost:3000,http://localhost:5173,http://localhost:8080'
+            LOG_LEVEL: debug
+        ports:
+            - '3000:3000'
+        depends_on:
+            postgres:
+                condition: service_healthy
+        healthcheck:
+            test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+            interval: 10s
+            timeout: 5s
+            retries: 3
+            start_period: 5s
+        restart: unless-stopped
+        networks:
+            - fantasy_network
+        volumes:
+            # Mount source for live debugging (optional)
+            - ./src:/app/src:ro
+            - ./docs:/app/docs:ro
+
+    # PostgreSQL Database
+    postgres:
+        build:
+            context: ./docker/postgres
+            dockerfile: Dockerfile
+        environment:
+            POSTGRES_DB: fantasy_characters_dev
+            POSTGRES_USER: fantasy_user
+            POSTGRES_PASSWORD: fantasy_password
+            POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
+        ports:
+            - '5432:5432'
+        volumes:
+            - postgres_integration_data:/var/lib/postgresql/data
+            - ./docker/postgres/init:/docker-entrypoint-initdb.d
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U fantasy_user -d fantasy_characters_dev']
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        restart: unless-stopped
+        networks:
+            - fantasy_network
+
+    # PostgreSQL admin interface for debugging
+    pgadmin:
+        image: dpage/pgadmin4:latest
+        environment:
+            PGADMIN_DEFAULT_EMAIL: admin@fantasy-api.dev
+            PGADMIN_DEFAULT_PASSWORD: admin123
+            PGADMIN_CONFIG_SERVER_MODE: 'False'
+        ports:
+            - '8080:80'
+        volumes:
+            - pgadmin_integration_data:/var/lib/pgadmin
+        depends_on:
+            postgres:
+                condition: service_healthy
+        restart: unless-stopped
+        networks:
+            - fantasy_network
+        profiles:
+            - admin
+
+    # Redis for caching (when implemented)
+    redis:
+        image: redis:7-alpine
+        ports:
+            - '6379:6379'
+        command: redis-server --appendonly yes
+        volumes:
+            - redis_integration_data:/data
+        healthcheck:
+            test: ['CMD', 'redis-cli', 'ping']
+            interval: 10s
+            timeout: 3s
+            retries: 3
+        restart: unless-stopped
+        networks:
+            - fantasy_network
+        profiles:
+            - cache
+
+volumes:
+    postgres_integration_data:
+        driver: local
+    pgadmin_integration_data:
+        driver: local
+    redis_integration_data:
+        driver: local
+
+networks:
+    fantasy_network:
+        driver: bridge

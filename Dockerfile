@@ -1,7 +1,9 @@
 # Multi-stage production Dockerfile for Fantasy Characters API
 # Stage 1: Base image with pnpm enabled
-FROM node:20-alpine AS base
+FROM node:24-alpine AS base
 RUN corepack enable pnpm
+# Install OpenSSL and wget for Prisma compatibility and health checks
+RUN apk add --no-cache openssl wget
 WORKDIR /app
 
 # Stage 2: Dependencies installation
