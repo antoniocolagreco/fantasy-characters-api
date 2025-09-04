@@ -62,7 +62,7 @@ Duration: 3–5 days
 - [x] 2.05 Implement shared cursor pagination/query helpers in shared
       ([query-templates.md](./query-templates.md))
 - [x] 2.06 Create seed data scripts covering all models
-- [ ] 2.07 Create test data generation utilities
+- [x] 2.07 Create test data generation utilities
 - [x] 2.08 Document DB workflow (migrations, generate, reset) in
       docs/[migrations-and-rollback.md](./migrations-and-rollback.md) notes
 
@@ -79,7 +79,7 @@ Duration: 2–3 days
 - [x] 3.04 Create request validation pipeline with TypeBox + Ajv
       ([development-principles.md](./development-principles.md))
 - [x] 3.05 Add input sanitization utilities (strings + HTML only where needed)
-- [ ] 3.06 Write security tests (80%+ coverage target)
+- [ ] 3.06 Write security tests (80%+ coverage target) ✅
 
 ---
 
@@ -87,25 +87,25 @@ Duration: 2–3 days
 
 Duration: 4–6 days
 
-- [ ] 4.01 Initialize Fastify server with TypeBox type provider
-- [ ] 4.02 Register global plugins: logging (Pino), error handler plugin
+- [x] 4.01 Initialize Fastify server with TypeBox type provider
+- [x] 4.02 Register global plugins: logging (Pino), error handler plugin
       ([error-handling.md](./error-handling.md))
-- [ ] 4.03 Register Swagger/OpenAPI plugin and expose /docs and /docs/json (see
+- [x] 4.03 Register Swagger/OpenAPI plugin and expose /docs and /docs/json (see
       [documentation.md](./documentation.md))
-- [ ] 4.04 Enable response compression (gzip/brotli)
-- [ ] 4.05 Setup multipart file upload handling
-- [ ] 4.06 Add health check endpoint at /api/health (align with
+- [x] 4.04 Enable response compression (gzip/brotli)
+- [x] 4.05 Setup multipart file upload handling
+- [x] 4.06 Add health check endpoint at /api/health (align with
       [endpoints.md](./endpoints.md) and CI)
-- [ ] 4.07 Implement graceful shutdown
-- [ ] 4.08 Add TypeBox base response schemas
+- [x] 4.07 Implement graceful shutdown
+- [x] 4.08 Add TypeBox base response schemas
       ([response-templates.md](./response-templates.md))
-- [ ] 4.09 Add pagination schemas and query helpers
+- [x] 4.09 Add pagination schemas and query helpers
       ([query-templates.md](./query-templates.md))
-- [ ] 4.10 Setup centralized error handling
+- [x] 4.10 Setup centralized error handling
       ([error-handling.md](./error-handling.md))
-- [ ] 4.11 Implement UUID v7 utility in shared/utils
-- [ ] 4.12 Configure base logging with Pino (redaction, requestId)
-- [ ] 4.13 Write server integration tests (≥ 80% coverage)
+- [x] 4.11 Implement UUID v7 utility in shared/utils
+- [x] 4.12 Configure base logging with Pino (redaction, requestId)
+- [ ] 4.13 Write server integration tests (≥ 80% coverage) ✅
 
 ---
 

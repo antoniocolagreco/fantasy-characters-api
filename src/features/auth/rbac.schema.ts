@@ -1,10 +1,7 @@
 import { Type, type Static } from '@sinclair/typebox'
+import { RoleSchema, VisibilitySchema } from '../../shared/schemas/common.schemas'
 
 // RBAC Types
-export const RoleSchema = Type.Union(
-    [Type.Literal('ADMIN'), Type.Literal('MODERATOR'), Type.Literal('USER')],
-    { $id: 'Role' }
-)
 
 export const ActionSchema = Type.Union(
     [
@@ -31,11 +28,6 @@ export const ResourceSchema = Type.Union(
         Type.Literal('equipment'),
     ],
     { $id: 'Resource' }
-)
-
-export const VisibilitySchema = Type.Union(
-    [Type.Literal('PUBLIC'), Type.Literal('PRIVATE'), Type.Literal('HIDDEN')],
-    { $id: 'Visibility' }
 )
 
 export const OwnershipDataSchema = Type.Object(
@@ -104,10 +96,8 @@ export const UserCanOptionsSchema = Type.Object(
 )
 
 // Derive TypeScript types
-export type Role = Static<typeof RoleSchema>
 export type Action = Static<typeof ActionSchema>
 export type Resource = Static<typeof ResourceSchema>
-export type Visibility = Static<typeof VisibilitySchema>
 export type OwnershipData = Static<typeof OwnershipDataSchema>
 export type RbacContext = Static<typeof RbacContextSchema>
 export type RouteRbacConfig = Static<typeof RouteRbacConfigSchema>

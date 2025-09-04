@@ -1,17 +1,18 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import { verifyAccessToken } from './jwt.service'
 import type { JwtConfig } from './auth.schema'
+import { err } from '../../shared/errors'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
     return function authMiddleware(request: FastifyRequest, _reply: FastifyReply) {
         const { authorization } = request.headers
 
         if (!authorization) {
-            throw new Error('UNAUTHORIZED')
+            throw err('UNAUTHORIZED', 'Authorization header required')
         }
 
         if (!authorization.startsWith('Bearer ')) {
-            throw new Error('UNAUTHORIZED')
+            throw err('UNAUTHORIZED', 'Bearer token required')
         }
 
         const token = authorization.slice(7) // Remove "Bearer " prefix
@@ -27,9 +28,9 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
             }
         } catch (error) {
             if (error instanceof Error) {
-                throw new Error(error.message)
+                throw err('TOKEN_INVALID', error.message)
             }
-            throw new Error('UNAUTHORIZED')
+            throw err('UNAUTHORIZED', 'Token verification failed')
         }
     }
 }

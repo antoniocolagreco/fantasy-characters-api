@@ -350,7 +350,9 @@ import { err } from '../errors/factories'
 
 export function rbacPreHandler(resource: Resource, action: Action) {
   return async function (req: any) {
-    const disabled = process.env.RBAC_ENABLED === 'false'
+    const disabled =
+      process.env.NODE_ENV === 'production' &&
+      process.env.RBAC_ENABLED === 'false'
     if (disabled) return // Allow all in test/dev environments
 
     if (!req.user && action !== 'read') {

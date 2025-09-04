@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
     generateUUIDv7,
-    isValidUUID,
-    extractTimestampFromUUIDv7,
+    isValidUUIDv7,
+    getTimestampFromUUIDv7,
 } from '../../../src/shared/utils/uuid'
 
 describe('UUID v7 Utility', () => {
@@ -31,49 +31,43 @@ describe('UUID v7 Utility', () => {
         })
     })
 
-    describe('isValidUUID', () => {
+    describe('isValidUUIDv7', () => {
         it('should validate UUID v7 format', () => {
             const uuid = generateUUIDv7()
-            expect(isValidUUID(uuid)).toBe(true)
+            expect(isValidUUIDv7(uuid)).toBe(true)
         })
 
         it('should validate standard UUID formats', () => {
-            expect(isValidUUID('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
-            expect(isValidUUID('01234567-89ab-1def-8123-456789abcdef')).toBe(true)
+            expect(isValidUUIDv7('123e4567-e89b-12d3-a456-426614174000')).toBe(true)
+            expect(isValidUUIDv7('01234567-89ab-1def-8123-456789abcdef')).toBe(true)
         })
 
         it('should reject invalid formats', () => {
-            expect(isValidUUID('')).toBe(false)
-            expect(isValidUUID('invalid')).toBe(false)
-            expect(isValidUUID('123e4567-e89b-12d3-a456')).toBe(false)
-            expect(isValidUUID('123e4567-e89b-12d3-a456-426614174000-extra')).toBe(false)
+            expect(isValidUUIDv7('')).toBe(false)
+            expect(isValidUUIDv7('invalid')).toBe(false)
+            expect(isValidUUIDv7('123e4567-e89b-12d3-a456')).toBe(false)
+            expect(isValidUUIDv7('123e4567-e89b-12d3-a456-426614174000-extra')).toBe(false)
         })
     })
 
-    describe('extractTimestampFromUUIDv7', () => {
+    describe('getTimestampFromUUIDv7', () => {
         it('should extract timestamp from UUID v7', () => {
             const beforeGeneration = new Date()
             const uuid = generateUUIDv7()
             const afterGeneration = new Date()
 
-            const extractedTimestamp = extractTimestampFromUUIDv7(uuid)
+            const extractedTimestamp = getTimestampFromUUIDv7(uuid)
             expect(extractedTimestamp).toBeInstanceOf(Date)
-            expect(extractedTimestamp!.getTime()).toBeGreaterThanOrEqual(beforeGeneration.getTime())
-            expect(extractedTimestamp!.getTime()).toBeLessThanOrEqual(afterGeneration.getTime())
+            expect(extractedTimestamp.getTime()).toBeGreaterThanOrEqual(beforeGeneration.getTime())
+            expect(extractedTimestamp.getTime()).toBeLessThanOrEqual(afterGeneration.getTime())
         })
 
-        it('should return null for invalid UUIDs', () => {
-            expect(extractTimestampFromUUIDv7('')).toBeNull()
-            expect(extractTimestampFromUUIDv7('invalid')).toBeNull()
-            expect(extractTimestampFromUUIDv7('not-a-uuid')).toBeNull()
-        })
-
-        it('should handle edge cases gracefully', () => {
-            // This UUID has version 0, which should still be valid format-wise
-            // but may not extract a meaningful timestamp
-            expect(
-                extractTimestampFromUUIDv7('00000000-0000-0000-8000-000000000000')
-            ).toBeInstanceOf(Date)
+        it('should handle invalid UUIDs gracefully', () => {
+            // These should return a Date object even for invalid input
+            // (the actual validation should be done with isValidUUIDv7)
+            expect(getTimestampFromUUIDv7('00000000-0000-0000-8000-000000000000')).toBeInstanceOf(
+                Date
+            )
         })
     })
 })

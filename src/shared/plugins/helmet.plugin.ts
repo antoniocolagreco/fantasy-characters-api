@@ -22,6 +22,12 @@ export default fp(async function helmetPlugin(fastify: FastifyInstance) {
         // Prevent MIME sniffing
         noSniff: true,
 
+        // IE no open - sets X-Download-Options: noopen
+        ieNoOpen: true,
+
+        // Disallow Adobe cross-domain policies
+        permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+
         // Prevent clickjacking
         frameguard: { action: 'deny' },
 

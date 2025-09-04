@@ -8,13 +8,14 @@ export * from './rbac.middleware'
 
 // Re-export RBAC types with aliases to avoid conflicts
 export type {
-    Role as RbacRole,
     Action,
     Resource,
-    Visibility,
     OwnershipData,
     RbacContext,
     RouteRbacConfig,
     RbacUser,
     UserCanOptions,
 } from './rbac.schema'
+
+// Re-export common types
+export type { Role as RbacRole, Visibility } from '../../shared/schemas/common.schemas'

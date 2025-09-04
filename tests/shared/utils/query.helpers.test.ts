@@ -7,7 +7,7 @@ import {
     validateRange,
     PaginationQuerySchema,
     PaginationResponseSchema,
-} from '@/shared/utils/query-helpers'
+} from '@/shared/utils/query.helpers'
 
 describe('Query Helpers', () => {
     describe('buildWhere', () => {

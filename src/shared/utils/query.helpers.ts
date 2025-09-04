@@ -1,4 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
+import { err } from '../errors'
 
 // Base pagination query schema
 export const PaginationQuerySchema = Type.Object({
@@ -39,7 +40,7 @@ export function buildWhere<T extends Record<string, unknown>>(filters: Partial<T
     }
 
     if (!isValidWhereClause(where)) {
-        throw new Error('Invalid where clause construction')
+        throw err('INTERNAL_SERVER_ERROR', 'Invalid where clause construction')
     }
 
     return where
@@ -66,7 +67,7 @@ export function applyCursor<T extends Record<string, unknown>>(
             OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
         } satisfies T
     } catch {
-        throw new Error('Invalid cursor')
+        throw err('VALIDATION_ERROR', 'Invalid cursor')
     }
 }
 
@@ -109,12 +110,12 @@ export function validateRange(
     maxFieldName: string
 ): void {
     if (min !== undefined && max !== undefined && min > max) {
-        throw new Error(`${minFieldName} cannot be greater than ${maxFieldName}`)
+        throw err('VALIDATION_ERROR', `${minFieldName} cannot be greater than ${maxFieldName}`)
     }
     if (min !== undefined && min < 0) {
-        throw new Error(`${minFieldName} must be positive`)
+        throw err('VALIDATION_ERROR', `${minFieldName} must be positive`)
     }
     if (max !== undefined && max < 0) {
-        throw new Error(`${maxFieldName} must be positive`)
+        throw err('VALIDATION_ERROR', `${maxFieldName} must be positive`)
     }
 }

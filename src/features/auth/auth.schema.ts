@@ -1,10 +1,5 @@
 import { Type, type Static } from '@sinclair/typebox'
-
-// Enums as TypeBox schemas
-export const RoleSchema = Type.Union(
-    [Type.Literal('USER'), Type.Literal('MODERATOR'), Type.Literal('ADMIN')],
-    { $id: 'Role' }
-)
+import { RoleSchema } from '../../shared/schemas/common.schemas'
 
 // JWT Claims Schema
 export const JwtClaimsSchema = Type.Object(
@@ -62,7 +57,6 @@ export const JwtConfigSchema = Type.Object(
 )
 
 // Derive TypeScript types from schemas
-export type Role = Static<typeof RoleSchema>
 export type JwtClaims = Static<typeof JwtClaimsSchema>
 export type AuthenticatedUser = Static<typeof AuthenticatedUserSchema>
 export type TokenPair = Static<typeof TokenPairSchema>

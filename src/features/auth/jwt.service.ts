@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { generateUUIDv7 } from '../../shared/utils'
 import type { JwtClaims, AuthenticatedUser, JwtConfig } from './auth.schema'
+import { err } from '../../shared/errors'
 
 /**
  * Generate an access token (JWT) for a user
@@ -40,12 +41,12 @@ export function verifyAccessToken(token: string, config: JwtConfig): JwtClaims {
         return decoded
     } catch (error) {
         if (error instanceof jwt.TokenExpiredError) {
-            throw new Error('TOKEN_EXPIRED')
+            throw err('TOKEN_EXPIRED', 'Token has expired')
         }
         if (error instanceof jwt.JsonWebTokenError) {
-            throw new Error('TOKEN_INVALID')
+            throw err('TOKEN_INVALID', 'Invalid token')
         }
-        throw new Error('TOKEN_INVALID')
+        throw err('TOKEN_INVALID', 'Token verification failed')
     }
 }
 
@@ -61,7 +62,7 @@ export function parseTtl(ttl: string | number): number {
     // Parse strings like "15m", "1h", "7d"
     const match = ttl.match(/^(\d+)([smhd])$/)
     if (!match?.[1] || !match?.[2]) {
-        throw new Error(`Invalid TTL format: ${ttl}`)
+        throw err('INVALID_FORMAT', `Invalid TTL format: ${ttl}`)
     }
 
     const value = parseInt(match[1], 10)
@@ -77,6 +78,6 @@ export function parseTtl(ttl: string | number): number {
         case 'd':
             return value * 60 * 60 * 24
         default:
-            throw new Error(`Invalid TTL unit: ${unit}`)
+            throw err('INVALID_FORMAT', `Invalid TTL unit: ${unit}`)
     }
 }

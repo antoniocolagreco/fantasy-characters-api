@@ -89,7 +89,7 @@ export interface ErrorResponse {
 ### AppError Class
 
 ```typescript
-// src/common/errors/app-error.ts
+// src/common/errors/app.error.ts
 const DEFAULT_STATUS: Record<ErrorCode, number> = {
   INVALID_CREDENTIALS: 401,
   EMAIL_ALREADY_EXISTS: 409,
@@ -232,7 +232,7 @@ export function normalizeError(e: unknown): AppError {
 ```typescript
 // src/common/utils/format-error.ts
 import type { FastifyRequest } from 'fastify'
-import type { AppError } from '../errors/app-error'
+import type { AppError } from '../errors'
 import type { ErrorResponse } from '../types/error.types'
 
 export function formatErrorResponse(

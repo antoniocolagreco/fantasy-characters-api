@@ -1,0 +1,71 @@
+import { Type, type Static } from '@sinclair/typebox'
+
+/**
+ * Standard pagination query parameters
+ */
+export const PaginationQuerySchema = Type.Object(
+    {
+        limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
+        cursor: Type.Optional(Type.String()),
+    },
+    { $id: 'PaginationQuery' }
+)
+
+/**
+ * Standard sorting query parameters
+ */
+export const SortQuerySchema = Type.Object(
+    {
+        sortBy: Type.Optional(
+            Type.Union([
+                Type.Literal('createdAt'),
+                Type.Literal('name'),
+                Type.Literal('updatedAt'),
+                Type.Literal('level'),
+            ])
+        ),
+        sortDir: Type.Optional(
+            Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
+                default: 'desc',
+            })
+        ),
+    },
+    { $id: 'SortQuery' }
+)
+
+/**
+ * Visibility filter query parameters
+ */
+export const VisibilityQuerySchema = Type.Object(
+    {
+        visibility: Type.Optional(
+            Type.Union([Type.Literal('PUBLIC'), Type.Literal('PRIVATE'), Type.Literal('HIDDEN')])
+        ),
+    },
+    { $id: 'VisibilityQuery' }
+)
+
+/**
+ * Standard search query parameters
+ */
+export const SearchQuerySchema = Type.Object(
+    {
+        search: Type.Optional(Type.String({ minLength: 1, maxLength: 100 })),
+    },
+    { $id: 'SearchQuery' }
+)
+
+/**
+ * Combined query schema with all standard parameters
+ */
+export const StandardQuerySchema = Type.Intersect(
+    [PaginationQuerySchema, SortQuerySchema, VisibilityQuerySchema, SearchQuerySchema],
+    { $id: 'StandardQuery' }
+)
+
+// Export TypeScript types
+export type PaginationQuery = Static<typeof PaginationQuerySchema>
+export type SortQuery = Static<typeof SortQuerySchema>
+export type VisibilityQuery = Static<typeof VisibilityQuerySchema>
+export type SearchQuery = Static<typeof SearchQuerySchema>
+export type StandardQuery = Static<typeof StandardQuerySchema>

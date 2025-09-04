@@ -1,7 +1,17 @@
 import type { FastifyRequest, FastifyReply } from 'fastify'
 import type { PrismaClient } from '@prisma/client'
 import { can } from './rbac.policy'
-import type { Action, Resource, RbacContext, Role, Visibility, OwnershipData } from './rbac.schema'
+import type { Action, Resource, RbacContext, OwnershipData } from './rbac.schema'
+import type { Role, Visibility } from '../../shared/schemas/common.schemas'
+import { err } from '../../shared/errors'
+
+interface AuthenticatedRequest extends FastifyRequest {
+    user?: {
+        id: string
+        role: Role
+        email: string
+    }
+}
 
 function isValidRole(role: unknown): role is Role {
     return typeof role === 'string' && ['ADMIN', 'MODERATOR', 'USER'].includes(role)
@@ -21,13 +31,13 @@ function isPrismaClient(client: unknown): client is PrismaClient {
  * Resolve ownership and context information for RBAC checks
  */
 export async function resolveOwnership(
-    request: FastifyRequest,
+    request: AuthenticatedRequest,
     resource: Resource
 ): Promise<OwnershipData> {
     // Get Prisma instance from request
     const client = request.prisma
     if (!isPrismaClient(client)) {
-        throw new Error('Prisma instance not available')
+        throw err('DATABASE_ERROR', 'Prisma instance not available')
     }
 
     // Extract ID from params if available
@@ -61,8 +71,8 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    visibility: isValidVisibility(row?.visibility) ? row.visibility : null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    visibility: row && isValidVisibility(row.visibility) ? row.visibility : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -73,7 +83,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.id ?? null,
-                    targetUserRole: isValidRole(row?.role) ? row.role : null,
+                    targetUserRole: row && isValidRole(row.role) ? row.role : null,
                 }
             }
 
@@ -88,8 +98,8 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    visibility: isValidVisibility(row?.visibility) ? row.visibility : null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    visibility: row && isValidVisibility(row.visibility) ? row.visibility : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -100,7 +110,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -111,7 +121,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -122,7 +132,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -133,7 +143,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -144,7 +154,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -155,7 +165,7 @@ export async function resolveOwnership(
                 })
                 return {
                     ownerId: row?.ownerId ?? null,
-                    ownerRole: isValidRole(row?.owner?.role) ? row.owner.role : null,
+                    ownerRole: row?.owner && isValidRole(row.owner.role) ? row.owner.role : null,
                 }
             }
 
@@ -172,16 +182,17 @@ export async function resolveOwnership(
  * Create RBAC preHandler middleware for Fastify routes
  */
 export function createRbacMiddleware(resource: Resource, action: Action) {
-    return async function rbacMiddleware(request: FastifyRequest, _reply: FastifyReply) {
+    return async function rbacMiddleware(request: AuthenticatedRequest, _reply: FastifyReply) {
         // Check if RBAC is disabled (for testing/development)
-        const disabled = process.env.RBAC_ENABLED === 'false'
+        const disabled =
+            process.env.NODE_ENV === 'production' && process.env.RBAC_ENABLED === 'false'
         if (disabled) {
             return
         }
 
         // Require authentication for non-read actions
         if (!request.user && action !== 'read') {
-            throw new Error('UNAUTHORIZED')
+            throw err('UNAUTHORIZED', 'Login required')
         }
 
         // Get route-specific RBAC config if available
@@ -212,7 +223,7 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
         // Check permissions
         const allowed = can(context)
         if (!allowed) {
-            throw new Error('FORBIDDEN')
+            throw err('FORBIDDEN', 'Not allowed')
         }
     }
 }
