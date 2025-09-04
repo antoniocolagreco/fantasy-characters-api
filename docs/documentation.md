@@ -19,6 +19,31 @@ Auto-validate requests → Auto-type TypeScript
 3. **Always reuse schemas** - Use Type.Pick/Omit instead of duplicating
 4. **Always tag endpoints** - Group related operations for better organization
 5. **Always validate OpenAPI output** - Include schema validation in CI/CD
+6. **Always import from centralized schemas** - Use `src/shared/schemas` exports only
+
+## ⚠️ IMPORTANT: Schema Consistency
+
+**ALL schemas must be imported from `src/shared/schemas` centralized exports.**
+
+```typescript
+// ✅ CORRECT - Use centralized exports
+import {
+  PaginationQuerySchema,
+  PaginationSchema,
+  SortQuerySchema,
+  VisibilitySchema,
+  BaseEntitySchema,
+  createSuccessResponseSchema,
+  createPaginatedResponseSchema,
+  ErrorResponseSchema,
+} from '../shared/schemas'
+
+// ❌ WRONG - Do not define pagination schemas in multiple places
+export const PaginationSchema = Type.Object({ ... }) // This creates conflicts!
+```
+
+This prevents the creation of multiple incompatible pagination schemas and ensures
+consistent API responses across all endpoints.
 
 ## OpenAPI Plugin Setup
 
@@ -131,23 +156,18 @@ export const {Feature}ListQuerySchema = Type.Intersect([
     ])),
     // Feature-specific filters here
   }),
-  PaginationQuerySchema, // From common/schemas/query.schemas.ts
-  SortQuerySchema,       // From common/schemas/query.schemas.ts
+  PaginationQuerySchema, // From shared/schemas/query.schema.ts
+  SortQuerySchema,       // From shared/schemas/query.schema.ts
 ], { $id: '{Feature}ListQuery' })
 
 // 5. Response Schemas (consistent envelope pattern)
-export const {Feature}ResponseSchema = Type.Object({
-  data: {Feature}Schema,
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-}, { $id: '{Feature}Response' })
+export const {Feature}ResponseSchema = createSuccessResponseSchema(
+  {Feature}Schema // From shared/schemas/response.schema.ts
+), { $id: '{Feature}Response' })
 
-export const {Feature}ListResponseSchema = Type.Object({
-  data: Type.Array({Feature}Schema),
-  pagination: PaginationResponseSchema, // From common/schemas/response.schemas.ts
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-}, { $id: '{Feature}ListResponse' })
+export const {Feature}ListResponseSchema = createPaginatedResponseSchema(
+  {Feature}Schema // From shared/schemas/response.schema.ts
+), { $id: '{Feature}ListResponse' })
 
 // 6. Export TypeScript Types
 export type {Feature} = Static<typeof {Feature}Schema>
@@ -165,7 +185,7 @@ export type {Feature}ListQuery = Static<typeof {Feature}ListQuerySchema>
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 import * as schemas from './{feature}.schema'
-import { ErrorResponseSchema } from '../../common/schemas/error.schema'
+import { ErrorResponseSchema } from '../../shared/schemas'
 
 export const {feature}Routes: FastifyPluginAsync = async (app) => {
   app.withTypeProvider<TypeBoxTypeProvider>()
@@ -263,78 +283,51 @@ export const {feature}Routes: FastifyPluginAsync = async (app) => {
 Create reusable schema components to maintain consistency across all features.
 
 ```ts
-// src/common/schemas/base.schemas.ts
-import { Type } from '@sinclair/typebox'
+// All base schemas are centralized in src/shared/schemas/
+// Import them from the centralized exports:
 
-// Pagination Schemas
-export const PaginationQuerySchema = Type.Object(
-  {
-    limit: Type.Optional(
-      Type.Integer({ minimum: 1, maximum: 100, default: 20 })
-    ),
-    cursor: Type.Optional(Type.String()),
-  },
-  { $id: 'PaginationQuery' }
+import {
+  PaginationQuerySchema,
+  PaginationSchema,
+  SortQuerySchema,
+  VisibilitySchema,
+  BaseEntitySchema,
+  createSuccessResponseSchema,
+  createPaginatedResponseSchema,
+} from '../shared/schemas'
+
+// Use the centralized schemas in your feature schemas
+// Example:
+
+// Example feature schema using centralized schemas:
+export const CharacterSchema = Type.Intersect([
+  BaseEntitySchema,
+  Type.Object({
+    name: Type.String({ minLength: 1, maxLength: 100 }),
+    level: Type.Integer({ minimum: 1, maximum: 100 }),
+    // ... other character fields
+  }),
+], { $id: 'Character' })
+
+// Query schema composition
+export const CharacterListQuerySchema = Type.Intersect([
+  PaginationQuerySchema,
+  SortQuerySchema,
+  Type.Object({
+    minLevel: Type.Optional(Type.Integer({ minimum: 1 })),
+    maxLevel: Type.Optional(Type.Integer({ minimum: 1 })),
+  }),
+], { $id: 'CharacterListQuery' })
+
+// Response schemas using helpers
+export const CharacterResponseSchema = createSuccessResponseSchema(
+  CharacterSchema,
+  'CharacterResponse'
 )
 
-export const PaginationResponseSchema = Type.Object(
-  {
-    limit: Type.Integer(),
-    cursor: Type.Optional(
-      Type.Object({
-        next: Type.Optional(Type.String()),
-        prev: Type.Optional(Type.String()),
-      })
-    ),
-  },
-  { $id: 'PaginationResponse' }
-)
-
-// Sorting Schemas
-export const SortQuerySchema = Type.Object(
-  {
-    sortBy: Type.Optional(
-      Type.Union([
-        Type.Literal('createdAt'),
-        Type.Literal('name'),
-        Type.Literal('updatedAt'),
-      ])
-    ),
-    sortDir: Type.Optional(
-      Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
-        default: 'desc',
-      })
-    ),
-  },
-  { $id: 'SortQuery' }
-)
-
-// Visibility Schema
-export const VisibilitySchema = Type.Union(
-  [Type.Literal('PUBLIC'), Type.Literal('PRIVATE'), Type.Literal('HIDDEN')],
-  { $id: 'Visibility' }
-)
-
-// Base Entity Fields
-export const BaseEntitySchema = Type.Object(
-  {
-    id: Type.String({ format: 'uuid' }),
-    createdAt: Type.String({ format: 'date-time' }),
-    updatedAt: Type.String({ format: 'date-time' }),
-  },
-  { $id: 'BaseEntity' }
-)
-
-// Ownership Fields
-export const OwnedEntitySchema = Type.Intersect(
-  [
-    BaseEntitySchema,
-    Type.Object({
-      ownerId: Type.String({ format: 'uuid' }),
-      visibility: VisibilitySchema,
-    }),
-  ],
-  { $id: 'OwnedEntity' }
+export const CharacterListResponseSchema = createPaginatedResponseSchema(
+  CharacterSchema,
+  'CharacterListResponse'
 )
 ```
 

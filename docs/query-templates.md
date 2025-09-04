@@ -54,23 +54,17 @@ export async function listCharacters(params: CharactersListParams) {
 Reusable building blocks for consistent query parameters across all endpoints.
 
 ```typescript
-// src/common/schemas/query.schemas.ts
-export const PaginationQuery = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+// src/shared/schemas/query.schema.ts (centralized exports)
+export const PaginationQuerySchema = Type.Object({
+  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
   cursor: Type.Optional(Type.String()),
-})
+}, { $id: 'PaginationQuery' })
 
-export const VisibilityQuery = Type.Object({
-  visibility: Type.Optional(
-    Type.Union([
-      Type.Literal('PUBLIC'),
-      Type.Literal('PRIVATE'),
-      Type.Literal('HIDDEN'),
-    ])
-  ),
-})
+export const VisibilityQuerySchema = Type.Object({
+  visibility: Type.Optional(VisibilitySchema),
+}, { $id: 'VisibilityQuery' })
 
-export const SortQuery = Type.Object({
+export const SortQuerySchema = Type.Object({
   sortBy: Type.Optional(
     Type.Union([
       Type.Literal('createdAt'),
@@ -79,14 +73,14 @@ export const SortQuery = Type.Object({
     ])
   ),
   sortDir: Type.Optional(
-    Type.Union([Type.Literal('asc'), Type.Literal('desc')])
+    Type.Union([Type.Literal('asc'), Type.Literal('desc')], { default: 'desc' })
   ),
-})
+}, { $id: 'SortQuery' })
 
 // Derive types
-export type PaginationParams = Static<typeof PaginationQuery>
-export type VisibilityFilter = Static<typeof VisibilityQuery>
-export type SortParams = Static<typeof SortQuery>
+export type PaginationQuery = Static<typeof PaginationQuerySchema>
+export type VisibilityQuery = Static<typeof VisibilityQuerySchema>
+export type SortQuery = Static<typeof SortQuerySchema>
 ```
 
 ## Route Implementation
@@ -224,7 +218,7 @@ export async function listCharacters(
     take: limit + 1,
   })
 
-  // Build response
+  // Build response with consistent pagination schema
   const {
     items: finalItems,
     hasNext,
@@ -233,7 +227,13 @@ export async function listCharacters(
 
   return {
     items: finalItems,
-    pagination: { limit, cursor: { next: nextCursor } },
+    pagination: {
+      limit,
+      hasNext,
+      hasPrev: !!cursor, // Has previous if we used a cursor
+      endCursor: nextCursor,
+      startCursor: cursor,
+    },
   }
 }
 ```

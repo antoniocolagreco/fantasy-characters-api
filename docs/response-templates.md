@@ -21,7 +21,10 @@ Essential response formats for consistent API development.
   "data": [],
   "pagination": {
     "limit": 20,
-    "cursor": { "next": "abc123", "prev": "xyz987" }
+    "hasNext": true,
+    "hasPrev": false,
+    "startCursor": "abc123",
+    "endCursor": "xyz987"
   },
   "requestId": "string",
   "timestamp": "string"
@@ -53,7 +56,7 @@ patterns._
 ### Helper Functions
 
 ```typescript
-// src/common/utils/response.helpers.ts
+// src/shared/utils/response.helper.ts
 export function success<T>(data: T, requestId?: string) {
   return {
     data,
@@ -75,7 +78,13 @@ export function created<T>(data: T, location: string, requestId?: string) {
 
 export function paginated<T>(
   items: T[],
-  pagination: { limit?: number; cursor?: { next?: string; prev?: string } },
+  pagination: {
+    limit: number
+    hasNext: boolean
+    hasPrev: boolean
+    startCursor?: string
+    endCursor?: string
+  },
   requestId?: string
 ) {
   return {
@@ -84,6 +93,38 @@ export function paginated<T>(
     requestId,
     timestamp: new Date().toISOString(),
   }
+}
+
+```typescript
+// src/shared/schemas/response.schema.ts (centralized exports)
+export const BaseResponseSchema = Type.Object({
+  requestId: Type.Optional(Type.String()),
+  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+}, { $id: 'BaseResponse' })
+
+export const PaginationSchema = Type.Object({
+  limit: Type.Number({ minimum: 1, maximum: 100 }),
+  hasNext: Type.Boolean(),
+  hasPrev: Type.Boolean(),
+  startCursor: Type.Optional(Type.String()),
+  endCursor: Type.Optional(Type.String()),
+}, { $id: 'Pagination' })
+
+export function createSuccessResponseSchema<T>(dataSchema: T) {
+  return Type.Intersect([
+    BaseResponseSchema,
+    Type.Object({ data: dataSchema }),
+  ])
+}
+
+export function createPaginatedResponseSchema<T>(itemSchema: T) {
+  return Type.Intersect([
+    BaseResponseSchema,
+    Type.Object({
+      data: Type.Array(itemSchema),
+      pagination: PaginationSchema,
+    }),
+  ])
 }
 ```
 
@@ -109,37 +150,13 @@ export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]
 ### TypeBox Schema Builder
 
 ```typescript
-// src/common/schemas/response.schemas.ts
-import { Type } from '@sinclair/typebox'
-
-export const BaseEnvelopeSchema = Type.Object({
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-})
-
-export const PaginationSchema = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1 })),
-  cursor: Type.Optional(
-    Type.Object({
-      next: Type.Optional(Type.String()),
-      prev: Type.Optional(Type.String()),
-    })
-  ),
-})
-
-export function createResponseSchema<T>(dataSchema: T) {
-  return Type.Intersect([Type.Object({ data: dataSchema }), BaseEnvelopeSchema])
-}
-
-export function createPaginatedResponseSchema<T>(dataSchema: T) {
-  return Type.Intersect([
-    Type.Object({
-      data: Type.Array(dataSchema),
-      pagination: PaginationSchema,
-    }),
-    BaseEnvelopeSchema,
-  ])
-}
+// Import from centralized schema exports
+import { 
+  BaseResponseSchema, 
+  PaginationSchema,
+  createSuccessResponseSchema,
+  createPaginatedResponseSchema 
+} from '../shared/schemas'
 ```
 
 ## Usage Patterns
@@ -191,9 +208,9 @@ app.get(
   {
     schema: {
       response: {
-        200: createResponseSchema(CharacterSchema),
-        404: { $ref: 'ErrorResponseSchema#' }, // See error-handling.md for ErrorResponseSchema
-        500: { $ref: 'ErrorResponseSchema#' },
+        200: createSuccessResponseSchema(CharacterSchema),
+        404: { $ref: 'ErrorResponse#' }, // See error-handling.md for ErrorResponseSchema
+        500: { $ref: 'ErrorResponse#' },
       },
     },
   },
@@ -206,10 +223,10 @@ app.post(
     schema: {
       body: CreateCharacterSchema,
       response: {
-        201: createResponseSchema(CharacterSchema),
-        400: { $ref: 'ErrorResponseSchema#' },
-        409: { $ref: 'ErrorResponseSchema#' },
-        500: { $ref: 'ErrorResponseSchema#' },
+        201: createSuccessResponseSchema(CharacterSchema),
+        400: { $ref: 'ErrorResponse#' },
+        409: { $ref: 'ErrorResponse#' },
+        500: { $ref: 'ErrorResponse#' },
       },
     },
   },
@@ -222,8 +239,8 @@ app.get(
     schema: {
       response: {
         200: createPaginatedResponseSchema(CharacterSchema),
-        400: { $ref: 'ErrorResponseSchema#' },
-        500: { $ref: 'ErrorResponseSchema#' },
+        400: { $ref: 'ErrorResponse#' },
+        500: { $ref: 'ErrorResponse#' },
       },
     },
   },
@@ -276,7 +293,8 @@ after your controller returns the response envelope.
 3. **Always** use cursor-based pagination for lists
 4. **Never** return raw objects - always use envelope
 5. **Always** use `HTTP_STATUS` constants instead of magic numbers
-6. **Always** use `$ref: 'ErrorResponseSchema#'` for error responses
+6. **Always** use `$ref: 'ErrorResponse#'` for error responses
 7. **Always** use `created()` helper for 201 responses with Location header
 8. **Always** register compression plugin before routes for automatic JSON/text
    compression
+9. **Always** use consistent pagination with `hasNext`, `hasPrev`, `startCursor`, `endCursor`
