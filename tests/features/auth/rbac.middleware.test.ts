@@ -12,9 +12,9 @@ const mockCan = vi.mocked(can)
 interface MockRequest {
     params: { id?: string }
     body: any
-    user: { id: string; role: string } | undefined
+    user?: { id: string; role: string }
     prisma: any
-    routeOptions: any
+    routeOptions?: any
 }
 
 interface MockReply {
@@ -192,7 +192,8 @@ describe('RBAC Middleware', () => {
         })
 
         it('should throw UNAUTHORIZED for non-read actions without user', async () => {
-            mockRequest.user = undefined
+            // Remove the user property entirely to respect exactOptionalPropertyTypes
+            delete mockRequest.user
 
             const middleware = createRbacMiddleware('characters', 'create')
 
@@ -207,7 +208,8 @@ describe('RBAC Middleware', () => {
         })
 
         it('should allow read actions without user (anonymous)', async () => {
-            mockRequest.user = undefined
+            // Remove the user property entirely to respect exactOptionalPropertyTypes
+            delete mockRequest.user
 
             // Set up mock character data for ownership resolution
             const mockCharacter = {

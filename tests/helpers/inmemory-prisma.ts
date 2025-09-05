@@ -1,6 +1,6 @@
 // In-memory Prisma-like client for tests
 // Provides minimal subset used by users and refresh tokens features
-import type { User, RefreshToken, Role, Visibility } from '@prisma/client'
+import type { RefreshToken, Role, User, Visibility } from '@prisma/client'
 
 const db = {
     users: [] as User[],
@@ -84,7 +84,103 @@ export type UserWhere = {
 }
 export type OrderBy = Array<Record<string, 'asc' | 'desc'>>
 
-export const prismaFake = {
+// Explicit Prisma-like client type to avoid self-referential implicit any
+export type PrismaFake = {
+    $connect(): Promise<void>
+    $disconnect(): Promise<void>
+    $queryRaw<T = unknown>(_query?: unknown): Promise<T>
+    $executeRaw(_query?: unknown): Promise<number>
+    $transaction<T>(fn: (tx: PrismaFake) => Promise<T>): Promise<T>
+    user: {
+        deleteMany(): Promise<DeleteManyResult>
+        create(args: { data: Partial<User> & { id: string; email: string } }): Promise<User>
+        findUnique(args: {
+            where: UserWhereUnique
+            select?: { id?: boolean; role?: boolean }
+        }): Promise<Partial<User> | null>
+        findMany(args: { where?: UserWhere; orderBy?: OrderBy; take?: number }): Promise<User[]>
+        update(args: { where: { id: string }; data: Partial<User> }): Promise<User>
+        delete(args: { where: { id: string } }): Promise<User>
+        count(args?: { where?: UserWhere }): Promise<CountResult>
+        groupBy(_args: {
+            by: Array<'role'>
+            _count: { role: boolean }
+        }): Promise<Array<{ role: Role; _count: { role: number } }>>
+    }
+    refreshToken: {
+        deleteMany(): Promise<DeleteManyResult>
+        create(args: { data: RefreshToken }): Promise<RefreshToken>
+        findFirst(args: {
+            where: { token: string; isRevoked: boolean; expiresAt: { gt: Date } }
+        }): Promise<RefreshToken | null>
+        updateMany(args: {
+            where: { token: string; isRevoked: boolean }
+            data: { isRevoked: boolean }
+        }): Promise<UpdateManyResult>
+        findMany(args: {
+            where: { userId: string; isRevoked: boolean; expiresAt: { gt: Date } }
+            orderBy?: { createdAt: 'asc' | 'desc' }
+        }): Promise<RefreshToken[]>
+    }
+    character: {
+        findUnique(args: {
+            where: { id: string }
+            select?: {
+                ownerId?: boolean
+                visibility?: boolean
+                owner?: { select: { role: boolean } }
+            }
+        }): Promise<{ ownerId?: string; visibility?: Visibility; owner?: { role: Role } } | null>
+    }
+    image: {
+        findUnique(args: {
+            where: { id: string }
+            select?: {
+                ownerId?: boolean
+                visibility?: boolean
+                owner?: { select: { role: boolean } }
+            }
+        }): Promise<{ ownerId?: string; visibility?: Visibility; owner?: { role: Role } } | null>
+    }
+    tag: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+    skill: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+    perk: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+    race: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+    archetype: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+    item: {
+        findUnique(args: {
+            where: { id: string }
+            select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
+        }): Promise<{ ownerId?: string; owner?: { role: Role } } | null>
+    }
+}
+
+export const prismaFake: PrismaFake = {
     // Minimal Prisma client surface
     async $connect() {
         /* no-op */
@@ -93,12 +189,12 @@ export const prismaFake = {
         /* no-op */
     },
     async $queryRaw<T = unknown>(_query?: unknown): Promise<T> {
-        return [] as unknown as T
+        return [] as T
     },
     async $executeRaw(_query?: unknown): Promise<number> {
         return 0
     },
-    async $transaction<T>(fn: (tx: typeof prismaFake) => Promise<T>): Promise<T> {
+    async $transaction<T>(fn: (tx: PrismaFake) => Promise<T>): Promise<T> {
         return fn(this)
     },
     user: {
@@ -203,14 +299,21 @@ export const prismaFake = {
                     })
                 }
             }
-            let order = args.orderBy || []
+            let order: OrderBy = args.orderBy ? [...args.orderBy] : []
             // Ensure stable tie-breaker by id when ordering
-            if (order.length === 1 && !('id' in order[0])) {
-                const dir = (Object.values(order[0])[0] as 'asc' | 'desc') || 'desc'
-                order = [...order, { id: dir }]
+            if (order.length === 1) {
+                const first = order[0]
+                if (first && !Object.prototype.hasOwnProperty.call(first, 'id')) {
+                    const values = Object.values(first)
+                    const firstVal = values.length > 0 ? values[0] : 'desc'
+                    const dir: 'asc' | 'desc' = firstVal === 'asc' ? 'asc' : 'desc'
+                    order = [...order, { id: dir }]
+                }
             }
-            for (const o of order.reverse()) {
-                const [key, dir] = Object.entries(o)[0]
+            for (const o of [...order].reverse()) {
+                const entries = Object.entries(o)
+                if (entries.length === 0) continue
+                const [key, dir] = entries[0] as [string, 'asc' | 'desc']
                 list.sort((a, b) => {
                     const av = (a as Record<string, unknown>)[key]
                     const bv = (b as Record<string, unknown>)[key]
@@ -245,10 +348,74 @@ export const prismaFake = {
             }
             const now = getNow()
             const current = db.users[idx]
+            if (!current) {
+                throw new PrismaLikeError('P2025')
+            }
             const updated: User = {
-                ...current,
-                ...args.data,
+                id: current.id,
+                email: args.data.email ?? current.email,
+                passwordHash: args.data.passwordHash ?? current.passwordHash,
+                role: args.data.role ?? current.role,
+                isEmailVerified: args.data.isEmailVerified ?? current.isEmailVerified,
+                isActive: args.data.isActive ?? current.isActive,
+                lastLogin: args.data.lastLogin ?? current.lastLogin,
+                isBanned: args.data.isBanned ?? current.isBanned,
+                createdAt: current.createdAt,
                 updatedAt: now,
+                name:
+                    'name' in args.data
+                        ? args.data.name === undefined
+                            ? current.name
+                            : args.data.name
+                        : current.name,
+                bio:
+                    'bio' in args.data
+                        ? args.data.bio === undefined
+                            ? current.bio
+                            : args.data.bio
+                        : current.bio,
+                oauthProvider:
+                    'oauthProvider' in args.data
+                        ? args.data.oauthProvider === undefined
+                            ? current.oauthProvider
+                            : args.data.oauthProvider
+                        : current.oauthProvider,
+                oauthId:
+                    'oauthId' in args.data
+                        ? args.data.oauthId === undefined
+                            ? current.oauthId
+                            : args.data.oauthId
+                        : current.oauthId,
+                lastPasswordChange:
+                    'lastPasswordChange' in args.data
+                        ? args.data.lastPasswordChange === undefined
+                            ? current.lastPasswordChange
+                            : args.data.lastPasswordChange
+                        : current.lastPasswordChange,
+                banReason:
+                    'banReason' in args.data
+                        ? args.data.banReason === undefined
+                            ? current.banReason
+                            : args.data.banReason
+                        : current.banReason,
+                bannedUntil:
+                    'bannedUntil' in args.data
+                        ? args.data.bannedUntil === undefined
+                            ? current.bannedUntil
+                            : args.data.bannedUntil
+                        : current.bannedUntil,
+                bannedById:
+                    'bannedById' in args.data
+                        ? args.data.bannedById === undefined
+                            ? current.bannedById
+                            : args.data.bannedById
+                        : current.bannedById,
+                profilePictureId:
+                    'profilePictureId' in args.data
+                        ? args.data.profilePictureId === undefined
+                            ? current.profilePictureId
+                            : args.data.profilePictureId
+                        : current.profilePictureId,
             }
             db.users[idx] = updated
             return updated
@@ -258,10 +425,14 @@ export const prismaFake = {
             if (idx === -1) {
                 throw new PrismaLikeError('P2025')
             }
-            const [removed] = db.users.splice(idx, 1)
+            const removed = db.users.splice(idx, 1)[0]
+            if (!removed) {
+                throw new PrismaLikeError('P2025')
+            }
             // Cascade: RefreshToken has onDelete: Cascade in schema
             for (let i = db.tokens.length - 1; i >= 0; i--) {
-                if (db.tokens[i].userId === removed.id) db.tokens.splice(i, 1)
+                const token = db.tokens[i]
+                if (token && token.userId === removed.id) db.tokens.splice(i, 1)
             }
             return removed
         },
@@ -456,5 +627,3 @@ export const prismaFake = {
         },
     },
 }
-
-export type PrismaFake = typeof prismaFake
