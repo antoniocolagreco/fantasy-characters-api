@@ -224,20 +224,20 @@ services:
     // Run single API container
     "docker:run": "docker run -p 3000:3000 fantasy-characters-api",
 
-  // Docker Compose for development (DB only)
-  "docker:compose:dev": "docker compose -f docker-compose.dev.yml up -d",
+    // Docker Compose for development (DB only)
+    "docker:compose:dev": "docker compose -f docker-compose.dev.yml up -d",
 
     // Docker Compose production (API + DB)
-  "docker:compose:prod": "docker compose -f docker-compose.prod.yml up -d",
+    "docker:compose:prod": "docker compose -f docker-compose.prod.yml up -d",
 
     // Docker Compose for CI/CD testing
-  "docker:compose:integration": "docker compose -f docker-compose.integration.yml up -d",
+    "docker:compose:integration": "docker compose -f docker-compose.integration.yml up -d",
 
-  // Stop all containers
-  "docker:compose:dev:down": "docker compose -f docker-compose.dev.yml down",
+    // Stop all containers
+    "docker:compose:dev:down": "docker compose -f docker-compose.dev.yml down",
 
-  // Stop ALL environments
-  "docker:compose:all:down": "docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.integration.yml down"
+    // Stop ALL environments
+    "docker:compose:all:down": "docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.integration.yml down"
   }
 }
 ```

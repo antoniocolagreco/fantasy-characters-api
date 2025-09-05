@@ -110,13 +110,13 @@ export default fp(async function swaggerPlugin(app) {
 })
 ```
 
-## Schema Organization Template
+## Schema Organization Template (versioned HTTP layer)
 
 **File Structure**: Each feature gets its own schema file with consistent
 exports.
 
 ```ts
-// src/features/{feature}/{feature}.schema.ts
+// src/features/{feature}/v1/{feature}.schema.ts
 import { Type, Static } from '@sinclair/typebox'
 
 // 1. Base Entity Schema (with $id for OpenAPI components)
@@ -177,12 +177,12 @@ export type Update{Feature} = Static<typeof Update{Feature}Schema>
 export type {Feature}ListQuery = Static<typeof {Feature}ListQuerySchema>
 ```
 
-## Route Documentation Template
+## Route Documentation Template (per version)
 
 **File Structure**: Each feature route file follows this exact pattern.
 
 ```ts
-// src/features/{feature}/{feature}.routes.ts
+// src/features/{feature}/v1/{feature}.routes.ts
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 import * as schemas from './{feature}.schema'

@@ -103,7 +103,8 @@ They cover setup, development, testing, and deployment in a standardized way.
   Runs the API inside a Docker container.
 
 - **`pnpm run docker:compose:dev`**  
-  Starts the development stack (PostgreSQL, optional pgAdmin) via Docker Compose v2.
+  Starts the development stack (PostgreSQL, optional pgAdmin) via Docker Compose
+  v2.
 - **`pnpm run docker:compose:prod`**  
   Starts the production stack (API + PostgreSQL) via Docker Compose v2.
 - **`pnpm run docker:compose:integration`**  

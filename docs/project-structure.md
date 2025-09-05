@@ -8,13 +8,13 @@ src/
 │   ├── feature-name/
 │   │   ├── v1/                              # Version 1 API
 │   │   │   ├── feature-name.controller.ts   # v1 HTTP handling
-│   │   │   ├── feature-name.schema.ts       # v1 validation schemas
-│   │   │   ├── feature-name.route.ts        # v1 route definitions
+│   │   │   ├── feature-name.schema.ts       # v1 request/response schemas (HTTP)
+│   │   │   ├── feature-name.routes.ts       # v1 route definitions (plural)
 │   │   │   └── feature-name.adapter.ts      # Domain → v1 API conversion
 │   │   ├── v2/                              # Version 2 API
 │   │   │   ├── feature-name.controller.ts   # v2 HTTP handling
-│   │   │   ├── feature-name.schema.ts       # v2 validation schemas
-│   │   │   ├── feature-name.route.ts        # v2 route definitions
+│   │   │   ├── feature-name.schema.ts       # v2 request/response schemas (HTTP)
+│   │   │   ├── feature-name.routes.ts       # v2 route definitions (plural)
 │   │   │   └── feature-name.adapter.ts      # Domain → v2 API conversion
 │   │   ├── feature-name.service.ts          # Shared business logic (version-agnostic)
 │   │   ├── feature-name.repository.ts       # Database access layer
@@ -50,10 +50,14 @@ src/
 - Controllers don't build error JSON
 - Keep files <500 lines
 - shared/ contains only generic, reusable utilities
+- Version ONLY the HTTP layer (routes/controller/schema) inside `v1/`, `v2/`;
+  keep `service`/`repository`/`types` at feature root
+- Prefer an `adapter` per version when response shape differs between API
+  versions
 
 ## Core File Responsibilities
 
-- **feature-name.route.ts**: Register endpoints, attach schemas
+- **feature-name.routes.ts**: Register endpoints, attach schemas
 - **feature-name.schema.ts**: TypeBox validation schemas, export TS types
 - **feature-name.controller.ts**: HTTP → service calls, no DB access
 - **feature-name.service.ts**: Business logic, coordinates repositories
@@ -61,13 +65,18 @@ src/
 - **feature-name.adapter.ts**: Transform domain models to API responses
 - **feature-name.types.ts**: Domain TypeScript types
 
+Tip: Place request/response schemas used by the HTTP layer inside the version
+folder (e.g., `v1/feature-name.schema.ts`). Keep domain-level types/schemas (if
+any) at the feature root.
+
 ## Feature Creation Workflow
 
 ### Plan → Scaffold → Schema → Types → Repo → Service → Controller → Errors → Tests → Docs
 
 1. **Plan**: Define feature requirements and API endpoints
 2. **Scaffold**: Generate versioned folders (`v1/`, `v2/`) + shared files
-3. **Schema**: Create TypeBox validation schemas in each version
+3. **Schema**: Create TypeBox validation schemas in each version (HTTP layer
+   only)
 4. **Types**: Define domain TypeScript types
 5. **Repository**: Set up Prisma models and database access layer
 6. **Service**: Implement business logic and coordinate repositories
@@ -94,3 +103,14 @@ When files exceed 500 lines, split by operation/responsibility:
 
 - `feature-name.repository.query.ts` (complex queries)
 - `feature-name.repository.mutation.ts` (create/update/delete)
+
+## Versioning Policy
+
+- Default: version only the HTTP layer (`v1/`, `v2/`) to evolve the public
+  contract without duplicating domain logic
+- Services and repositories remain version-agnostic and shared across versions
+- Use per-version adapters when you need to change the response or request
+  shapes between versions
+- Consider placing authentication/session-related persistence (e.g., refresh
+  tokens) under the `auth` feature to respect SRP and keep `users` focused on
+  user domain data

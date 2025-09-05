@@ -1,7 +1,10 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify, { type FastifyInstance } from 'fastify'
 
+import { createOptionalAuthMiddleware } from './features/auth/auth.middleware'
+import { usersRoutesV1 } from './features/users/v1/users.routes'
 import { config } from './infrastructure/config'
+import prismaService from './infrastructure/database/prisma.service'
 import { compressionPlugin } from './shared/plugins/compression.plugin'
 import corsPlugin from './shared/plugins/cors.plugin'
 import { errorHandlerPlugin } from './shared/plugins/error-handler.plugin'
@@ -59,6 +62,32 @@ export async function buildApp(): Promise<FastifyInstance> {
     // Feature plugins (define routes AFTER swagger is registered)
     await app.register(multipartPlugin)
     await app.register(healthCheckPlugin)
+
+    // Add Prisma to all requests
+    app.decorateRequest('prisma', null)
+    app.addHook('onRequest', async request => {
+        request.prisma = prismaService
+    })
+
+    // Create authentication middleware instance (available for RBAC when needed)
+    const authMiddleware = createOptionalAuthMiddleware({
+        secret: config.JWT_SECRET,
+        accessTokenTtl: config.JWT_ACCESS_EXPIRES_IN,
+        refreshTokenTtl: config.JWT_REFRESH_EXPIRES_IN,
+        issuer: 'fantasy-characters-api',
+        audience: 'fantasy-characters-app',
+    })
+
+    // Apply optional authentication globally (parses JWT if present, but doesn't require it)
+    app.addHook('preHandler', async (request, reply) => {
+        // Cast for compatibility since headers are slightly different types
+        const authRequest = request as unknown as import('./shared/types/http').BasicAuthRequest
+        const authReply = reply as unknown as import('./shared/types/http').BasicReply
+        authMiddleware(authRequest, authReply)
+    })
+
+    // API v1 routes
+    await app.register(usersRoutesV1, { prefix: '/api/v1' })
 
     return app
 }

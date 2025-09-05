@@ -17,6 +17,7 @@ export default defineConfig({
                 'dist/**',
                 'coverage/**',
                 'scripts/**',
+                'tests/**',
                 '**/*.d.ts',
                 '**/*.type.ts',
                 '**/index.ts',
@@ -50,8 +51,8 @@ export default defineConfig({
                 isolate: false,
             },
         },
-        testTimeout: 10000,
-        hookTimeout: 10000,
+        testTimeout: 3000,
+        hookTimeout: 5000,
         teardownTimeout: 5000,
     },
     resolve: {

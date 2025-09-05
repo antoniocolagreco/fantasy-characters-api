@@ -1,5 +1,9 @@
 # API Endpoints
 
+All endpoints are exposed under versioned prefixes. Current stable version is
+`v1`. Future versions (e.g., `v2`) will live alongside v1 without breaking
+changes.
+
 ## 1. Utility / health checks
 
 ```http

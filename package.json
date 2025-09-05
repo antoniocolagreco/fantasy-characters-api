@@ -28,6 +28,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "vitest run --config vitest.config.e2e.ts",
     "test:ui": "vitest --ui",
+    "validate:coverage": "tsx scripts/validate-coverage.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:openapi": "tsx scripts/validate-openapi.ts",
     "smoke:test": "tsx scripts/smoke-tests.ts",

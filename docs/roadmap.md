@@ -132,21 +132,21 @@ Duration: 3–5 days
 
 Duration: 4–6 days
 
-- [ ] 6.01 Scaffold user feature structure
-- [ ] 6.02 Create User and RefreshToken schemas (types derived from schemas)
-- [ ] 6.03 Implement User repository layer
-- [ ] 6.04 Implement RefreshToken repository layer
-- [ ] 6.05 Create user service layer
-- [ ] 6.06 Implement `GET /api/v1/users` (pagination, filtering)
-- [ ] 6.07 Implement `GET /api/v1/users/:id`
-- [ ] 6.08 Implement `GET /api/v1/users/stats`
-- [ ] 6.09 Implement `POST /api/v1/users`
-- [ ] 6.10 Implement `PUT /api/v1/users/:id`
-- [ ] 6.11 Implement `DELETE /api/v1/users/:id`
-- [ ] 6.12 Implement POST /api/v1/users/:id/ban
-- [ ] 6.13 Add error handling for all user operations
-- [ ] 6.14 Write user tests (≥ 80% coverage)
-- [ ] 6.15 Update OpenAPI docs for all user endpoints
+- [x] 6.01 Scaffold user feature structure
+- [x] 6.02 Create User and RefreshToken schemas (types derived from schemas)
+- [x] 6.03 Implement User repository layer
+- [x] 6.04 Implement RefreshToken repository layer
+- [x] 6.05 Create user service layer
+- [x] 6.06 Implement `GET /api/v1/users` (pagination, filtering)
+- [x] 6.07 Implement `GET /api/v1/users/:id`
+- [x] 6.08 Implement `GET /api/v1/users/stats`
+- [x] 6.09 Implement `POST /api/v1/users`
+- [x] 6.10 Implement `PUT /api/v1/users/:id`
+- [x] 6.11 Implement `DELETE /api/v1/users/:id`
+- [x] 6.12 Implement POST /api/v1/users/:id/ban
+- [x] 6.13 Add error handling for all user operations
+- [x] 6.14 Write user tests (≥ 80% coverage)
+- [x] 6.15 Update OpenAPI docs for all user endpoints
 
 ---
 
@@ -184,12 +184,17 @@ Cross-links: [feature-dependencies.md](./feature-dependencies.md),
 
 - [x] 8.01 Implement RBAC: policy function, ownership resolver, and preHandler
       per [authorization.md](./authorization.md)
-- [ ] 8.02 Apply RBAC checks in routes (preHandler)
-- [ ] 8.03 Enforce RBAC again in services (defense in depth)
-- [x] 8.04 Write comprehensive RBAC tests (80%+ coverage) (policy unit tests
-      exist; middleware/route tests pending)
-- [ ] 8.05 Update authorization docs and note protected endpoints in
-      [endpoints.md](./endpoints.md)
+- [x] 8.02 Apply RBAC checks in routes (preHandler) ✅ (implemented in users
+      routes)
+- [x] 8.03 Enforce RBAC again in services (defense in depth) ✅ (users service
+      layer includes RBAC)
+- [x] 8.04 Write comprehensive RBAC tests (80%+ coverage) ✅ (policy unit tests
+      and integration tests via users.auth.test.ts)
+- [x] 8.05 Update authorization docs and note protected endpoints in
+      [endpoints.md](./endpoints.md) ✅
+
+**Milestone 8 COMPLETED** ✅ All RBAC authorization tasks complete with working
+implementation and comprehensive testing.
 
 ---
 
