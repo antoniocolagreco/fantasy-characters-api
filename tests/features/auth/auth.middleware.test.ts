@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { JwtClaims, JwtConfig } from '../../../src/features/auth'
-import { AppError } from '../../../src/shared/errors'
-import type { BasicAuthRequest, BasicReply } from '../../../src/shared/types/http'
+import type { JwtClaims, JwtConfig } from '@/features/auth'
+import { AppError } from '@/shared/errors'
+import type { BasicAuthRequest, BasicReply } from '@/shared/types/http'
 
 describe('Auth Middleware - Real Implementation', () => {
     let mockRequest: BasicAuthRequest
@@ -31,7 +31,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
         // Mock JWT service using vi.doMock for test isolation
         mockVerifyAccessToken = vi.fn()
-        vi.doMock('../../../src/features/auth/jwt.service', () => ({
+        vi.doMock('@/features/auth/jwt.service', () => ({
             verifyAccessToken: mockVerifyAccessToken,
             generateAccessToken: vi.fn(),
             generateRefreshToken: vi.fn(),
@@ -44,7 +44,7 @@ describe('Auth Middleware - Real Implementation', () => {
     // Helper function to create fresh middleware instances
     async function createMiddleware() {
         // Dynamic import after mocking to ensure mock is applied
-        const middlewareModule = await import('../../../src/features/auth/auth.middleware')
+        const middlewareModule = await import('@/features/auth/auth.middleware')
         return {
             authMiddleware: middlewareModule.createAuthMiddleware(jwtConfig),
             optionalAuthMiddleware: middlewareModule.createOptionalAuthMiddleware(jwtConfig),
@@ -53,7 +53,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
     afterEach(() => {
         vi.clearAllMocks()
-        vi.doUnmock('../../../src/features/auth/jwt.service')
+        vi.doUnmock('@/features/auth/jwt.service')
         vi.resetModules()
     })
 

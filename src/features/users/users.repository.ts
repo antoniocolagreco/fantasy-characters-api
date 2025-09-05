@@ -1,10 +1,16 @@
 import { Prisma } from '@prisma/client'
 
-import { prisma } from '../../infrastructure/database'
-import { err } from '../../shared/errors'
-import { generateUUIDv7 } from '../../shared/utils'
-
-import type { CreateUser, UpdateUser, BanUser, UserListQuery, UserStats, User } from './users.type'
+import type {
+    BanUser,
+    CreateUser,
+    UpdateUser,
+    User,
+    UserListQuery,
+    UserStats,
+} from '@/features/users/users.type'
+import { prisma } from '@/infrastructure/database'
+import { err } from '@/shared/errors'
+import { generateUUIDv7 } from '@/shared/utils'
 
 // ===== Transformation Helpers =====
 function transformUserToSchema(user: Prisma.UserGetPayload<object>): User {

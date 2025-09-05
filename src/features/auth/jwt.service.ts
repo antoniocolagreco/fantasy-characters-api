@@ -1,9 +1,8 @@
 import jwt from 'jsonwebtoken'
 
-import { err } from '../../shared/errors'
-import { generateUUIDv7 } from '../../shared/utils'
-
-import type { AuthenticatedUser, JwtClaims, JwtConfig } from './auth.schema'
+import type { AuthenticatedUser, JwtClaims, JwtConfig } from '@/features/auth/auth.schema'
+import { err } from '@/shared/errors'
+import { generateUUIDv7 } from '@/shared/utils'
 
 /**
  * Generate an access token (JWT) for a user

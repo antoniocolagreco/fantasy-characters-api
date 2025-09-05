@@ -1,7 +1,7 @@
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
-import { AppError } from '../errors/app.error'
-import type { ErrorDetail, ErrorResponse } from '../schemas'
+import { AppError } from '@/shared/errors/app.error'
+import type { ErrorDetail, ErrorResponse } from '@/shared/schemas'
 
 /**
  * Global error handler plugin for Fastify

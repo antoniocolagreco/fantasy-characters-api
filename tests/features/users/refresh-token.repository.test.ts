@@ -4,7 +4,7 @@ vi.stubEnv('NODE_ENV', 'test')
 vi.stubEnv('DATABASE_URL', 'postgresql://user:pass@localhost:5432/db')
 
 // Use real uuid helper but make output deterministic
-vi.mock('../../../src/shared/utils', async orig => {
+vi.mock('@/shared/utils', async orig => {
     const mod: any = await (orig as any)()
     return {
         ...mod,
@@ -12,10 +12,8 @@ vi.mock('../../../src/shared/utils', async orig => {
     }
 })
 
-const { refreshTokenRepository } = await import(
-    '../../../src/features/users/refresh-token.repository'
-)
-const prismaServiceModule = await import('../../../src/infrastructure/database/prisma.service')
+const { refreshTokenRepository } = await import('@/features/users/refresh-token.repository')
+const prismaServiceModule = await import('@/infrastructure/database/prisma.service')
 
 describe('refreshTokenRepository', () => {
     beforeEach(() => {

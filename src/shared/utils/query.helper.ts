@@ -1,4 +1,4 @@
-import { err } from '../errors'
+import { err } from '@/shared/errors'
 
 // Generic query building functions
 export function buildWhere<T extends Record<string, unknown>>(filters: Partial<T>): T {

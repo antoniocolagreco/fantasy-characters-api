@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { hashPassword, verifyPassword } from '../../../src/features/auth/password.service'
-import { prismaFake, resetDb } from '../../helpers/inmemory-prisma'
+import { hashPassword, verifyPassword } from '@/features/auth/password.service'
+import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
 
 async function getServices() {
-    const serviceMod = await import('../../../src/features/users/users.service')
-    const repoMod = await import('../../../src/features/users/users.repository')
+    const serviceMod = await import('@/features/users/users.service')
+    const repoMod = await import('@/features/users/users.repository')
     return { userService: serviceMod.userService, userRepository: repoMod.userRepository }
 }
 

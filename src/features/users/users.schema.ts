@@ -2,12 +2,12 @@ import { Type, type Static } from '@sinclair/typebox'
 
 import {
     BaseEntitySchema,
-    RoleSchema,
     PaginationQuerySchema,
+    RoleSchema,
     SortQuerySchema,
-    createSuccessResponseSchema,
     createPaginatedResponseSchema,
-} from '../../shared/schemas'
+    createSuccessResponseSchema,
+} from '@/shared/schemas'
 
 // ===== User Schema =====
 export const UserSchema = Type.Intersect(

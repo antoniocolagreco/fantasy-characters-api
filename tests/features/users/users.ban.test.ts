@@ -1,10 +1,10 @@
 import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
-import { buildApp } from '../../../src/app'
-import type { User } from '../../../src/features/users'
-import prismaService from '../../../src/infrastructure/database/prisma.service'
-import { createAuthHeaders } from '../../helpers/auth.helper'
+import { buildApp } from '@/app'
+import type { User } from '@/features/users'
+import prismaService from '@/infrastructure/database/prisma.service'
+import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 
 describe('Users API v1 - Ban Operations', () => {
     let app: FastifyInstance

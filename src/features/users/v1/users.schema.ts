@@ -7,7 +7,7 @@ import {
     SortQuerySchema,
     createSuccessResponseSchema,
     createPaginatedResponseSchema,
-} from '../../../shared/schemas'
+} from '@/shared/schemas'
 
 // ===== User Schema =====
 export const UserSchema = Type.Intersect(

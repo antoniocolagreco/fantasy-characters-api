@@ -1,5 +1,5 @@
-import { resolve } from 'path'
 import { defineConfig } from 'vitest/config'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
     test: {
@@ -55,14 +55,5 @@ export default defineConfig({
         hookTimeout: 5000,
         teardownTimeout: 5000,
     },
-    resolve: {
-        alias: {
-            '@': resolve(__dirname, './src'),
-            '@/features': resolve(__dirname, './src/features'),
-            '@/infrastructure': resolve(__dirname, './src/infrastructure'),
-            '@/shared': resolve(__dirname, './src/shared'),
-            '@/tests': resolve(__dirname, './tests'),
-            '@/scripts': resolve(__dirname, './scripts'),
-        },
-    },
+    plugins: [tsconfigPaths({ projects: ['./tsconfig.json', './tests/tsconfig.json'] })],
 })

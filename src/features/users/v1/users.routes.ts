@@ -1,9 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 
-import { ErrorResponseSchema } from '../../../shared/schemas'
-import { rbac } from '../../auth/rbac.middleware'
-
 import * as controller from './users.controller'
 import {
     UserListQuerySchema,
@@ -15,6 +12,9 @@ import {
     UpdateUserSchema,
     BanUserSchema,
 } from './users.schema'
+
+import { rbac } from '@/features/auth/rbac.middleware'
+import { ErrorResponseSchema } from '@/shared/schemas'
 
 export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.withTypeProvider<TypeBoxTypeProvider>()

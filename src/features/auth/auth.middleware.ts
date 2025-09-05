@@ -1,8 +1,7 @@
-import { AppError, err } from '../../shared/errors'
-import type { BasicAuthRequest, BasicReply } from '../../shared/types/http'
-
-import type { JwtConfig } from './auth.schema'
-import { verifyAccessToken } from './jwt.service'
+import type { JwtConfig } from '@/features/auth/auth.schema'
+import { verifyAccessToken } from '@/features/auth/jwt.service'
+import { AppError, err } from '@/shared/errors'
+import type { BasicAuthRequest, BasicReply } from '@/shared/types/http'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
     return function authMiddleware(request: BasicAuthRequest, _reply: BasicReply) {

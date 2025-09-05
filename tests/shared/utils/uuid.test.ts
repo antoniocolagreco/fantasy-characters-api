@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-    generateUUIDv7,
-    getTimestampFromUUIDv7,
-    isValidUUIDv7,
-} from '../../../src/shared/utils/uuid'
+import { generateUUIDv7, getTimestampFromUUIDv7, isValidUUIDv7 } from '@/shared/utils/uuid'
 
 describe('UUID v7 Utility', () => {
     describe('generateUUIDv7', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
-import { userRepository } from '../../../src/features/users/users.repository'
-import { prismaFake, resetDb } from '../../helpers/inmemory-prisma'
+import { userRepository } from '@/features/users/users.repository'
+import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
 
 function makeUser(id: string, email: string, extras: Partial<import('@prisma/client').User> = {}) {
     const now = new Date()

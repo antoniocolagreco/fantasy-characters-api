@@ -1,21 +1,21 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify, { type FastifyInstance } from 'fastify'
 
-import { createOptionalAuthMiddleware } from './features/auth/auth.middleware'
-import { usersRoutesV1 } from './features/users/v1/users.routes'
-import { config } from './infrastructure/config'
-import prismaService from './infrastructure/database/prisma.service'
-import { compressionPlugin } from './shared/plugins/compression.plugin'
-import corsPlugin from './shared/plugins/cors.plugin'
-import { errorHandlerPlugin } from './shared/plugins/error-handler.plugin'
-import { healthCheckPlugin } from './shared/plugins/health.plugin'
-import helmetPlugin from './shared/plugins/helmet.plugin'
-import loggingPlugin from './shared/plugins/logging.plugin'
-import { multipartPlugin } from './shared/plugins/multipart.plugin'
-import rateLimitPlugin from './shared/plugins/rate-limit.plugin'
-// import sanitizationPlugin from './shared/plugins/sanitization.plugin' // Temporarily disabled
-import { swaggerPlugin } from './shared/plugins/swagger.plugin'
-import { generateUUIDv7 } from './shared/utils/uuid'
+import { createOptionalAuthMiddleware } from '@/features/auth/auth.middleware'
+import { usersRoutesV1 } from '@/features/users/v1/users.routes'
+import { config } from '@/infrastructure/config'
+import prismaService from '@/infrastructure/database/prisma.service'
+import { compressionPlugin } from '@/shared/plugins/compression.plugin'
+import corsPlugin from '@/shared/plugins/cors.plugin'
+import { errorHandlerPlugin } from '@/shared/plugins/error-handler.plugin'
+import { healthCheckPlugin } from '@/shared/plugins/health.plugin'
+import helmetPlugin from '@/shared/plugins/helmet.plugin'
+import loggingPlugin from '@/shared/plugins/logging.plugin'
+import { multipartPlugin } from '@/shared/plugins/multipart.plugin'
+import rateLimitPlugin from '@/shared/plugins/rate-limit.plugin'
+// import sanitizationPlugin from '@/shared/plugins/sanitization.plugin' // Temporarily disabled
+import { swaggerPlugin } from '@/shared/plugins/swagger.plugin'
+import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 /**
  * Build and configure Fastify application instance
@@ -81,8 +81,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     // Apply optional authentication globally (parses JWT if present, but doesn't require it)
     app.addHook('preHandler', async (request, reply) => {
         // Cast for compatibility since headers are slightly different types
-        const authRequest = request as unknown as import('./shared/types/http').BasicAuthRequest
-        const authReply = reply as unknown as import('./shared/types/http').BasicReply
+        const authRequest = request as unknown as import('@/shared/types/http').BasicAuthRequest
+        const authReply = reply as unknown as import('@/shared/types/http').BasicReply
         authMiddleware(authRequest, authReply)
     })
 

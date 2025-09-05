@@ -1,5 +1,5 @@
-import type { AuthenticatedUser, JwtConfig } from '../../src/features/auth'
-import { generateAccessToken } from '../../src/features/auth/jwt.service'
+import type { AuthenticatedUser, JwtConfig } from '@/features/auth'
+import { generateAccessToken } from '@/features/auth/jwt.service'
 
 function getTestJwtConfig(): JwtConfig {
     const secret = process.env.JWT_SECRET || 'test-secret-key-with-minimum-32-characters!!'

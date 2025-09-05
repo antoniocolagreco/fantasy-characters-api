@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
 
-import { buildApp } from '../../../src/app'
+import { buildApp } from '@/app'
 
 describe('Health Check Endpoint Tests', () => {
     let app: FastifyInstance

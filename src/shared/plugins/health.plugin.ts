@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 
-import prismaService from '../../infrastructure/database/prisma.service'
-import { HealthResponseSchema, ReadinessResponseSchema } from '../schemas/health.schema'
+import prismaService from '@/infrastructure/database/prisma.service'
+import { HealthResponseSchema, ReadinessResponseSchema } from '@/shared/schemas/health.schema'
 
 /**
  * Health check plugin

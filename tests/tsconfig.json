@@ -1,0 +1,17 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": "..",
+    "rootDir": "..",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/features/*": ["src/features/*"],
+      "@/infrastructure/*": ["src/infrastructure/*"],
+      "@/shared/*": ["src/shared/*"],
+      "@/tests/*": ["tests/*"]
+    }
+  },
+  "include": ["../src/**/*.ts", "./**/*.ts"],
+  "exclude": []
+}

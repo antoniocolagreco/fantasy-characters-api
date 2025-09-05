@@ -1,4 +1,4 @@
-import { startServer, stopServer } from './app'
+import { startServer, stopServer } from '@/app'
 
 /**
  * Main server entry point

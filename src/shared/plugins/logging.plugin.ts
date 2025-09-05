@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
-import { generateUUIDv7 } from '../utils/uuid'
+import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 /**
  * Enhanced logging configuration plugin

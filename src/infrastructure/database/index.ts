@@ -1,3 +1,3 @@
-export * from './prisma.service'
-export * from './seed'
-export * from './test-data.generator'
+export * from '@/infrastructure/database/prisma.service'
+export * from '@/infrastructure/database/seed'
+export * from '@/infrastructure/database/test-data.generator'

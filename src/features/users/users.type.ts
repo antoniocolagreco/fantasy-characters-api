@@ -1,8 +1,5 @@
 import type { Static } from '@sinclair/typebox'
 
-import { PaginationSchema } from '../../shared/schemas'
-import type { RefreshTokenPayload } from '../auth'
-
 import type {
     BanUserSchema,
     CreateUserRequestSchema,
@@ -15,6 +12,11 @@ import type {
     UserSchema,
     UserStatsSchema,
 } from './v1/users.schema'
+
+import type { RefreshTokenPayload } from '@/features/auth'
+import { PaginationSchema } from '@/shared/schemas'
+
+// (moved to top for lint order)
 
 // ===== Domain Types =====
 export type User = Static<typeof UserSchema>

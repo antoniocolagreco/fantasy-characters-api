@@ -1,9 +1,9 @@
 import type { FastifyInstance } from 'fastify'
-import { describe, expect, it, beforeAll, afterAll, beforeEach } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
-import { buildApp } from '../../../src/app'
-import prismaService from '../../../src/infrastructure/database/prisma.service'
-import { createAuthHeaders } from '../../helpers/auth.helper'
+import { buildApp } from '@/app'
+import prismaService from '@/infrastructure/database/prisma.service'
+import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 
 describe('Users API v1 - Update Operations', () => {
     let app: FastifyInstance

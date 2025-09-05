@@ -1,8 +1,7 @@
-import { prisma } from '../../infrastructure/database'
-import { err } from '../../shared/errors'
-import { generateUUIDv7 } from '../../shared/utils'
-
-import type { RefreshTokenRepository } from './users.type'
+import type { RefreshTokenRepository } from '@/features/users/users.type'
+import { prisma } from '@/infrastructure/database'
+import { err } from '@/shared/errors'
+import { generateUUIDv7 } from '@/shared/utils'
 
 // ===== Repository Implementation =====
 export const refreshTokenRepository: RefreshTokenRepository = {

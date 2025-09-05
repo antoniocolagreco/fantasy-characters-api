@@ -31,6 +31,7 @@
     "validate:coverage": "tsx scripts/validate-coverage.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:openapi": "tsx scripts/validate-openapi.ts",
+    "pre:commit": "pnpm format && pnpm typecheck && pnpm lint:fix && pnpm test:coverage && pnpm validate:coverage",
     "smoke:test": "tsx scripts/smoke-tests.ts",
     "ci": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm validate:env",
     "ci:quality": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage",
@@ -107,6 +108,7 @@
     "tsc-alias": "^1.8.16",
     "tsx": "^4.19.1",
     "typescript": "^5.6.2",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^2.1.1"
   },
   "engines": {

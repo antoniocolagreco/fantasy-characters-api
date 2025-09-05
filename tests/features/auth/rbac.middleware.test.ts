@@ -1,15 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-    createRbacMiddleware,
-    rbac,
-    resolveOwnership,
-} from '../../../src/features/auth/rbac.middleware'
-import { can } from '../../../src/features/auth/rbac.policy'
-import { AppError } from '../../../src/shared/errors'
+import { createRbacMiddleware, rbac, resolveOwnership } from '@/features/auth/rbac.middleware'
+import { can } from '@/features/auth/rbac.policy'
+import { AppError } from '@/shared/errors'
 
 // Mock the RBAC policy
-vi.mock('../../../src/features/auth/rbac.policy')
+vi.mock('@/features/auth/rbac.policy')
 const mockCan = vi.mocked(can)
 
 // Define proper types for our mocks

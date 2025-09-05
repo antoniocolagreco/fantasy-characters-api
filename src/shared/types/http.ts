@@ -1,4 +1,4 @@
-import type { Role } from '../schemas'
+import type { Role } from '@/shared/schemas'
 
 // Minimal shapes used across features and tests without coupling to Fastify
 export type BasicRequestUser = { id: string; role: Role | string; email?: string }

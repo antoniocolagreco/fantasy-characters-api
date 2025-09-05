@@ -1,15 +1,14 @@
 import type { PrismaClient } from '@prisma/client'
 
-import { err } from '../../shared/errors'
-import type { Role, Visibility } from '../../shared/schemas'
+import { can } from '@/features/auth/rbac.policy'
+import type { Action, OwnershipData, RbacContext, Resource } from '@/features/auth/rbac.schema'
+import { err } from '@/shared/errors'
+import type { Role, Visibility } from '@/shared/schemas'
 import type {
     OwnershipRequest,
     RbacMiddlewareReply,
     RbacMiddlewareRequest,
-} from '../../shared/types/http'
-
-import { can } from './rbac.policy'
-import type { Action, OwnershipData, RbacContext, Resource } from './rbac.schema'
+} from '@/shared/types/http'
 // Note: We intentionally avoid depending on Fastify types here to keep
 // the middleware easy to unit-test with plain objects.
 

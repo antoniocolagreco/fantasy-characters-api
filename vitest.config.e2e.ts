@@ -1,5 +1,5 @@
-import { resolve } from 'path'
-import { defineConfig } from 'vitest/config.js'
+import { defineConfig } from 'vitest/config'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
     test: {
@@ -8,22 +8,15 @@ export default defineConfig({
         setupFiles: ['./tests/setup.ts'],
         include: ['src/**/*.e2e.{test,spec}.{ts,tsx}', 'tests/e2e/**/*.{test,spec}.{ts,tsx}'],
         exclude: ['node_modules', 'dist', 'coverage'],
+        passWithNoTests: true,
         pool: 'threads',
         poolOptions: {
             threads: {
                 singleThread: true,
             },
         },
-        testTimeout: 60000,
-        hookTimeout: 60000,
+        testTimeout: 10000,
+        hookTimeout: 10000,
     },
-    resolve: {
-        alias: {
-            '@': resolve(__dirname, './src'),
-            '@/features': resolve(__dirname, './src/features'),
-            '@/infrastructure': resolve(__dirname, './src/infrastructure'),
-            '@/shared': resolve(__dirname, './src/shared'),
-            '@/tests': resolve(__dirname, './tests'),
-        },
-    },
+    plugins: [tsconfigPaths({ projects: ['./tsconfig.json', './tests/tsconfig.json'] })],
 })

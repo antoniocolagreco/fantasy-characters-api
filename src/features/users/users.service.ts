@@ -1,6 +1,3 @@
-import { err } from '../../shared/errors'
-import { hashPassword, verifyPassword } from '../auth/password.service'
-
 import {
     userRepository,
     refreshTokenRepository,
@@ -12,6 +9,11 @@ import {
     type User,
     type UserStats,
 } from './index'
+
+import { hashPassword, verifyPassword } from '@/features/auth/password.service'
+import { err } from '@/shared/errors'
+
+// (moved above for lint order)
 
 // ===== User Service =====
 export class UserService {

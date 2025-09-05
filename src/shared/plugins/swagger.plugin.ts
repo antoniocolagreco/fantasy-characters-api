@@ -3,7 +3,7 @@ import fastifySwaggerUi from '@fastify/swagger-ui'
 import type { FastifyInstance } from 'fastify'
 import fp from 'fastify-plugin'
 
-import { config } from '../../infrastructure/config'
+import { config } from '@/infrastructure/config'
 
 /**
  * Swagger/OpenAPI documentation plugin

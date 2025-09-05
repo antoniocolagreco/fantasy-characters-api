@@ -3,8 +3,8 @@
 
 import { PrismaClient, Rarity, Role, Sex, Slot, Visibility } from '@prisma/client'
 
-import { generateUUIDv7 } from '../../shared/utils'
-import { logger } from '../logging/logger.service'
+import { logger } from '@/infrastructure/logging/logger.service'
+import { generateUUIDv7 } from '@/shared/utils'
 
 const prisma = new PrismaClient()
 

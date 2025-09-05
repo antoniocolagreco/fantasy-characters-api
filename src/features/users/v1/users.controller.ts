@@ -1,14 +1,15 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { userService } from '..'
+
 import type {
-    UserParams,
+    BanUser,
     CreateUserInput,
     UpdateUser,
-    BanUser,
-    UserListQuery,
     User,
-} from '../users.type'
+    UserListQuery,
+    UserParams,
+} from '@/features/users/users.type'
 
 function envelope<T>(data: T, requestId?: string) {
     return { data, requestId, timestamp: new Date().toISOString() }

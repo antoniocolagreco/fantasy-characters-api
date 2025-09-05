@@ -346,7 +346,7 @@ export async function resolveOwnership(
 ```ts
 // src/common/middleware/rbac.ts
 import { can } from './rbac.policy'
-import { err } from '../errors/factories'
+import { err } from '@/shared/errors/factories'
 
 export function rbacPreHandler(resource: Resource, action: Action) {
   return async function (req: any) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { type RbacContext, can, userCan } from '../../../src/features/auth'
+import { type RbacContext, can, userCan } from '@/features/auth'
 
 describe('RBAC Policy', () => {
     describe('Anonymous users', () => {

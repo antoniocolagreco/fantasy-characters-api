@@ -10,7 +10,7 @@ vi.stubEnv('JWT_SECRET', 'test-secret-key-with-minimum-32-characters!!')
 vi.stubEnv('JWT_REFRESH_SECRET', 'test-refresh-secret-with-min-32-chars!!')
 
 // Dynamic import after env is set
-const appModule = await import('../../../src/app')
+const appModule = await import('@/app')
 
 describe('Server start/stop', () => {
     it('starts the server and responds to /api/health, then stops cleanly', async () => {

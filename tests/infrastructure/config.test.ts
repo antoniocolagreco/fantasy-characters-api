@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { loadConfig } from '../../src/infrastructure/config'
+import { loadConfig } from '@/infrastructure/config'
 
 describe('Environment Configuration', () => {
     beforeEach(() => {
