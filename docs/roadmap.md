@@ -120,11 +120,11 @@ Duration: 3–5 days
 - [x] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md) (lint,
       type-check, tests with coverage, OpenAPI validate, Docker build, smoke
       tests)
-- [ ] 5.05 Validate environment via config loader; commit .env.example
+- [x] 5.05 Validate environment via config loader; commit .env.example
       ([secrets-and-config.md](./secrets-and-config.md))
-- [ ] 5.06 Add deployment smoke tests (start container, hit /api/health and
+- [x] 5.06 Add deployment smoke tests (start container, hit /api/health and
       /api/ready and one read endpoint when available)
-- [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy)
+- [x] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy)
 
 ---
 

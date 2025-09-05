@@ -146,8 +146,8 @@ Essential scripts for local development and CI/CD pipeline.
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
-    "format": "prettier --write "src/**/*.{ts,tsx,json,md}"",
-    "format:check": "prettier --check "src/**/*.{ts,tsx,json,md}"",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,md}\"",
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -267,3 +267,57 @@ Pipeline stages that must pass before code can be merged or deployed.
 | **OpenAPI**      | Schema validation    | Valid spec   | ✅       |
 | **Docker Build** | Multi-stage build    | Successful   | ✅       |
 | **Smoke Test**   | Health + API calls   | All pass     | ✅       |
+
+## Deployment assumptions (production)
+
+This API runs inside a container behind a reverse proxy that terminates TLS. The application
+listens on HTTP port 3000 inside the container. Your reverse proxy (Nginx, Traefik, AWS ALB/NLB,
+etc.) is responsible for HTTPS and for forwarding the correct headers.
+
+### Networking & TLS
+
+- TLS is terminated by the reverse proxy; the app exposes HTTP on port 3000
+- Forward these headers to the app: `X-Forwarded-Proto`, `X-Forwarded-For`, `X-Forwarded-Host`
+- Configure proxy keep-alive and upstream timeouts (for example, 60s)
+
+### Health and readiness
+
+- Liveness: `GET /api/health` returns 200 OK when the process is healthy; 503 otherwise
+- Readiness: `GET /api/ready` returns 200 only when dependencies are ready (DB reachable and,
+  in production, migrations applied); returns 503 when not ready
+- Use readiness to gate traffic in orchestrators (Kubernetes readinessProbe, load balancer target
+  groups, etc.)
+
+### Required environment variables
+
+- `DATABASE_URL`: Postgres connection string
+- `JWT_SECRET` and `JWT_REFRESH_SECRET`: at least 32 characters each; never use defaults in prod
+- `CORS_ORIGINS`: comma-separated allowlist for browser clients
+- `LOG_LEVEL`: one of `fatal|error|warn|info|debug|trace|silent` (suggest `info` in prod)
+- `PORT` (default 3000) and `HOST` (default 0.0.0.0) are optional overrides
+
+### Database & migrations
+
+- Run `prisma migrate deploy` as part of the release process before sending real traffic
+- In production, readiness will fail (503) if migrations are not applied
+
+### Statelessness & storage
+
+- The application is stateless; do not rely on local container storage for persistent data
+- All persistence is via the configured Postgres database
+
+### Observability & logging
+
+- Structured logs via Pino to stdout; include a `requestId` for correlation
+- Forward container stdout/stderr to your log aggregation (for example, CloudWatch, ELK, Loki)
+
+### Scaling & resources
+
+- Set CPU/RAM limits per your platform; use multiple replicas for HA
+- Use readiness checks to control rollout and traffic shifting
+- Dockerfile includes a healthcheck probing `/api/health` and `/api/ready`
+
+### Post-deploy verification
+
+- Basic verification endpoints: `/api/health`, `/api/ready`, `/docs/json`
+- Optional: `pnpm smoke:test` (runs `scripts/smoke-tests.ts`) against the deployed base URL

@@ -179,11 +179,6 @@ Once running, visit:
 - **OpenAPI JSON**: `http://localhost:3000/docs/json`
 - **Health Check**: `http://localhost:3000/api/v1/live`
 
-## 🤝 Contributing
-
-Please read the [Development Principles](docs/development-principles.md) and
-[Code Style](docs/code-style.md) before contributing.
-
 ## 👨‍💻 Author
 
 **Antonio Colagreco**  
