@@ -3,12 +3,14 @@
 ## Key Principles
 
 1. **Schema-First**: Define TypeBox schemas, derive TypeScript types
-2. **Single Source of Truth**: Never duplicate type definitions - always import from `src/shared/schemas`
+2. **Single Source of Truth**: Never duplicate type definitions - always import
+   from `src/shared/schemas`
 3. **Functional over OOP**: Pure functions for business logic
 4. **KISS**: Simplest code that works
 5. **YAGNI**: Only build what's needed right now
 6. **DRY**: Extract common code, don't over-abstract
-7. **Centralized Schemas**: All shared schemas in `src/shared/schemas/` with proper exports
+7. **Centralized Schemas**: All shared schemas in `src/shared/schemas/` with
+   proper exports
 
 ## Schema-First Development Workflow
 
@@ -41,13 +43,16 @@ import {
 } from '../shared/schemas'
 
 // 2. Define Schema (in feature-name.schema.ts)
-export const UserSchema = Type.Intersect([
-  BaseEntitySchema, // Always extend from base
-  Type.Object({
-    email: Type.String({ format: 'email' }),
-    name: Type.String({ minLength: 1, maxLength: 100 }),
-  }),
-], { $id: 'User' })
+export const UserSchema = Type.Intersect(
+  [
+    BaseEntitySchema, // Always extend from base
+    Type.Object({
+      email: Type.String({ format: 'email' }),
+      name: Type.String({ minLength: 1, maxLength: 100 }),
+    }),
+  ],
+  { $id: 'User' }
+)
 
 // 2. Derive Types (in feature-name.types.ts)
 export type User = Static<typeof UserSchema>
@@ -83,7 +88,9 @@ app.post(
   {
     schema: {
       body: CreateUserSchema, // Validates input
-      response: { 201: createSuccessResponseSchema(UserSchema, 'UserResponse') }, // Centralized response helper
+      response: {
+        201: createSuccessResponseSchema(UserSchema, 'UserResponse'),
+      }, // Centralized response helper
     },
   },
   createUserHandler

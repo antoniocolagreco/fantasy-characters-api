@@ -1,4 +1,4 @@
-import { Type, type Static } from '@sinclair/typebox'
+import { type Static, Type } from '@sinclair/typebox'
 
 // Error codes schema
 export const ErrorCodeSchema = Type.Union(

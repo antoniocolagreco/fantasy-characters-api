@@ -19,7 +19,8 @@ Auto-validate requests → Auto-type TypeScript
 3. **Always reuse schemas** - Use Type.Pick/Omit instead of duplicating
 4. **Always tag endpoints** - Group related operations for better organization
 5. **Always validate OpenAPI output** - Include schema validation in CI/CD
-6. **Always import from centralized schemas** - Use `src/shared/schemas` exports only
+6. **Always import from centralized schemas** - Use `src/shared/schemas` exports
+   only
 
 ## ⚠️ IMPORTANT: Schema Consistency
 
@@ -42,8 +43,8 @@ import {
 export const PaginationSchema = Type.Object({ ... }) // This creates conflicts!
 ```
 
-This prevents the creation of multiple incompatible pagination schemas and ensures
-consistent API responses across all endpoints.
+This prevents the creation of multiple incompatible pagination schemas and
+ensures consistent API responses across all endpoints.
 
 ## OpenAPI Plugin Setup
 
@@ -300,24 +301,30 @@ import {
 // Example:
 
 // Example feature schema using centralized schemas:
-export const CharacterSchema = Type.Intersect([
-  BaseEntitySchema,
-  Type.Object({
-    name: Type.String({ minLength: 1, maxLength: 100 }),
-    level: Type.Integer({ minimum: 1, maximum: 100 }),
-    // ... other character fields
-  }),
-], { $id: 'Character' })
+export const CharacterSchema = Type.Intersect(
+  [
+    BaseEntitySchema,
+    Type.Object({
+      name: Type.String({ minLength: 1, maxLength: 100 }),
+      level: Type.Integer({ minimum: 1, maximum: 100 }),
+      // ... other character fields
+    }),
+  ],
+  { $id: 'Character' }
+)
 
 // Query schema composition
-export const CharacterListQuerySchema = Type.Intersect([
-  PaginationQuerySchema,
-  SortQuerySchema,
-  Type.Object({
-    minLevel: Type.Optional(Type.Integer({ minimum: 1 })),
-    maxLevel: Type.Optional(Type.Integer({ minimum: 1 })),
-  }),
-], { $id: 'CharacterListQuery' })
+export const CharacterListQuerySchema = Type.Intersect(
+  [
+    PaginationQuerySchema,
+    SortQuerySchema,
+    Type.Object({
+      minLevel: Type.Optional(Type.Integer({ minimum: 1 })),
+      maxLevel: Type.Optional(Type.Integer({ minimum: 1 })),
+    }),
+  ],
+  { $id: 'CharacterListQuery' }
+)
 
 // Response schemas using helpers
 export const CharacterResponseSchema = createSuccessResponseSchema(

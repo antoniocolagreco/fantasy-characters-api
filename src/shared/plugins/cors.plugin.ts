@@ -1,6 +1,6 @@
-import fp from 'fastify-plugin'
 import cors from '@fastify/cors'
 import type { FastifyInstance } from 'fastify'
+import fp from 'fastify-plugin'
 
 function parseOrigins(envString?: string): string[] {
     if (!envString) return []
@@ -10,7 +10,7 @@ function parseOrigins(envString?: string): string[] {
         .filter(Boolean)
 }
 
-export default fp(async function corsPlugin(fastify: FastifyInstance) {
+export default fp(async (fastify: FastifyInstance) => {
     const isProd = process.env.NODE_ENV === 'production'
 
     // Development defaults for local frontends

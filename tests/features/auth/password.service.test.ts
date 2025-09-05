@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
 import {
     hashPassword,
-    verifyPassword,
     needsRehash,
+    verifyPassword,
 } from '../../../src/features/auth/password.service'
 
 describe('Password Service', () => {

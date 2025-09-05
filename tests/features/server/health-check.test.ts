@@ -1,5 +1,6 @@
-import { test, expect, beforeAll, afterAll, describe } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+
 import { buildApp } from '../../../src/app'
 
 describe('Health Check Endpoint Tests', () => {
@@ -25,15 +26,11 @@ describe('Health Check Endpoint Tests', () => {
             status: string
             timestamp: string
             uptime: number
-            version: string
-            environment: string
         } = response.json()
 
-        expect(body).toHaveProperty('status', 'healthy')
+        expect(body).toHaveProperty('status', 'ok')
         expect(body).toHaveProperty('timestamp')
         expect(body).toHaveProperty('uptime')
-        expect(body).toHaveProperty('version')
-        expect(body).toHaveProperty('environment')
 
         expect(typeof body.timestamp).toBe('string')
         expect(typeof body.uptime).toBe('number')

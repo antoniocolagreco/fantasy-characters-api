@@ -1,7 +1,9 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
-import { verifyAccessToken } from './jwt.service'
-import type { JwtConfig } from './auth.schema'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+
 import { AppError, err } from '../../shared/errors'
+
+import type { JwtConfig } from './auth.schema'
+import { verifyAccessToken } from './jwt.service'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
     return function authMiddleware(request: FastifyRequest, _reply: FastifyReply) {

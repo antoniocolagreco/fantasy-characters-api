@@ -55,27 +55,40 @@ Reusable building blocks for consistent query parameters across all endpoints.
 
 ```typescript
 // src/shared/schemas/query.schema.ts (centralized exports)
-export const PaginationQuerySchema = Type.Object({
-  limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
-  cursor: Type.Optional(Type.String()),
-}, { $id: 'PaginationQuery' })
+export const PaginationQuerySchema = Type.Object(
+  {
+    limit: Type.Optional(
+      Type.Integer({ minimum: 1, maximum: 100, default: 20 })
+    ),
+    cursor: Type.Optional(Type.String()),
+  },
+  { $id: 'PaginationQuery' }
+)
 
-export const VisibilityQuerySchema = Type.Object({
-  visibility: Type.Optional(VisibilitySchema),
-}, { $id: 'VisibilityQuery' })
+export const VisibilityQuerySchema = Type.Object(
+  {
+    visibility: Type.Optional(VisibilitySchema),
+  },
+  { $id: 'VisibilityQuery' }
+)
 
-export const SortQuerySchema = Type.Object({
-  sortBy: Type.Optional(
-    Type.Union([
-      Type.Literal('createdAt'),
-      Type.Literal('name'),
-      Type.Literal('level'),
-    ])
-  ),
-  sortDir: Type.Optional(
-    Type.Union([Type.Literal('asc'), Type.Literal('desc')], { default: 'desc' })
-  ),
-}, { $id: 'SortQuery' })
+export const SortQuerySchema = Type.Object(
+  {
+    sortBy: Type.Optional(
+      Type.Union([
+        Type.Literal('createdAt'),
+        Type.Literal('name'),
+        Type.Literal('level'),
+      ])
+    ),
+    sortDir: Type.Optional(
+      Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
+        default: 'desc',
+      })
+    ),
+  },
+  { $id: 'SortQuery' }
+)
 
 // Derive types
 export type PaginationQuery = Static<typeof PaginationQuerySchema>

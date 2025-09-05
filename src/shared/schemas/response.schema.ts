@@ -1,4 +1,4 @@
-import { Type, type Static, type TSchema } from '@sinclair/typebox'
+import { type Static, type TSchema, Type } from '@sinclair/typebox'
 
 /**
  * Base response schemas for consistent API responses

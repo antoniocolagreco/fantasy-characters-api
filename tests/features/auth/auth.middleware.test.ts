@@ -1,5 +1,6 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import type { FastifyRequest, FastifyReply } from 'fastify'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type { JwtClaims, JwtConfig } from '../../../src/features/auth'
 import { AppError } from '../../../src/shared/errors'
 
@@ -168,7 +169,6 @@ describe('Auth Middleware - Real Implementation', () => {
             }
 
             mockVerifyAccessToken.mockImplementation(() => {
-                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'String error'
             })
 
@@ -331,7 +331,6 @@ describe('Auth Middleware - Real Implementation', () => {
             }
 
             mockVerifyAccessToken.mockImplementation(() => {
-                // eslint-disable-next-line @typescript-eslint/only-throw-error
                 throw 'String error'
             })
 

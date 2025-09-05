@@ -1,8 +1,8 @@
-import fp from 'fastify-plugin'
 import helmet from '@fastify/helmet'
 import type { FastifyInstance } from 'fastify'
+import fp from 'fastify-plugin'
 
-export default fp(async function helmetPlugin(fastify: FastifyInstance) {
+export default fp(async (fastify: FastifyInstance) => {
     await fastify.register(helmet, {
         // Content Security Policy
         contentSecurityPolicy: {

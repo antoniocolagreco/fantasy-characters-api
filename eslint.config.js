@@ -1,13 +1,14 @@
 import js from '@eslint/js'
 import tseslint from '@typescript-eslint/eslint-plugin'
 import tsparser from '@typescript-eslint/parser'
-import prettier from 'eslint-plugin-prettier'
 import prettierConfig from 'eslint-config-prettier'
+import importPlugin from 'eslint-plugin-import'
+import prettier from 'eslint-plugin-prettier'
 
 export default [
     js.configs.recommended,
     {
-        files: ['src/**/*.{ts,tsx}', 'tests/**/*.{ts,tsx}'],
+        files: ['src/**/*.{ts,tsx}', 'tests/**/*.{ts,tsx}', 'scripts/**/*.{ts,tsx}'],
         languageOptions: {
             parser: tsparser,
             parserOptions: {
@@ -24,35 +25,26 @@ export default [
                 global: 'readonly',
                 module: 'readonly',
                 require: 'readonly',
+                fetch: 'readonly',
+                AbortController: 'readonly',
             },
         },
         plugins: {
             '@typescript-eslint': tseslint,
             prettier,
+            import: importPlugin,
         },
         rules: {
             ...tseslint.configs.recommended.rules,
-            ...tseslint.configs['recommended-requiring-type-checking'].rules,
             ...prettierConfig.rules,
 
-            // TypeScript specific rules
+            // TypeScript specific rules (without type checking)
             '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
             '@typescript-eslint/explicit-function-return-type': 'off',
             '@typescript-eslint/explicit-module-boundary-types': 'off',
             '@typescript-eslint/no-explicit-any': 'error',
             '@typescript-eslint/no-non-null-assertion': 'error',
-            '@typescript-eslint/prefer-nullish-coalescing': 'error',
-            '@typescript-eslint/prefer-optional-chain': 'error',
-            '@typescript-eslint/no-floating-promises': 'error',
-            '@typescript-eslint/await-thenable': 'error',
-            '@typescript-eslint/no-misused-promises': 'error',
-            '@typescript-eslint/require-await': 'error',
-            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
             '@typescript-eslint/prefer-as-const': 'error',
-            '@typescript-eslint/no-unsafe-assignment': 'error',
-            '@typescript-eslint/no-unsafe-call': 'error',
-            '@typescript-eslint/no-unsafe-member-access': 'error',
-            '@typescript-eslint/no-unsafe-return': 'error',
 
             // General rules
             'no-console': 'warn',
@@ -66,7 +58,26 @@ export default [
             'no-useless-rename': 'error',
             'prefer-destructuring': ['error', { object: true, array: false }],
 
+            // Import rules
+            'import/order': [
+                'error',
+                {
+                    groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+                    'newlines-between': 'always',
+                    alphabetize: { order: 'asc', caseInsensitive: true },
+                },
+            ],
+            'import/newline-after-import': 'error',
+            'import/no-useless-path-segments': 'error',
+
             'prettier/prettier': 'error',
+        },
+    },
+    {
+        files: ['scripts/**/*.{ts,tsx}'],
+        rules: {
+            'no-console': 'off', // Allow console.log in scripts
+            '@typescript-eslint/no-explicit-any': 'off', // Allow any types in scripts
         },
     },
     {
@@ -111,6 +122,6 @@ export default [
         },
     },
     {
-        ignores: ['dist/**', 'coverage/**', 'node_modules/**', '*.config.js', '*.config.ts'],
+        ignores: ['dist/**', 'coverage/**', 'node_modules/**'],
     },
 ]

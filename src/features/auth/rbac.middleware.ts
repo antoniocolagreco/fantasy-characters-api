@@ -1,9 +1,11 @@
-import type { FastifyRequest, FastifyReply } from 'fastify'
 import type { PrismaClient } from '@prisma/client'
-import { can } from './rbac.policy'
-import type { Action, Resource, RbacContext, OwnershipData } from './rbac.schema'
-import type { Role, Visibility } from '../../shared/schemas'
+import type { FastifyReply, FastifyRequest } from 'fastify'
+
 import { err } from '../../shared/errors'
+import type { Role, Visibility } from '../../shared/schemas'
+
+import { can } from './rbac.policy'
+import type { Action, OwnershipData, RbacContext, Resource } from './rbac.schema'
 
 interface AuthenticatedRequest extends FastifyRequest {
     user?: {

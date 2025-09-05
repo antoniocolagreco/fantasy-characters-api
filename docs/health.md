@@ -47,14 +47,15 @@ app.get('/api/health', async (req, reply) => {
 ## Readiness Endpoint (`/api/ready`)
 
 Comprehensive readiness check for container orchestration. Returns `200` if
-service is ready to accept traffic, `503` if not ready (missing migrations, etc).
+service is ready to accept traffic, `503` if not ready (missing migrations,
+etc).
 
 ```ts
 app.get('/api/ready', async (req, reply) => {
   let isReady = true
   const checks = {
     database: { status: 'not_ready', responseTime: 0 },
-    migrations: { status: 'not_ready' }
+    migrations: { status: 'not_ready' },
   }
 
   // Check database connectivity
@@ -66,9 +67,9 @@ app.get('/api/ready', async (req, reply) => {
         setTimeout(() => reject(new Error('Timeout')), 5000)
       ),
     ])
-    checks.database = { 
-      status: 'ready', 
-      responseTime: Date.now() - dbStart 
+    checks.database = {
+      status: 'ready',
+      responseTime: Date.now() - dbStart,
     }
   } catch (error) {
     isReady = false
@@ -89,7 +90,7 @@ app.get('/api/ready', async (req, reply) => {
   return reply.code(statusCode).send({
     status: isReady ? 'ready' : 'not_ready',
     timestamp: new Date().toISOString(),
-    checks
+    checks,
   })
 })
 ```
@@ -135,28 +136,36 @@ Register both endpoints with proper schema validation and documentation.
 
 ```ts
 // Health endpoint
-app.get('/api/health', {
-  schema: {
-    tags: ['Health'],
-    description: 'Basic health check for monitoring and load balancers',
-    response: {
-      200: HealthResponseSchema,
-      503: HealthResponseSchema,
+app.get(
+  '/api/health',
+  {
+    schema: {
+      tags: ['Health'],
+      description: 'Basic health check for monitoring and load balancers',
+      response: {
+        200: HealthResponseSchema,
+        503: HealthResponseSchema,
+      },
     },
   },
-}, healthHandler)
+  healthHandler
+)
 
-// Readiness endpoint  
-app.get('/api/ready', {
-  schema: {
-    tags: ['Health'],
-    description: 'Readiness check for container orchestration',
-    response: {
-      200: ReadinessResponseSchema,
-      503: ReadinessResponseSchema,
+// Readiness endpoint
+app.get(
+  '/api/ready',
+  {
+    schema: {
+      tags: ['Health'],
+      description: 'Readiness check for container orchestration',
+      response: {
+        200: ReadinessResponseSchema,
+        503: ReadinessResponseSchema,
+      },
     },
   },
-}, readinessHandler)
+  readinessHandler
+)
 ```
 
 ## Required Health Schema

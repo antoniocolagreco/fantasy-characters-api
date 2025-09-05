@@ -1,5 +1,6 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify, { type FastifyInstance } from 'fastify'
+
 import { config } from './infrastructure/config'
 import { compressionPlugin } from './shared/plugins/compression.plugin'
 import corsPlugin from './shared/plugins/cors.plugin'

@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
 import { buildApp } from '../../../src/app'
 import type { ErrorResponse } from '../../../src/shared/schemas/error.schema'
 

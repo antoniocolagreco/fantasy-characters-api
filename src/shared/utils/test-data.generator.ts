@@ -1,4 +1,5 @@
 import { type Prisma } from '@prisma/client'
+
 import { generateUUIDv7 } from './uuid'
 
 // Test data generation utilities for consistent test data across the application

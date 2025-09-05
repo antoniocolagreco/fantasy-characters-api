@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createRbacMiddleware,
     rbac,

@@ -1,12 +1,13 @@
-import { describe, test, expect } from 'vitest'
+import { describe, expect, test } from 'vitest'
+
+import { PaginationQuerySchema } from '@/shared/schemas'
 import {
-    buildWhere,
     applyCursor,
     buildOrderBy,
     buildPagination,
+    buildWhere,
     validateRange,
 } from '@/shared/utils/query.helper'
-import { PaginationQuerySchema } from '@/shared/schemas'
 
 describe('Query Helpers', () => {
     describe('buildWhere', () => {

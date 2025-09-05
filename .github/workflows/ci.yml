@@ -1,0 +1,188 @@
+name: CI/CD Pipeline
+
+on:
+    push:
+        branches: [master, develop]
+    pull_request:
+        branches: [master]
+
+env:
+    NODE_VERSION: '24'
+    PNPM_VERSION: '9'
+
+jobs:
+    quality-checks:
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:15
+                env:
+                    POSTGRES_PASSWORD: fantasy_password
+                    POSTGRES_USER: fantasy_user
+                    POSTGRES_DB: fantasy_characters_test
+                options: >-
+                    --health-cmd pg_isready --health-interval 10s --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: ${{ env.PNPM_VERSION }}
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: ${{ env.NODE_VERSION }}
+                  cache: 'pnpm'
+
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
+
+            - name: Generate Prisma client
+              run: pnpm db:generate
+
+            - name: Run database migrations
+              run: pnpm prisma migrate deploy
+              env:
+                  DATABASE_URL: postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_test
+
+            - name: Lint check
+              run: pnpm lint
+
+            - name: Type check
+              run: pnpm typecheck
+
+            - name: Run tests with coverage
+              run: pnpm test:coverage
+              env:
+                  NODE_ENV: test
+                  DATABASE_URL: postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_test
+                  JWT_SECRET: test-secret-for-ci-only-never-use-in-production
+                  JWT_REFRESH_SECRET: test-refresh-secret-for-ci-only
+                  CORS_ORIGINS: 'http://localhost:3000'
+                  LOG_LEVEL: warn
+                  SKIP_DB_CHECK: 'false'
+
+            - name: Build application
+              run: pnpm build
+
+            - name: Validate OpenAPI schema
+              run: |
+                  # Start server in background
+                  NODE_ENV=test \
+                  DATABASE_URL=postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_test \
+                  JWT_SECRET=test-secret \
+                  nohup pnpm start > server.log 2>&1 &
+
+                  # Wait for server to start
+                  sleep 15
+
+                  # Download and validate OpenAPI schema
+                  curl -f http://localhost:3000/docs/json > openapi.json
+                  npx @apidevtools/swagger-parser validate openapi.json
+
+                  # Test health endpoints
+                  curl -f http://localhost:3000/api/health
+                  curl -f http://localhost:3000/api/ready || true  # Ready might fail without full setup
+
+            - name: Upload coverage reports
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-reports
+                  path: coverage/
+                  retention-days: 30
+
+            - name: Upload OpenAPI schema
+              uses: actions/upload-artifact@v4
+              with:
+                  name: openapi-schema
+                  path: openapi.json
+                  retention-days: 30
+
+    docker-build:
+        runs-on: ubuntu-latest
+        needs: quality-checks
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
+
+            - name: Build Docker image
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  push: false
+                  tags: fantasy-characters-api:${{ github.sha }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
+                  platforms: linux/amd64
+
+            - name: Run Docker smoke tests
+              run: |
+                  # Start PostgreSQL for smoke tests
+                  docker run -d --name postgres-smoke \
+                    -e POSTGRES_PASSWORD=fantasy_password \
+                    -e POSTGRES_USER=fantasy_user \
+                    -e POSTGRES_DB=fantasy_characters_test \
+                    -p 5433:5432 \
+                    postgres:15
+
+                  # Wait for PostgreSQL to be ready
+                  sleep 10
+
+                  # Run the API container
+                  docker run -d --name api-smoke \
+                    -p 3000:3000 \
+                    --add-host host.docker.internal:host-gateway \
+                    -e NODE_ENV=production \
+                    -e DATABASE_URL=postgresql://fantasy_user:fantasy_password@host.docker.internal:5433/fantasy_characters_test \
+                    -e JWT_SECRET=test-secret-for-smoke-tests \
+                    -e JWT_REFRESH_SECRET=test-refresh-secret \
+                    -e CORS_ORIGINS='http://localhost:3000' \
+                    -e LOG_LEVEL=info \
+                    fantasy-characters-api:${{ github.sha }}
+
+                  # Wait for API to start
+                  sleep 20
+
+                  # Run smoke tests
+                  echo "Testing health endpoint..."
+                  curl -f http://localhost:3000/api/health
+
+                  echo "Testing readiness endpoint..."
+                  curl -f http://localhost:3000/api/ready || echo "Readiness check failed (expected without migrations)"
+
+                  echo "Testing OpenAPI docs..."
+                  curl -f http://localhost:3000/docs/json > /dev/null
+
+                  # Cleanup
+                  docker stop api-smoke postgres-smoke
+                  docker rm api-smoke postgres-smoke
+
+    # Optional: Deploy job (only on main branch)
+    deploy-staging:
+        runs-on: ubuntu-latest
+        needs: [quality-checks, docker-build]
+        if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Deploy to staging
+              run: |
+                  echo "🚀 Deploying to staging environment..."
+                  echo "Docker image: fantasy-characters-api:${{ github.sha }}"
+                  echo "Branch: ${{ github.ref_name }}"
+                  echo "Commit: ${{ github.sha }}"
+                  # Add actual deployment steps here when ready

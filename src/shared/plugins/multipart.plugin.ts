@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify'
 import fastifyMultipart from '@fastify/multipart'
+import type { FastifyInstance } from 'fastify'
 
 /**
  * Multipart file upload handling plugin

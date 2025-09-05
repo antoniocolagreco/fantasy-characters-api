@@ -1,4 +1,4 @@
-import type { RbacContext, Action, Resource, RbacUser, UserCanOptions } from './rbac.schema'
+import type { Action, RbacContext, RbacUser, Resource, UserCanOptions } from './rbac.schema'
 
 /**
  * Core RBAC policy function that determines if a user can perform an action

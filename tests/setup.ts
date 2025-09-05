@@ -1,4 +1,4 @@
-import { beforeAll, afterAll, beforeEach } from 'vitest'
+import { afterAll, beforeAll, beforeEach } from 'vitest'
 
 // Test environment setup
 process.env.NODE_ENV = 'test'

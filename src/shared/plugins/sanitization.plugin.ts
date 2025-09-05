@@ -1,6 +1,6 @@
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 import DOMPurify from 'isomorphic-dompurify'
-import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify'
 
 // Fields that should be sanitized as HTML
 const HTML_FIELDS = new Set(['description', 'bio', 'backstory', 'notes', 'content', 'htmlContent'])
@@ -115,7 +115,7 @@ function sanitizationMiddleware(request: FastifyRequest, _reply: FastifyReply) {
     }
 }
 
-export default fp(function sanitizationPlugin(fastify: FastifyInstance) {
+export default fp((fastify: FastifyInstance) => {
     // Register the middleware globally for all routes
     fastify.addHook('preValidation', sanitizationMiddleware)
 

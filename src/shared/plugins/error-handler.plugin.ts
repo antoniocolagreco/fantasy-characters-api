@@ -1,4 +1,5 @@
-import type { FastifyError, FastifyRequest, FastifyReply, FastifyInstance } from 'fastify'
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+
 import { AppError } from '../errors/app.error'
 import type { ErrorDetail, ErrorResponse } from '../schemas'
 

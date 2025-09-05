@@ -1,14 +1,14 @@
 import { faker } from '@faker-js/faker'
 import type {
-    User,
-    Character,
-    Item,
-    Race,
     Archetype,
-    Skill,
-    Perk,
-    Tag,
+    Character,
     Image,
+    Item,
+    Perk,
+    Race,
+    Skill,
+    Tag,
+    User,
 } from '@prisma/client'
 
 // Set a seed for reproducible test data

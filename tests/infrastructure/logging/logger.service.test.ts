@@ -1,5 +1,6 @@
-import { logger } from '@/infrastructure/logging/logger.service'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+
+import { logger } from '@/infrastructure/logging/logger.service'
 
 describe('Logger Service', () => {
     let originalLogLevel: string | undefined

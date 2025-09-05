@@ -1,6 +1,7 @@
 import { Value } from '@sinclair/typebox/value'
+
 import 'dotenv/config'
-import { ConfigSchema, type Config } from '../shared/schemas'
+import { type Config, ConfigSchema } from '../shared/schemas'
 
 export function loadConfig(): Config {
     const rawConfig = {

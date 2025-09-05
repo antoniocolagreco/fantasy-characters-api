@@ -1,5 +1,5 @@
-import type { FastifyInstance } from 'fastify'
 import fastifyCompress from '@fastify/compress'
+import type { FastifyInstance } from 'fastify'
 
 /**
  * Response compression plugin (gzip/brotli)

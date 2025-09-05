@@ -2,12 +2,14 @@
 /* eslint-disable no-console */
 
 import { PrismaClient, Rarity, Role, Sex, Slot, Visibility } from '@prisma/client'
+
 import { generateUUIDv7 } from '../../shared/utils'
+import { logger } from '../logging/logger.service'
 
 const prisma = new PrismaClient()
 
 async function main() {
-    console.log('Starting database seed...')
+    logger.info('Starting database seed...')
 
     // Clear existing data in correct order (respecting foreign key constraints)
     await prisma.equipment.deleteMany()
@@ -22,7 +24,7 @@ async function main() {
     await prisma.refreshToken.deleteMany()
     await prisma.user.deleteMany()
 
-    console.log('Creating admin user...')
+    logger.info('Creating admin user...')
 
     // Create admin user
     const adminUser = await prisma.user.create({
@@ -44,7 +46,7 @@ async function main() {
         data: { role: Role.ADMIN },
     })
 
-    console.log('Creating sample races...')
+    logger.info('Creating sample races...')
 
     // Create sample races
     const races = await Promise.all([
@@ -126,7 +128,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating sample archetypes...')
+    logger.info('Creating sample archetypes...')
 
     // Create sample archetypes
     const archetypes = await Promise.all([
@@ -172,7 +174,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating sample skills...')
+    logger.info('Creating sample skills...')
 
     // Create sample skills
     const skills = await Promise.all([
@@ -218,7 +220,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating sample perks...')
+    logger.info('Creating sample perks...')
 
     // Create sample perks
     const perks = await Promise.all([
@@ -254,7 +256,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating sample items...')
+    logger.info('Creating sample items...')
 
     // Create sample items
     const items = await Promise.all([
@@ -324,7 +326,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating sample characters...')
+    logger.info('Creating sample characters...')
 
     // Create sample characters
     const characters = await Promise.all([
@@ -426,7 +428,7 @@ async function main() {
         }),
     ])
 
-    console.log('Creating equipment for characters...')
+    logger.info('Creating equipment for characters...')
 
     // Create equipment for first character (Aria)
     await prisma.equipment.create({
@@ -447,7 +449,7 @@ async function main() {
         },
     })
 
-    console.log('Creating tags and relationships...')
+    logger.info('Creating tags and relationships...')
 
     // Create some tags
     const tags = await Promise.all([
@@ -499,7 +501,7 @@ async function main() {
         },
     })
 
-    console.log('Database seed completed successfully!')
+    logger.info('Database seed completed successfully!')
 
     // Log summary
     const userCount = await prisma.user.count()
@@ -512,7 +514,7 @@ async function main() {
     const equipmentCount = await prisma.equipment.count()
     const tagCount = await prisma.tag.count()
 
-    console.log(`Created:
+    logger.info(`Created:
     - Users: ${userCount}
     - Races: ${raceCount}
     - Archetypes: ${archetypeCount}

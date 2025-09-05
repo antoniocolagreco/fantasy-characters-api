@@ -55,7 +55,7 @@ patterns._
 
 ### Helper Functions
 
-```typescript
+````typescript
 // src/shared/utils/response.helper.ts
 export function success<T>(data: T, requestId?: string) {
   return {
@@ -126,7 +126,7 @@ export function createPaginatedResponseSchema<T>(itemSchema: T) {
     }),
   ])
 }
-```
+````
 
 ### HTTP Status Constants
 
@@ -151,11 +151,11 @@ export type HttpStatus = (typeof HTTP_STATUS)[keyof typeof HTTP_STATUS]
 
 ```typescript
 // Import from centralized schema exports
-import { 
-  BaseResponseSchema, 
+import {
+  BaseResponseSchema,
   PaginationSchema,
   createSuccessResponseSchema,
-  createPaginatedResponseSchema 
+  createPaginatedResponseSchema,
 } from '../shared/schemas'
 ```
 
@@ -297,4 +297,5 @@ after your controller returns the response envelope.
 7. **Always** use `created()` helper for 201 responses with Location header
 8. **Always** register compression plugin before routes for automatic JSON/text
    compression
-9. **Always** use consistent pagination with `hasNext`, `hasPrev`, `startCursor`, `endCursor`
+9. **Always** use consistent pagination with `hasNext`, `hasPrev`,
+   `startCursor`, `endCursor`

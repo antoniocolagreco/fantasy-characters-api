@@ -61,6 +61,7 @@ export default defineConfig({
             '@/infrastructure': resolve(__dirname, './src/infrastructure'),
             '@/shared': resolve(__dirname, './src/shared'),
             '@/tests': resolve(__dirname, './tests'),
+            '@/scripts': resolve(__dirname, './scripts'),
         },
     },
 })

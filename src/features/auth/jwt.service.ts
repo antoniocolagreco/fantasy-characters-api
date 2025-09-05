@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken'
-import { generateUUIDv7 } from '../../shared/utils'
-import type { JwtClaims, AuthenticatedUser, JwtConfig } from './auth.schema'
+
 import { err } from '../../shared/errors'
+import { generateUUIDv7 } from '../../shared/utils'
+
+import type { AuthenticatedUser, JwtClaims, JwtConfig } from './auth.schema'
 
 /**
  * Generate an access token (JWT) for a user
@@ -65,8 +67,8 @@ export function parseTtl(ttl: string | number): number {
         throw err('INVALID_FORMAT', `Invalid TTL format: ${ttl}`)
     }
 
-    const value = parseInt(match[1], 10)
-    const unit = match[2]
+    const [, valueStr, unit] = match
+    const value = parseInt(valueStr, 10)
 
     switch (unit) {
         case 's':

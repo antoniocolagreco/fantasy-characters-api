@@ -115,14 +115,15 @@ Duration: 3–5 days
 
 - [x] 5.01 Create multi-stage production Dockerfile and image
 - [x] 5.02 Add Docker Compose for app + database for local integration
-- [x] 5.03 Implement container health/readiness checks hitting /api/health and /api/ready
+- [x] 5.03 Implement container health/readiness checks hitting /api/health and
+      /api/ready
 - [ ] 5.04 Add GitHub Actions workflow per [ci-cd.md](./ci-cd.md) (lint,
       type-check, tests with coverage, OpenAPI validate, Docker build, smoke
       tests)
 - [ ] 5.05 Validate environment via config loader; commit .env.example
       ([secrets-and-config.md](./secrets-and-config.md))
-- [ ] 5.06 Add deployment smoke tests (start container, hit /api/health and /api/ready and one
-      read endpoint when available)
+- [ ] 5.06 Add deployment smoke tests (start container, hit /api/health and
+      /api/ready and one read endpoint when available)
 - [ ] 5.07 Document deploy assumptions (HTTPS/TLS via reverse proxy)
 
 ---

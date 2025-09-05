@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+
 import { buildApp } from '../../../src/app'
 
 describe('Request Timeout Tests', () => {
@@ -22,7 +23,7 @@ describe('Request Timeout Tests', () => {
             })
 
             expect(response.statusCode).toBe(200)
-            expect(response.json()).toHaveProperty('status', 'healthy')
+            expect(response.json()).toHaveProperty('status', 'ok')
         })
 
         it('should timeout requests that take too long', async () => {

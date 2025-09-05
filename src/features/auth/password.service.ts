@@ -1,4 +1,5 @@
 import * as argon2 from 'argon2'
+
 import { err } from '../../shared/errors'
 
 const ARGON2_OPTIONS: argon2.Options = {

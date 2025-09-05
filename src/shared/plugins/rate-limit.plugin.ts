@@ -1,8 +1,8 @@
-import fp from 'fastify-plugin'
 import rateLimit from '@fastify/rate-limit'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
+import fp from 'fastify-plugin'
 
-export default fp(async function rateLimitPlugin(fastify: FastifyInstance) {
+export default fp(async (fastify: FastifyInstance) => {
     await fastify.register(rateLimit, {
         global: true,
         keyGenerator: (request: FastifyRequest) => {

@@ -1,5 +1,6 @@
-import { test, expect, beforeAll, afterAll, describe } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+
 import { buildApp } from '../../../src/app'
 
 describe('Application Lifecycle Tests', () => {
@@ -26,9 +27,9 @@ describe('Application Lifecycle Tests', () => {
         expect(plugins).toContain('logging-plugin')
         expect(plugins).toContain('healthCheckPlugin')
         expect(plugins).toContain('swaggerPlugin')
-        expect(plugins).toMatch(/helmetPlugin-auto-\d+/)
-        expect(plugins).toMatch(/corsPlugin-auto-\d+/)
-        expect(plugins).toMatch(/rateLimitPlugin-auto-\d+/)
+        expect(plugins).toMatch(/helmet\.plugin-auto-\d+/)
+        expect(plugins).toMatch(/cors\.plugin-auto-\d+/)
+        expect(plugins).toMatch(/limit\.plugin-auto-\d+/)
         expect(plugins).toContain('compressionPlugin')
         expect(plugins).toContain('multipartPlugin')
     })
@@ -37,9 +38,9 @@ describe('Application Lifecycle Tests', () => {
         const plugins = app.printPlugins()
 
         // Verify security plugins are loaded early (check for patterns due to dynamic naming)
-        const helmetIndex = plugins.search(/helmetPlugin-auto-\d+/)
-        const corsIndex = plugins.search(/corsPlugin-auto-\d+/)
-        const rateLimitIndex = plugins.search(/rateLimitPlugin-auto-\d+/)
+        const helmetIndex = plugins.search(/helmet\.plugin-auto-\d+/)
+        const corsIndex = plugins.search(/cors\.plugin-auto-\d+/)
+        const rateLimitIndex = plugins.search(/limit\.plugin-auto-\d+/)
 
         expect(helmetIndex).toBeGreaterThan(-1)
         expect(corsIndex).toBeGreaterThan(-1)

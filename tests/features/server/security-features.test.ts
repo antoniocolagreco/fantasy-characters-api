@@ -1,5 +1,6 @@
-import { test, expect, beforeAll, afterAll, describe } from 'vitest'
 import type { FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, test } from 'vitest'
+
 import { buildApp } from '../../../src/app'
 
 describe('Security Features Tests', () => {

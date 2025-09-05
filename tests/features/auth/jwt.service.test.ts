@@ -1,13 +1,14 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import jwt from 'jsonwebtoken'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { AuthenticatedUser, JwtConfig } from '../../../src/features/auth'
 import {
     generateAccessToken,
     generateRefreshToken,
-    verifyAccessToken,
     parseTtl,
+    verifyAccessToken,
 } from '../../../src/features/auth/jwt.service'
 import { AppError } from '../../../src/shared/errors'
-import type { AuthenticatedUser, JwtConfig } from '../../../src/features/auth'
 
 interface DecodedToken {
     sub: string

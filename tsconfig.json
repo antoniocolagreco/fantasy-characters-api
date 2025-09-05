@@ -13,7 +13,7 @@
     "declaration": true,
     "declarationMap": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "removeComments": true,
     "sourceMap": true,
     "importHelpers": false,
@@ -67,8 +67,8 @@
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "coverage", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "scripts/**/*"],
+  "exclude": ["node_modules", "dist", "coverage"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"
