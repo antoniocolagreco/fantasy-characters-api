@@ -1,14 +1,12 @@
-import type { FastifyReply, FastifyRequest } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { JwtClaims, JwtConfig } from '../../../src/features/auth'
 import { AppError } from '../../../src/shared/errors'
+import type { BasicAuthRequest, BasicReply } from '../../../src/shared/types/http'
 
 describe('Auth Middleware - Real Implementation', () => {
-    let mockRequest: Partial<
-        FastifyRequest & { user?: { id: string; role: string; email: string } }
-    >
-    let mockReply: Partial<FastifyReply>
+    let mockRequest: BasicAuthRequest
+    let mockReply: BasicReply
     let jwtConfig: JwtConfig
     let mockVerifyAccessToken: ReturnType<typeof vi.fn>
 
@@ -16,10 +14,12 @@ describe('Auth Middleware - Real Implementation', () => {
         // Clear all module cache to ensure fresh imports
         vi.resetModules()
 
-        mockRequest = {
-            headers: {},
+        mockRequest = { headers: {} }
+        mockReply = {
+            code: vi.fn(),
+            send: vi.fn(),
+            header: vi.fn(),
         }
-        mockReply = {}
 
         jwtConfig = {
             secret: 'test-secret',
@@ -73,7 +73,7 @@ describe('Auth Middleware - Real Implementation', () => {
             mockVerifyAccessToken.mockReturnValue(mockClaims)
 
             const { authMiddleware } = await createMiddleware()
-            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            authMiddleware(mockRequest, mockReply)
 
             expect(mockVerifyAccessToken).toHaveBeenCalledWith('valid-token', jwtConfig)
             expect(mockRequest.user).toEqual({
@@ -90,7 +90,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             let thrownError: unknown
             try {
-                authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                authMiddleware(mockRequest, mockReply)
             } catch (error) {
                 thrownError = error
             }
@@ -110,7 +110,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             let thrownError: unknown
             try {
-                authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                authMiddleware(mockRequest, mockReply)
             } catch (error) {
                 thrownError = error
             }
@@ -133,9 +133,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { authMiddleware } = await createMiddleware()
 
-            expect(() =>
-                authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).toThrow(jwtError)
+            expect(() => authMiddleware(mockRequest, mockReply)).toThrow(jwtError)
         })
 
         it('should convert Error instances to TOKEN_INVALID', async () => {
@@ -152,7 +150,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             let thrownError: unknown
             try {
-                authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                authMiddleware(mockRequest, mockReply)
             } catch (error) {
                 thrownError = error
             }
@@ -176,7 +174,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             let thrownError: unknown
             try {
-                authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                authMiddleware(mockRequest, mockReply)
             } catch (error) {
                 thrownError = error
             }
@@ -202,7 +200,7 @@ describe('Auth Middleware - Real Implementation', () => {
             mockVerifyAccessToken.mockReturnValue(mockClaims)
 
             const { authMiddleware } = await createMiddleware()
-            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            authMiddleware(mockRequest, mockReply)
 
             expect(mockVerifyAccessToken).toHaveBeenCalledWith(
                 'token-with-special-chars-123',
@@ -225,7 +223,7 @@ describe('Auth Middleware - Real Implementation', () => {
             mockVerifyAccessToken.mockReturnValue(mockClaims)
 
             const { authMiddleware } = await createMiddleware()
-            authMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            authMiddleware(mockRequest, mockReply)
 
             expect(mockRequest.user).toEqual({
                 id: 'admin-123',
@@ -251,7 +249,7 @@ describe('Auth Middleware - Real Implementation', () => {
             mockVerifyAccessToken.mockReturnValue(mockClaims)
 
             const { optionalAuthMiddleware } = await createMiddleware()
-            optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+            optionalAuthMiddleware(mockRequest, mockReply)
 
             expect(mockVerifyAccessToken).toHaveBeenCalledWith('valid-token', jwtConfig)
             expect(mockRequest.user).toEqual({
@@ -266,9 +264,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { optionalAuthMiddleware } = await createMiddleware()
 
-            expect(() =>
-                optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).not.toThrow()
+            expect(() => optionalAuthMiddleware(mockRequest, mockReply)).not.toThrow()
 
             expect(mockRequest.user).toBeUndefined()
             expect(mockVerifyAccessToken).not.toHaveBeenCalled()
@@ -281,9 +277,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { optionalAuthMiddleware } = await createMiddleware()
 
-            expect(() =>
-                optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).not.toThrow()
+            expect(() => optionalAuthMiddleware(mockRequest, mockReply)).not.toThrow()
 
             expect(mockRequest.user).toBeUndefined()
             expect(mockVerifyAccessToken).not.toHaveBeenCalled()
@@ -300,9 +294,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { optionalAuthMiddleware } = await createMiddleware()
 
-            expect(() =>
-                optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).not.toThrow()
+            expect(() => optionalAuthMiddleware(mockRequest, mockReply)).not.toThrow()
 
             expect(mockRequest.user).toBeUndefined()
         })
@@ -318,9 +310,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { optionalAuthMiddleware } = await createMiddleware()
 
-            expect(() =>
-                optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).not.toThrow()
+            expect(() => optionalAuthMiddleware(mockRequest, mockReply)).not.toThrow()
 
             expect(mockRequest.user).toBeUndefined()
         })
@@ -336,9 +326,7 @@ describe('Auth Middleware - Real Implementation', () => {
 
             const { optionalAuthMiddleware } = await createMiddleware()
 
-            expect(() =>
-                optionalAuthMiddleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).not.toThrow()
+            expect(() => optionalAuthMiddleware(mockRequest, mockReply)).not.toThrow()
 
             expect(mockRequest.user).toBeUndefined()
         })

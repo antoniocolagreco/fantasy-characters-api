@@ -1,13 +1,12 @@
-import type { FastifyReply, FastifyRequest } from 'fastify'
-
 import { AppError, err } from '../../shared/errors'
+import type { BasicAuthRequest, BasicReply } from '../../shared/types/http'
 
 import type { JwtConfig } from './auth.schema'
 import { verifyAccessToken } from './jwt.service'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
-    return function authMiddleware(request: FastifyRequest, _reply: FastifyReply) {
-        const { authorization } = request.headers
+    return function authMiddleware(request: BasicAuthRequest, _reply: BasicReply) {
+        const authorization = request.headers?.authorization
 
         if (!authorization) {
             throw err('UNAUTHORIZED', 'Authorization header required')
@@ -43,8 +42,8 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
 }
 
 export function createOptionalAuthMiddleware(jwtConfig: JwtConfig) {
-    return function optionalAuthMiddleware(request: FastifyRequest, _reply: FastifyReply) {
-        const { authorization } = request.headers
+    return function optionalAuthMiddleware(request: BasicAuthRequest, _reply: BasicReply) {
+        const authorization = request.headers?.authorization
 
         if (!authorization?.startsWith('Bearer ')) {
             // No auth provided, continue without user

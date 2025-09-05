@@ -2,21 +2,11 @@
 
 /**
  * Environment validation script
- * Vali// Run validation if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    try {
-        validateEnvironment()
-        console.log('✅ Environment validation completed successfully')
-        process.exit(0)
-    } catch (error) {
-        console.error('❌ Environment validation failed:', error)
-        process.exit(1)
-    }
-}hat all required environment variables are set and valid
+ * Validates that all required environment variables are set and valid
  */
 
 import 'dotenv/config'
-import { loadConfig } from '../src/infrastructure/config.js'
+import { loadConfig } from '../src/infrastructure/config'
 
 function validateEnvironment(): void {
     console.log('🔍 Validating environment configuration...')
@@ -63,24 +53,24 @@ function validateEnvironment(): void {
         }
 
         console.log('\n🎉 All environment validations passed!')
-        process.exit(0)
     } catch (error) {
         console.error('❌ Environment validation failed:')
         console.error(error instanceof Error ? error.message : 'Unknown error')
         console.error('\n💡 Tip: Copy .env.example to .env and fill in the required values')
-        process.exit(1)
+        throw error
     }
 }
 
 export { validateEnvironment }
 
 // Run validation if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1]?.endsWith('validate-env.ts') || process.argv[1]?.endsWith('validate-env.js')) {
     try {
         validateEnvironment()
-        console.log('✅ Environment validation script completed successfully')
+        console.log('✅ Environment validation completed successfully')
+        process.exit(0)
     } catch (error) {
-        console.error('❌ Validation script failed:', error)
+        console.error('❌ Environment validation failed:', error)
         process.exit(1)
     }
 }

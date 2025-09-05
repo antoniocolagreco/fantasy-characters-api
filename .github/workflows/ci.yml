@@ -8,7 +8,6 @@ on:
 
 env:
     NODE_VERSION: '24'
-    PNPM_VERSION: '9'
 
 jobs:
     quality-checks:
@@ -31,10 +30,8 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: ${{ env.PNPM_VERSION }}
+            - name: Enable Corepack (pnpm from packageManager)
+              run: corepack enable
 
             - name: Setup Node.js
               uses: actions/setup-node@v4

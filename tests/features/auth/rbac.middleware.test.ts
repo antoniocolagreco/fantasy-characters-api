@@ -1,4 +1,3 @@
-import type { FastifyReply, FastifyRequest } from 'fastify'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
@@ -80,7 +79,7 @@ describe('RBAC Middleware', () => {
 
             mockPrismaClient.character.findUnique.mockResolvedValue(mockCharacter)
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({
                 ownerId: 'owner-123',
@@ -97,7 +96,7 @@ describe('RBAC Middleware', () => {
 
             mockPrismaClient.user.findUnique.mockResolvedValue(mockUser)
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'users')
+            const result = await resolveOwnership(mockRequest, 'users')
 
             expect(result).toEqual({
                 ownerId: 'user-456',
@@ -108,7 +107,7 @@ describe('RBAC Middleware', () => {
         it('should handle database query errors gracefully', async () => {
             mockPrismaClient.character.findUnique.mockRejectedValue(new Error('Database error'))
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({})
         })
@@ -116,7 +115,7 @@ describe('RBAC Middleware', () => {
         it('should handle missing ID in params', async () => {
             mockRequest.params = {}
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({
                 ownerId: null,
@@ -131,7 +130,7 @@ describe('RBAC Middleware', () => {
                 visibility: 'PRIVATE',
             }
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({
                 ownerId: 'body-owner-123',
@@ -142,9 +141,9 @@ describe('RBAC Middleware', () => {
         it('should throw error when Prisma instance is not available', async () => {
             mockRequest.prisma = null
 
-            await expect(
-                resolveOwnership(mockRequest as FastifyRequest, 'characters')
-            ).rejects.toThrow('Prisma instance not available')
+            await expect(resolveOwnership(mockRequest, 'characters')).rejects.toThrow(
+                'Prisma instance not available'
+            )
         })
 
         it('should handle invalid visibility values', async () => {
@@ -156,7 +155,7 @@ describe('RBAC Middleware', () => {
 
             mockPrismaClient.character.findUnique.mockResolvedValue(mockCharacter)
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({
                 ownerId: 'owner-123',
@@ -174,7 +173,7 @@ describe('RBAC Middleware', () => {
 
             mockPrismaClient.character.findUnique.mockResolvedValue(mockCharacter)
 
-            const result = await resolveOwnership(mockRequest as FastifyRequest, 'characters')
+            const result = await resolveOwnership(mockRequest, 'characters')
 
             expect(result).toEqual({
                 ownerId: 'owner-123',
@@ -191,9 +190,7 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'read')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).resolves.toBeUndefined()
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             expect(mockCan).not.toHaveBeenCalled()
         })
@@ -203,12 +200,10 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'create')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).rejects.toThrow(AppError)
+            await expect(middleware(mockRequest, mockReply)).rejects.toThrow(AppError)
 
             try {
-                await middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                await middleware(mockRequest, mockReply)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('UNAUTHORIZED')
@@ -229,9 +224,7 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'read')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).resolves.toBeUndefined()
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             // The test was passing wrong expected values - corrected the expected call
             expect(mockCan).toHaveBeenCalledWith({
@@ -261,9 +254,7 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'update')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).resolves.toBeUndefined()
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             expect(mockCan).toHaveBeenCalledWith({
                 user: { id: 'user-123', role: 'USER' },
@@ -288,9 +279,7 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'update')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).resolves.toBeUndefined()
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             expect(mockCan).toHaveBeenCalledWith({
                 user: { id: 'user-123', role: 'USER' },
@@ -308,12 +297,10 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'delete')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).rejects.toThrow(AppError)
+            await expect(middleware(mockRequest, mockReply)).rejects.toThrow(AppError)
 
             try {
-                await middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
+                await middleware(mockRequest, mockReply)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('FORBIDDEN')
@@ -336,9 +323,7 @@ describe('RBAC Middleware', () => {
 
             const middleware = createRbacMiddleware('characters', 'read')
 
-            await expect(
-                middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-            ).resolves.toBeUndefined()
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             expect(mockCan).toHaveBeenCalledWith({
                 user: { id: 'user-123', role: 'USER' },
@@ -376,9 +361,7 @@ describe('RBAC Middleware', () => {
 
                 const middleware = createRbacMiddleware(`${resource}s`, 'read')
 
-                await expect(
-                    middleware(mockRequest as FastifyRequest, mockReply as FastifyReply)
-                ).resolves.toBeUndefined()
+                await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
                 expect(mockCan).toHaveBeenCalledWith({
                     user: { id: 'user-123', role: 'USER' },

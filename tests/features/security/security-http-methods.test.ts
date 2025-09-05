@@ -7,7 +7,7 @@ describe('HTTP Methods Security Tests', () => {
     let app: FastifyInstance
 
     beforeEach(async () => {
-        app = buildApp()
+        app = await buildApp()
         await app.ready()
     })
 

@@ -102,8 +102,16 @@ They cover setup, development, testing, and deployment in a standardized way.
 - **`pnpm run docker:run`**  
   Runs the API inside a Docker container.
 
-- **`pnpm run docker:compose`**  
-  Starts the API and related services (e.g., PostgreSQL) via `docker-compose`.
+- **`pnpm run docker:compose:dev`**  
+  Starts the development stack (PostgreSQL, optional pgAdmin) via Docker Compose v2.
+- **`pnpm run docker:compose:prod`**  
+  Starts the production stack (API + PostgreSQL) via Docker Compose v2.
+- **`pnpm run docker:compose:integration`**  
+  Starts the integration testing stack via Docker Compose v2.
+- **`pnpm run docker:compose:dev:down`**  
+  Stops the development stack.
+- **`pnpm run docker:compose:all:down`**  
+  Stops all stacks (dev, prod, integration).
 
 ---
 

@@ -6,22 +6,30 @@
  */
 
 import { spawn } from 'child_process'
+import { createServer } from 'net'
 import { setTimeout } from 'timers/promises'
 
 import SwaggerParser from '@apidevtools/swagger-parser'
 
-async function startServer(): Promise<() => void> {
-    console.log('🚀 Starting server for OpenAPI validation...')
+const DEFAULT_PORT = 3000
+const PORT_SCAN_END = 3010
+const PORT_SCAN_START = DEFAULT_PORT + 1 // Prefer avoiding 3000 where dev server may run
 
-    const serverProcess = spawn('tsx', ['src/server.ts'], {
+// Note: we no longer reuse an existing server; always start a temporary one on a free port
+
+async function startServer(port: number): Promise<() => void> {
+    console.log(`🚀 Starting server for OpenAPI validation on port ${port} ...`)
+
+    const serverProcess = spawn('pnpm', ['exec', 'tsx', 'src/server.ts'], {
         env: {
             ...process.env,
             NODE_ENV: 'test',
-            PORT: '3001',
+            PORT: port.toString(),
             SKIP_DB_CHECK: 'true', // Skip DB check for validation
             LOG_LEVEL: 'warn',
         },
         stdio: 'pipe',
+        shell: true, // Required on Windows
     })
 
     // Wait for server to start
@@ -32,19 +40,62 @@ async function startServer(): Promise<() => void> {
     }
 }
 
+async function isPortFree(port: number): Promise<boolean> {
+    return new Promise(resolve => {
+        const srv = createServer()
+        srv.once('error', () => {
+            resolve(false)
+        })
+        srv.once('listening', () => {
+            srv.close(() => resolve(true))
+        })
+        srv.listen(port, '127.0.0.1')
+    })
+}
+
+async function findFirstAvailablePort(start: number, end: number): Promise<number | null> {
+    for (let port = start; port <= end; port++) {
+        const free = await isPortFree(port)
+        if (free) return port
+    }
+    return null
+}
+
+async function waitForDocs(port: number, timeoutMs = 10000): Promise<void> {
+    const start = Date.now()
+    while (Date.now() - start < timeoutMs) {
+        try {
+            const res = await fetch(`http://localhost:${port}/docs/json`)
+            if (res.ok) return
+        } catch {
+            // ignore
+        }
+        await setTimeout(200)
+    }
+    throw new Error('Timed out waiting for /docs/json')
+}
+
 async function validateOpenAPI(): Promise<void> {
     console.log('🔍 Validating OpenAPI schema...')
 
+    // Always start on the first available port starting from DEFAULT_PORT
+    let port = DEFAULT_PORT
     let stopServer: (() => void) | null = null
 
     try {
-        // Start the server
-        stopServer = await startServer()
+        const free = await findFirstAvailablePort(PORT_SCAN_START, PORT_SCAN_END)
+        if (free === null) {
+            throw new Error(`No available port found between ${DEFAULT_PORT}-${PORT_SCAN_END}`)
+        }
+        port = free
+        console.log(`🚦 Starting isolated test server on first available port ${port} ...`)
+        stopServer = await startServer(port)
+        await waitForDocs(port)
 
-        console.log('📥 Fetching OpenAPI schema from http://localhost:3001/docs/json...')
+        console.log(`📥 Fetching OpenAPI schema from http://localhost:${port}/docs/json...`)
 
         // Fetch the OpenAPI schema
-        const response = await fetch('http://localhost:3001/docs/json')
+        const response = await fetch(`http://localhost:${port}/docs/json`)
 
         if (!response.ok) {
             throw new Error(
@@ -121,7 +172,7 @@ async function validateOpenAPI(): Promise<void> {
         throw error
     } finally {
         if (stopServer) {
-            console.log('🛑 Stopping server...')
+            console.log('🛑 Stopping test server...')
             stopServer()
             await setTimeout(1000) // Give server time to shutdown
         }
@@ -129,7 +180,10 @@ async function validateOpenAPI(): Promise<void> {
 }
 
 // Run validation if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (
+    process.argv[1]?.endsWith('validate-openapi.ts') ||
+    process.argv[1]?.endsWith('validate-openapi.js')
+) {
     validateOpenAPI()
         .then(() => {
             console.log('✅ OpenAPI validation script completed successfully')

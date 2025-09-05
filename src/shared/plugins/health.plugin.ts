@@ -6,11 +6,7 @@ import { HealthResponseSchema, ReadinessResponseSchema } from '../schemas/health
 /**
  * Health check plugin
  */
-export function healthCheckPlugin(
-    fastify: FastifyInstance,
-    _opts: unknown,
-    done: () => void
-): void {
+export async function healthCheckPlugin(fastify: FastifyInstance): Promise<void> {
     fastify.get(
         '/api/health',
         {
@@ -136,6 +132,5 @@ export function healthCheckPlugin(
         }
     )
 
-    // Signal plugin is ready
-    done()
+    // Plugin is ready (async pattern)
 }

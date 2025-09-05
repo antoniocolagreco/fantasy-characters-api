@@ -14,7 +14,8 @@ export default [
             parserOptions: {
                 ecmaVersion: 2022,
                 sourceType: 'module',
-                project: './tsconfig.json',
+                project: './tsconfig.eslint.json',
+                tsconfigRootDir: process.cwd(),
             },
             globals: {
                 console: 'readonly',
@@ -27,6 +28,7 @@ export default [
                 require: 'readonly',
                 fetch: 'readonly',
                 AbortController: 'readonly',
+                AbortSignal: 'readonly',
             },
         },
         plugins: {

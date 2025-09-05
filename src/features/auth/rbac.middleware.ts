@@ -1,19 +1,17 @@
 import type { PrismaClient } from '@prisma/client'
-import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { err } from '../../shared/errors'
 import type { Role, Visibility } from '../../shared/schemas'
+import type {
+    OwnershipRequest,
+    RbacMiddlewareReply,
+    RbacMiddlewareRequest,
+} from '../../shared/types/http'
 
 import { can } from './rbac.policy'
 import type { Action, OwnershipData, RbacContext, Resource } from './rbac.schema'
-
-interface AuthenticatedRequest extends FastifyRequest {
-    user?: {
-        id: string
-        role: Role
-        email: string
-    }
-}
+// Note: We intentionally avoid depending on Fastify types here to keep
+// the middleware easy to unit-test with plain objects.
 
 function isValidRole(role: unknown): role is Role {
     return typeof role === 'string' && ['ADMIN', 'MODERATOR', 'USER'].includes(role)
@@ -33,7 +31,7 @@ function isPrismaClient(client: unknown): client is PrismaClient {
  * Resolve ownership and context information for RBAC checks
  */
 export async function resolveOwnership(
-    request: AuthenticatedRequest,
+    request: OwnershipRequest,
     resource: Resource
 ): Promise<OwnershipData> {
     // Get Prisma instance from request
@@ -184,7 +182,10 @@ export async function resolveOwnership(
  * Create RBAC preHandler middleware for Fastify routes
  */
 export function createRbacMiddleware(resource: Resource, action: Action) {
-    return async function rbacMiddleware(request: AuthenticatedRequest, _reply: FastifyReply) {
+    return async function rbacMiddleware(
+        request: RbacMiddlewareRequest,
+        _reply: RbacMiddlewareReply
+    ) {
         // Check if RBAC is disabled (for testing/development)
         const disabled = process.env.RBAC_ENABLED === 'false'
         if (disabled) {
@@ -197,12 +198,14 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
         }
 
         // Get route-specific RBAC config if available
-        const routeConfig =
-            request.routeOptions?.config &&
-            typeof request.routeOptions.config === 'object' &&
-            'rbac' in request.routeOptions.config
-                ? (request.routeOptions.config as { rbac?: OwnershipData }).rbac
-                : undefined
+        const routeConfig = (() => {
+            const ro = request.routeOptions as { config?: unknown } | undefined
+            const cfg = ro?.config
+            if (cfg && typeof cfg === 'object' && 'rbac' in (cfg as Record<string, unknown>)) {
+                return (cfg as { rbac?: OwnershipData }).rbac
+            }
+            return undefined
+        })()
 
         // Resolve ownership context
         const resolved =
@@ -212,7 +215,10 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
 
         // Build RBAC context
         const context: RbacContext = {
-            user: request.user ? { id: request.user.id, role: request.user.role } : undefined,
+            user:
+                request.user && isValidRole(request.user.role)
+                    ? { id: request.user.id, role: request.user.role }
+                    : undefined,
             resource,
             action,
             ownerId: resolved.ownerId ?? undefined,

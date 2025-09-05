@@ -1,7 +1,7 @@
 # Fantasy Characters API
 
-A modern, type-safe REST API for managing fantasy characters, built with
-Node.js, TypeScript, and Fastify.
+A modern, REST API for managing fantasy characters, built with Node.js,
+TypeScript, and Fastify.
 
 ## 🚀 Quick Start
 
@@ -38,8 +38,10 @@ pnpm dev
 
 - [🔐 Secrets & Config](docs/secrets-and-config.md) - Environment variables and
   configuration management
+- [🐳 Docker Setup Guide](docs/docker-setup-guide.md) - Complete Docker and
+  Docker Compose guide for developers
 - [📦 Package Scripts](docs/package-scripts.md) - Available npm/pnpm scripts
-- [🚀 CI/CD](docs/ci-cd.md) - Continuous integration and deployment pipeline
+- [🚀 CI/CD](docs/ci-cd.md) - Continuous integration and deployment pipelinefe
 
 ### 🏛️ **Architecture & Design**
 
@@ -59,18 +61,17 @@ pnpm dev
 
 ### 🌐 **API Documentation**
 
-- [� Endpoints](docs/endpoints.md) - Detailed endpoint specifications
+- [📋 Endpoints](docs/endpoints.md) - Detailed endpoint specifications
 - [🔍 Query Templates](docs/query-templates.md) - Database query patterns and
   examples
 - [📋 Response Templates](docs/response-templates.md) - Response format
   standards
-- [� Documentation](docs/documentation.md) - API documentation generation
+- [📚 Documentation](docs/documentation.md) - API documentation generation
 
 ### 🎯 **Features & Functionality**
 
 - [🖼️ Images](docs/images.md) - Image upload, processing, and storage
 - [🏥 Health](docs/health.md) - Health check endpoints and monitoring
-- [📖 Documentation](docs/documentation.md) - API documentation generation
 
 ### ⚡ **Performance & Operations**
 
@@ -84,7 +85,6 @@ pnpm dev
 ### 🔄 **Versioning & Evolution**
 
 - [📌 Versioning](docs/versioning.md) - API versioning strategy
-- [🗺️ Roadmap](docs/roadmap.md) - Future development plans
 
 ## 🎮 What This API Does
 
@@ -138,8 +138,8 @@ This API manages fantasy characters with rich taxonomies and relationships:
 #### Development with Docker
 
 ```bash
-# Start PostgreSQL only
-pnpm docker:compose
+# Start PostgreSQL only (Compose v2)
+pnpm docker:compose:dev
 
 # Run API locally against containerized DB
 pnpm dev
@@ -153,16 +153,16 @@ pnpm docker:compose:prod
 
 # Or step by step
 pnpm docker:build
-docker-compose -f docker-compose.prod.yml up -d
+pnpm docker:compose:prod
 ```
 
 #### Docker Commands
 
 - `pnpm docker:build` - Build production image
 - `pnpm docker:run` - Run container locally
-- `pnpm docker:compose` - Start development stack (DB only)
+- `pnpm docker:compose:dev` - Start development stack (DB only)
 - `pnpm docker:compose:prod` - Start production stack (API + DB)
-- `pnpm docker:compose:down` - Stop all containers
+- `pnpm docker:compose:dev:down` - Stop development stack
 
 The production image is optimized with:
 
@@ -191,9 +191,5 @@ Please read the [Development Principles](docs/development-principles.md) and
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE.md) file
 for details.
-
----
-
-Built with ❤️ using modern TypeScript and best practices.

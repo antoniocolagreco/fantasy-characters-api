@@ -36,18 +36,19 @@ class SmokeTestRunner {
         try {
             console.log(`🔍 Testing ${endpoint}...`)
 
-            const controller = new AbortController()
-            const timeoutId = globalThis.setTimeout(() => controller.abort(), this.config.timeout)
+            // Use built-in timeout signal (Node 18+)
+            const timeoutSignal = (AbortSignal as any).timeout
+                ? (AbortSignal as any).timeout(this.config.timeout)
+                : undefined
 
             const response = await fetch(url, {
-                signal: controller.signal,
+                signal: timeoutSignal,
                 headers: {
                     'User-Agent': 'FantasyAPI-SmokeTest/1.0',
                     Accept: 'application/json',
+                    Connection: 'close',
                 },
             })
-
-            globalThis.clearTimeout(timeoutId)
 
             const responseTime = Date.now() - startTime
 
@@ -185,6 +186,13 @@ async function runSmokeTests(): Promise<void> {
     const timeout = parseInt(process.env.SMOKE_TEST_TIMEOUT ?? '10000', 10)
     const retries = parseInt(process.env.SMOKE_TEST_RETRIES ?? '3', 10)
 
+    console.log('🔥 Fantasy Characters API - Smoke Test Runner')
+    console.log('='.repeat(50))
+    console.log(`🎯 Target: ${baseUrl}`)
+    console.log(`⏰ Timeout: ${timeout}ms`)
+    console.log(`🔄 Retries: ${retries}`)
+    console.log('')
+
     const config: SmokeTestConfig = {
         baseUrl,
         timeout,
@@ -195,23 +203,32 @@ async function runSmokeTests(): Promise<void> {
 
     try {
         const success = await runner.runSmokeTests()
-
         if (success) {
-            console.log('\n✅ Smoke tests completed successfully')
-            process.exit(0)
+            console.log('\n🚀 SUCCESS: All smoke tests passed!')
+            console.log('✅ API is ready for production traffic')
+            process.exitCode = 0
         } else {
-            console.log('\n❌ Smoke tests failed')
-            process.exit(1)
+            console.log('\n🚨 FAILURE: Some smoke tests failed!')
+            console.log('❌ API is NOT ready for production traffic')
+            process.exitCode = 1
         }
     } catch (error) {
-        console.error('\n💥 Smoke test runner failed:', error)
-        process.exit(1)
+        console.error('\n💥 CRITICAL ERROR: Smoke test runner failed!')
+        console.error('Error details:', error)
+        console.log('\n❌ Cannot determine API health status')
+        process.exitCode = 1
+    } finally {
+        // Allow event loop to drain before exit on Windows
+        await setTimeout(0)
     }
 }
 
 // Run smoke tests if called directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-    runSmokeTests()
+if (process.argv[1]?.endsWith('smoke-tests.ts') || process.argv[1]?.endsWith('smoke-tests.js')) {
+    runSmokeTests().catch(error => {
+        console.error('💥 Fatal error:', error)
+        process.exitCode = 1
+    })
 }
 
 export { SmokeTestRunner, runSmokeTests }

@@ -7,7 +7,7 @@ describe('API Documentation Tests', () => {
     let app: FastifyInstance
 
     beforeAll(async () => {
-        app = buildApp()
+        app = await buildApp()
         await app.ready()
     }, 30000)
 

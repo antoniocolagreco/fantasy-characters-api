@@ -1,5 +1,5 @@
-# Use the latest stable PostgreSQL version
-FROM postgres:17.6-alpine
+# Use a valid, stable PostgreSQL image tag
+FROM postgres:17.6-alpine3.22
 # Install UUID extension for UUID v7 support
 RUN echo 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' > /docker-entrypoint-initdb.d/01-uuid-extension.sql
 

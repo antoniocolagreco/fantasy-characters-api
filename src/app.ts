@@ -17,7 +17,7 @@ import { generateUUIDv7 } from './shared/utils/uuid'
 /**
  * Build and configure Fastify application instance
  */
-export function buildApp(): FastifyInstance {
+export async function buildApp(): Promise<FastifyInstance> {
     const app = Fastify({
         logger: {
             level: config.LOG_LEVEL,
@@ -40,28 +40,25 @@ export function buildApp(): FastifyInstance {
         requestTimeout: 15_000, // 15 seconds
     }).withTypeProvider<TypeBoxTypeProvider>()
 
-    // Register plugins in order
-    app.register(async fastify => {
-        // Core plugins
-        errorHandlerPlugin(fastify)
-        await fastify.register(loggingPlugin)
+    // Register plugins on root instance (avoid extra encapsulation)
+    // Core plugins
+    errorHandlerPlugin(app)
+    await app.register(loggingPlugin)
 
-        // Performance plugins
-        await fastify.register(compressionPlugin)
+    // Documentation plugin FIRST (so it can capture subsequent routes via onRoute)
+    await app.register(swaggerPlugin)
 
-        // Security plugins
-        await fastify.register(helmetPlugin)
-        await fastify.register(corsPlugin)
-        await fastify.register(rateLimitPlugin)
-        // fastify.register(sanitizationPlugin) // Temporarily disabled
+    // Performance plugins
+    await app.register(compressionPlugin)
 
-        // Documentation plugin
-        await fastify.register(swaggerPlugin)
+    // Security plugins
+    await app.register(helmetPlugin)
+    await app.register(corsPlugin)
+    await app.register(rateLimitPlugin)
 
-        // Feature plugins
-        await fastify.register(multipartPlugin)
-        await fastify.register(healthCheckPlugin)
-    })
+    // Feature plugins (define routes AFTER swagger is registered)
+    await app.register(multipartPlugin)
+    await app.register(healthCheckPlugin)
 
     return app
 }
@@ -70,7 +67,7 @@ export function buildApp(): FastifyInstance {
  * Start the Fastify server
  */
 export async function startServer(): Promise<FastifyInstance> {
-    const app = buildApp()
+    const app = await buildApp()
 
     try {
         await app.listen({
@@ -78,7 +75,7 @@ export async function startServer(): Promise<FastifyInstance> {
             host: '0.0.0.0',
         })
 
-        app.log.info(`Server listening on port ${config.PORT}`)
+        // app.log.info(`Server listening on port ${config.PORT}`)
         return app
     } catch (error) {
         app.log.error(error)
