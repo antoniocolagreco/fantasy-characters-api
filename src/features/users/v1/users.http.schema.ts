@@ -120,14 +120,17 @@ export const UserStatsSchema = Type.Object(
 )
 
 // ===== Response Schemas (HTTP v1) =====
-export const UserResponseSchema = createSuccessResponseSchema(UserSchema, 'UserResponse')
+export const UserResponseSchema = createSuccessResponseSchema(PublicUserSchema, 'UserResponse')
 
 export const PublicUserResponseSchema = createSuccessResponseSchema(
     PublicUserSchema,
     'PublicUserResponse'
 )
 
-export const UserListResponseSchema = createPaginatedResponseSchema(UserSchema, 'UserListResponse')
+export const UserListResponseSchema = createPaginatedResponseSchema(
+    PublicUserSchema,
+    'UserListResponse'
+)
 
 export const UserStatsResponseSchema = createSuccessResponseSchema(
     UserStatsSchema,

@@ -1,5 +1,6 @@
 import {
     userRepository,
+    publicUserRepository,
     refreshTokenRepository,
     type CreateUserInput,
     type UpdateUser,
@@ -7,6 +8,7 @@ import {
     type UserListQuery,
     type ListUsersResult,
     type User,
+    type PublicUser,
     type UserStats,
 } from './index'
 
@@ -175,5 +177,34 @@ export class UserService {
     }
 }
 
+// ===== Public User Service (safe for API responses) =====
+export class PublicUserService {
+    async getById(id: string): Promise<PublicUser> {
+        const user = await publicUserRepository.findById(id)
+        if (!user) {
+            throw err('RESOURCE_NOT_FOUND', 'User not found')
+        }
+        return user
+    }
+
+    async list(
+        query: UserListQuery
+    ): Promise<{ users: PublicUser[]; pagination: ListUsersResult['pagination'] }> {
+        const { users, hasNext, nextCursor } = await publicUserRepository.findMany(query)
+
+        return {
+            users,
+            pagination: {
+                hasNext,
+                hasPrev: !!query.cursor,
+                limit: query.limit ?? 20,
+                ...(nextCursor && { nextCursor }),
+                ...(query.cursor && { startCursor: query.cursor }),
+            },
+        }
+    }
+}
+
 // ===== Singleton Export =====
 export const userService = new UserService()
+export const publicUserService = new PublicUserService()

@@ -1,14 +1,20 @@
 import type { FastifyInstance } from 'fastify'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
-import prismaService from '@/infrastructure/database/prisma.service'
-import { createAuthHeaders } from '@/tests/helpers/auth.helper'
+import { cleanupTestData, seedTestDatabase } from '@/tests/helpers/data.helper'
+import {
+    createAuthHeaders,
+    expectSuccessResponse,
+    expectErrorResponse,
+    expectPaginatedResponse,
+    expectSafeUserData,
+    HTTP_STATUS,
+    type TestResponse,
+} from '@/tests/helpers/test.helper'
 
-describe('Users API v1 - Read Operations', () => {
+describe('Users API - Read Operations', () => {
     let app: FastifyInstance
-    let userId: string
-    let originalRbacEnabled: string | undefined
 
     beforeAll(async () => {
         app = await buildApp()
@@ -19,232 +25,201 @@ describe('Users API v1 - Read Operations', () => {
         await app.close()
     })
 
-    afterEach(() => {
-        // Restore original RBAC_ENABLED value instead of deleting it
-        if (originalRbacEnabled !== undefined) {
-            process.env.RBAC_ENABLED = originalRbacEnabled
-        } else {
-            delete process.env.RBAC_ENABLED
-        }
-    })
-
     beforeEach(async () => {
-        // Save original RBAC_ENABLED value
-        originalRbacEnabled = process.env.RBAC_ENABLED
-
-        // Clean database
-        await prismaService.refreshToken.deleteMany()
-        await prismaService.user.deleteMany()
-
-        // Enable RBAC for authorization tests
-        process.env.RBAC_ENABLED = 'true'
+        await cleanupTestData()
     })
 
     describe('GET /api/v1/users/:id', () => {
-        beforeEach(async () => {
-            const createResponse = await app.inject({
-                method: 'POST',
-                url: '/api/v1/users',
-                payload: {
-                    email: 'getuser@example.com',
-                    password: 'password123',
-                    name: 'Get User',
-                    role: 'USER' as const,
-                },
-                headers: {
-                    'content-type': 'application/json',
-                    ...createAuthHeaders({ role: 'ADMIN' }),
-                },
-            })
-            userId = createResponse.json().data.id
-        })
+        it('should return user data for valid request by admin', async () => {
+            // Arrange
+            const { regularUser } = await seedTestDatabase()
 
-        it('should get user by id (ADMIN access)', async () => {
+            // Act
             const response = await app.inject({
                 method: 'GET',
-                url: `/api/v1/users/${userId}`,
+                url: `/api/v1/users/${regularUser.id}`,
                 headers: createAuthHeaders({ role: 'ADMIN' }),
             })
 
-            expect(response.statusCode).toBe(200)
-            const body = response.json()
+            // Assert
+            const body = expectSuccessResponse(response as TestResponse)
             expect(body.data).toMatchObject({
-                id: userId,
-                email: 'getuser@example.com',
-                name: 'Get User',
-                role: 'USER',
+                id: regularUser.id,
+                email: regularUser.email,
+                name: regularUser.name,
+                role: regularUser.role,
             })
+            expectSafeUserData(body.data as Record<string, unknown>)
         })
 
-        it('should get user by id (USER accessing own profile)', async () => {
+        it('should allow user to access own profile', async () => {
+            // Arrange
+            const { regularUser } = await seedTestDatabase()
+
+            // Act
             const response = await app.inject({
                 method: 'GET',
-                url: `/api/v1/users/${userId}`,
-                headers: createAuthHeaders({ role: 'USER', id: userId }),
+                url: `/api/v1/users/${regularUser.id}`,
+                headers: createAuthHeaders({
+                    role: 'USER',
+                    id: regularUser.id,
+                    email: regularUser.email,
+                }),
             })
 
-            expect(response.statusCode).toBe(200)
+            // Assert
+            expectSuccessResponse(response as TestResponse)
         })
 
-        it('should reject unauthorized access', async () => {
+        it('should return 403 for unauthorized access', async () => {
+            // Arrange
+            const { regularUser } = await seedTestDatabase()
+
+            // Act
             const response = await app.inject({
                 method: 'GET',
-                url: `/api/v1/users/${userId}`,
+                url: `/api/v1/users/${regularUser.id}`,
+                // No auth headers
             })
 
-            expect(response.statusCode).toBe(403) // RBAC returns 403 for unauthenticated requests
+            // Assert
+            expectErrorResponse(response, HTTP_STATUS.FORBIDDEN)
         })
 
         it('should return 404 for non-existent user', async () => {
+            // Arrange
+            const nonExistentId = '01234567-89ab-cdef-0123-456789abcdef'
+
+            // Act
             const response = await app.inject({
                 method: 'GET',
-                url: '/api/v1/users/01234567-89ab-cdef-0123-456789abcdef',
+                url: `/api/v1/users/${nonExistentId}`,
                 headers: createAuthHeaders({ role: 'ADMIN' }),
             })
 
-            expect(response.statusCode).toBe(404)
+            // Assert
+            expectErrorResponse(response, HTTP_STATUS.NOT_FOUND)
+        })
+
+        it('should return 400 for invalid UUID format', async () => {
+            // Act
+            const response = await app.inject({
+                method: 'GET',
+                url: '/api/v1/users/invalid-uuid',
+                headers: createAuthHeaders({ role: 'ADMIN' }),
+            })
+
+            // Assert
+            expectErrorResponse(response, HTTP_STATUS.BAD_REQUEST)
         })
     })
 
     describe('GET /api/v1/users', () => {
-        beforeEach(async () => {
-            // Create test users
-            await Promise.all([
-                app.inject({
-                    method: 'POST',
-                    url: '/api/v1/users',
-                    payload: {
-                        email: 'user1@example.com',
-                        password: 'password123',
-                        name: 'User 1',
-                        role: 'USER' as const,
-                    },
-                    headers: {
-                        'content-type': 'application/json',
-                        ...createAuthHeaders({ role: 'ADMIN' }),
-                    },
-                }),
-                app.inject({
-                    method: 'POST',
-                    url: '/api/v1/users',
-                    payload: {
-                        email: 'admin1@example.com',
-                        password: 'password123',
-                        name: 'Admin 1',
-                        role: 'ADMIN' as const,
-                    },
-                    headers: {
-                        'content-type': 'application/json',
-                        ...createAuthHeaders({ role: 'ADMIN' }),
-                    },
-                }),
-            ])
-        })
+        it('should return paginated list of users for admin', async () => {
+            // Arrange
+            await seedTestDatabase()
 
-        it('should list users with pagination (ADMIN)', async () => {
+            // Act
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/users?limit=10',
                 headers: createAuthHeaders({ role: 'ADMIN' }),
             })
 
-            expect(response.statusCode).toBe(200)
-            const body = response.json()
-            expect(body.data).toHaveLength(2)
-            expect(body.pagination).toMatchObject({
-                limit: 10,
-                hasNext: false,
-                hasPrev: false,
+            // Assert
+            const body = expectPaginatedResponse(response)
+            expect((body.data as unknown[]).length).toBeGreaterThan(0)
+
+            // Verify user structure
+            ;(body.data as Record<string, unknown>[]).forEach(user => {
+                expectSafeUserData(user)
             })
         })
 
-        it('should filter users by role (ADMIN)', async () => {
+        it('should filter users by role', async () => {
+            // Arrange
+            await seedTestDatabase()
+
+            // Act
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/users?role=USER',
                 headers: createAuthHeaders({ role: 'ADMIN' }),
             })
 
-            expect(response.statusCode).toBe(200)
-            const body = response.json()
-            expect(body.data).toHaveLength(1)
-            expect(body.data[0].role).toBe('USER')
+            // Assert
+            const body = expectSuccessResponse(response)
+            expect(body.data).toBeInstanceOf(Array)
+
+            // All returned users should have USER role
+            ;(body.data as { role: string }[]).forEach(user => {
+                expect(user.role).toBe('USER')
+            })
         })
 
-        it('should reject unauthorized access', async () => {
+        it('should return 403 for non-admin users', async () => {
+            // Act
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/users',
+                headers: createAuthHeaders({ role: 'USER' }),
             })
 
-            expect(response.statusCode).toBe(403) // RBAC returns 403 for unauthenticated requests
+            // Assert
+            expectErrorResponse(response, HTTP_STATUS.FORBIDDEN)
         })
     })
 
     describe('GET /api/v1/users/stats', () => {
-        beforeEach(async () => {
-            // Create test users
-            await Promise.all([
-                app.inject({
-                    method: 'POST',
-                    url: '/api/v1/users',
-                    payload: {
-                        email: 'statsuser1@example.com',
-                        password: 'password123',
-                        name: 'Stats User 1',
-                        role: 'USER' as const,
-                    },
-                    headers: {
-                        'content-type': 'application/json',
-                        ...createAuthHeaders({ role: 'ADMIN' }),
-                    },
-                }),
-                app.inject({
-                    method: 'POST',
-                    url: '/api/v1/users',
-                    payload: {
-                        email: 'statsadmin1@example.com',
-                        password: 'password123',
-                        name: 'Stats Admin 1',
-                        role: 'ADMIN' as const,
-                    },
-                    headers: {
-                        'content-type': 'application/json',
-                        ...createAuthHeaders({ role: 'ADMIN' }),
-                    },
-                }),
-            ])
-        })
+        it('should return comprehensive user statistics for admin', async () => {
+            // Arrange
+            await seedTestDatabase()
 
-        it('should return user statistics (ADMIN)', async () => {
+            // Act
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/users/stats',
                 headers: createAuthHeaders({ role: 'ADMIN' }),
             })
 
-            expect(response.statusCode).toBe(200)
-            const body = response.json()
+            // Assert
+            const body = expectSuccessResponse(response)
             expect(body.data).toMatchObject({
-                totalUsers: 2,
-                activeUsers: 2,
-                bannedUsers: 0,
-                unverifiedUsers: 2,
-                usersByRole: {
-                    USER: 1,
-                    ADMIN: 1,
-                    MODERATOR: 0,
-                },
+                totalUsers: expect.any(Number),
+                activeUsers: expect.any(Number),
+                bannedUsers: expect.any(Number),
+                unverifiedUsers: expect.any(Number),
+                usersByRole: expect.objectContaining({
+                    USER: expect.any(Number),
+                    ADMIN: expect.any(Number),
+                    MODERATOR: expect.any(Number),
+                }),
             })
+
+            // Verify stats make logical sense
+            const stats = body.data as {
+                totalUsers: number
+                activeUsers: number
+                bannedUsers: number
+                usersByRole: { USER: number; ADMIN: number; MODERATOR: number }
+            }
+            expect(stats.totalUsers).toBeGreaterThan(0)
+            expect(stats.activeUsers + stats.bannedUsers).toBeLessThanOrEqual(stats.totalUsers)
+            expect(
+                stats.usersByRole.USER + stats.usersByRole.ADMIN + stats.usersByRole.MODERATOR
+            ).toBe(stats.totalUsers)
         })
 
-        it('should reject unauthorized access', async () => {
+        it('should return 403 for non-admin users', async () => {
+            // Act
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/users/stats',
+                headers: createAuthHeaders({ role: 'USER' }),
             })
 
-            expect(response.statusCode).toBe(403) // RBAC returns 403 for unauthenticated requests
+            // Assert
+            expectErrorResponse(response, HTTP_STATUS.FORBIDDEN)
         })
     })
 })

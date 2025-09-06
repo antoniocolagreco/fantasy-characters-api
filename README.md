@@ -41,7 +41,9 @@ pnpm dev
 - [🐳 Docker Setup Guide](docs/docker-setup-guide.md) - Complete Docker and
   Docker Compose guide for developers
 - [📦 Package Scripts](docs/package-scripts.md) - Available npm/pnpm scripts
-- [🚀 CI/CD](docs/ci-cd.md) - Continuous integration and deployment pipelinefe
+- [🚀 CI/CD](docs/ci-cd.md) - Continuous integration and deployment pipeline
+- [🧪 Testing Guide](docs/testing.md) - Testing strategy, best practices, and
+  templates
 
 ### 🏛️ **Architecture & Design**
 

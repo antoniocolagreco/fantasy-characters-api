@@ -40,7 +40,20 @@ export const UserSchema = Type.Intersect(
 // Public projection (domain-level projection used across layers)
 export const PublicUserSchema = Type.Pick(
     UserSchema,
-    ['id', 'name', 'bio', 'role', 'profilePictureId', 'createdAt', 'updatedAt'],
+    [
+        'id',
+        'email',
+        'name',
+        'bio',
+        'role',
+        'isEmailVerified',
+        'isActive',
+        'lastLogin',
+        'isBanned',
+        'profilePictureId',
+        'createdAt',
+        'updatedAt',
+    ],
     { $id: 'PublicUser' }
 )
 

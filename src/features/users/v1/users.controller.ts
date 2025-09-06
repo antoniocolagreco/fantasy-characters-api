@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify'
 
-import { userService } from '..'
+import { publicUserService, userService } from '..'
 
 import type {
     BanUser,
@@ -19,7 +19,7 @@ export async function getUserById(
     request: FastifyRequest<{ Params: UserParams }>,
     reply: FastifyReply
 ) {
-    const user = await userService.getById(request.params.id)
+    const user = await publicUserService.getById(request.params.id)
     return reply.code(200).send(envelope(user, request.id))
 }
 
@@ -27,13 +27,13 @@ export async function listUsers(
     request: FastifyRequest<{ Querystring: UserListQuery }>,
     reply: FastifyReply
 ) {
-    const { users, pagination } = await userService.list(request.query)
+    const { users, pagination } = await publicUserService.list(request.query)
     return reply.code(200).send({ ...envelope(users, request.id), pagination })
 }
 
-export async function getUserStats(_request: FastifyRequest, reply: FastifyReply) {
+export async function getUserStats(request: FastifyRequest, reply: FastifyReply) {
     const stats = await userService.getStats()
-    return reply.code(200).send(envelope(stats))
+    return reply.code(200).send(envelope(stats, request.id))
 }
 
 export async function createUser(

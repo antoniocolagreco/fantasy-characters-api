@@ -3,6 +3,7 @@ export * from './v1/users.http.schema'
 
 // ===== Repository Interfaces =====
 export type {
+    PublicUser,
     UserRepository,
     RefreshTokenRepository,
     CreateUserInput,
@@ -10,8 +11,8 @@ export type {
 } from './users.type'
 
 // ===== Repositories =====
-export { userRepository } from './users.repository'
+export { userRepository, publicUserRepository } from './users.repository'
 export { refreshTokenRepository } from './refresh-token.repository'
 
 // ===== Services =====
-export { userService } from './users.service'
+export { userService, publicUserService } from './users.service'

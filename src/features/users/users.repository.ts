@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import type {
     BanUser,
     CreateUser,
+    PublicUser,
     UpdateUser,
     User,
     UserListQuery,
@@ -35,6 +36,23 @@ function transformUserToSchema(user: Prisma.UserGetPayload<object>): User {
         ...(user.banReason && { banReason: user.banReason }),
         ...(user.bannedUntil && { bannedUntil: user.bannedUntil.toISOString() }),
         ...(user.bannedById && { bannedById: user.bannedById }),
+        ...(user.profilePictureId && { profilePictureId: user.profilePictureId }),
+    }
+}
+
+function transformUserToPublicSchema(user: Prisma.UserGetPayload<object>): PublicUser {
+    return {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        isEmailVerified: user.isEmailVerified,
+        isActive: user.isActive,
+        lastLogin: user.lastLogin.toISOString(),
+        isBanned: user.isBanned,
+        createdAt: user.createdAt.toISOString(),
+        updatedAt: user.updatedAt.toISOString(),
+        ...(user.name && { name: user.name }),
+        ...(user.bio && { bio: user.bio }),
         ...(user.profilePictureId && { profilePictureId: user.profilePictureId }),
     }
 }
@@ -372,6 +390,51 @@ export const userRepository = {
                 throw err('RESOURCE_NOT_FOUND', 'User not found')
             }
             throw error
+        }
+    },
+}
+
+// ===== Public Repository (without sensitive data) =====
+export const publicUserRepository = {
+    async findById(id: string): Promise<PublicUser | null> {
+        const user = await prisma.user.findUnique({
+            where: { id },
+        })
+
+        if (!user) {
+            return null
+        }
+
+        return transformUserToPublicSchema(user)
+    },
+
+    async findMany(
+        query: UserListQuery
+    ): Promise<{ users: PublicUser[]; hasNext: boolean; nextCursor?: string }> {
+        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = query
+
+        // Build where clause
+        const where = buildUserWhereClause(query)
+        const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
+
+        // Execute query
+        const users = await prisma.user.findMany({
+            where: whereWithCursor,
+            orderBy: buildOrderBy(sortBy, sortDir),
+            take: limit + 1,
+        })
+
+        // Build pagination response
+        const { items, hasNext, nextCursor } = buildNextCursor(
+            users as { id: string; [key: string]: unknown }[],
+            limit,
+            sortBy
+        )
+
+        return {
+            users: (items as typeof users).map(transformUserToPublicSchema),
+            hasNext,
+            ...(nextCursor && { nextCursor }),
         }
     },
 }

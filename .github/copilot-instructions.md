@@ -18,3 +18,5 @@
   examples
 - [📋 Response Templates](../docs/response-templates.md) - Response format
   standards
+- [🧪 Testing Guide](docs/testing.md) - Testing strategy, best practices, and
+  templates
