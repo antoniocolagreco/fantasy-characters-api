@@ -10,75 +10,63 @@ import type {
     UserListQuery,
     UserParams,
 } from '@/features/users/users.type'
+import { HTTP_STATUS } from '@/shared/constants'
+import { paginated, success } from '@/shared/utils'
 
-function envelope<T>(data: T, requestId?: string) {
-    return { data, requestId, timestamp: new Date().toISOString() }
-}
+export const userController = {
+    async getUserById(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
+        const user = await publicUserService.getById(request.params.id)
+        return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
+    },
 
-export async function getUserById(
-    request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
-) {
-    const user = await publicUserService.getById(request.params.id)
-    return reply.code(200).send(envelope(user, request.id))
-}
+    async listUsers(request: FastifyRequest<{ Querystring: UserListQuery }>, reply: FastifyReply) {
+        const { users, pagination } = await publicUserService.list(request.query)
+        return reply.code(HTTP_STATUS.OK).send(paginated(users, pagination, request.id))
+    },
 
-export async function listUsers(
-    request: FastifyRequest<{ Querystring: UserListQuery }>,
-    reply: FastifyReply
-) {
-    const { users, pagination } = await publicUserService.list(request.query)
-    return reply.code(200).send({ ...envelope(users, request.id), pagination })
-}
+    async getUserStats(request: FastifyRequest, reply: FastifyReply) {
+        const stats = await userService.getStats()
+        return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
+    },
 
-export async function getUserStats(request: FastifyRequest, reply: FastifyReply) {
-    const stats = await userService.getStats()
-    return reply.code(200).send(envelope(stats, request.id))
-}
+    async createUser(request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
+        const user = await userService.create(request.body)
+        return reply.code(HTTP_STATUS.CREATED).send(success(user, request.id))
+    },
 
-export async function createUser(
-    request: FastifyRequest<{ Body: CreateUserInput }>,
-    reply: FastifyReply
-) {
-    const user = await userService.create(request.body)
-    return reply.code(201).send(envelope(user, request.id))
-}
+    async updateUser(
+        request: FastifyRequest<{ Params: UserParams; Body: UpdateUser }>,
+        reply: FastifyReply
+    ) {
+        const user = await userService.update(request.params.id, request.body)
+        return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
+    },
 
-export async function updateUser(
-    request: FastifyRequest<{ Params: UserParams; Body: UpdateUser }>,
-    reply: FastifyReply
-) {
-    const user = await userService.update(request.params.id, request.body)
-    return reply.code(200).send(envelope(user, request.id))
-}
+    async deleteUser(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
+        await userService.delete(request.params.id)
+        return reply.code(HTTP_STATUS.NO_CONTENT).send()
+    },
 
-export async function deleteUser(
-    request: FastifyRequest<{ Params: UserParams }>,
-    reply: FastifyReply
-) {
-    await userService.delete(request.params.id)
-    return reply.code(204).send()
-}
+    async banUser(
+        request: FastifyRequest<{ Params: UserParams; Body: BanUser }>,
+        reply: FastifyReply
+    ) {
+        // Get bannedById from authenticated user
+        const bannedById = request.user?.id
+        if (!bannedById) {
+            return reply.code(HTTP_STATUS.UNAUTHORIZED).send({ error: 'Authentication required' })
+        }
 
-export async function banUser(
-    request: FastifyRequest<{ Params: UserParams; Body: BanUser }>,
-    reply: FastifyReply
-) {
-    // Get bannedById from authenticated user
-    const bannedById = request.user?.id
-    if (!bannedById) {
-        return reply.code(401).send({ error: 'Authentication required' })
-    }
+        // If banReason is not provided or empty, treat as unban
+        const isUnban = !request.body.banReason && !request.body.bannedUntil
 
-    // If banReason is not provided or empty, treat as unban
-    const isUnban = !request.body.banReason && !request.body.bannedUntil
+        let user: User
+        if (isUnban) {
+            user = await userService.unban(request.params.id)
+        } else {
+            user = await userService.ban(request.params.id, request.body, bannedById)
+        }
 
-    let user: User
-    if (isUnban) {
-        user = await userService.unban(request.params.id)
-    } else {
-        user = await userService.ban(request.params.id, request.body, bannedById)
-    }
-
-    return reply.code(200).send(envelope(user, request.id))
-}
+        return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
+    },
+} as const

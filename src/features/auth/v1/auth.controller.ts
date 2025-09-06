@@ -8,6 +8,7 @@ import type {
 } from './auth.http.schema'
 
 import { authService } from '@/features/auth/auth.service'
+import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { err } from '@/shared/errors'
 import { success, successMessage } from '@/shared/utils'
 
@@ -15,12 +16,12 @@ export const authController = {
     async login(request: FastifyRequest<{ Body: LoginRequest }>, reply: FastifyReply) {
         const deviceInfo = request.headers['user-agent']
         const result = await authService.login(request.body, deviceInfo)
-        return reply.code(200).send(success(result, request.id))
+        return reply.code(HTTP_STATUS.OK).send(success(result, request.id))
     },
 
     async register(request: FastifyRequest<{ Body: RegisterRequest }>, reply: FastifyReply) {
         const user = await authService.register(request.body)
-        return reply.code(201).send(success(user, request.id))
+        return reply.code(HTTP_STATUS.CREATED).send(success(user, request.id))
     },
 
     async refreshToken(
@@ -29,12 +30,14 @@ export const authController = {
     ) {
         const deviceInfo = request.headers['user-agent']
         const tokens = await authService.refreshTokens(request.body.refreshToken, deviceInfo)
-        return reply.code(200).send(success(tokens, request.id))
+        return reply.code(HTTP_STATUS.OK).send(success(tokens, request.id))
     },
 
     async logout(request: FastifyRequest<{ Body: RefreshTokenRequest }>, reply: FastifyReply) {
         await authService.logout(request.body.refreshToken)
-        return reply.code(200).send(successMessage('Logged out successfully', request.id))
+        return reply
+            .code(HTTP_STATUS.OK)
+            .send(successMessage('Logged out successfully', request.id))
     },
 
     async logoutAll(request: FastifyRequest, reply: FastifyReply) {
@@ -44,7 +47,9 @@ export const authController = {
         }
 
         await authService.logoutAll(userId)
-        return reply.code(200).send(successMessage('Logged out from all devices', request.id))
+        return reply
+            .code(HTTP_STATUS.OK)
+            .send(successMessage('Logged out from all devices', request.id))
     },
 
     async changePassword(
@@ -61,6 +66,8 @@ export const authController = {
             request.body.currentPassword,
             request.body.newPassword
         )
-        return reply.code(200).send(successMessage('Password changed successfully', request.id))
+        return reply
+            .code(HTTP_STATUS.OK)
+            .send(successMessage('Password changed successfully', request.id))
     },
 } as const

@@ -15,21 +15,19 @@ import {
 import { passwordService } from '@/features/auth/password.service'
 import { err } from '@/shared/errors'
 
-// (moved above for lint order)
-
 // ===== User Service =====
-export class UserService {
+export const userService = {
     async getById(id: string): Promise<User> {
         const user = await userRepository.findById(id)
         if (!user) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
         }
         return user
-    }
+    },
 
     async getByEmail(email: string): Promise<User | null> {
         return userRepository.findByEmail(email)
-    }
+    },
 
     async list(query: UserListQuery): Promise<ListUsersResult> {
         const { users, hasNext, nextCursor } = await userRepository.findMany(query)
@@ -44,7 +42,7 @@ export class UserService {
                 ...(query.cursor && { startCursor: query.cursor }),
             },
         }
-    }
+    },
 
     async create(data: CreateUserInput): Promise<User> {
         // Check if user with email already exists
@@ -72,7 +70,7 @@ export class UserService {
         }
 
         return userRepository.create(userData)
-    }
+    },
 
     async update(id: string, data: UpdateUser): Promise<User> {
         // Check if user exists
@@ -84,7 +82,7 @@ export class UserService {
         // UpdateUser doesn't include email changes - that would be a separate endpoint
 
         return userRepository.update(id, data)
-    }
+    },
 
     async delete(id: string): Promise<void> {
         // Check if user exists
@@ -98,7 +96,7 @@ export class UserService {
 
         // Delete user
         await userRepository.delete(id)
-    }
+    },
 
     async ban(id: string, banData: BanUser, bannedById: string): Promise<User> {
         // Check if user exists
@@ -116,7 +114,7 @@ export class UserService {
         await refreshTokenRepository.revokeAllByUserId(id)
 
         return userRepository.ban(id, banData, bannedById)
-    }
+    },
 
     async unban(id: string): Promise<User> {
         // Check if user exists
@@ -131,11 +129,11 @@ export class UserService {
         }
 
         return userRepository.unban(id)
-    }
+    },
 
     async getStats(): Promise<UserStats> {
         return userRepository.getStats()
-    }
+    },
 
     async markEmailAsVerified(id: string): Promise<User> {
         const existingUser = await userRepository.findById(id)
@@ -148,11 +146,11 @@ export class UserService {
         }
 
         return userRepository.markEmailAsVerified(id)
-    }
+    },
 
     async updateLastLogin(id: string): Promise<void> {
         await userRepository.updateLastLogin(id)
-    }
+    },
 
     async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
         const user = await userRepository.findById(id)
@@ -177,18 +175,18 @@ export class UserService {
 
         // Revoke all refresh tokens to force re-authentication
         await refreshTokenRepository.revokeAllByUserId(id)
-    }
-}
+    },
+} as const
 
 // ===== Public User Service (safe for API responses) =====
-export class PublicUserService {
+export const publicUserService = {
     async getById(id: string): Promise<PublicUser> {
         const user = await publicUserRepository.findById(id)
         if (!user) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
         }
         return user
-    }
+    },
 
     async list(
         query: UserListQuery
@@ -205,9 +203,5 @@ export class PublicUserService {
                 ...(query.cursor && { startCursor: query.cursor }),
             },
         }
-    }
-}
-
-// ===== Singleton Export =====
-export const userService = new UserService()
-export const publicUserService = new PublicUserService()
+    },
+} as const

@@ -1,7 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 
-import * as controller from './users.controller'
+import { userController } from './users.controller'
 import {
     UserListQuerySchema,
     UserParamsSchema,
@@ -37,7 +37,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.getUserById
+        userController.getUserById
     )
 
     // GET /api/v1/users
@@ -57,7 +57,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.listUsers
+        userController.listUsers
     )
 
     // GET /api/v1/users/stats
@@ -76,7 +76,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.getUserStats
+        userController.getUserStats
     )
 
     // POST /api/v1/users
@@ -96,7 +96,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.createUser
+        userController.createUser
     )
 
     // PUT /api/v1/users/:id
@@ -118,7 +118,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.updateUser
+        userController.updateUser
     )
 
     // DELETE /api/v1/users/:id
@@ -139,7 +139,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.deleteUser
+        userController.deleteUser
     )
 
     // POST /api/v1/users/:id/ban
@@ -161,6 +161,6 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.banUser
+        userController.banUser
     )
 }
