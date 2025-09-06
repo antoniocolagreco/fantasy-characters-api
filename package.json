@@ -30,7 +30,7 @@
     "validate:coverage": "tsx scripts/validate-coverage.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:openapi": "tsx scripts/validate-openapi.ts",
-    "pre:commit": "pnpm format && pnpm typecheck && pnpm lint:fix && pnpm test:coverage && pnpm validate:coverage",
+    "validate": "pnpm format && pnpm typecheck && pnpm lint:fix && pnpm test:coverage && pnpm validate:coverage",
     "smoke:test": "tsx scripts/smoke-tests.ts",
     "ci": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm validate:env",
     "ci:quality": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage",

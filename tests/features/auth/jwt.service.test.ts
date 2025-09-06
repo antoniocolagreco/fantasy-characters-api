@@ -2,12 +2,7 @@ import jwt from 'jsonwebtoken'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AuthenticatedUser, JwtConfig } from '@/features/auth'
-import {
-    generateAccessToken,
-    generateRefreshToken,
-    parseTtl,
-    verifyAccessToken,
-} from '@/features/auth/jwt.service'
+import { jwtService } from '@/features/auth/jwt.service'
 import { AppError } from '@/shared/errors'
 
 interface DecodedToken {
@@ -46,7 +41,7 @@ describe('JWT Service', () => {
 
     describe('generateAccessToken', () => {
         it('should generate a valid JWT token', () => {
-            const token = generateAccessToken(mockUser, mockConfig)
+            const token = jwtService.generateAccessToken(mockUser, mockConfig)
 
             expect(token).toBeDefined()
             expect(typeof token).toBe('string')
@@ -61,7 +56,7 @@ describe('JWT Service', () => {
         })
 
         it('should include correct claims in the token', () => {
-            const token = generateAccessToken(mockUser, mockConfig)
+            const token = jwtService.generateAccessToken(mockUser, mockConfig)
             const decoded = jwt.decode(token) as DecodedToken
 
             expect(decoded.sub).toBe(mockUser.id)
@@ -73,8 +68,8 @@ describe('JWT Service', () => {
         })
 
         it('should generate different tokens for the same user', () => {
-            const token1 = generateAccessToken(mockUser, mockConfig)
-            const token2 = generateAccessToken(mockUser, mockConfig)
+            const token1 = jwtService.generateAccessToken(mockUser, mockConfig)
+            const token2 = jwtService.generateAccessToken(mockUser, mockConfig)
 
             expect(token1).not.toBe(token2)
         })
@@ -85,7 +80,7 @@ describe('JWT Service', () => {
                 role: 'ADMIN',
             }
 
-            const token = generateAccessToken(adminUser, mockConfig)
+            const token = jwtService.generateAccessToken(adminUser, mockConfig)
             const decoded = jwt.decode(token) as DecodedToken
 
             expect(decoded.role).toBe('ADMIN')
@@ -93,7 +88,7 @@ describe('JWT Service', () => {
 
         it('should handle numeric TTL in config', () => {
             const configWithNumericTtl = { ...mockConfig, accessTokenTtl: 1800 }
-            const token = generateAccessToken(mockUser, configWithNumericTtl)
+            const token = jwtService.generateAccessToken(mockUser, configWithNumericTtl)
             const decoded = jwt.decode(token) as DecodedToken
 
             expect(decoded.exp).toBe(1609459200 + 1800) // 30 minutes
@@ -102,7 +97,7 @@ describe('JWT Service', () => {
 
     describe('generateRefreshToken', () => {
         it('should generate a valid UUID refresh token', () => {
-            const token = generateRefreshToken()
+            const token = jwtService.generateRefreshToken()
 
             expect(token).toBeDefined()
             expect(typeof token).toBe('string')
@@ -110,8 +105,8 @@ describe('JWT Service', () => {
         })
 
         it('should generate unique tokens', () => {
-            const token1 = generateRefreshToken()
-            const token2 = generateRefreshToken()
+            const token1 = jwtService.generateRefreshToken()
+            const token2 = jwtService.generateRefreshToken()
 
             expect(token1).not.toBe(token2)
         })
@@ -119,8 +114,8 @@ describe('JWT Service', () => {
 
     describe('verifyAccessToken', () => {
         it('should verify a valid token', () => {
-            const token = generateAccessToken(mockUser, mockConfig)
-            const claims = verifyAccessToken(token, mockConfig)
+            const token = jwtService.generateAccessToken(mockUser, mockConfig)
+            const claims = jwtService.verifyAccessToken(token, mockConfig)
 
             expect(claims.sub).toBe(mockUser.id)
             expect(claims.role).toBe(mockUser.role)
@@ -144,10 +139,10 @@ describe('JWT Service', () => {
                 }
             )
 
-            expect(() => verifyAccessToken(expiredToken, mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken(expiredToken, mockConfig)).toThrow(AppError)
 
             try {
-                verifyAccessToken(expiredToken, mockConfig)
+                jwtService.verifyAccessToken(expiredToken, mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_EXPIRED')
@@ -155,10 +150,12 @@ describe('JWT Service', () => {
         })
 
         it('should throw TOKEN_INVALID for malformed tokens', () => {
-            expect(() => verifyAccessToken('invalid.token.here', mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken('invalid.token.here', mockConfig)).toThrow(
+                AppError
+            )
 
             try {
-                verifyAccessToken('invalid.token.here', mockConfig)
+                jwtService.verifyAccessToken('invalid.token.here', mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_INVALID')
@@ -171,10 +168,10 @@ describe('JWT Service', () => {
                 audience: mockConfig.audience,
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken(token, mockConfig)).toThrow(AppError)
 
             try {
-                verifyAccessToken(token, mockConfig)
+                jwtService.verifyAccessToken(token, mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_INVALID')
@@ -187,10 +184,10 @@ describe('JWT Service', () => {
                 audience: mockConfig.audience,
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken(token, mockConfig)).toThrow(AppError)
 
             try {
-                verifyAccessToken(token, mockConfig)
+                jwtService.verifyAccessToken(token, mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_INVALID')
@@ -203,10 +200,10 @@ describe('JWT Service', () => {
                 audience: 'wrong-audience',
             })
 
-            expect(() => verifyAccessToken(token, mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken(token, mockConfig)).toThrow(AppError)
 
             try {
-                verifyAccessToken(token, mockConfig)
+                jwtService.verifyAccessToken(token, mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_INVALID')
@@ -218,10 +215,10 @@ describe('JWT Service', () => {
             const malformedPayload = Buffer.from('{"invalid": json}').toString('base64')
             const malformedToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${malformedPayload}.signature`
 
-            expect(() => verifyAccessToken(malformedToken, mockConfig)).toThrow(AppError)
+            expect(() => jwtService.verifyAccessToken(malformedToken, mockConfig)).toThrow(AppError)
 
             try {
-                verifyAccessToken(malformedToken, mockConfig)
+                jwtService.verifyAccessToken(malformedToken, mockConfig)
             } catch (error) {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('TOKEN_INVALID')
@@ -231,35 +228,35 @@ describe('JWT Service', () => {
 
     describe('parseTtl', () => {
         it('should return number as-is', () => {
-            expect(parseTtl(3600)).toBe(3600)
-            expect(parseTtl(0)).toBe(0)
+            expect(jwtService.parseTtl(3600)).toBe(3600)
+            expect(jwtService.parseTtl(0)).toBe(0)
         })
 
         it('should parse seconds correctly', () => {
-            expect(parseTtl('30s')).toBe(30)
-            expect(parseTtl('1s')).toBe(1)
+            expect(jwtService.parseTtl('30s')).toBe(30)
+            expect(jwtService.parseTtl('1s')).toBe(1)
         })
 
         it('should parse minutes correctly', () => {
-            expect(parseTtl('15m')).toBe(900) // 15 * 60
-            expect(parseTtl('1m')).toBe(60)
+            expect(jwtService.parseTtl('15m')).toBe(900) // 15 * 60
+            expect(jwtService.parseTtl('1m')).toBe(60)
         })
 
         it('should parse hours correctly', () => {
-            expect(parseTtl('2h')).toBe(7200) // 2 * 60 * 60
-            expect(parseTtl('1h')).toBe(3600)
+            expect(jwtService.parseTtl('2h')).toBe(7200) // 2 * 60 * 60
+            expect(jwtService.parseTtl('1h')).toBe(3600)
         })
 
         it('should parse days correctly', () => {
-            expect(parseTtl('7d')).toBe(604800) // 7 * 24 * 60 * 60
-            expect(parseTtl('1d')).toBe(86400)
+            expect(jwtService.parseTtl('7d')).toBe(604800) // 7 * 24 * 60 * 60
+            expect(jwtService.parseTtl('1d')).toBe(86400)
         })
 
         it('should throw error for invalid format', () => {
-            expect(() => parseTtl('invalid')).toThrow('Invalid TTL format: invalid')
-            expect(() => parseTtl('15x')).toThrow('Invalid TTL format: 15x')
-            expect(() => parseTtl('m15')).toThrow('Invalid TTL format: m15')
-            expect(() => parseTtl('')).toThrow('Invalid TTL format: ')
+            expect(() => jwtService.parseTtl('invalid')).toThrow('Invalid TTL format: invalid')
+            expect(() => jwtService.parseTtl('15x')).toThrow('Invalid TTL format: 15x')
+            expect(() => jwtService.parseTtl('m15')).toThrow('Invalid TTL format: m15')
+            expect(() => jwtService.parseTtl('')).toThrow('Invalid TTL format: ')
         })
 
         it('should throw error for invalid unit', () => {
@@ -267,14 +264,14 @@ describe('JWT Service', () => {
             // We'll need to mock the regex match to test this
             const matchSpy = vi.spyOn(String.prototype, 'match').mockReturnValue(['15x', '15', 'x'])
 
-            expect(() => parseTtl('15x')).toThrow('Invalid TTL unit: x')
+            expect(() => jwtService.parseTtl('15x')).toThrow('Invalid TTL unit: x')
 
             matchSpy.mockRestore()
         })
 
         it('should handle edge cases', () => {
-            expect(parseTtl('0s')).toBe(0)
-            expect(parseTtl('999d')).toBe(999 * 24 * 60 * 60)
+            expect(jwtService.parseTtl('0s')).toBe(0)
+            expect(jwtService.parseTtl('999d')).toBe(999 * 24 * 60 * 60)
         })
     })
 })

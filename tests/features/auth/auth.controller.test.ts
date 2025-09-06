@@ -13,7 +13,7 @@ vi.mock('@/features/auth/auth.service', () => ({
 }))
 
 import { authService, type LoginResult } from '@/features/auth/auth.service'
-import * as authController from '@/features/auth/v1/auth.controller'
+import { authController } from '@/features/auth/v1/auth.controller'
 
 // Type assertion for mocked service
 const mockAuthService = authService as any
@@ -196,7 +196,7 @@ describe('AuthController', () => {
             })
         })
 
-        it('should return 401 when user is not authenticated', async () => {
+        it('should throw error when user is not authenticated', async () => {
             const request = {
                 user: undefined,
                 id: 'test-request-id',
@@ -207,13 +207,11 @@ describe('AuthController', () => {
                 send: vi.fn(),
             } as any
 
-            await authController.logoutAll(request, reply)
+            await expect(authController.logoutAll(request, reply)).rejects.toThrow(
+                'Authentication required'
+            )
 
             expect(mockAuthService.logoutAll).not.toHaveBeenCalled()
-            expect(reply.code).toHaveBeenCalledWith(401)
-            expect(reply.send).toHaveBeenCalledWith({
-                error: 'Authentication required',
-            })
         })
     })
 
@@ -252,7 +250,7 @@ describe('AuthController', () => {
             })
         })
 
-        it('should return 401 when user is not authenticated', async () => {
+        it('should throw error when user is not authenticated', async () => {
             const changePasswordData = {
                 currentPassword: 'old-password',
                 newPassword: 'new-password',
@@ -269,13 +267,10 @@ describe('AuthController', () => {
                 send: vi.fn(),
             } as any
 
-            await authController.changePassword(request, reply)
-
+            await expect(authController.changePassword(request, reply)).rejects.toThrow(
+                'Authentication required'
+            )
             expect(mockAuthService.changePassword).not.toHaveBeenCalled()
-            expect(reply.code).toHaveBeenCalledWith(401)
-            expect(reply.send).toHaveBeenCalledWith({
-                error: 'Authentication required',
-            })
         })
     })
 })

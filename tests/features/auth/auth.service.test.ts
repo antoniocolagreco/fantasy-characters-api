@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { authService } from '@/features/auth/auth.service'
-import { generateAccessToken } from '@/features/auth/jwt.service'
-import { verifyPassword } from '@/features/auth/password.service'
+import { jwtService } from '@/features/auth/jwt.service'
+import { passwordService } from '@/features/auth/password.service'
 import { refreshTokenRepository, userService } from '@/features/users'
 import { err } from '@/shared/errors'
 
@@ -24,11 +24,15 @@ vi.mock('@/features/users', () => ({
 }))
 
 vi.mock('@/features/auth/jwt.service', () => ({
-    generateAccessToken: vi.fn(),
+    jwtService: {
+        generateAccessToken: vi.fn(),
+    },
 }))
 
 vi.mock('@/features/auth/password.service', () => ({
-    verifyPassword: vi.fn(),
+    passwordService: {
+        verifyPassword: vi.fn(),
+    },
 }))
 
 vi.mock('@/shared/errors', () => ({
@@ -62,8 +66,9 @@ describe('AuthService', () => {
         it('should successfully login with valid credentials', async () => {
             // Arrange
             vi.mocked(userService.getByEmail).mockResolvedValue(mockUser)
-            vi.mocked(verifyPassword).mockResolvedValue(true)
-            vi.mocked(generateAccessToken).mockReturnValue('access-token')
+            vi.mocked(userService.getById).mockResolvedValue(mockUser) // For generateTokenPair
+            vi.mocked(passwordService.verifyPassword).mockResolvedValue(true)
+            vi.mocked(jwtService.generateAccessToken).mockReturnValue('access-token')
             vi.mocked(refreshTokenRepository.create).mockResolvedValue({
                 id: 'token-id',
                 token: 'refresh-token',
@@ -104,7 +109,7 @@ describe('AuthService', () => {
         it('should throw error when password is invalid', async () => {
             // Arrange
             vi.mocked(userService.getByEmail).mockResolvedValue(mockUser)
-            vi.mocked(verifyPassword).mockResolvedValue(false)
+            vi.mocked(passwordService.verifyPassword).mockResolvedValue(false)
             const mockError = new Error('INVALID_CREDENTIALS: Invalid email or password')
             Object.assign(mockError, { code: 'INVALID_CREDENTIALS', status: 401 })
             vi.mocked(err).mockReturnValue(mockError as any)
@@ -118,7 +123,7 @@ describe('AuthService', () => {
             // Arrange
             const inactiveUser = { ...mockUser, isActive: false }
             vi.mocked(userService.getByEmail).mockResolvedValue(inactiveUser)
-            vi.mocked(verifyPassword).mockResolvedValue(true)
+            vi.mocked(passwordService.verifyPassword).mockResolvedValue(true)
             const mockError = new Error('FORBIDDEN: Account is disabled')
             Object.assign(mockError, { code: 'FORBIDDEN', status: 403 })
             vi.mocked(err).mockReturnValue(mockError as any)
@@ -132,7 +137,7 @@ describe('AuthService', () => {
             // Arrange
             const bannedUser = { ...mockUser, isBanned: true }
             vi.mocked(userService.getByEmail).mockResolvedValue(bannedUser)
-            vi.mocked(verifyPassword).mockResolvedValue(true)
+            vi.mocked(passwordService.verifyPassword).mockResolvedValue(true)
             const mockError = new Error('FORBIDDEN: Account is banned')
             Object.assign(mockError, { code: 'FORBIDDEN', status: 403 })
             vi.mocked(err).mockReturnValue(mockError as any)
@@ -284,7 +289,7 @@ describe('AuthService', () => {
             // Arrange
             vi.mocked(refreshTokenRepository.findByToken).mockResolvedValue(mockRefreshToken)
             vi.mocked(userService.getById).mockResolvedValue(mockUser as any)
-            vi.mocked(generateAccessToken).mockReturnValue('new-access-token')
+            vi.mocked(jwtService.generateAccessToken).mockReturnValue('new-access-token')
             vi.mocked(refreshTokenRepository.create).mockResolvedValue({
                 ...mockRefreshToken,
                 token: 'new-refresh-token',

@@ -1,5 +1,5 @@
 import type { AuthenticatedUser, JwtConfig } from '@/features/auth'
-import { generateAccessToken } from '@/features/auth/jwt.service'
+import { jwtService } from '@/features/auth/jwt.service'
 
 function getTestJwtConfig(): JwtConfig {
     const secret = process.env.JWT_SECRET || 'test-secret-key-with-minimum-32-characters!!'
@@ -25,7 +25,7 @@ export function createTestUser(overrides: Partial<AuthenticatedUser> = {}): Auth
 
 export function generateTestToken(user?: Partial<AuthenticatedUser>): string {
     const testUser = createTestUser(user)
-    return generateAccessToken(testUser, getTestJwtConfig())
+    return jwtService.generateAccessToken(testUser, getTestJwtConfig())
 }
 
 export function createAuthHeaders(user?: Partial<AuthenticatedUser>) {

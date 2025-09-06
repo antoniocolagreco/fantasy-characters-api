@@ -12,7 +12,7 @@ import {
     type UserStats,
 } from './index'
 
-import { hashPassword, verifyPassword } from '@/features/auth/password.service'
+import { passwordService } from '@/features/auth/password.service'
 import { err } from '@/shared/errors'
 
 // (moved above for lint order)
@@ -54,7 +54,7 @@ export class UserService {
         }
 
         // Hash password
-        const passwordHash = await hashPassword(data.password)
+        const passwordHash = await passwordService.hashPassword(data.password)
 
         // Create user
         const userData = {
@@ -161,13 +161,16 @@ export class UserService {
         }
 
         // Verify current password
-        const isValidPassword = await verifyPassword(user.passwordHash, currentPassword)
+        const isValidPassword = await passwordService.verifyPassword(
+            user.passwordHash,
+            currentPassword
+        )
         if (!isValidPassword) {
             throw err('UNAUTHORIZED', 'Current password is incorrect')
         }
 
         // Hash new password
-        const newPasswordHash = await hashPassword(newPassword)
+        const newPasswordHash = await passwordService.hashPassword(newPassword)
 
         // Update password
         await userRepository.updatePassword(id, newPasswordHash)

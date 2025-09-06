@@ -1,6 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 
+import { authController } from './auth.controller'
 import {
     LoginRequestSchema,
     LoginResponseSchema,
@@ -14,7 +15,6 @@ import {
 } from './auth.http.schema'
 
 import { createAuthMiddleware } from '@/features/auth/auth.middleware'
-import * as controller from '@/features/auth/v1/auth.controller'
 import { config } from '@/infrastructure/config'
 import { ErrorResponseSchema } from '@/shared/schemas'
 
@@ -46,7 +46,7 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.login
+        authController.login
     )
 
     // POST /api/v1/auth/register
@@ -65,7 +65,7 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.register
+        authController.register
     )
 
     // POST /api/v1/auth/refresh
@@ -84,7 +84,7 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.refreshToken
+        authController.refreshToken
     )
 
     // POST /api/v1/auth/logout
@@ -102,7 +102,7 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.logout
+        authController.logout
     )
 
     // POST /api/v1/auth/logout-all
@@ -125,7 +125,7 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.logoutAll
+        authController.logoutAll
     )
 
     // PUT /api/v1/auth/change-password
@@ -150,6 +150,6 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
                 },
             },
         },
-        controller.changePassword
+        authController.changePassword
     )
 }

@@ -2,7 +2,7 @@ import type { User, Role } from '@prisma/client'
 import { expect } from 'vitest'
 
 import type { AuthenticatedUser } from '@/features/auth'
-import { generateAccessToken } from '@/features/auth/jwt.service'
+import { jwtService } from '@/features/auth/jwt.service'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 interface TestUser extends Partial<User> {
@@ -81,7 +81,7 @@ export function createAuthenticatedUser(options: TestUserOptions = {}): Authenti
  */
 export function generateTestToken(options: TestUserOptions = {}): string {
     const authUser = createAuthenticatedUser(options)
-    return generateAccessToken(authUser, getTestJwtConfig())
+    return jwtService.generateAccessToken(authUser, getTestJwtConfig())
 }
 
 /**

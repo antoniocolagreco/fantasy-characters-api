@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { hashPassword, verifyPassword } from '@/features/auth/password.service'
+import { passwordService } from '@/features/auth/password.service'
 import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
 
 async function getServices() {
@@ -19,7 +19,7 @@ async function seedUser(
     extras: Partial<import('@prisma/client').User> = {}
 ) {
     const now = new Date()
-    const passwordHash = await hashPassword('old')
+    const passwordHash = await passwordService.hashPassword('old')
     return prismaFake.user.create({
         data: {
             id,
@@ -154,7 +154,9 @@ describe('users.service unit', () => {
         await userService.changePassword(u.id, 'old', 'new')
         const fetched = await userRepository.findById(u.id)
         expect(fetched && before && fetched.passwordHash !== before).toBe(true)
-        const ok = fetched ? await verifyPassword(fetched.passwordHash, 'new') : false
+        const ok = fetched
+            ? await passwordService.verifyPassword(fetched.passwordHash, 'new')
+            : false
         expect(ok).toBe(true)
     })
 

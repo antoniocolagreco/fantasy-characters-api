@@ -119,7 +119,10 @@ app.get(
     // Validate business rules with reusable helper
     validateRange(query.minLevel, query.maxLevel, 'minLevel', 'maxLevel')
 
-    const result = await characterService.listCharacters({ ...query, userId: req.user?.id })
+    const result = await characterService.listCharacters({
+      ...query,
+      userId: req.user?.id,
+    })
     return reply.send(success(result.items, { pagination: result.pagination }))
   }
 )
@@ -208,8 +211,15 @@ building and pagination.
 
 ```typescript
 export const characterService = {
-  async listCharacters(params: ListCharactersParams): Promise<ListCharactersResult> {
-    const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
+  async listCharacters(
+    params: ListCharactersParams
+  ): Promise<ListCharactersResult> {
+    const {
+      limit = 20,
+      cursor,
+      sortBy = 'createdAt',
+      sortDir = 'desc',
+    } = params
 
     // Build where clause - zero boilerplate
     const where = buildWhere<Prisma.CharacterWhereInput>({

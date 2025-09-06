@@ -1,6 +1,6 @@
 import type { User, Role } from '@prisma/client'
 
-import { hashPassword } from '@/features/auth/password.service'
+import { passwordService } from '@/features/auth/password.service'
 import prismaService from '@/infrastructure/database/prisma.service'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
@@ -26,7 +26,7 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
         const config = userConfigs[i]
         if (!config) continue
 
-        const passwordHash = await hashPassword('test-password-123')
+        const passwordHash = await passwordService.hashPassword('test-password-123')
 
         const user = await prismaService.user.create({
             data: {
@@ -47,7 +47,7 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
 
     // Add more generic users if needed
     for (let i = userConfigs.length; i < count; i++) {
-        const passwordHash = await hashPassword('test-password-123')
+        const passwordHash = await passwordService.hashPassword('test-password-123')
         const id = generateUUIDv7()
 
         const user = await prismaService.user.create({
@@ -108,7 +108,7 @@ export async function createTestUserInDb(
     } = {}
 ): Promise<User> {
     const id = generateUUIDv7()
-    const passwordHash = await hashPassword('test-password-123')
+    const passwordHash = await passwordService.hashPassword('test-password-123')
 
     return prismaService.user.create({
         data: {

@@ -32,10 +32,12 @@ describe('Auth Middleware - Real Implementation', () => {
         // Mock JWT service using vi.doMock for test isolation
         mockVerifyAccessToken = vi.fn()
         vi.doMock('@/features/auth/jwt.service', () => ({
-            verifyAccessToken: mockVerifyAccessToken,
-            generateAccessToken: vi.fn(),
-            generateRefreshToken: vi.fn(),
-            parseTtl: vi.fn(),
+            jwtService: {
+                verifyAccessToken: mockVerifyAccessToken,
+                generateAccessToken: vi.fn(),
+                generateRefreshToken: vi.fn(),
+                parseTtl: vi.fn(),
+            },
         }))
 
         vi.clearAllMocks()

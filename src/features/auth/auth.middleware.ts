@@ -1,5 +1,5 @@
 import type { JwtConfig } from '@/features/auth/auth.domain.schema'
-import { verifyAccessToken } from '@/features/auth/jwt.service'
+import { jwtService } from '@/features/auth/jwt.service'
 import { AppError, err } from '@/shared/errors'
 import type { BasicAuthRequest, BasicReply } from '@/shared/types/http'
 
@@ -19,7 +19,7 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
         const token = authorization.slice(7) // Remove "Bearer " prefix
 
         try {
-            const claims = verifyAccessToken(token, jwtConfig)
+            const claims = jwtService.verifyAccessToken(token, jwtConfig)
 
             // Attach user info to request
             request.user = {
@@ -54,7 +54,7 @@ export function createOptionalAuthMiddleware(jwtConfig: JwtConfig) {
         const token = authorization.slice(7)
 
         try {
-            const claims = verifyAccessToken(token, jwtConfig)
+            const claims = jwtService.verifyAccessToken(token, jwtConfig)
 
             request.user = {
                 id: claims.sub,

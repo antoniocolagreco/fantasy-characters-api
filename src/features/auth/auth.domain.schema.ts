@@ -119,4 +119,37 @@ export type LoginRequest = Static<typeof LoginRequestSchema>
 export type RegisterRequest = Static<typeof RegisterRequestSchema>
 export type RefreshTokenRequest = Static<typeof RefreshTokenRequestSchema>
 export type ChangePasswordRequest = Static<typeof ChangePasswordRequestSchema>
-// No response types here: responses belong to HTTP layer
+
+// Service-specific schemas for auth operations
+export const AuthUserSchema = Type.Object(
+    {
+        id: Type.String({ format: 'uuid' }),
+        email: Type.String({ format: 'email' }),
+        role: RoleSchema,
+    },
+    { $id: 'AuthUser' }
+)
+
+export const LoginResultSchema = Type.Intersect(
+    [
+        AuthUserSchema,
+        Type.Object({
+            accessToken: Type.String(),
+            refreshToken: Type.String(),
+        }),
+    ],
+    { $id: 'LoginResult' }
+)
+
+export const RefreshTokensResultSchema = Type.Object(
+    {
+        accessToken: Type.String(),
+        refreshToken: Type.Optional(Type.String()),
+    },
+    { $id: 'RefreshTokensResult' }
+)
+
+// Derive types for service operations
+export type AuthUser = Static<typeof AuthUserSchema>
+export type LoginResult = Static<typeof LoginResultSchema>
+export type RefreshTokensResult = Static<typeof RefreshTokensResultSchema>
