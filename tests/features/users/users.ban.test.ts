@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
 import type { User } from '@/features/users'
@@ -9,6 +9,7 @@ import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 describe('Users API v1 - Ban Operations', () => {
     let app: FastifyInstance
     let userId: string
+    let originalRbacEnabled: string | undefined
 
     beforeAll(async () => {
         app = await buildApp()
@@ -19,10 +20,25 @@ describe('Users API v1 - Ban Operations', () => {
         await app.close()
     })
 
+    afterEach(() => {
+        // Restore original RBAC_ENABLED value instead of deleting it
+        if (originalRbacEnabled !== undefined) {
+            process.env.RBAC_ENABLED = originalRbacEnabled
+        } else {
+            delete process.env.RBAC_ENABLED
+        }
+    })
+
     beforeEach(async () => {
+        // Save original RBAC_ENABLED value
+        originalRbacEnabled = process.env.RBAC_ENABLED
+
         // Clean database
         await prismaService.refreshToken.deleteMany()
         await prismaService.user.deleteMany()
+
+        // Enable RBAC for authorization tests
+        process.env.RBAC_ENABLED = 'true'
 
         // Create test user
         const createResponse = await app.inject({
