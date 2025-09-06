@@ -114,7 +114,7 @@ for (const [filePath, file] of Object.entries(data)) {
 }
 
 if (offenders.length === 0) {
-    console.log('PASS: All files meet coverage thresholds.')
+    console.log('✅ PASS: All files meet coverage thresholds.')
     console.log(
         `Thresholds -> statements: ${MIN_STMTS}%, functions: ${MIN_FUNCS}%, lines: ${MIN_LINES}%, branches: ${MIN_BRANCHES}%`
     )
@@ -132,7 +132,7 @@ offenders.sort((a, b) =>
             : a.branches - b.branches
 )
 
-console.error('FAIL: Some files are below coverage thresholds:')
+console.error('❌ FAIL: Some files are below coverage thresholds:')
 console.error(
     `Thresholds -> statements: ${MIN_STMTS}%, functions: ${MIN_FUNCS}%, lines: ${MIN_LINES}%, branches: ${MIN_BRANCHES}%`
 )

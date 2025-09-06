@@ -102,6 +102,70 @@ describe('RBAC Middleware', () => {
             })
         })
 
+        it('should resolve images ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'images')
+
+            expect(result).toEqual({
+                ownerId: null,
+                visibility: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve tags ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'tags')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve skills ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'skills')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve perks ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'perks')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve races ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'races')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve archetypes ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'archetypes')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
+        it('should resolve items ownership correctly', async () => {
+            const result = await resolveOwnership(mockRequest, 'items')
+
+            expect(result).toEqual({
+                ownerId: null,
+                ownerRole: null,
+            })
+        })
+
         it('should handle database query errors gracefully', async () => {
             // Test with a request that would normally cause an error
             // Since the in-memory database doesn't throw errors for missing records,
@@ -176,6 +240,14 @@ describe('RBAC Middleware', () => {
                 ownerRole: null,
             })
         })
+
+        it('should handle default case for unknown resource', async () => {
+            // Test default case for unknown resource type
+            // @ts-expect-error Testing invalid resource type
+            const result = await resolveOwnership(mockRequest, 'unknown-resource')
+
+            expect(result).toEqual({})
+        })
     })
 
     describe('createRbacMiddleware', () => {
@@ -219,6 +291,85 @@ describe('RBAC Middleware', () => {
                 expect(error).toBeInstanceOf(AppError)
                 expect((error as AppError).code).toBe('FORBIDDEN')
             }
+        })
+
+        it('should use route config when available', async () => {
+            canSpy.mockReturnValue(true)
+
+            // Set up route config
+            mockRequest.routeOptions = {
+                config: {
+                    rbac: {
+                        ownerId: 'route-owner-123',
+                        visibility: 'PUBLIC',
+                    },
+                },
+            }
+
+            const middleware = createRbacMiddleware('characters', 'read')
+
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
+
+            expect(canSpy).toHaveBeenCalledWith({
+                user: { id: 'user-123', role: 'USER' },
+                resource: 'characters',
+                action: 'read',
+                ownerId: 'route-owner-123',
+                visibility: 'PUBLIC',
+                ownerRole: undefined,
+                targetUserRole: undefined,
+            })
+        })
+
+        it('should handle route config without rbac property', async () => {
+            canSpy.mockReturnValue(true)
+
+            // Set up route config without rbac
+            mockRequest.routeOptions = {
+                config: {
+                    otherProperty: 'value',
+                },
+            }
+
+            const middleware = createRbacMiddleware('characters', 'read')
+
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
+
+            expect(canSpy).toHaveBeenCalled()
+        })
+
+        it('should handle missing route config', async () => {
+            canSpy.mockReturnValue(true)
+
+            // No route config
+            mockRequest.routeOptions = undefined
+
+            const middleware = createRbacMiddleware('characters', 'read')
+
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
+
+            expect(canSpy).toHaveBeenCalled()
+        })
+
+        it('should handle invalid user role', async () => {
+            canSpy.mockReturnValue(true)
+
+            // Invalid role
+            mockRequest.user = { id: 'user-123', role: 'INVALID_ROLE' }
+
+            const middleware = createRbacMiddleware('characters', 'read')
+
+            await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
+
+            expect(canSpy).toHaveBeenCalledWith({
+                user: undefined,
+                resource: 'characters',
+                action: 'read',
+                ownerId: undefined,
+                visibility: undefined,
+                ownerRole: undefined,
+                targetUserRole: undefined,
+            })
         })
     })
 

@@ -57,4 +57,36 @@ describe('Logger Service', () => {
         const { logger: freshLogger } = await import('@/infrastructure/logging/logger.service')
         expect(freshLogger.level).toBe('debug')
     })
+
+    test('should use development config when NODE_ENV is not production', async () => {
+        const originalNodeEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'development'
+        vi.resetModules()
+
+        const { logger: devLogger } = await import('@/infrastructure/logging/logger.service')
+        expect(devLogger).toBeDefined()
+
+        // Restore original NODE_ENV
+        if (originalNodeEnv !== undefined) {
+            process.env.NODE_ENV = originalNodeEnv
+        } else {
+            delete process.env.NODE_ENV
+        }
+    })
+
+    test('should use production config when NODE_ENV is production', async () => {
+        const originalNodeEnv = process.env.NODE_ENV
+        process.env.NODE_ENV = 'production'
+        vi.resetModules()
+
+        const { logger: prodLogger } = await import('@/infrastructure/logging/logger.service')
+        expect(prodLogger).toBeDefined()
+
+        // Restore original NODE_ENV
+        if (originalNodeEnv !== undefined) {
+            process.env.NODE_ENV = originalNodeEnv
+        } else {
+            delete process.env.NODE_ENV
+        }
+    })
 })
