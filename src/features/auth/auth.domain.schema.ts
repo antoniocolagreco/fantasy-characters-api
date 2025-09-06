@@ -64,20 +64,38 @@ export type TokenPair = Static<typeof TokenPairSchema>
 export type RefreshTokenPayload = Static<typeof RefreshTokenPayloadSchema>
 export type JwtConfig = Static<typeof JwtConfigSchema>
 
-// Request/Response Schemas
+// Request Schemas (domain-level, version-agnostic)
 export const LoginRequestSchema = Type.Object(
     {
-        email: Type.String({ format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 128 }),
+        email: Type.String({
+            format: 'email',
+            transform: ['trim', 'toLowerCase'],
+        }),
+        password: Type.String({
+            minLength: 8,
+            maxLength: 128,
+        }),
     },
     { $id: 'LoginRequest', additionalProperties: false }
 )
 
 export const RegisterRequestSchema = Type.Object(
     {
-        email: Type.String({ format: 'email' }),
-        password: Type.String({ minLength: 8, maxLength: 128 }),
-        name: Type.Optional(Type.String({ minLength: 1, maxLength: 100 })),
+        email: Type.String({
+            format: 'email',
+            transform: ['trim', 'toLowerCase'],
+        }),
+        password: Type.String({
+            minLength: 8,
+            maxLength: 128,
+        }),
+        name: Type.Optional(
+            Type.String({
+                minLength: 1,
+                maxLength: 100,
+                transform: ['trim'],
+            })
+        ),
     },
     { $id: 'RegisterRequest', additionalProperties: false }
 )
@@ -96,33 +114,9 @@ export const ChangePasswordRequestSchema = Type.Object(
     },
     { $id: 'ChangePasswordRequest', additionalProperties: false }
 )
-
-// Response Schemas
-export const LoginResponseSchema = Type.Object(
-    {
-        data: Type.Intersect([AuthenticatedUserSchema, TokenPairSchema]),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-    },
-    { $id: 'LoginResponse' }
-)
-
-export const RefreshTokenResponseSchema = Type.Object(
-    {
-        data: Type.Object({
-            accessToken: Type.String(),
-            refreshToken: Type.Optional(Type.String()), // Optional for rotation
-        }),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-    },
-    { $id: 'RefreshTokenResponse' }
-)
-
-// Derive types for requests/responses
+// Derive types for requests
 export type LoginRequest = Static<typeof LoginRequestSchema>
 export type RegisterRequest = Static<typeof RegisterRequestSchema>
 export type RefreshTokenRequest = Static<typeof RefreshTokenRequestSchema>
 export type ChangePasswordRequest = Static<typeof ChangePasswordRequestSchema>
-export type LoginResponse = Static<typeof LoginResponseSchema>
-export type RefreshTokenResponse = Static<typeof RefreshTokenResponseSchema>
+// No response types here: responses belong to HTTP layer

@@ -11,7 +11,7 @@ import {
     CreateUserRequestSchema,
     UpdateUserSchema,
     BanUserSchema,
-} from './users.schema'
+} from './users.http.schema'
 
 import { rbac } from '@/features/auth/rbac.middleware'
 import { ErrorResponseSchema } from '@/shared/schemas'

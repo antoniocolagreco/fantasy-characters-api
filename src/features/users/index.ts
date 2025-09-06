@@ -1,5 +1,5 @@
 // ===== Schemas (HTTP layer v1) =====
-export * from './v1/users.schema'
+export * from './v1/users.http.schema'
 
 // ===== Repository Interfaces =====
 export type {

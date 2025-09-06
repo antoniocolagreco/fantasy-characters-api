@@ -2,6 +2,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify, { type FastifyInstance } from 'fastify'
 
 import { createOptionalAuthMiddleware } from '@/features/auth/auth.middleware'
+import { authRoutesV1 } from '@/features/auth/v1/auth.routes'
 import { usersRoutesV1 } from '@/features/users/v1/users.routes'
 import { config } from '@/infrastructure/config'
 import prismaService from '@/infrastructure/database/prisma.service'
@@ -13,8 +14,9 @@ import helmetPlugin from '@/shared/plugins/helmet.plugin'
 import loggingPlugin from '@/shared/plugins/logging.plugin'
 import { multipartPlugin } from '@/shared/plugins/multipart.plugin'
 import rateLimitPlugin from '@/shared/plugins/rate-limit.plugin'
-// import sanitizationPlugin from '@/shared/plugins/sanitization.plugin' // Temporarily disabled
+import sanitizationPlugin from '@/shared/plugins/sanitization.plugin'
 import { swaggerPlugin } from '@/shared/plugins/swagger.plugin'
+import validationPlugin from '@/shared/plugins/validation.plugin'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 /**
@@ -41,12 +43,17 @@ export async function buildApp(): Promise<FastifyInstance> {
         },
         bodyLimit: 1_000_000, // 1 MB
         requestTimeout: 15_000, // 15 seconds
+        onProtoPoisoning: 'remove',
+        onConstructorPoisoning: 'remove',
     }).withTypeProvider<TypeBoxTypeProvider>()
 
     // Register plugins on root instance (avoid extra encapsulation)
     // Core plugins
     errorHandlerPlugin(app)
     await app.register(loggingPlugin)
+
+    // Validation plugin BEFORE routes so all validators use our Ajv instance
+    await app.register(validationPlugin)
 
     // Documentation plugin FIRST (so it can capture subsequent routes via onRoute)
     await app.register(swaggerPlugin)
@@ -58,6 +65,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(helmetPlugin)
     await app.register(corsPlugin)
     await app.register(rateLimitPlugin)
+    await app.register(sanitizationPlugin)
 
     // Feature plugins (define routes AFTER swagger is registered)
     await app.register(multipartPlugin)
@@ -87,6 +95,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     })
 
     // API v1 routes
+    await app.register(authRoutesV1, { prefix: '/api/v1' })
     await app.register(usersRoutesV1, { prefix: '/api/v1' })
 
     return app

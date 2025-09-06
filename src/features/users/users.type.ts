@@ -11,7 +11,7 @@ import type {
     UserParamsSchema,
     UserSchema,
     UserStatsSchema,
-} from './v1/users.schema'
+} from './v1/users.http.schema'
 
 import type { RefreshTokenPayload } from '@/features/auth'
 import { PaginationSchema } from '@/shared/schemas'

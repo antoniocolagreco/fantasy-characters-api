@@ -1,6 +1,7 @@
 // Auth feature barrel exports
 export * from '@/features/auth/auth.middleware'
-export * from '@/features/auth/auth.schema'
+export * from '@/features/auth/auth.domain.schema'
+export * from '@/features/auth/auth.service'
 export * from '@/features/auth/jwt.service'
 export * from '@/features/auth/password.service'
 export * from '@/features/auth/rbac.middleware'

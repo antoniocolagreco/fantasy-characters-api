@@ -287,38 +287,75 @@ export async function updateCharacter(id: string, data: any, user: any) {
 
 ## Required Input Sanitization
 
-Always sanitize user input to prevent XSS, even when using TypeBox validation.
+Policy: l'API non accetta HTML. Qualsiasi markup viene convertito in testo
+semplice. La sanitizzazione avviene in due livelli:
+
+1. Schemi JSON (TypeBox + Ajv) come source of truth per tipi e vincoli
+2. Normalizzazione testo nel middleware (preValidation) per JSON body
+
+### 1) Ajv Keywords (transform)
+
+Usa `ajv-keywords` per normalizzare stringhe durante la validazione (es. trim,
+toLowerCase per email). Esempio con TypeBox:
 
 ```ts
-import DOMPurify from 'isomorphic-dompurify'
+import { Type } from '@sinclair/typebox'
 
-// HTML content sanitization
-export function sanitizeHtml(input: string): string {
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'br'],
-    ALLOWED_ATTR: [],
-  })
-}
-
-// String normalization and control character removal
-export function sanitizeString(input: string): string {
-  return input
-    .trim()
-    .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-    .replace(/\s+/g, ' ') // Normalize whitespace
-}
-
-// Usage in controllers
-export async function createCharacterHandler(req: any, reply: any) {
-  const sanitizedData = {
-    ...req.body,
-    name: sanitizeString(req.body.name),
-    bio: req.body.bio ? sanitizeHtml(req.body.bio) : undefined,
-  }
-  const character = await createCharacter(sanitizedData, req.user)
-  return reply.send(success(character, req.id))
-}
+export const LoginBody = Type.Object(
+  {
+    email: Type.String({
+      format: 'email',
+      transform: ['trim', 'toLowerCase'] as any,
+    }),
+    password: Type.String({
+      minLength: 8,
+      maxLength: 128,
+      transform: ['trim'] as any,
+    }),
+  },
+  { additionalProperties: false }
+)
 ```
+
+Nel bootstrap dell'app configura Ajv con `ajv-formats` e `ajv-keywords`.
+
+### 2) Normalizzazione testo (no HTML)
+
+Middleware di sanitizzazione (preValidation) applicato a JSON body per
+POST/PUT/PATCH:
+
+Caratteristiche:
+
+- rimuove script/style e tag HTML (striptags) → testo semplice
+- rimuove caratteri di controllo (validator.stripLow)
+- normalizza whitespace (collapse + trim)
+- clamp lunghezza (difesa da input eccessivi)
+
+Nota: la sanitizzazione è “safe by default” e non muta richieste non-JSON.
+
+Vedi `src/shared/plugins/sanitization.plugin.ts` per l'implementazione.
+
+### Best Practices
+
+- Definisci sempre `additionalProperties: false` nei tuoi schemi
+- Usa `transform` per campi utente (email: trim+lowercase; name: trim)
+- Convalida formati con `ajv-formats` (email, uuid, uri, ecc.)
+- Non accettare HTML: convertilo a testo semplice lato server
+
+## Prototype Poisoning Protection
+
+Abilita le protezioni Fastify contro prototype/constructor poisoning:
+
+```ts
+const app = fastify({
+  // ...
+  onProtoPoisoning: 'remove',
+  onConstructorPoisoning: 'remove',
+})
+```
+
+Queste opzioni rimuovono chiavi pericolose come `__proto__` e `constructor` da
+input JSON.
 
 ## Required CSRF Protection
 

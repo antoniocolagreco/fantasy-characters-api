@@ -1,4 +1,5 @@
 import { startServer, stopServer } from '@/app'
+import logger from '@/infrastructure/logging/logger.service'
 
 /**
  * Main server entry point
@@ -22,6 +23,10 @@ async function main() {
         void gracefulShutdown('SIGINT').catch((error: unknown) => {
             app.log.error({ error }, 'Error during graceful shutdown')
         })
+    })
+
+    process.on('listening', () => {
+        logger.info('Server running...')
     })
 
     // Handle uncaught exceptions

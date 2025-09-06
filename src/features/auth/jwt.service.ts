@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken'
 
-import type { AuthenticatedUser, JwtClaims, JwtConfig } from '@/features/auth/auth.schema'
+import type { AuthenticatedUser, JwtClaims, JwtConfig } from '@/features/auth/auth.domain.schema'
 import { err } from '@/shared/errors'
 import { generateUUIDv7 } from '@/shared/utils'
 

@@ -1,11 +1,12 @@
-import type { JwtConfig } from '@/features/auth/auth.schema'
+import type { JwtConfig } from '@/features/auth/auth.domain.schema'
 import { verifyAccessToken } from '@/features/auth/jwt.service'
 import { AppError, err } from '@/shared/errors'
 import type { BasicAuthRequest, BasicReply } from '@/shared/types/http'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
     return function authMiddleware(request: BasicAuthRequest, _reply: BasicReply) {
-        const authorization = request.headers?.authorization
+        const headers = request.headers || {}
+        const authorization = (headers.authorization || headers.Authorization) as string | undefined
 
         if (!authorization) {
             throw err('UNAUTHORIZED', 'Authorization header required')
@@ -42,7 +43,8 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
 
 export function createOptionalAuthMiddleware(jwtConfig: JwtConfig) {
     return function optionalAuthMiddleware(request: BasicAuthRequest, _reply: BasicReply) {
-        const authorization = request.headers?.authorization
+        const headers = request.headers || {}
+        const authorization = (headers.authorization || headers.Authorization) as string | undefined
 
         if (!authorization?.startsWith('Bearer ')) {
             // No auth provided, continue without user

@@ -1,0 +1,242 @@
+import type { TokenPair, RefreshTokenPayload } from './auth.domain.schema'
+
+import { generateAccessToken } from '@/features/auth/jwt.service'
+import { verifyPassword } from '@/features/auth/password.service'
+import { userService, refreshTokenRepository } from '@/features/users'
+import { config } from '@/infrastructure/config'
+import { err } from '@/shared/errors'
+
+export interface LoginCredentials {
+    email: string
+    password: string
+}
+
+export interface RegisterData {
+    email: string
+    password: string
+    name?: string
+}
+
+export interface AuthUser {
+    id: string
+    email: string
+    role: string
+}
+
+export interface LoginResult extends AuthUser {
+    accessToken: string
+    refreshToken: string
+}
+
+/**
+ * Authentication Service
+ * Handles user authentication, registration, and token management
+ */
+export class AuthService {
+    /**
+     * Authenticate user with email and password
+     */
+    async login(credentials: LoginCredentials, deviceInfo?: string): Promise<LoginResult> {
+        const { email, password } = credentials
+
+        // Get user by email
+        const user = await userService.getByEmail(email)
+        if (!user) {
+            throw err('INVALID_CREDENTIALS', 'Invalid email or password')
+        }
+
+        // Verify password
+        const isValidPassword = await verifyPassword(user.passwordHash, password)
+        if (!isValidPassword) {
+            throw err('INVALID_CREDENTIALS', 'Invalid email or password')
+        }
+
+        // Check if user is active
+        if (!user.isActive) {
+            throw err('FORBIDDEN', 'Account is disabled')
+        }
+
+        // Check if user is banned
+        if (user.isBanned) {
+            throw err('FORBIDDEN', 'Account is banned')
+        }
+
+        // Generate tokens
+        const tokenPair = await this.generateTokenPair(user.id, user.role, deviceInfo)
+
+        // Update last login
+        await userService.updateLastLogin(user.id)
+
+        return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            accessToken: tokenPair.accessToken,
+            refreshToken: tokenPair.refreshToken,
+        }
+    }
+
+    /**
+     * Register a new user
+     */
+    async register(data: RegisterData): Promise<AuthUser> {
+        const { email, password, name } = data
+
+        // Check if user already exists
+        const existingUser = await userService.getByEmail(email)
+        if (existingUser) {
+            throw err('EMAIL_ALREADY_EXISTS', 'User with this email already exists')
+        }
+
+        // Create user
+        const userData = {
+            email,
+            password,
+            role: 'USER' as const,
+            isEmailVerified: false,
+            isActive: true,
+            ...(name && { name }),
+        }
+
+        const user = await userService.create(userData)
+
+        return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+        }
+    }
+
+    /**
+     * Refresh access token using refresh token
+     */
+    async refreshTokens(
+        refreshTokenValue: string,
+        deviceInfo?: string
+    ): Promise<{ accessToken: string; refreshToken?: string }> {
+        // Find and validate refresh token
+        const refreshToken = await refreshTokenRepository.findByToken(refreshTokenValue)
+        if (!refreshToken) {
+            throw err('TOKEN_INVALID', 'Invalid refresh token')
+        }
+
+        if (refreshToken.isRevoked) {
+            throw err('TOKEN_INVALID', 'Refresh token has been revoked')
+        }
+
+        if (new Date() > new Date(refreshToken.expiresAt)) {
+            throw err('TOKEN_EXPIRED', 'Refresh token has expired')
+        }
+
+        // Get user
+        const user = await userService.getById(refreshToken.userId)
+        if (!user.isActive || user.isBanned) {
+            throw err('FORBIDDEN', 'Account is disabled or banned')
+        }
+
+        // Generate new access token
+        const accessToken = generateAccessToken(
+            { id: user.id, role: user.role as 'ADMIN' | 'MODERATOR' | 'USER', email: user.email },
+            {
+                secret: config.JWT_SECRET,
+                accessTokenTtl: config.JWT_ACCESS_EXPIRES_IN,
+                refreshTokenTtl: config.JWT_REFRESH_EXPIRES_IN,
+                issuer: 'fantasy-characters-api',
+                audience: 'fantasy-characters-app',
+            }
+        )
+
+        // Optionally rotate refresh token (recommended for security)
+        let newRefreshToken: string | undefined
+        const shouldRotateRefreshToken = true // This could be configurable
+
+        if (shouldRotateRefreshToken) {
+            // Revoke old refresh token
+            await refreshTokenRepository.revokeByToken(refreshTokenValue)
+
+            // Generate new refresh token
+            const newRefreshTokenPayload: RefreshTokenPayload = {
+                token: refreshTokenValue, // This will be regenerated by the repository
+                userId: user.id,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                ...(deviceInfo && { deviceInfo }),
+            }
+
+            const newRefreshTokenRecord =
+                await refreshTokenRepository.create(newRefreshTokenPayload)
+            newRefreshToken = newRefreshTokenRecord.token
+        }
+
+        return {
+            accessToken,
+            ...(newRefreshToken && { refreshToken: newRefreshToken }),
+        }
+    }
+
+    /**
+     * Logout user by revoking refresh token
+     */
+    async logout(refreshTokenValue: string): Promise<void> {
+        const refreshToken = await refreshTokenRepository.findByToken(refreshTokenValue)
+        if (refreshToken && !refreshToken.isRevoked) {
+            await refreshTokenRepository.revokeByToken(refreshTokenValue)
+        }
+    }
+
+    /**
+     * Logout user from all devices by revoking all refresh tokens
+     */
+    async logoutAll(userId: string): Promise<void> {
+        await refreshTokenRepository.revokeAllByUserId(userId)
+    }
+
+    /**
+     * Change user password
+     */
+    async changePassword(
+        userId: string,
+        currentPassword: string,
+        newPassword: string
+    ): Promise<void> {
+        await userService.changePassword(userId, currentPassword, newPassword)
+    }
+
+    /**
+     * Generate access and refresh token pair
+     */
+    private async generateTokenPair(
+        userId: string,
+        role: string,
+        deviceInfo?: string
+    ): Promise<TokenPair> {
+        // Generate access token
+        const accessToken = generateAccessToken(
+            { id: userId, role: role as 'ADMIN' | 'MODERATOR' | 'USER', email: '' }, // Email not needed for JWT
+            {
+                secret: config.JWT_SECRET,
+                accessTokenTtl: config.JWT_ACCESS_EXPIRES_IN,
+                refreshTokenTtl: config.JWT_REFRESH_EXPIRES_IN,
+                issuer: 'fantasy-characters-api',
+                audience: 'fantasy-characters-app',
+            }
+        )
+
+        // Generate refresh token
+        const refreshTokenPayload: RefreshTokenPayload = {
+            token: '', // Will be generated by repository
+            userId,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+            ...(deviceInfo && { deviceInfo }),
+        }
+
+        const refreshTokenRecord = await refreshTokenRepository.create(refreshTokenPayload)
+
+        return {
+            accessToken,
+            refreshToken: refreshTokenRecord.token,
+        }
+    }
+}
+
+// Singleton export
+export const authService = new AuthService()
