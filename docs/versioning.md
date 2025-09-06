@@ -73,9 +73,11 @@ function toCharacterV1(domain: Character): CharacterV1 {
 }
 
 // Controller (version-specific)
-async function getCharacterV1Handler(req, reply) {
-  const character = await getCharacter(req.params.id)
-  const v1Character = toCharacterV1(character)
-  return reply.send(success(v1Character)) // Uses response-templates.md patterns
-}
+export const characterControllerV1 = {
+  async getCharacter(req, reply) {
+    const character = await characterService.getById(req.params.id)
+    const v1Character = toCharacterV1(character)
+    return reply.send(success(v1Character)) // Uses response-templates.md patterns
+  },
+} as const
 ```

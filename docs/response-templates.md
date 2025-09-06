@@ -166,37 +166,30 @@ import {
 ```typescript
 import { HTTP_STATUS } from '../../common/constants/http-status'
 
-// Always use helpers for consistent format
-export async function getCharacter(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
-  const character = await characterService.getById(request.params.id)
-  return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
-}
+// Object literal wrapper for clean organization
+export const characterController = {
+  async getCharacter(request: FastifyRequest, reply: FastifyReply) {
+    const character = await characterService.getById(request.params.id)
+    return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
+  },
 
-export async function createCharacter(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
-  const character = await characterService.create(request.body)
-  const { response, headers } = created(
-    character,
-    `/api/v1/characters/${character.id}`,
-    request.id
-  )
-  return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
-}
+  async createCharacter(request: FastifyRequest, reply: FastifyReply) {
+    const character = await characterService.create(request.body)
+    const { response, headers } = created(
+      character,
+      `/api/v1/characters/${character.id}`,
+      request.id
+    )
+    return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
+  },
 
-export async function listCharacters(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
-  const { items, pagination } = await characterService.list(request.query)
-  return reply
-    .code(HTTP_STATUS.OK)
-    .send(paginated(items, pagination, request.id))
-}
+  async listCharacters(request: FastifyRequest, reply: FastifyReply) {
+    const { items, pagination } = await characterService.list(request.query)
+    return reply
+      .code(HTTP_STATUS.OK)
+      .send(paginated(items, pagination, request.id))
+  },
+} as const
 ```
 
 ### Route Schema Definition
@@ -214,7 +207,7 @@ app.get(
       },
     },
   },
-  getCharacterHandler
+  characterController.getCharacter // Object method reference
 )
 
 app.post(
@@ -230,7 +223,7 @@ app.post(
       },
     },
   },
-  createCharacterHandler
+  characterController.createCharacter // Object method reference
 )
 
 app.get(
@@ -244,7 +237,7 @@ app.get(
       },
     },
   },
-  listCharactersHandler
+  characterController.listCharacters // Object method reference
 )
 ```
 

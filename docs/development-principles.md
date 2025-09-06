@@ -5,12 +5,13 @@
 1. **Schema-First**: Define TypeBox schemas, derive TypeScript types
 2. **Single Source of Truth**: Never duplicate type definitions - always import
    from `src/shared/schemas`
-3. **Functional over OOP**: Pure functions for business logic
+3. **Functional over OOP**: Pure functions wrapped in object literals for organization
 4. **KISS**: Simplest code that works
 5. **YAGNI**: Only build what's needed right now
 6. **DRY**: Extract common code, don't over-abstract
 7. **Centralized Schemas**: All shared schemas in `src/shared/schemas/` with
    proper exports
+8. **Object Literal Wrappers**: Use object literals to namespace and organize pure functions
 
 ## Schema-First Development Workflow
 
@@ -64,23 +65,37 @@ export async function createUserInDb(data: CreateUserInput): Promise<User> {
   return prisma.user.create({ data: { ...data, id: generateUUIDv7() } })
 }
 
-// 4. Service Layer (in feature-name.service.ts)
-export async function createUser(data: CreateUserInput): Promise<User> {
-  // Business logic validation
-  const existingUser = await findUserByEmail(data.email)
-  if (existingUser) throw err('EMAIL_ALREADY_EXISTS', 'Email already exists') // See error-handling.md
+// 4. Service Layer (in feature-name.service.ts) - Object literal wrapper
+export const userService = {
+  async createUser(data: CreateUserInput): Promise<User> {
+    // Business logic validation
+    const existingUser = await findUserByEmail(data.email)
+    if (existingUser) throw err('EMAIL_ALREADY_EXISTS', 'Email already exists') // See error-handling.md
 
-  return createUserInDb(data)
-}
+    return createUserInDb(data)
+  },
 
-// 5. Controller (in feature-name.controller.ts)
-export async function createUserHandler(
-  req: FastifyRequest,
-  reply: FastifyReply
-) {
-  const user = await createUser(req.body) // req.body is typed automatically
-  return reply.code(201).send(success(user, req.id)) // See response-templates.md for success()
-}
+  async getUserById(id: string): Promise<User | null> {
+    return findUserByIdInDb(id)
+  },
+  
+  // ... other user operations
+} as const
+
+// 5. Controller (in feature-name.controller.ts) - Object literal wrapper
+export const userController = {
+  async create(req: FastifyRequest, reply: FastifyReply) {
+    const user = await userService.createUser(req.body) // req.body is typed automatically
+    return reply.code(201).send(success(user, req.id)) // See response-templates.md for success()
+  },
+
+  async getById(req: FastifyRequest, reply: FastifyReply) {
+    const user = await userService.getUserById(req.params.id)
+    return reply.send(success(user, req.id))
+  },
+  
+  // ... other controller methods
+} as const
 
 // 6. Register Routes (in feature-name.route.ts)
 app.post(
@@ -93,7 +108,7 @@ app.post(
       }, // Centralized response helper
     },
   },
-  createUserHandler
+  userController.create // Clean object method reference
 )
 ```
 
@@ -111,3 +126,5 @@ app.post(
 - **Prefer explicit over implicit** - be clear about intentions
 - **Write code that fails fast** in development but handles errors gracefully in
   production
+- **Use object literal wrappers** for services and controllers to maintain clean namespaces
+- **Export pure functions wrapped in `const` objects** with `as const` for type safety

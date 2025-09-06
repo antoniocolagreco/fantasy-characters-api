@@ -59,9 +59,9 @@ src/
 
 - **feature-name.routes.ts**: Register endpoints, attach schemas
 - **feature-name.schema.ts**: TypeBox validation schemas, export TS types
-- **feature-name.controller.ts**: HTTP → service calls, no DB access
-- **feature-name.service.ts**: Business logic, coordinates repositories
-- **feature-name.repository.ts**: Database access layer (Prisma operations)
+- **feature-name.controller.ts**: HTTP → service calls, exported as object literal wrapper
+- **feature-name.service.ts**: Business logic, coordinates repositories, exported as object literal wrapper
+- **feature-name.repository.ts**: Database access layer (Prisma operations), pure functions
 - **feature-name.adapter.ts**: Transform domain models to API responses
 - **feature-name.types.ts**: Domain TypeScript types
 

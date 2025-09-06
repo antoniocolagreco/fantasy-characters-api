@@ -42,7 +42,7 @@ app.post(
   {
     config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
   },
-  loginHandler
+  authController.login
 )
 
 app.post(
@@ -50,7 +50,7 @@ app.post(
   {
     config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
   },
-  registerHandler
+  authController.register
 )
 
 app.post(
@@ -58,7 +58,7 @@ app.post(
   {
     config: { rateLimit: { max: 3, timeWindow: '1 minute' } },
   },
-  forgotPasswordHandler
+  authController.forgotPassword
 )
 
 // CRUD endpoints - balance usability and protection
@@ -67,7 +67,7 @@ app.post(
   {
     config: { rateLimit: { max: 30, timeWindow: '1 minute' } },
   },
-  createCharacterHandler
+  characterController.create
 )
 
 app.put(
@@ -75,7 +75,7 @@ app.put(
   {
     config: { rateLimit: { max: 50, timeWindow: '1 minute' } },
   },
-  updateCharacterHandler
+  characterController.update
 )
 
 app.delete(
@@ -83,7 +83,7 @@ app.delete(
   {
     config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
   },
-  deleteCharacterHandler
+  characterController.delete
 )
 
 // Expensive endpoints - prevent resource abuse
@@ -92,7 +92,7 @@ app.get(
   {
     config: { rateLimit: { max: 40, timeWindow: '1 minute' } },
   },
-  searchHandler
+  searchController.search
 )
 
 app.post(
@@ -100,7 +100,7 @@ app.post(
   {
     config: { rateLimit: { max: 15, timeWindow: '1 minute' } },
   },
-  uploadHandler
+  uploadController.upload
 )
 
 app.post(
@@ -108,7 +108,7 @@ app.post(
   {
     config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
   },
-  batchHandler
+  characterController.batch
 )
 ```
 
@@ -117,7 +117,8 @@ app.post(
 Application-level limits enforced in services for user plans/features.
 
 ```ts
-export async function createCharacter(
+export const characterService = {
+  async createCharacter(
   data: CreateCharacterInput,
   userId: string
 ) {

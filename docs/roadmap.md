@@ -154,22 +154,22 @@ Duration: 4–6 days
 
 Duration: 4–5 days
 
-- [ ] 7.01 Scaffold authentication feature structure
-- [ ] 7.02 Create authentication schemas (types derived from schemas)
-- [ ] 7.03 Implement JWT token system ([authentication.md](./authentication.md))
-- [ ] 7.04 Implement password hashing with Argon2
-- [ ] 7.05 Setup JWT middleware for route protection
-- [ ] 7.06 Implement authentication service layer
-- [ ] 7.07 Implement `POST /api/v1/auth/register`
-- [ ] 7.08 Implement `POST /api/v1/auth/login`
-- [ ] 7.09 Implement `POST /api/v1/auth/logout`
-- [ ] 7.10 Implement `POST /api/v1/auth/refresh` (rotation)
-- [ ] 7.11 Implement `GET /api/v1/auth/profile`
-- [ ] 7.12 Implement `PUT /api/v1/auth/profile`
-- [ ] 7.13 Implement PUT /api/v1/auth/password
-- [ ] 7.14 Add error handling for all auth operations
-- [ ] 7.15 Write auth tests (≥ 80% coverage)
-- [ ] 7.16 Update OpenAPI docs for all auth endpoints
+- [x] 7.01 Scaffold authentication feature structure
+- [x] 7.02 Create authentication schemas (types derived from schemas)
+- [x] 7.03 Implement JWT token system ([authentication.md](./authentication.md))
+- [x] 7.04 Implement password hashing with Argon2
+- [x] 7.05 Setup JWT middleware for route protection
+- [x] 7.06 Implement authentication service layer
+- [x] 7.07 Implement `POST /api/v1/auth/register`
+- [x] 7.08 Implement `POST /api/v1/auth/login`
+- [x] 7.09 Implement `POST /api/v1/auth/logout`
+- [x] 7.10 Implement `POST /api/v1/auth/refresh` (rotation)
+- [x] 7.11 Implement `GET /api/v1/auth/profile`
+- [x] 7.12 Implement `PUT /api/v1/auth/profile`
+- [x] 7.13 Implement PUT /api/v1/auth/password
+- [x] 7.14 Add error handling for all auth operations
+- [x] 7.15 Write auth tests (≥ 80% coverage)
+- [x] 7.16 Update OpenAPI docs for all auth endpoints
 - [ ] 7.17 Gate OAuth providers behind OAUTH_ENABLED flag and env vars
       (optional)
 
@@ -193,12 +193,9 @@ Cross-links: [feature-dependencies.md](./feature-dependencies.md),
 - [x] 8.05 Update authorization docs and note protected endpoints in
       [endpoints.md](./endpoints.md) ✅
 
-**Milestone 8 COMPLETED** ✅ All RBAC authorization tasks complete with working
-implementation and comprehensive testing.
-
 ---
 
-## 9 🔑 OAuth2 Integration (Dependencies: M1-M7)
+## 9 🔑 OAuth2 Integration (Dependencies: M1-M7) (Optional)
 
 Duration: 3-5 days
 

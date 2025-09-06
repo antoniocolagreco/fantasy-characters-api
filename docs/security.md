@@ -269,20 +269,22 @@ export function rbacPreHandler(resource: string, action: string) {
 }
 
 // Service-level check (always re-check)
-export async function updateCharacter(id: string, data: any, user: any) {
-  const character = await prisma.character.findUnique({ where: { id } })
-  if (
-    !can({
-      user,
-      resource: 'characters',
-      action: 'update',
-      ownerId: character.ownerId,
-    })
-  ) {
-    throw err('FORBIDDEN', 'Not allowed')
-  }
-  return prisma.character.update({ where: { id }, data })
-}
+export const characterService = {
+  async updateCharacter(id: string, data: any, user: any) {
+    const character = await prisma.character.findUnique({ where: { id } })
+    if (
+      !can({
+        user,
+        resource: 'characters',
+        action: 'update',
+        ownerId: character.ownerId,
+      })
+    ) {
+      throw err('FORBIDDEN', 'Not allowed')
+    }
+    // ... update logic
+  },
+} as const
 ```
 
 ## Required Input Sanitization

@@ -119,7 +119,7 @@ app.get(
     // Validate business rules with reusable helper
     validateRange(query.minLevel, query.maxLevel, 'minLevel', 'maxLevel')
 
-    const result = await listCharacters({ ...query, userId: req.user?.id })
+    const result = await characterService.listCharacters({ ...query, userId: req.user?.id })
     return reply.send(success(result.items, { pagination: result.pagination }))
   }
 )
@@ -207,48 +207,50 @@ Clean service implementation using helper utilities for consistent query
 building and pagination.
 
 ```typescript
-export async function listCharacters(
-  params: ListCharactersParams
-): Promise<ListCharactersResult> {
-  const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
+export const characterService = {
+  async listCharacters(params: ListCharactersParams): Promise<ListCharactersResult> {
+    const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
 
-  // Build where clause - zero boilerplate
-  const where = buildWhere<Prisma.CharacterWhereInput>({
-    visibility: params.visibility,
-    raceId: params.raceId,
-    archetypeId: params.archetypeId,
-    level: params.level && { gte: params.minLevel, lte: params.maxLevel },
-    ownerId: params.ownerId,
-  })
+    // Build where clause - zero boilerplate
+    const where = buildWhere<Prisma.CharacterWhereInput>({
+      visibility: params.visibility,
+      raceId: params.raceId,
+      archetypeId: params.archetypeId,
+      level: params.level && { gte: params.minLevel, lte: params.maxLevel },
+      ownerId: params.ownerId,
+    })
 
-  // Apply cursor pagination
-  const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
+    // Apply cursor pagination
+    const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
 
-  // Execute query
-  const items = await prisma.character.findMany({
-    where: whereWithCursor,
-    orderBy: buildOrderBy(sortBy, sortDir), // Automatic tie-breaker
-    take: limit + 1,
-  })
+    // Execute query
+    const items = await prisma.character.findMany({
+      where: whereWithCursor,
+      orderBy: buildOrderBy(sortBy, sortDir), // Automatic tie-breaker
+      take: limit + 1,
+    })
 
-  // Build response with consistent pagination schema
-  const {
-    items: finalItems,
-    hasNext,
-    nextCursor,
-  } = buildPagination(items, limit, sortBy)
-
-  return {
-    items: finalItems,
-    pagination: {
-      limit,
+    // Build response with consistent pagination schema
+    const {
+      items: finalItems,
       hasNext,
-      hasPrev: !!cursor, // Has previous if we used a cursor
-      endCursor: nextCursor,
-      startCursor: cursor,
-    },
-  }
-}
+      nextCursor,
+    } = buildPagination(items, limit, sortBy)
+
+    return {
+      items: finalItems,
+      pagination: {
+        limit,
+        hasNext,
+        hasPrev: !!cursor, // Has previous if we used a cursor
+        endCursor: nextCursor,
+        startCursor: cursor,
+      },
+    }
+  },
+
+  // ... other character operations
+} as const
 ```
 
 ## Advanced Query Helpers (Examples)
