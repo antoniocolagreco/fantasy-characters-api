@@ -184,7 +184,7 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
     return async function rbacMiddleware(
         request: RbacMiddlewareRequest,
         _reply: RbacMiddlewareReply
-    ) {
+    ): Promise<void> {
         // Check if RBAC is disabled (for testing/development)
         const disabled = process.env.RBAC_ENABLED === 'false'
         if (disabled) {
@@ -243,4 +243,19 @@ export const rbac = {
     update: (resource: Resource) => createRbacMiddleware(resource, 'update'),
     delete: (resource: Resource) => createRbacMiddleware(resource, 'delete'),
     manage: (resource: Resource) => createRbacMiddleware(resource, 'manage'),
+}
+
+/**
+ * Adapter: wrap our RBAC middleware into a Fastify-compatible preHandler
+ * without leaking Fastify types into the RBAC domain.
+ */
+export function toFastifyPreHandler(
+    fn: (req: RbacMiddlewareRequest, reply: RbacMiddlewareReply) => Promise<void>
+) {
+    return async function preHandler(request: unknown, reply: unknown): Promise<void> {
+        // Convert using unknown to avoid any
+        const rq = request as unknown as RbacMiddlewareRequest
+        const rp = reply as unknown as RbacMiddlewareReply
+        await fn(rq, rp)
+    }
 }

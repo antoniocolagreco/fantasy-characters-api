@@ -4,6 +4,16 @@ import { AppError, err } from '@/shared/errors'
 import type { BasicAuthRequest, BasicReply } from '@/shared/types/http'
 
 export function createAuthMiddleware(jwtConfig: JwtConfig) {
+    // Local type guard to recognize AppError across module boundaries
+    function isAppErrorLike(e: unknown): e is AppError {
+        if (e instanceof AppError) return true
+        if (typeof e === 'object' && e !== null && 'name' in e && 'code' in e) {
+            const n = (e as { name?: unknown }).name
+            return typeof n === 'string' && n === 'AppError'
+        }
+        return false
+    }
+
     return function authMiddleware(request: BasicAuthRequest, _reply: BasicReply) {
         const headers = request.headers || {}
         const authorization = (headers.authorization || headers.Authorization) as string | undefined
@@ -29,7 +39,7 @@ export function createAuthMiddleware(jwtConfig: JwtConfig) {
             }
         } catch (error) {
             // Re-throw AppError instances as-is (preserves specific error codes)
-            if (error instanceof AppError) {
+            if (isAppErrorLike(error)) {
                 throw error
             }
             if (error instanceof Error) {

@@ -13,7 +13,7 @@ import {
     BanUserSchema,
 } from './users.http.schema'
 
-import { rbac } from '@/features/auth/rbac.middleware'
+import { rbac, toFastifyPreHandler } from '@/features/auth/rbac.middleware'
 import { ErrorResponseSchema } from '@/shared/schemas'
 
 export const usersRoutesV1: FastifyPluginAsync = async app => {
@@ -23,7 +23,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.get(
         '/users/:id',
         {
-            preHandler: [rbac.read('users')],
+            preHandler: [toFastifyPreHandler(rbac.read('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'Get user by ID',
@@ -44,7 +44,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.get(
         '/users',
         {
-            preHandler: [rbac.read('users')],
+            preHandler: [toFastifyPreHandler(rbac.read('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'List users',
@@ -64,7 +64,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.get(
         '/users/stats',
         {
-            preHandler: [rbac.read('users')],
+            preHandler: [toFastifyPreHandler(rbac.read('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'User statistics',
@@ -83,7 +83,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.post(
         '/users',
         {
-            preHandler: [rbac.create('users')],
+            preHandler: [toFastifyPreHandler(rbac.create('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'Create user',
@@ -103,7 +103,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.put(
         '/users/:id',
         {
-            preHandler: [rbac.update('users')],
+            preHandler: [toFastifyPreHandler(rbac.update('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'Update user',
@@ -125,7 +125,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.delete(
         '/users/:id',
         {
-            preHandler: [rbac.delete('users')],
+            preHandler: [toFastifyPreHandler(rbac.delete('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'Delete user',
@@ -146,7 +146,7 @@ export const usersRoutesV1: FastifyPluginAsync = async app => {
     app.post(
         '/users/:id/ban',
         {
-            preHandler: [rbac.manage('users')],
+            preHandler: [toFastifyPreHandler(rbac.manage('users'))],
             schema: {
                 tags: ['Users'],
                 summary: 'Ban/unban user',

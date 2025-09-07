@@ -72,8 +72,8 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(multipartPlugin)
     await app.register(healthCheckPlugin)
 
-    // Add Prisma to all requests
-    app.decorateRequest('prisma', null)
+    // Add Prisma to all requests (use undefined to satisfy Fastify's GetterSetter typing)
+    app.decorateRequest('prisma', undefined)
     app.addHook('onRequest', async request => {
         request.prisma = prismaService
     })

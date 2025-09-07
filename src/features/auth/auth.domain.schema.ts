@@ -71,8 +71,9 @@ export const LoginRequestSchema = Type.Object(
             format: 'email',
             transform: ['trim', 'toLowerCase'],
         }),
+        // Login should accept existing passwords of any reasonable length; do not block short dev passwords
         password: Type.String({
-            minLength: 8,
+            minLength: 4,
             maxLength: 128,
         }),
     },

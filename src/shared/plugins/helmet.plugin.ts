@@ -8,11 +8,13 @@ export default fp(async (fastify: FastifyInstance) => {
         contentSecurityPolicy: {
             directives: {
                 defaultSrc: ["'self'"],
-                scriptSrc: ["'self'"],
+                // Swagger UI may inject some inline scripts; allow in dev
+                scriptSrc: ["'self'", "'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for Swagger UI
-                imgSrc: ["'self'", 'data:', 'https:'],
-                connectSrc: ["'self'"],
-                fontSrc: ["'self'"],
+                imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
+                // Allow same-origin plus protocols for server url declared in OpenAPI, and WS for dev
+                connectSrc: ["'self'", 'http:', 'https:', 'ws:', 'wss:'],
+                fontSrc: ["'self'", 'data:'],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
                 frameSrc: ["'none'"],

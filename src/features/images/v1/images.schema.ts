@@ -26,8 +26,16 @@ export const ImageSchema = Type.Intersect(
     { $id: 'Image' }
 )
 
-// API response schema (without blob data)
-export const ImageMetadataSchema = Type.Omit(ImageSchema, ['blob'], { $id: 'ImageMetadata' })
+// API response schema (without blob data + URL for accessing the image)
+export const ImageMetadataSchema = Type.Intersect(
+    [
+        Type.Omit(ImageSchema, ['blob']),
+        Type.Object({
+            url: Type.String({ format: 'uri', description: 'URL to access the image file' }),
+        }),
+    ],
+    { $id: 'ImageMetadata' }
+)
 
 // Request schemas
 export const CreateImageSchema = Type.Object(

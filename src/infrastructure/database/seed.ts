@@ -3,8 +3,10 @@
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+
 import { PrismaClient, Rarity, Role, Sex, Slot, Visibility } from '@prisma/client'
 
+import { passwordService } from '@/features/auth/password.service'
 import { logger } from '@/infrastructure/logging/logger.service'
 import { generateUUIDv7 } from '@/shared/utils'
 
@@ -28,14 +30,16 @@ async function main() {
 
     logger.info('Creating admin user...')
 
+    // Hash the default admin password ('admin')
+    const adminPasswordHash = await passwordService.hashPassword('admin123')
+
     // Create admin user
     const adminUser = await prisma.user.create({
         data: {
             id: generateUUIDv7(),
-            email: 'admin@fantasy-api.dev',
-            passwordHash:
-                '$argon2id$v=19$m=65536,t=3,p=4$lBX5nAE8wTVvQD6ZK5bQ7A$7BJ+wOvzYMc6N5RD2eZF9Q4K9MQq2Y8R7F2L3M4V5N6',
-            name: 'System Administrator',
+            email: 'admin@admin.dev',
+            passwordHash: adminPasswordHash,
+            name: 'admin',
             role: Role.USER, // Will be promoted to ADMIN after creation
             isEmailVerified: true,
             isActive: true,
@@ -47,6 +51,8 @@ async function main() {
         where: { id: adminUser.id },
         data: { role: Role.ADMIN },
     })
+
+    logger.info("Seeded admin credentials -> email: 'admin@fantasy-api.dev' | password: 'admin'")
 
     logger.info('Creating sample races...')
 
@@ -183,7 +189,7 @@ async function main() {
         try {
             const filePath = join(process.cwd(), 'assets', filename)
             const imageBuffer = readFileSync(filePath)
-            
+
             return await prisma.image.create({
                 data: {
                     id: generateUUIDv7(),

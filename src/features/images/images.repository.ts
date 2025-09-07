@@ -5,7 +5,7 @@ import type {
     CreateImageInput,
     ImageStats,
     ListImagesParams,
-    ListImagesResult,
+    RawImageListResult,
     UpdateImageInput,
 } from './images.type'
 
@@ -65,7 +65,7 @@ export async function findImageMetadataByIdInDb(id: string): Promise<Omit<Image,
 export async function findImageBlobByIdInDb(
     id: string
 ): Promise<{ blob: Buffer; mimeType: string; size: number } | null> {
-    return prisma.image.findUnique({
+    const row = await prisma.image.findUnique({
         where: { id },
         select: {
             blob: true,
@@ -73,6 +73,15 @@ export async function findImageBlobByIdInDb(
             size: true,
         },
     })
+
+    if (!row) return null
+
+    // Prisma may return Uint8Array for bytes; convert to Buffer for downstream code
+    const blob = Buffer.isBuffer(row.blob)
+        ? (row.blob as Buffer)
+        : Buffer.from(row.blob as unknown as Uint8Array)
+
+    return { blob, mimeType: row.mimeType, size: row.size }
 }
 
 export async function updateImageInDb(id: string, data: UpdateImageInput): Promise<Image | null> {
@@ -103,7 +112,7 @@ export async function deleteImageFromDb(id: string): Promise<boolean> {
     }
 }
 
-export async function listImagesInDb(params: ListImagesParams): Promise<ListImagesResult> {
+export async function listImagesInDb(params: ListImagesParams): Promise<RawImageListResult> {
     const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
 
     // Build where clause manually for type safety
@@ -190,18 +199,7 @@ export async function listImagesInDb(params: ListImagesParams): Promise<ListImag
     }
 
     return {
-        data: finalItems.map(item => ({
-            id: item.id,
-            description: item.description || undefined,
-            size: item.size,
-            mimeType: item.mimeType,
-            width: item.width,
-            height: item.height,
-            ownerId: item.ownerId || undefined,
-            visibility: item.visibility as 'PUBLIC' | 'PRIVATE' | 'HIDDEN',
-            createdAt: item.createdAt.toISOString(),
-            updatedAt: item.updatedAt.toISOString(),
-        })) as ListImagesResult['data'],
+        data: finalItems,
         pagination: {
             limit,
             hasNext,

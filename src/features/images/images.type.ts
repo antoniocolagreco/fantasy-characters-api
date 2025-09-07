@@ -37,6 +37,29 @@ export type ListImagesParams = ImageListQuery & {
     userId?: string
 }
 
+// Repository layer result types (raw database data)
+export type RawImageListResult = {
+    data: {
+        id: string
+        description: string | null
+        size: number
+        mimeType: string
+        width: number
+        height: number
+        ownerId: string | null
+        visibility: string
+        createdAt: Date
+        updatedAt: Date
+    }[]
+    pagination: {
+        limit: number
+        hasNext: boolean
+        hasPrev: boolean
+        startCursor?: string
+        endCursor?: string
+    }
+}
+
 // Use generic domain pagination type instead of manual definition
 export type ListImagesResult = PaginatedResultOf<ImageMetadata>
 

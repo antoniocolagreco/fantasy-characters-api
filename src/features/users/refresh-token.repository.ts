@@ -1,3 +1,5 @@
+import { randomBytes } from 'node:crypto'
+
 import type { RefreshTokenRepository } from '@/features/users/users.type'
 import { prisma } from '@/infrastructure/database'
 import { err } from '@/shared/errors'
@@ -6,10 +8,17 @@ import { generateUUIDv7 } from '@/shared/utils'
 // ===== Repository Implementation =====
 export const refreshTokenRepository: RefreshTokenRepository = {
     async create(data) {
+        // Ensure a token value exists (service passes empty placeholder)
+        // Ensure a token value exists (service passes empty placeholder)
+        // Use a cryptographically-strong random token (32 bytes -> 64 hex chars)
+        const token =
+            data.token && data.token.length > 0 ? data.token : randomBytes(32).toString('hex')
+
         const refreshToken = await prisma.refreshToken.create({
             data: {
                 id: generateUUIDv7(),
                 ...data,
+                token,
             },
         })
 

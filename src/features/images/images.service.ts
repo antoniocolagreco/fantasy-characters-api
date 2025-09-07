@@ -10,12 +10,12 @@ import {
 } from './images.repository'
 import type {
     CreateImageInput,
-    Image,
     ImageStats,
     ListImagesParams,
     ListImagesResult,
     UpdateImageInput,
 } from './images.type'
+import type { ImageMetadata } from './v1/images.schema'
 
 import { userCan, type AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
@@ -34,21 +34,26 @@ function transformImageForApi(image: {
     visibility: string
     createdAt: Date | string
     updatedAt: Date | string
-}): Omit<Image, 'blob'> {
-    return {
+}): ImageMetadata {
+    const base = {
         id: image.id,
-        description: image.description || undefined,
         size: image.size,
         mimeType: image.mimeType,
         width: image.width,
         height: image.height,
-        ownerId: image.ownerId || undefined,
         visibility: image.visibility as 'PUBLIC' | 'PRIVATE' | 'HIDDEN',
         createdAt:
             image.createdAt instanceof Date ? image.createdAt.toISOString() : image.createdAt,
         updatedAt:
             image.updatedAt instanceof Date ? image.updatedAt.toISOString() : image.updatedAt,
-    } as Omit<Image, 'blob'>
+        url: `/api/v1/images/${image.id}/file`,
+    }
+
+    return {
+        ...base,
+        ...(image.description && { description: image.description }),
+        ...(image.ownerId && { ownerId: image.ownerId }),
+    }
 }
 
 /**
@@ -83,7 +88,7 @@ export const imageService = {
         file: { mimetype: string; filename?: string },
         buffer: Buffer,
         user?: AuthenticatedUser
-    ): Promise<Omit<Image, 'blob'>> {
+    ): Promise<ImageMetadata> {
         // Validate file before processing
         validateImageFile(file, buffer)
 
@@ -113,7 +118,7 @@ export const imageService = {
         return transformImageForApi(image)
     },
 
-    async getImageById(id: string, user?: AuthenticatedUser): Promise<Omit<Image, 'blob'> | null> {
+    async getImageById(id: string, user?: AuthenticatedUser): Promise<ImageMetadata | null> {
         const image = await findImageMetadataByIdInDb(id)
         if (!image) {
             return null
@@ -150,7 +155,7 @@ export const imageService = {
         id: string,
         data: UpdateImageInput,
         user?: AuthenticatedUser
-    ): Promise<Omit<Image, 'blob'> | null> {
+    ): Promise<ImageMetadata | null> {
         const existingImage = await findImageMetadataByIdInDb(id)
         if (!existingImage) {
             return null
@@ -202,7 +207,13 @@ export const imageService = {
         }
         // Admin users can see all images without restriction
 
-        return listImagesInDb(effectiveParams)
+        const rawResult = await listImagesInDb(effectiveParams)
+
+        // Transform raw data to API format
+        return {
+            data: rawResult.data.map(item => transformImageForApi(item)),
+            pagination: rawResult.pagination,
+        }
     },
 
     async getImageStats(ownerId?: string, user?: AuthenticatedUser): Promise<ImageStats> {
@@ -226,7 +237,7 @@ export const imageService = {
         file: { mimetype: string; filename?: string },
         buffer: Buffer,
         user?: AuthenticatedUser
-    ): Promise<Omit<Image, 'blob'> | null> {
+    ): Promise<ImageMetadata | null> {
         const existingImage = await findImageMetadataByIdInDb(id)
         if (!existingImage) {
             return null

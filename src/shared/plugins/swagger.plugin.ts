@@ -110,8 +110,12 @@ export const swaggerPlugin = fp(
                 deepLinking: true,
                 defaultModelsExpandDepth: 2,
                 defaultModelExpandDepth: 2,
+                supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+                showMutatedRequest: false,
+                persistAuthorization: true,
             },
-            staticCSP: true,
+            // Disable staticCSP to avoid double CSP with helmet in dev
+            staticCSP: false,
             transformSpecificationClone: true,
         })
 
