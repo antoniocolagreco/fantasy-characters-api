@@ -29,36 +29,44 @@ vi.mock('@/infrastructure/database', () => ({
     prisma: prismaFake,
 }))
 
-// Mock image processing functions for tests
-vi.mock('../src/features/images/images.processing', () => ({
-    validateImageFile: vi.fn(() => {
-        // Do nothing - skip validation in tests
-    }),
-    processImageToWebP: vi.fn((buffer: Buffer) => {
-        return Promise.resolve({
-            buffer,
-            size: buffer.length,
-            mimeType: 'image/webp',
-            width: 800,
-            height: 600,
-        })
-    }),
-}))
+// Mock image processing functions for tests - will be overridden for specific tests
+vi.mock('../src/features/images/images.processing', async importOriginal => {
+    const actual = (await importOriginal()) as Record<string, unknown>
+    return {
+        ...actual,
+        validateImageFile: vi.fn(() => {
+            // Do nothing - skip validation in tests
+        }),
+        processImageToWebP: vi.fn((buffer: Buffer) => {
+            return Promise.resolve({
+                buffer,
+                size: buffer.length,
+                mimeType: 'image/webp',
+                width: 800,
+                height: 600,
+            })
+        }),
+    }
+})
 
-vi.mock('@/features/images/images.processing', () => ({
-    validateImageFile: vi.fn(() => {
-        // Do nothing - skip validation in tests
-    }),
-    processImageToWebP: vi.fn((buffer: Buffer) => {
-        return Promise.resolve({
-            buffer,
-            size: buffer.length,
-            mimeType: 'image/webp',
-            width: 800,
-            height: 600,
-        })
-    }),
-}))
+vi.mock('@/features/images/images.processing', async importOriginal => {
+    const actual = (await importOriginal()) as Record<string, unknown>
+    return {
+        ...actual,
+        validateImageFile: vi.fn(() => {
+            // Do nothing - skip validation in tests
+        }),
+        processImageToWebP: vi.fn((buffer: Buffer) => {
+            return Promise.resolve({
+                buffer,
+                size: buffer.length,
+                mimeType: 'image/webp',
+                width: 800,
+                height: 600,
+            })
+        }),
+    }
+})
 
 beforeAll(() => {
     // Setup will be added in future milestones

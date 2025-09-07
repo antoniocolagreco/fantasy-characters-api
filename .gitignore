@@ -115,11 +115,6 @@ prisma/migrations/*
 # Sharp cache
 .sharp-cache/
 
-# Upload directories (if using local file storage)
-uploads/
-images/
-files/
-
 # Development certificates
 *.pem
 *.key
