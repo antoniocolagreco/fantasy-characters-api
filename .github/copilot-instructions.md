@@ -11,6 +11,8 @@
 - [📋 Code Style](../docs/code-style.md) - Linting, formatting, and coding
   conventions
 - [� Endpoints](../docs/endpoints.md) - Detailed endpoint specifications
+- [🚪 Authorization & RBAC](../docs/authorization.md) - Complete role-based
+  access control specification
 - [🔍 Query Templates](../docs/query-templates.md) - Database query patterns and
   examples
 - [📋 Response Templates](../docs/response-templates.md) - Response format

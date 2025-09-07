@@ -1,0 +1,178 @@
+/**
+ * RBAC Utility Helpers
+ *
+ * Reusable security functions following the new RBAC architecture.
+ * These helpers are used in SERVICE layer for consistent permission checking.
+ */
+
+import type { AuthenticatedUser } from '@/features/auth'
+import type { Role, Visibility } from '@/shared/schemas'
+
+/**
+ * Apply security constraints to any filter object for DATABASE queries
+ *
+ * This is the core function that SERVICE layer uses to build secure filters
+ * that REPOSITORY layer applies directly to database queries.
+ */
+export function applySecurityFilters<T extends Record<string, unknown>>(
+    filters: T,
+    user?: AuthenticatedUser
+): T {
+    if (!user) {
+        // Anonymous users: only PUBLIC content
+        return { ...filters, visibility: 'PUBLIC' } as T
+    }
+
+    if (user.role === 'ADMIN') {
+        // Admin: no security restrictions
+        return filters
+    }
+
+    if (user.role === 'MODERATOR') {
+        // Moderator: PUBLIC + HIDDEN + own content
+        const securityFilter = {
+            OR: [{ visibility: 'PUBLIC' }, { visibility: 'HIDDEN' }, { ownerId: user.id }],
+        }
+        return { ...filters, ...securityFilter } as T
+    }
+
+    // Regular USER: PUBLIC + own content
+    const securityFilter = {
+        OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }],
+    }
+    return { ...filters, ...securityFilter } as T
+}
+
+/**
+ * Check if user can modify a specific resource
+ *
+ * Used in SERVICE layer for UPDATE/DELETE operations.
+ */
+export function canModifyResource(
+    user: AuthenticatedUser | undefined,
+    resource: { ownerId?: string | null; ownerRole?: Role | null }
+): boolean {
+    if (!user) return false
+
+    // Owner can always modify their own content
+    if (resource.ownerId === user.id) return true
+
+    // Admin can modify non-admin content
+    if (user.role === 'ADMIN') {
+        return resource.ownerRole !== 'ADMIN' || resource.ownerId === user.id
+    }
+
+    // Moderator can modify USER content or orphaned content
+    if (user.role === 'MODERATOR') {
+        return !resource.ownerId || resource.ownerRole === 'USER'
+    }
+
+    return false
+}
+
+/**
+ * Check if user can view a specific resource
+ *
+ * Used in SERVICE layer for READ operations on specific resources.
+ */
+export function canViewResource(
+    user: AuthenticatedUser | undefined,
+    resource: { ownerId?: string | null; visibility?: Visibility | string | null }
+): boolean {
+    if (!user) return resource.visibility === 'PUBLIC'
+
+    // Admin can see everything
+    if (user.role === 'ADMIN') return true
+
+    // Owner can see own content regardless of visibility
+    if (resource.ownerId === user.id) return true
+
+    // Moderator can see PUBLIC and HIDDEN
+    if (user.role === 'MODERATOR') {
+        return ['PUBLIC', 'HIDDEN'].includes(resource.visibility as string)
+    }
+
+    // Regular user can only see PUBLIC
+    return resource.visibility === 'PUBLIC'
+}
+
+/**
+ * Check if user can create content with specific ownership
+ *
+ * Used in SERVICE layer for CREATE operations.
+ */
+export function canCreateResource(
+    user: AuthenticatedUser | undefined,
+    targetOwnerId?: string
+): boolean {
+    if (!user) return false
+
+    // Admin can create content for anyone
+    if (user.role === 'ADMIN') return true
+
+    // Moderator can create content for themselves or orphaned
+    if (user.role === 'MODERATOR') {
+        return !targetOwnerId || targetOwnerId === user.id
+    }
+
+    // Regular user can only create content for themselves
+    return !targetOwnerId || targetOwnerId === user.id
+}
+
+/**
+ * Build security filters specifically for USER management
+ *
+ * Special case for user-related operations.
+ */
+export function applyUserSecurityFilters<T extends Record<string, unknown>>(
+    filters: T,
+    user?: AuthenticatedUser
+): T {
+    if (!user) {
+        // Anonymous: no users visible
+        return { ...filters, id: 'never-match' } as T
+    }
+
+    if (user.role === 'ADMIN') {
+        // Admin: see all users
+        return filters
+    }
+
+    if (user.role === 'MODERATOR') {
+        // Moderator: see USERs + themselves
+        const securityFilter = {
+            OR: [{ role: 'USER' }, { id: user.id }],
+        }
+        return { ...filters, ...securityFilter } as T
+    }
+
+    // Regular user: only see themselves
+    return { ...filters, id: user.id } as T
+}
+
+/**
+ * Check if user can manage (ban/unban) another user
+ *
+ * Used for user moderation operations.
+ */
+export function canManageUser(
+    user: AuthenticatedUser | undefined,
+    targetUser: { id: string; role: Role }
+): boolean {
+    if (!user) return false
+
+    // Cannot manage yourself
+    if (user.id === targetUser.id) return false
+
+    // Admin can manage non-admin users
+    if (user.role === 'ADMIN') {
+        return targetUser.role !== 'ADMIN'
+    }
+
+    // Moderator can only manage regular users
+    if (user.role === 'MODERATOR') {
+        return targetUser.role === 'USER'
+    }
+
+    return false
+}

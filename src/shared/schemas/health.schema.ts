@@ -6,29 +6,63 @@ import { type Static, Type } from '@sinclair/typebox'
 
 export const HealthResponseSchema = Type.Object(
     {
-        status: Type.Union([Type.Literal('ok'), Type.Literal('error')]),
-        timestamp: Type.String({ format: 'date-time' }),
-        uptime: Type.Number(),
-        error: Type.Optional(Type.String()),
+        status: Type.String({
+            enum: ['ok', 'error'],
+            description: 'Overall health status of the application',
+        }),
+        timestamp: Type.String({
+            format: 'date-time',
+            description: 'When the health check was performed',
+        }),
+        uptime: Type.Number({
+            description: 'Application uptime in seconds',
+        }),
+        error: Type.Optional(
+            Type.String({
+                description: 'Error message if status is error',
+            })
+        ),
     },
-    { $id: 'HealthResponse' }
+    {
+        $id: 'HealthResponse',
+        title: 'Health Response',
+        description: 'Application health check response',
+    }
 )
 
 export const ReadinessResponseSchema = Type.Object(
     {
-        status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
-        timestamp: Type.String({ format: 'date-time' }),
+        status: Type.String({
+            enum: ['ready', 'not_ready'],
+            description: 'Overall readiness status of the application',
+        }),
+        timestamp: Type.String({
+            format: 'date-time',
+            description: 'When the readiness check was performed',
+        }),
         checks: Type.Object({
             database: Type.Object({
-                status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
-                responseTime: Type.Number(),
+                status: Type.String({
+                    enum: ['ready', 'not_ready'],
+                    description: 'Database connection status',
+                }),
+                responseTime: Type.Number({
+                    description: 'Database response time in milliseconds',
+                }),
             }),
             migrations: Type.Object({
-                status: Type.Union([Type.Literal('ready'), Type.Literal('not_ready')]),
+                status: Type.String({
+                    enum: ['ready', 'not_ready'],
+                    description: 'Database migrations status',
+                }),
             }),
         }),
     },
-    { $id: 'ReadinessResponse' }
+    {
+        $id: 'ReadinessResponse',
+        title: 'Readiness Response',
+        description: 'Application readiness check response with detailed component status',
+    }
 )
 
 // Export TypeScript types

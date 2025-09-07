@@ -6,7 +6,6 @@ import type {
     BanUser,
     CreateUserInput,
     UpdateUser,
-    User,
     UserListQuery,
     UserParams,
 } from '@/features/users/users.type'
@@ -20,12 +19,12 @@ export const userController = {
     },
 
     async listUsers(request: FastifyRequest<{ Querystring: UserListQuery }>, reply: FastifyReply) {
-        const { users, pagination } = await publicUserService.list(request.query)
+        const { users, pagination } = await publicUserService.list(request.query, request.user)
         return reply.code(HTTP_STATUS.OK).send(paginated(users, pagination, request.id))
     },
 
     async getUserStats(request: FastifyRequest, reply: FastifyReply) {
-        const stats = await userService.getStats()
+        const stats = await userService.getStats(request.user)
         return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
     },
 
@@ -38,12 +37,12 @@ export const userController = {
         request: FastifyRequest<{ Params: UserParams; Body: UpdateUser }>,
         reply: FastifyReply
     ) {
-        const user = await userService.update(request.params.id, request.body)
+        const user = await userService.update(request.params.id, request.body, request.user)
         return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
     },
 
     async deleteUser(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
-        await userService.delete(request.params.id)
+        await userService.delete(request.params.id, request.user)
         return reply.code(HTTP_STATUS.NO_CONTENT).send()
     },
 
@@ -51,22 +50,18 @@ export const userController = {
         request: FastifyRequest<{ Params: UserParams; Body: BanUser }>,
         reply: FastifyReply
     ) {
-        // Get bannedById from authenticated user
-        const bannedById = request.user?.id
-        if (!bannedById) {
+        const { user } = request
+        if (!user?.id) {
             return reply.code(HTTP_STATUS.UNAUTHORIZED).send({ error: 'Authentication required' })
         }
 
         // If banReason is not provided or empty, treat as unban
         const isUnban = !request.body.banReason && !request.body.bannedUntil
 
-        let user: User
-        if (isUnban) {
-            user = await userService.unban(request.params.id)
-        } else {
-            user = await userService.ban(request.params.id, request.body, bannedById)
-        }
+        const updatedUser = isUnban
+            ? await userService.unban(request.params.id, user)
+            : await userService.ban(request.params.id, request.body, user.id, user)
 
-        return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
+        return reply.code(HTTP_STATUS.OK).send(success(updatedUser, request.id))
     },
 } as const

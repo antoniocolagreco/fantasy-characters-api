@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client'
+import { Prisma, Role } from '@prisma/client'
 
 import type {
     BanUser,
@@ -58,47 +58,19 @@ function transformUserToPublicSchema(user: Prisma.UserGetPayload<object>): Publi
 }
 
 // ===== Query Helpers =====
-function buildUserWhereClause(query: UserListQuery): Prisma.UserWhereInput {
-    const where: Prisma.UserWhereInput = {}
-
-    if (query.role !== undefined) {
-        where.role = query.role
-    }
-
-    if (query.isActive !== undefined) {
-        where.isActive = query.isActive
-    }
-
-    if (query.isBanned !== undefined) {
-        where.isBanned = query.isBanned
-    }
-
-    if (query.hasProfilePicture !== undefined) {
-        if (query.hasProfilePicture) {
-            where.profilePictureId = { not: null }
-        } else {
-            where.profilePictureId = null
-        }
-    }
-
-    if (query.search) {
-        where.OR = [
-            { name: { contains: query.search, mode: 'insensitive' } },
-            { email: { contains: query.search, mode: 'insensitive' } },
-            { bio: { contains: query.search, mode: 'insensitive' } },
-        ]
-    }
-
-    return where
-}
 
 function applyCursorPagination(
     where: Prisma.UserWhereInput,
     cursor: string | undefined,
     sortBy: string,
-    sortDir: 'asc' | 'desc'
+    sortDir: string
 ): Prisma.UserWhereInput {
     if (!cursor) return where
+
+    // Validate sortDir at runtime
+    if (sortDir !== 'asc' && sortDir !== 'desc') {
+        throw new Error('Invalid sort direction')
+    }
 
     try {
         const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
@@ -170,17 +142,17 @@ export const userRepository = {
         return transformUserToSchema(user)
     },
 
-    async findMany(query: UserListQuery) {
-        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = query
+    async findMany(query: UserListQuery & { filters?: Record<string, unknown> }) {
+        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
 
-        // Build where clause
-        const where = buildUserWhereClause(query)
+        // Use pre-built filters from service layer
+        const where = filters as Prisma.UserWhereInput
         const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
 
         // Execute query
         const users = await prisma.user.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir),
+            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
             take: limit + 1,
         })
 
@@ -203,6 +175,7 @@ export const userRepository = {
             ...data,
             id: generateUUIDv7(),
             passwordHash: '', // This should be provided by the service layer
+            role: (data.role || 'USER') as Role,
             name: data.name || null,
             bio: data.bio || null,
             oauthProvider: data.oauthProvider || null,
@@ -409,18 +382,18 @@ export const publicUserRepository = {
     },
 
     async findMany(
-        query: UserListQuery
+        query: UserListQuery & { filters?: Record<string, unknown> }
     ): Promise<{ users: PublicUser[]; hasNext: boolean; nextCursor?: string }> {
-        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = query
+        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
 
-        // Build where clause
-        const where = buildUserWhereClause(query)
+        // Use pre-built filters from service layer
+        const where = filters as Prisma.UserWhereInput
         const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
 
         // Execute query
         const users = await prisma.user.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir),
+            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
             take: limit + 1,
         })
 

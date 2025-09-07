@@ -17,8 +17,14 @@ import type {
 } from './images.type'
 import type { ImageMetadata } from './v1/images.schema'
 
-import { userCan, type AuthenticatedUser } from '@/features/auth'
+import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import {
+    applySecurityFilters,
+    canCreateResource,
+    canModifyResource,
+    canViewResource,
+} from '@/shared/utils/rbac.helpers'
 
 /**
  * Transform Prisma Image to API Image format
@@ -57,45 +63,32 @@ function transformImageForApi(image: {
 }
 
 /**
- * RBAC helper functions
- */
-function canViewImage(
-    user: AuthenticatedUser | undefined,
-    image: { ownerId: string | null; visibility: string }
-): boolean {
-    return userCan(user, 'read', 'images', {
-        ownerId: image.ownerId,
-        visibility: image.visibility as 'PUBLIC' | 'PRIVATE' | 'HIDDEN',
-    })
-}
-
-function canManageImage(
-    user: AuthenticatedUser | undefined,
-    image: { ownerId: string | null }
-): boolean {
-    return userCan(user, 'update', 'images', {
-        ownerId: image.ownerId,
-    })
-}
-
-/**
  * Image service - handles business logic for image management
+ * Following new RBAC architecture: Service builds security filters, Repository applies them.
  */
 
 export const imageService = {
     async createImage(
-        data: { description?: string; visibility?: 'PUBLIC' | 'PRIVATE' | 'HIDDEN' },
+        data: {
+            description?: string
+            visibility?: 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
+        },
         file: { mimetype: string; filename?: string },
         buffer: Buffer,
         user?: AuthenticatedUser
     ): Promise<ImageMetadata> {
+        // Check if user can create content - users can only create content for themselves
+        if (!canCreateResource(user, user?.id)) {
+            throw err('FORBIDDEN', 'Cannot create images')
+        }
+
         // Validate file before processing
         validateImageFile(file, buffer)
 
         // Process image to WebP
         const processed = await processImageToWebP(buffer)
 
-        // Create image record
+        // Create image record - always assign to authenticated user
         const imageData: CreateImageInput = {
             blob: processed.buffer,
             size: processed.size,
@@ -105,6 +98,7 @@ export const imageService = {
             visibility: data.visibility ?? 'PUBLIC',
         }
 
+        // Only assign ownerId if user is authenticated
         if (user?.id) {
             imageData.ownerId = user.id
         }
@@ -124,8 +118,8 @@ export const imageService = {
             return null
         }
 
-        // Check permissions
-        if (!canViewImage(user, image)) {
+        // Check permissions using helper
+        if (!canViewResource(user, image)) {
             throw err('FORBIDDEN', 'Access denied to this image')
         }
 
@@ -142,8 +136,8 @@ export const imageService = {
             return null
         }
 
-        // Check permissions
-        if (!canViewImage(user, metadata)) {
+        // Check permissions using helper
+        if (!canViewResource(user, metadata)) {
             throw err('FORBIDDEN', 'Access denied to this image')
         }
 
@@ -161,8 +155,8 @@ export const imageService = {
             return null
         }
 
-        // Check permissions
-        if (!canManageImage(user, existingImage)) {
+        // Check permissions using helper
+        if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to modify this image')
         }
 
@@ -180,8 +174,8 @@ export const imageService = {
             return false
         }
 
-        // Check permissions
-        if (!canManageImage(user, existingImage)) {
+        // Check permissions using helper
+        if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to delete this image')
         }
 
@@ -192,22 +186,29 @@ export const imageService = {
         params: ListImagesParams,
         user?: AuthenticatedUser
     ): Promise<ListImagesResult> {
-        // Apply visibility filtering based on user permissions
-        const effectiveParams = { ...params }
+        // Build business filters
+        const businessFilters: Record<string, unknown> = {}
 
-        if (!user) {
-            // Anonymous users can only see PUBLIC images
-            effectiveParams.visibility = 'PUBLIC'
-        } else if (user.role !== 'ADMIN') {
-            // Non-admin users: if ownerId is not specified or different from user,
-            // can only see PUBLIC images
-            if (!effectiveParams.ownerId || effectiveParams.ownerId !== user.id) {
-                effectiveParams.visibility = 'PUBLIC'
+        if (params.ownerId) businessFilters.ownerId = params.ownerId
+        if (params.visibility) businessFilters.visibility = params.visibility
+        if (params.user) {
+            businessFilters.owner = {
+                OR: [
+                    { id: params.user },
+                    { email: { contains: params.user, mode: 'insensitive' } },
+                    { name: { contains: params.user, mode: 'insensitive' } },
+                ],
             }
         }
-        // Admin users can see all images without restriction
 
-        const rawResult = await listImagesInDb(effectiveParams)
+        // Apply security constraints using helper
+        const secureFilters = applySecurityFilters(businessFilters, user)
+
+        // Repository call with secure filters
+        const rawResult = await listImagesInDb({
+            ...params,
+            filters: secureFilters,
+        })
 
         // Transform raw data to API format
         return {
@@ -217,7 +218,7 @@ export const imageService = {
     },
 
     async getImageStats(ownerId?: string, user?: AuthenticatedUser): Promise<ImageStats> {
-        // If ownerId is specified, check permissions
+        // Permission checks for stats
         if (ownerId) {
             if (!user || (user.role !== 'ADMIN' && user.id !== ownerId)) {
                 throw err('FORBIDDEN', 'Access denied to view these statistics')
@@ -243,8 +244,8 @@ export const imageService = {
             return null
         }
 
-        // Check permissions
-        if (!canManageImage(user, existingImage)) {
+        // Check permissions using helper
+        if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to modify this image')
         }
 

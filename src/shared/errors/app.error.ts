@@ -43,7 +43,7 @@ export class AppError extends Error {
         super(message)
         this.name = 'AppError'
         this.code = code
-        this.status = status ?? DEFAULT_STATUS[code]
+        this.status = status ?? DEFAULT_STATUS[code] ?? 500
         if (details !== undefined) {
             this.details = details
         }

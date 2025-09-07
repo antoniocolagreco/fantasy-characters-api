@@ -5,56 +5,140 @@ import { RoleSchema } from '@/shared/schemas'
 // JWT Claims Schema
 export const JwtClaimsSchema = Type.Object(
     {
-        sub: Type.String({ format: 'uuid' }),
+        sub: Type.String({
+            format: 'uuid',
+            description: 'Subject (user ID)',
+        }),
         role: RoleSchema,
-        iat: Type.Integer(),
-        exp: Type.Integer(),
-        jti: Type.Optional(Type.String({ format: 'uuid' })),
+        iat: Type.Integer({
+            description: 'Issued at timestamp',
+        }),
+        exp: Type.Integer({
+            description: 'Expiration timestamp',
+        }),
+        jti: Type.Optional(
+            Type.String({
+                format: 'uuid',
+                description: 'JWT ID (optional)',
+            })
+        ),
     },
-    { $id: 'JwtClaims' }
+    {
+        $id: 'JwtClaims',
+        title: 'JWT Claims',
+        description: 'JWT token claims/payload',
+    }
 )
 
 // User Authentication Schemas
 export const AuthenticatedUserSchema = Type.Object(
     {
-        id: Type.String({ format: 'uuid' }),
+        id: Type.String({
+            format: 'uuid',
+            description: 'User ID',
+        }),
         role: RoleSchema,
-        email: Type.String({ format: 'email' }),
+        email: Type.String({
+            format: 'email',
+            description: 'User email address',
+        }),
     },
-    { $id: 'AuthenticatedUser' }
+    {
+        $id: 'AuthenticatedUser',
+        title: 'Authenticated User',
+        description: 'Authenticated user information',
+    }
 )
 
 // Token Schemas
 export const TokenPairSchema = Type.Object(
     {
-        accessToken: Type.String(),
-        refreshToken: Type.String(),
+        accessToken: Type.String({
+            description: 'JWT access token',
+        }),
+        refreshToken: Type.String({
+            description: 'Refresh token',
+        }),
     },
-    { $id: 'TokenPair' }
+    {
+        $id: 'TokenPair',
+        title: 'Token Pair',
+        description: 'Access and refresh token pair',
+    }
 )
 
 export const RefreshTokenPayloadSchema = Type.Object(
     {
-        token: Type.String({ format: 'uuid' }),
-        userId: Type.String({ format: 'uuid' }),
-        expiresAt: Type.String({ format: 'date-time' }),
-        deviceInfo: Type.Optional(Type.String()),
-        ipAddress: Type.Optional(Type.String()),
-        userAgent: Type.Optional(Type.String()),
+        token: Type.String({
+            format: 'uuid',
+            description: 'Refresh token ID',
+        }),
+        userId: Type.String({
+            format: 'uuid',
+            description: 'User ID this token belongs to',
+        }),
+        expiresAt: Type.String({
+            format: 'date-time',
+            description: 'When the refresh token expires',
+        }),
+        deviceInfo: Type.Optional(
+            Type.String({
+                description: 'Device information',
+            })
+        ),
+        ipAddress: Type.Optional(
+            Type.String({
+                description: 'IP address where token was issued',
+            })
+        ),
+        userAgent: Type.Optional(
+            Type.String({
+                description: 'User agent string',
+            })
+        ),
     },
-    { $id: 'RefreshTokenPayload' }
+    {
+        $id: 'RefreshTokenPayload',
+        title: 'Refresh Token Payload',
+        description: 'Refresh token data structure',
+    }
 )
 
 // JWT Configuration Schema
 export const JwtConfigSchema = Type.Object(
     {
-        secret: Type.String({ minLength: 32 }),
-        accessTokenTtl: Type.Union([Type.String(), Type.Integer()]),
-        refreshTokenTtl: Type.Union([Type.String(), Type.Integer()]),
-        issuer: Type.String(),
-        audience: Type.String(),
+        secret: Type.String({
+            minLength: 32,
+            description: 'JWT signing secret',
+        }),
+        accessTokenTtl: Type.Union([
+            Type.String({
+                description: 'Access token TTL (string format)',
+            }),
+            Type.Integer({
+                description: 'Access token TTL (seconds)',
+            }),
+        ]),
+        refreshTokenTtl: Type.Union([
+            Type.String({
+                description: 'Refresh token TTL (string format)',
+            }),
+            Type.Integer({
+                description: 'Refresh token TTL (seconds)',
+            }),
+        ]),
+        issuer: Type.String({
+            description: 'JWT issuer',
+        }),
+        audience: Type.String({
+            description: 'JWT audience',
+        }),
     },
-    { $id: 'JwtConfig' }
+    {
+        $id: 'JwtConfig',
+        title: 'JWT Configuration',
+        description: 'JWT configuration settings',
+    }
 )
 
 // Derive TypeScript types from schemas
@@ -70,14 +154,21 @@ export const LoginRequestSchema = Type.Object(
         email: Type.String({
             format: 'email',
             transform: ['trim', 'toLowerCase'],
+            description: 'User email address',
         }),
         // Login should accept existing passwords of any reasonable length; do not block short dev passwords
         password: Type.String({
             minLength: 4,
             maxLength: 128,
+            description: 'User password',
         }),
     },
-    { $id: 'LoginRequest', additionalProperties: false }
+    {
+        $id: 'LoginRequest',
+        title: 'Login Request',
+        description: 'User login credentials',
+        additionalProperties: false,
+    }
 )
 
 export const RegisterRequestSchema = Type.Object(
@@ -85,35 +176,64 @@ export const RegisterRequestSchema = Type.Object(
         email: Type.String({
             format: 'email',
             transform: ['trim', 'toLowerCase'],
+            description: 'User email address',
         }),
         password: Type.String({
             minLength: 8,
             maxLength: 128,
+            description: 'User password (minimum 8 characters)',
         }),
         name: Type.Optional(
             Type.String({
                 minLength: 1,
                 maxLength: 100,
                 transform: ['trim'],
+                description: 'Optional display name',
             })
         ),
     },
-    { $id: 'RegisterRequest', additionalProperties: false }
+    {
+        $id: 'RegisterRequest',
+        title: 'Register Request',
+        description: 'User registration data',
+        additionalProperties: false,
+    }
 )
 
 export const RefreshTokenRequestSchema = Type.Object(
     {
-        refreshToken: Type.String({ format: 'uuid' }),
+        refreshToken: Type.String({
+            format: 'uuid',
+            description: 'Refresh token for getting new access token',
+        }),
     },
-    { $id: 'RefreshTokenRequest', additionalProperties: false }
+    {
+        $id: 'RefreshTokenRequest',
+        title: 'Refresh Token Request',
+        description: 'Request to refresh access token',
+        additionalProperties: false,
+    }
 )
 
 export const ChangePasswordRequestSchema = Type.Object(
     {
-        currentPassword: Type.String({ minLength: 8, maxLength: 128 }),
-        newPassword: Type.String({ minLength: 8, maxLength: 128 }),
+        currentPassword: Type.String({
+            minLength: 8,
+            maxLength: 128,
+            description: 'Current password',
+        }),
+        newPassword: Type.String({
+            minLength: 8,
+            maxLength: 128,
+            description: 'New password (minimum 8 characters)',
+        }),
     },
-    { $id: 'ChangePasswordRequest', additionalProperties: false }
+    {
+        $id: 'ChangePasswordRequest',
+        title: 'Change Password Request',
+        description: 'Request to change user password',
+        additionalProperties: false,
+    }
 )
 // Derive types for requests
 export type LoginRequest = Static<typeof LoginRequestSchema>
@@ -124,30 +244,58 @@ export type ChangePasswordRequest = Static<typeof ChangePasswordRequestSchema>
 // Service-specific schemas for auth operations
 export const AuthUserSchema = Type.Object(
     {
-        id: Type.String({ format: 'uuid' }),
-        email: Type.String({ format: 'email' }),
+        id: Type.String({
+            format: 'uuid',
+            description: 'User ID',
+        }),
+        email: Type.String({
+            format: 'email',
+            description: 'User email address',
+        }),
         role: RoleSchema,
     },
-    { $id: 'AuthUser' }
+    {
+        $id: 'AuthUser',
+        title: 'Auth User',
+        description: 'User data for authentication operations',
+    }
 )
 
 export const LoginResultSchema = Type.Intersect(
     [
         AuthUserSchema,
         Type.Object({
-            accessToken: Type.String(),
-            refreshToken: Type.String(),
+            accessToken: Type.String({
+                description: 'JWT access token',
+            }),
+            refreshToken: Type.String({
+                description: 'Refresh token',
+            }),
         }),
     ],
-    { $id: 'LoginResult' }
+    {
+        $id: 'LoginResult',
+        title: 'Login Result',
+        description: 'Successful login response with user data and tokens',
+    }
 )
 
 export const RefreshTokensResultSchema = Type.Object(
     {
-        accessToken: Type.String(),
-        refreshToken: Type.Optional(Type.String()),
+        accessToken: Type.String({
+            description: 'New JWT access token',
+        }),
+        refreshToken: Type.Optional(
+            Type.String({
+                description: 'New refresh token (if rotated)',
+            })
+        ),
     },
-    { $id: 'RefreshTokensResult' }
+    {
+        $id: 'RefreshTokensResult',
+        title: 'Refresh Tokens Result',
+        description: 'Result of token refresh operation',
+    }
 )
 
 // Derive types for service operations

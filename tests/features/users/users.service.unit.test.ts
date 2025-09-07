@@ -138,20 +138,36 @@ describe('users.service unit', () => {
 
     it('changePassword throws when user not found', async () => {
         const { userService } = await getServices()
-        await expect(userService.changePassword('non-existent', 'old', 'new')).rejects.toBeDefined()
+        await expect(
+            userService.changePassword('non-existent', 'old', 'new', {
+                id: 'test',
+                email: 'test@test.com',
+                role: 'USER',
+            })
+        ).rejects.toBeDefined()
     })
 
     it('changePassword rejects invalid current password', async () => {
         const { userService } = await getServices()
         const u = await seedUser('u4', 'pw@test.local')
-        await expect(userService.changePassword(u.id, 'wrong', 'new')).rejects.toBeDefined()
+        await expect(
+            userService.changePassword(u.id, 'wrong', 'new', {
+                id: u.id,
+                email: u.email,
+                role: u.role,
+            })
+        ).rejects.toBeDefined()
     })
 
     it('changePassword updates hash and revokes tokens', async () => {
         const { userService, userRepository } = await getServices()
         const u = await seedUser('u5', 'ok@test.local')
         const before = (await userRepository.findById(u.id))?.passwordHash
-        await userService.changePassword(u.id, 'old', 'new')
+        await userService.changePassword(u.id, 'old', 'new', {
+            id: u.id,
+            email: u.email,
+            role: u.role,
+        })
         const fetched = await userRepository.findById(u.id)
         expect(fetched && before && fetched.passwordHash !== before).toBe(true)
         const ok = fetched

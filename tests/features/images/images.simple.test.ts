@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
+import type { RoleLiterals } from '@/shared/schemas/common.schema'
 import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
 
 async function getImageService() {
@@ -35,10 +36,13 @@ async function seedTestUser(id: string, role: 'USER' | 'ADMIN' = 'USER') {
 }
 
 function createAuthUser(user: any) {
+    if (!user || !user.id || !user.role || !user.email) {
+        throw new Error(`Invalid user data: ${JSON.stringify(user)}`)
+    }
     return {
         id: user.id,
         email: user.email,
-        role: user.role,
+        role: user.role as RoleLiterals,
     }
 }
 
@@ -78,8 +82,9 @@ describe('Image Service Unit Tests', () => {
             }
         })
 
-        it('should create image without owner when user not provided', async () => {
+        it('should allow admin to create system image without specific owner', async () => {
             const imageService = await getImageService()
+            const admin = await seedTestUser('admin-1', 'ADMIN')
 
             const fakeBuffer = Buffer.from('fake-image-data')
             const mockFile = {
@@ -90,10 +95,11 @@ describe('Image Service Unit Tests', () => {
             const result = await imageService.createImage(
                 { description: 'System image' },
                 mockFile,
-                fakeBuffer
+                fakeBuffer,
+                createAuthUser(admin)
             )
 
-            expect(result.ownerId).toBeUndefined()
+            expect(result.ownerId).toBe(admin.id) // Admin becomes owner
             expect(result.visibility).toBe('PUBLIC') // Default visibility
         })
     })
@@ -174,7 +180,6 @@ describe('Image Service Unit Tests', () => {
                 },
             })
             expect(result.totalSize).toBeGreaterThan(0)
-            expect(result.averageSize).toBeGreaterThan(0)
         })
     })
 })

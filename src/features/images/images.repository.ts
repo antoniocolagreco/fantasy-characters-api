@@ -14,6 +14,7 @@ import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 /**
  * Image repository - handles all database operations for images
+ * Following new RBAC architecture: Repository accepts pre-built filters from service.
  */
 
 export async function createImageInDb(data: CreateImageInput): Promise<Image> {
@@ -24,7 +25,7 @@ export async function createImageInDb(data: CreateImageInput): Promise<Image> {
         mimeType: data.mimeType,
         width: data.width,
         height: data.height,
-        visibility: data.visibility ?? 'PUBLIC',
+        visibility: (data.visibility ?? 'PUBLIC') as 'PUBLIC' | 'PRIVATE' | 'HIDDEN',
         ...(data.description !== undefined && { description: data.description }),
         ...(data.ownerId && {
             owner: {
@@ -86,9 +87,12 @@ export async function findImageBlobByIdInDb(
 
 export async function updateImageInDb(id: string, data: UpdateImageInput): Promise<Image | null> {
     try {
+        // Remove ownerId from update data as it's a relation field
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { ownerId, ...updateData } = data
         return await prisma.image.update({
             where: { id },
-            data,
+            data: updateData as Prisma.ImageUpdateInput,
         })
     } catch (error) {
         if (error instanceof PrismaClientKnownRequestError && error.code === 'P2025') {
@@ -112,34 +116,31 @@ export async function deleteImageFromDb(id: string): Promise<boolean> {
     }
 }
 
-export async function listImagesInDb(params: ListImagesParams): Promise<RawImageListResult> {
-    const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc' } = params
+export async function listImagesInDb(
+    params: ListImagesParams & { filters?: Record<string, unknown> }
+): Promise<RawImageListResult> {
+    const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters } = params
 
-    // Build where clause manually for type safety
-    const where: Prisma.ImageWhereInput = {}
+    // Use pre-built filters from service if provided, otherwise build basic ones
+    let where: Prisma.ImageWhereInput
 
-    if (params.ownerId) where.ownerId = params.ownerId
-    if (params.visibility) where.visibility = params.visibility
-    if (params.mimeType) where.mimeType = params.mimeType
-
-    if (params.minWidth || params.maxWidth) {
-        where.width = {
-            ...(params.minWidth && { gte: params.minWidth }),
-            ...(params.maxWidth && { lte: params.maxWidth }),
-        }
-    }
-
-    if (params.minHeight || params.maxHeight) {
-        where.height = {
-            ...(params.minHeight && { gte: params.minHeight }),
-            ...(params.maxHeight && { lte: params.maxHeight }),
-        }
-    }
-
-    if (params.search) {
-        where.description = {
-            contains: params.search,
-            mode: 'insensitive',
+    if (filters) {
+        // Filters come pre-secured from service layer
+        where = filters as Prisma.ImageWhereInput
+    } else {
+        // Fallback for direct repository usage (should not happen in production)
+        where = {}
+        if (params.ownerId) where.ownerId = params.ownerId
+        if (params.visibility)
+            where.visibility = params.visibility as 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
+        if (params.user) {
+            where.owner = {
+                OR: [
+                    { id: params.user },
+                    { email: { contains: params.user, mode: 'insensitive' } },
+                    { name: { contains: params.user, mode: 'insensitive' } },
+                ],
+            }
         }
     }
 
@@ -153,10 +154,28 @@ export async function listImagesInDb(params: ListImagesParams): Promise<RawImage
             const { lastValue, lastId } = decoded
             const op = sortDir === 'desc' ? 'lt' : 'gt'
 
-            where.OR = [
-                { [sortBy]: { [op]: lastValue } },
-                { [sortBy]: lastValue, id: { [op]: lastId } },
-            ]
+            // Build cursor conditions
+            let cursorConditions: Prisma.ImageWhereInput
+            if (sortBy === 'email') {
+                cursorConditions = {
+                    OR: [
+                        { owner: { email: { [op]: lastValue } } },
+                        { owner: { email: lastValue as string }, id: { [op]: lastId } },
+                    ],
+                }
+            } else {
+                cursorConditions = {
+                    OR: [
+                        { [sortBy]: { [op]: lastValue } },
+                        { [sortBy]: lastValue, id: { [op]: lastId } },
+                    ],
+                }
+            }
+
+            // Combine with existing where clause
+            where = {
+                AND: [where, cursorConditions],
+            }
         } catch {
             // Invalid cursor, ignore
         }
@@ -165,7 +184,13 @@ export async function listImagesInDb(params: ListImagesParams): Promise<RawImage
     // Execute query (excluding blob for list operations)
     const items = await prisma.image.findMany({
         where,
-        orderBy: [{ [sortBy]: sortDir }, { id: sortDir }],
+        orderBy:
+            sortBy === 'email'
+                ? [
+                      { owner: { email: sortDir as 'asc' | 'desc' } },
+                      { id: sortDir as 'asc' | 'desc' },
+                  ]
+                : [{ [sortBy]: sortDir as 'asc' | 'desc' }, { id: sortDir as 'asc' | 'desc' }],
         take: limit + 1,
         select: {
             id: true,
@@ -178,6 +203,13 @@ export async function listImagesInDb(params: ListImagesParams): Promise<RawImage
             visibility: true,
             createdAt: true,
             updatedAt: true,
+            ...(sortBy === 'email' && {
+                owner: {
+                    select: {
+                        email: true,
+                    },
+                },
+            }),
         },
     })
 
@@ -189,9 +221,17 @@ export async function listImagesInDb(params: ListImagesParams): Promise<RawImage
     if (hasNext && finalItems.length > 0) {
         const lastItem = finalItems[finalItems.length - 1]
         if (lastItem) {
+            let lastValue: unknown
+            if (sortBy === 'email') {
+                lastValue = (lastItem as typeof lastItem & { owner?: { email: string } }).owner
+                    ?.email
+            } else {
+                lastValue = lastItem[sortBy as keyof typeof lastItem]
+            }
+
             nextCursor = Buffer.from(
                 JSON.stringify({
-                    lastValue: lastItem[sortBy as keyof typeof lastItem],
+                    lastValue,
                     lastId: lastItem.id,
                 })
             ).toString('base64')
@@ -214,7 +254,7 @@ export async function getImageStatsFromDb(ownerId?: string): Promise<ImageStats>
     const where: Prisma.ImageWhereInput = ownerId ? { ownerId } : {}
 
     // Get total counts and aggregates
-    const [totalCount, visibilityStats, mimeTypeStats, sizeStats] = await Promise.all([
+    const [totalCount, visibilityStats, sizeStats] = await Promise.all([
         // Total count
         prisma.image.count({ where }),
 
@@ -225,18 +265,10 @@ export async function getImageStatsFromDb(ownerId?: string): Promise<ImageStats>
             _count: true,
         }),
 
-        // Count by MIME type
-        prisma.image.groupBy({
-            by: ['mimeType'],
-            where,
-            _count: true,
-        }),
-
-        // Size and dimension aggregates
+        // Size aggregates
         prisma.image.aggregate({
             where,
             _sum: { size: true },
-            _avg: { size: true, width: true, height: true },
         }),
     ])
 
@@ -251,19 +283,9 @@ export async function getImageStatsFromDb(ownerId?: string): Promise<ImageStats>
         byVisibility[stat.visibility as keyof typeof byVisibility] = stat._count
     }
 
-    // Transform MIME type stats
-    const byMimeType: Record<string, number> = {}
-    for (const stat of mimeTypeStats) {
-        byMimeType[stat.mimeType] = stat._count
-    }
-
     return {
         total: totalCount,
         byVisibility,
-        byMimeType,
         totalSize: sizeStats._sum.size ?? 0,
-        averageSize: sizeStats._avg.size ?? 0,
-        averageWidth: sizeStats._avg.width ?? 0,
-        averageHeight: sizeStats._avg.height ?? 0,
     }
 }

@@ -7,10 +7,25 @@ import { VisibilitySchema } from './common.schema'
  */
 export const PaginationQuerySchema = Type.Object(
     {
-        limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100, default: 20 })),
-        cursor: Type.Optional(Type.String()),
+        limit: Type.Optional(
+            Type.Integer({
+                minimum: 1,
+                maximum: 100,
+                default: 20,
+                description: 'Number of items to return (1-100)',
+            })
+        ),
+        cursor: Type.Optional(
+            Type.String({
+                description: 'Cursor for pagination - use the next_cursor from previous response',
+            })
+        ),
     },
-    { $id: 'PaginationQuery' }
+    {
+        $id: 'PaginationQuery',
+        title: 'Pagination Query',
+        description: 'Standard pagination parameters for listing endpoints',
+    }
 )
 
 /**
@@ -19,20 +34,24 @@ export const PaginationQuerySchema = Type.Object(
 export const SortQuerySchema = Type.Object(
     {
         sortBy: Type.Optional(
-            Type.Union([
-                Type.Literal('createdAt'),
-                Type.Literal('name'),
-                Type.Literal('updatedAt'),
-                Type.Literal('level'),
-            ])
+            Type.String({
+                enum: ['createdAt', 'name', 'updatedAt', 'level'],
+                description: 'Field to sort by',
+            })
         ),
         sortDir: Type.Optional(
-            Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
+            Type.String({
+                enum: ['asc', 'desc'],
                 default: 'desc',
+                description: 'Sort direction',
             })
         ),
     },
-    { $id: 'SortQuery' }
+    {
+        $id: 'SortQuery',
+        title: 'Sort Query',
+        description: 'Standard sorting parameters for listing endpoints',
+    }
 )
 
 /**
@@ -42,7 +61,11 @@ export const VisibilityQuerySchema = Type.Object(
     {
         visibility: Type.Optional(VisibilitySchema),
     },
-    { $id: 'VisibilityQuery' }
+    {
+        $id: 'VisibilityQuery',
+        title: 'Visibility Query',
+        description: 'Filter by content visibility level',
+    }
 )
 
 /**
@@ -50,9 +73,19 @@ export const VisibilityQuerySchema = Type.Object(
  */
 export const SearchQuerySchema = Type.Object(
     {
-        search: Type.Optional(Type.String({ minLength: 1, maxLength: 100 })),
+        search: Type.Optional(
+            Type.String({
+                minLength: 1,
+                maxLength: 100,
+                description: 'Search term to filter results',
+            })
+        ),
     },
-    { $id: 'SearchQuery' }
+    {
+        $id: 'SearchQuery',
+        title: 'Search Query',
+        description: 'Text search parameter',
+    }
 )
 
 /**
@@ -60,7 +93,11 @@ export const SearchQuerySchema = Type.Object(
  */
 export const StandardQuerySchema = Type.Intersect(
     [PaginationQuerySchema, SortQuerySchema, VisibilityQuerySchema, SearchQuerySchema],
-    { $id: 'StandardQuery' }
+    {
+        $id: 'StandardQuery',
+        title: 'Standard Query',
+        description: 'Combined standard query parameters for listing endpoints',
+    }
 )
 
 // Export TypeScript types

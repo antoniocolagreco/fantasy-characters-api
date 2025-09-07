@@ -5,7 +5,6 @@ import {
     VisibilitySchema,
     PaginationQuerySchema,
     VisibilityQuerySchema,
-    SearchQuerySchema,
     createPaginatedResponseSchema,
     createSuccessResponseSchema,
 } from '@/shared/schemas'
@@ -15,15 +14,37 @@ export const ImageSchema = Type.Intersect(
     [
         OwnedEntitySchema,
         Type.Object({
-            blob: Type.Uint8Array(), // Binary data - use Uint8Array instead of Any
-            description: Type.Optional(Type.String({ maxLength: 2000 })),
-            size: Type.Integer({ minimum: 0 }),
-            mimeType: Type.String(),
-            width: Type.Integer({ minimum: 1 }),
-            height: Type.Integer({ minimum: 1 }),
+            blob: Type.Uint8Array({
+                description: 'Binary image data',
+            }), // Binary data - use Uint8Array instead of Any
+            description: Type.Optional(
+                Type.String({
+                    maxLength: 2000,
+                    description: 'Optional description of the image',
+                })
+            ),
+            size: Type.Integer({
+                minimum: 0,
+                description: 'File size in bytes',
+            }),
+            mimeType: Type.String({
+                description: 'MIME type of the image (e.g., image/jpeg, image/png)',
+            }),
+            width: Type.Integer({
+                minimum: 1,
+                description: 'Image width in pixels',
+            }),
+            height: Type.Integer({
+                minimum: 1,
+                description: 'Image height in pixels',
+            }),
         }),
     ],
-    { $id: 'Image' }
+    {
+        $id: 'Image',
+        title: 'Image',
+        description: 'Complete image entity with binary data',
+    }
 )
 
 // API response schema (without blob data + URL for accessing the image)
@@ -31,34 +52,66 @@ export const ImageMetadataSchema = Type.Intersect(
     [
         Type.Omit(ImageSchema, ['blob']),
         Type.Object({
-            url: Type.String({ format: 'uri', description: 'URL to access the image file' }),
+            url: Type.String({
+                format: 'uri',
+                description: 'URL to access the image file',
+            }),
         }),
     ],
-    { $id: 'ImageMetadata' }
+    {
+        $id: 'ImageMetadata',
+        title: 'Image Metadata',
+        description: 'Image metadata without binary data, includes access URL',
+    }
 )
 
 // Request schemas
 export const CreateImageSchema = Type.Object(
     {
-        description: Type.Optional(Type.String({ maxLength: 2000 })),
+        description: Type.Optional(
+            Type.String({
+                maxLength: 2000,
+                description: 'Optional description for the image',
+            })
+        ),
     },
-    { $id: 'CreateImage' }
+    {
+        $id: 'CreateImage',
+        title: 'Create Image',
+        description: 'Data for creating a new image',
+    }
 )
 
 export const UpdateImageSchema = Type.Object(
     {
-        description: Type.Optional(Type.String({ maxLength: 2000 })),
+        description: Type.Optional(
+            Type.String({
+                maxLength: 2000,
+                description: 'Updated description for the image',
+            })
+        ),
         visibility: Type.Optional(VisibilitySchema),
     },
-    { $id: 'UpdateImage' }
+    {
+        $id: 'UpdateImage',
+        title: 'Update Image',
+        description: 'Updateable image properties',
+    }
 )
 
 // Parameter schemas
 export const ImageParamsSchema = Type.Object(
     {
-        id: Type.String({ format: 'uuid' }),
+        id: Type.String({
+            format: 'uuid',
+            description: 'Image ID',
+        }),
     },
-    { $id: 'ImageParams' }
+    {
+        $id: 'ImageParams',
+        title: 'Image Parameters',
+        description: 'URL parameters for image endpoints',
+    }
 )
 
 // Query schemas
@@ -66,48 +119,65 @@ export const ImageListQuerySchema = Type.Intersect(
     [
         PaginationQuerySchema,
         VisibilityQuerySchema,
-        SearchQuerySchema,
         Type.Object({
             sortBy: Type.Optional(
-                Type.Union([
-                    Type.Literal('createdAt'),
-                    Type.Literal('name'),
-                    Type.Literal('size'),
-                    Type.Literal('width'),
-                    Type.Literal('height'),
-                ])
-            ),
-            sortDir: Type.Optional(
-                Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
-                    default: 'desc',
+                Type.String({
+                    enum: ['createdAt', 'email'],
+                    description: 'Field to sort by',
                 })
             ),
-            minWidth: Type.Optional(Type.Integer({ minimum: 1 })),
-            maxWidth: Type.Optional(Type.Integer({ minimum: 1 })),
-            minHeight: Type.Optional(Type.Integer({ minimum: 1 })),
-            maxHeight: Type.Optional(Type.Integer({ minimum: 1 })),
-            mimeType: Type.Optional(Type.String()),
+            sortDir: Type.Optional(
+                Type.String({
+                    enum: ['asc', 'desc'],
+                    default: 'desc',
+                    description: 'Sort direction',
+                })
+            ),
+            user: Type.Optional(
+                Type.String({
+                    description: 'Search by owner ID (exact match) or email/name (partial match)',
+                })
+            ),
         }),
     ],
-    { $id: 'ImageListQuery' }
+    {
+        $id: 'ImageListQuery',
+        title: 'Image List Query',
+        description: 'Query parameters for listing images',
+    }
 )
 
 // Stats schema
 export const ImageStatsSchema = Type.Object(
     {
-        total: Type.Integer({ minimum: 0 }),
-        byVisibility: Type.Object({
-            PUBLIC: Type.Integer({ minimum: 0 }),
-            PRIVATE: Type.Integer({ minimum: 0 }),
-            HIDDEN: Type.Integer({ minimum: 0 }),
+        total: Type.Integer({
+            minimum: 0,
+            description: 'Total number of images',
         }),
-        byMimeType: Type.Record(Type.String(), Type.Integer({ minimum: 0 })),
-        totalSize: Type.Integer({ minimum: 0 }),
-        averageSize: Type.Number({ minimum: 0 }),
-        averageWidth: Type.Number({ minimum: 0 }),
-        averageHeight: Type.Number({ minimum: 0 }),
+        byVisibility: Type.Object({
+            PUBLIC: Type.Integer({
+                minimum: 0,
+                description: 'Number of public images',
+            }),
+            PRIVATE: Type.Integer({
+                minimum: 0,
+                description: 'Number of private images',
+            }),
+            HIDDEN: Type.Integer({
+                minimum: 0,
+                description: 'Number of hidden images',
+            }),
+        }),
+        totalSize: Type.Integer({
+            minimum: 0,
+            description: 'Total size of all images in bytes',
+        }),
     },
-    { $id: 'ImageStats' }
+    {
+        $id: 'ImageStats',
+        title: 'Image Statistics',
+        description: 'Statistical information about images',
+    }
 )
 
 // Response schemas

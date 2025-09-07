@@ -1,542 +1,386 @@
-# Role-Based Access Control (RBAC) — Complete Specification
+# RBAC Implementation Guide
 
-This document defines how authorization works in the Fantasy Characters API. It
-is the single source of truth for who can do what, providing both theoretical
-foundation and practical implementation guidance.
-
-**Non-goals**: authentication, OAuth, password policies, or general security
-hardening — see other docs for those.
+**Core Principle**: RBAC logic is distributed across 4 layers, each with
+specific responsibilities.
 
 ---
 
-## RBAC Model Overview
+## 🏗️ **Layer Architecture**
 
-### Roles
+Think of your application as a pipeline where each layer has ONE job:
 
-- **ADMIN**: System administrators with full access
-- **MODERATOR**: Content moderators with limited admin privileges
-- **USER**: Regular users with basic access
-- **Anonymous**: Non-authenticated users (no JWT)
+```text
+MIDDLEWARE → CONTROLLER → SERVICE → REPOSITORY
+   ↓            ↓          ↓         ↓
+Auth + Role   HTTP only   Business   Data only
+check macro   coordinate  + RBAC     zero logic
+permissions   requests    granular   pure queries
+```
 
-### Resources
+### **Layer Responsibilities**
 
-- `users`, `characters`, `images`, `tags`, `items`, `races`, `archetypes`,
-  `skills`, `perks`, `equipment`
+| Layer      | Does                            | Does NOT                     |
+| ---------- | ------------------------------- | ---------------------------- |
+| MIDDLEWARE | JWT auth, macro role check      | Business logic, DB queries   |
+| CONTROLLER | HTTP params, response format    | RBAC logic, business rules   |
+| SERVICE    | Business logic, granular RBAC   | HTTP concerns, direct DB     |
+| REPOSITORY | Query DB with pre-built filters | Security logic, user context |
 
-### Actions
-
-- `read` (list/get operations)
-- `create` (new resource creation)
-- `update` (modify existing resources)
-- `delete` (remove resources)
-- `manage` (administrative operations: role changes, bans)
-
-### Core Concepts
-
-- **Ownership**: Most resources have `ownerId` field
-- **Visibility**: Resources have visibility ∈ {`PUBLIC`, `PRIVATE`, `HIDDEN`}
-- **Owner Role**: The role of the resource owner (for moderation logic)
-- **Target User Role**: For user-related operations (bans, role changes)
+**Key insight**: Each layer trusts the previous one but RE-VALIDATES everything
+for security.
 
 ---
 
-## Permission Matrix by Role
+## 🎯 **Roles & Permissions**
 
-| Role          | Own Content | Others' PUBLIC | Others' PRIVATE/HIDDEN | USER Content (MOD) | ADMIN Content (MOD) |
-| ------------- | :---------: | :------------: | :--------------------: | :----------------: | :-----------------: |
-| **ADMIN**     |   ✅ All    |     ✅ All     |         ✅ All         |       ✅ All       |   ✅ Read-only\*    |
-| **MODERATOR** |   ✅ All    |     ✅ All     |      ✅ Read-only      |  ✅ Update/Delete  |    ❌ Read-only     |
-| **USER**      |   ✅ All    |  ✅ Read-only  |       ❌ Denied        |     ❌ Denied      |      ❌ Denied      |
-| **Anonymous** |   ❌ N/A    |  ✅ Read-only  |       ❌ Denied        |     ❌ Denied      |      ❌ Denied      |
+### **User Roles**
 
-\*_Exception: ADMIN cannot modify/delete other ADMIN accounts or change other
-ADMIN roles_
+- **ADMIN**: Can do everything except modify other admins
+- **MODERATOR**: Manages USER content, can see HIDDEN content
+- **USER**: Only manages their own content
+- **Anonymous**: Only reads PUBLIC content
 
----
+### **Permission Matrix**
 
-## Detailed Permissions by Role
-
-### USER (Basic Access)
-
-**Can:**
-
-- Read PUBLIC content and their own PRIVATE content
-- Create content owned by themselves (`ownerId = self`)
-- Update/Delete only their own content
-- Use PUBLIC content created by others (no copy required)
-- Transfer ownership of their own content to another user
-- Abandon ownership (set `ownerId = null` → orphaned)
-- Read/Update their own profile, change password, delete own account
-
-**Cannot:**
-
-- Modify/Delete content owned by others
-- Manage orphaned content
-- Read others' PRIVATE/HIDDEN content
-- Modify other user accounts or roles
-- Access admin-only functions or statistics
-
-### MODERATOR (Content Management)
-
-**Inherits**: All USER permissions
-
-**Can:**
-
-- Read any resource (any visibility, including user profiles)
-- Update/Delete USER-owned content
-- Update/Delete orphaned content (`ownerId = null`)
-- Change visibility of USER-owned/orphaned entities
-- View user lists, profiles, and basic statistics
-- Ban/Unban USER accounts; set ban windows/dates
-- Restore content from HIDDEN visibility (only MODERATOR/ADMIN can do this)
-
-**Cannot:**
-
-- Modify content owned by MODERATOR or ADMIN (read-only access)
-- Create content on behalf of others
-- Change user roles or edit user profile fields (except ban status/dates)
-- Act on MODERATOR or ADMIN accounts (cannot ban, modify, or delete)
-- Access sensitive/system administration functions
-
-### ADMIN (System Administration)
-
-**Inherits**: All USER and MODERATOR permissions
-
-**Can:**
-
-- Create/Read/Update/Delete any resource
-- Manage USER and MODERATOR accounts and roles
-- Access system statistics, logs, and monitoring
-- Modify system settings and security policies
-
-**Cannot:**
-
-- Modify/Delete other ADMIN accounts
-- Change roles/permissions of other ADMIN accounts
+| Role      | Own Content | Others' PUBLIC | Others' PRIVATE/HIDDEN |  Manage USERs  | Manage ADMINs |
+| --------- | :---------: | :------------: | :--------------------: | :------------: | :-----------: |
+| ADMIN     |   ✅ All    |     ✅ All     |         ✅ All         |     ✅ All     | ❌ Read-only  |
+| MODERATOR |   ✅ All    |     ✅ All     |      ✅ Read-only      | ✅ Edit/Delete | ❌ Read-only  |
+| USER      |   ✅ All    |  ✅ Read-only  |       ❌ Denied        |   ❌ Denied    |   ❌ Denied   |
+| Anonymous |   ❌ N/A    |  ✅ Read-only  |       ❌ Denied        |   ❌ Denied    |   ❌ Denied   |
 
 ---
 
-## Evaluation Logic (Short-Circuit)
+## 🛠️ **Implementation**
 
-The permission evaluation follows this order:
+### **1. Middleware Layer**
 
-1. **Anonymous**: Allow `read` only on `PUBLIC` resources; deny all other
-   actions
+**Purpose**: Authenticate users and check if their ROLE can access the ROUTE.
 
-2. **ADMIN**: Allow all actions on all resources, **except**:
-   - Cannot modify/delete other ADMIN accounts
-   - Cannot change other ADMIN roles
+**Important**: This is NOT where you check ownership or specific permissions!
 
-3. **Owner**: If `user.id === ownerId`, allow `read/create/update/delete` on own
-   resources, **except**:
-   - Never allow `manage` on `users` resource (no role changes)
+```typescript
+export function rbac(resource: string, action: string) {
+  return async (req: any) => {
+    const { user } = req
+    const role = user?.role
 
-4. **MODERATOR** (non-owner):
-   - `read`: Allowed on any resource
-   - For content resources (not `users`):
-     - `update`/`delete` allowed when `ownerId` is `null` (orphaned) or
-       `ownerRole = USER`
-     - Read-only when `ownerRole ∈ {MODERATOR, ADMIN}`
-   - For `users` resource:
-     - `manage` (ban/unban) allowed only on `USER` targets
-     - Cannot change roles or edit profiles
-     - Cannot act on MODERATOR or ADMIN accounts
+    // Anonymous users can only read
+    if (!role) return action === 'read'
 
-5. **USER** (non-owner): Allow `read` on `PUBLIC` only; deny all other actions
+    // Define what each role can do at route level
+    const permissions = {
+      ADMIN: ['read', 'create', 'update', 'delete', 'manage'],
+      MODERATOR: ['read', 'create', 'update', 'delete'],
+      USER: ['read', 'create', 'update', 'delete'],
+    }
 
----
-
-## Special Rules
-
-### Equipment Resources
-
-- Follow the character's owner rules
-- Equipment permissions are inherited from the associated character
-
-### Visibility Lock
-
-- When an entity is set to `HIDDEN`, only MODERATOR/ADMIN can restore it to
-  `PUBLIC`/`PRIVATE`
-- USER owners cannot unhide their own content
-
-### Users Resource Specifics
-
-- **Self-service**: Users can read/update their own profile except protected
-  fields (`role`, `isBanned`, `isActive`)
-- **Moderators**: Can ban/unban USER accounts via dedicated endpoints; cannot
-  change roles or edit other profile fields; cannot act on MODERATOR or ADMIN
-  accounts
-- **Admins**: Can manage roles/ban flags for USER and MODERATOR accounts; cannot
-  modify/delete other ADMIN accounts or change other ADMIN roles
-
-### Ownership Transfer
-
-- Owners may transfer ownership of their entities to another user (server
-  validates target)
-- Owners may abandon ownership by setting `ownerId` to `null` (creates orphaned
-  content)
-
----
-
-## Implementation Guide
-
-### TypeScript Types
-
-```ts
-export type Role = 'ADMIN' | 'MODERATOR' | 'USER'
-export type Action = 'read' | 'create' | 'update' | 'delete' | 'manage'
-export type Resource =
-  | 'users'
-  | 'characters'
-  | 'images'
-  | 'tags'
-  | 'items'
-  | 'races'
-  | 'archetypes'
-  | 'skills'
-  | 'perks'
-  | 'equipment'
-export type Visibility = 'PUBLIC' | 'PRIVATE' | 'HIDDEN'
-
-export interface RbacContext {
-  user?: { id: string; role: Role }
-  resource: Resource
-  action: Action
-  ownerId?: string
-  visibility?: Visibility
-  ownerRole?: Role // Role of the resource owner
-  targetUserRole?: Role // For user operations (bans, role changes)
+    const allowed = permissions[role]?.includes(action)
+    if (!allowed) throw err('FORBIDDEN')
+  }
 }
 ```
 
-### Core Policy Function
+**Usage**: Attach to routes to block users who shouldn't even try.
 
-```ts
-// src/common/middleware/rbac.policy.ts
-export function can(ctx: RbacContext): boolean {
-  const {
-    user,
-    resource,
-    action,
-    ownerId,
-    visibility,
-    ownerRole,
-    targetUserRole,
-  } = ctx
-  const role = user?.role
+```typescript
+app.get(
+  '/images',
+  {
+    preHandler: [rbac('images', 'read')],
+  },
+  controller.listImages
+)
+```
 
-  // 1) Anonymous
-  if (!role) return action === 'read' && visibility === 'PUBLIC'
+### **2. Service Layer**
 
-  // 2) Admin
-  if (role === 'ADMIN') {
-    // Cannot modify/delete other ADMIN accounts or change their roles
-    if (
-      resource === 'users' &&
-      (action === 'update' || action === 'delete' || action === 'manage')
-    ) {
-      const targetIsAdmin = targetUserRole === 'ADMIN'
-      const actingOnSelf = !!user && !!ownerId && user.id === ownerId
-      if (targetIsAdmin && !actingOnSelf) return false
+**Purpose**: This is where the REAL security decisions happen. Check ownership,
+visibility, and business rules.
+
+**Key concept**: The service decides WHO can see WHAT data by building security
+filters.
+
+```typescript
+export const imageService = {
+  async listImages(params: any, user?: User) {
+    // Step 1: Build security filters based on user role
+    const securityFilters = this.buildSecurityFilters(user)
+
+    // Step 2: Combine with business filters (tags, etc.)
+    const filters = { ...securityFilters, tags: params.tags }
+
+    // Step 3: Let repository execute with secure filters
+    return imageRepository.findImages(filters)
+  },
+
+  async updateImage(id: string, data: any, user: User) {
+    // Step 1: Get current resource state
+    const image = await imageRepository.findById(id)
+    if (!image) throw err('NOT_FOUND')
+
+    // Step 2: Check if THIS user can modify THIS specific resource
+    if (!this.canModify(user, image)) throw err('FORBIDDEN')
+
+    // Step 3: Perform the update
+    return imageRepository.update(id, data)
+  },
+
+  // PRIVATE: Build security filters for different roles
+  buildSecurityFilters(user?: User) {
+    if (!user) {
+      // Anonymous: only public content
+      return { visibility: 'PUBLIC' }
     }
-    return true
-  }
 
-  // 3) Owner
-  const isOwner = !!user && !!ownerId && user.id === ownerId
-  if (isOwner) {
-    if (resource === 'users' && action === 'manage') return false
-    return action !== 'manage'
-  }
-
-  // 4) Moderator (non-owner)
-  if (role === 'MODERATOR') {
-    if (action === 'read') return true
-
-    // Users resource: can only manage bans for USER targets
-    if (resource === 'users') {
-      if (action === 'manage') return targetUserRole === 'USER'
-      return false
+    if (user.role === 'ADMIN') {
+      // Admin sees everything
+      return {}
     }
 
-    // Content resources: can update/delete USER-owned or orphaned content
-    const isOrphan = ownerId == null
-    const ownedByUser = ownerRole === 'USER'
-    if (
-      (action === 'update' || action === 'delete') &&
-      (isOrphan || ownedByUser)
-    ) {
-      return true
+    if (user.role === 'MODERATOR') {
+      // Moderator sees: PUBLIC + HIDDEN + own content
+      return {
+        OR: [
+          { visibility: 'PUBLIC' },
+          { visibility: 'HIDDEN' },
+          { ownerId: user.id },
+        ],
+      }
+    }
+
+    // Regular USER sees: PUBLIC + own content
+    return {
+      OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }],
+    }
+  },
+
+  // PRIVATE: Check if user can modify specific resource
+  canModify(user: User, resource: any): boolean {
+    // Owner can always modify their own content
+    if (resource.ownerId === user.id) return true
+
+    // Admin can modify non-admin content
+    if (user.role === 'ADMIN') {
+      return resource.ownerRole !== 'ADMIN'
+    }
+
+    // Moderator can modify USER content
+    if (user.role === 'MODERATOR') {
+      return resource.ownerRole === 'USER'
     }
 
     return false
-  }
-
-  // 5) Regular user (non-owner)
-  return action === 'read' && visibility === 'PUBLIC'
-}
-```
-
-### Route Metadata
-
-```ts
-// Add RBAC hints to Fastify route options
-{
-  config: {
-    rbac: {
-      resource: 'characters',
-      action: 'create' | 'read' | 'update' | 'delete' | 'manage',
-      ownership: 'own' | 'any' | 'public'  // Optional hint
-    }
-  }
-}
-```
-
-### Ownership Resolution Helper
-
-```ts
-// src/common/middleware/rbac.resolve.ts
-export async function resolveOwnership(
-  req: any,
-  resource: string
-): Promise<{
-  ownerId?: string
-  visibility?: Visibility
-  ownerRole?: Role
-  targetUserRole?: Role
-}> {
-  // Characters example
-  if (resource === 'characters' && req.params?.id) {
-    const { id } = req.params
-    const row = await req.prisma.character.findUnique({
-      where: { id },
-      select: {
-        ownerId: true,
-        visibility: true,
-        owner: { select: { role: true } },
-      },
-    })
-    return {
-      ownerId: row?.ownerId,
-      visibility: row?.visibility,
-      ownerRole: row?.owner?.role,
-    }
-  }
-
-  // Users example
-  if (resource === 'users' && req.params?.id) {
-    const { id } = req.params
-    const row = await req.prisma.user.findUnique({
-      where: { id },
-      select: { id: true, role: true },
-    })
-    return { ownerId: row?.id, targetUserRole: row?.role }
-  }
-
-  // Fallback for creation routes
-  return {
-    ownerId: req.body?.ownerId,
-    visibility: req.body?.visibility,
-  }
-}
-```
-
-### Fastify PreHandler
-
-```ts
-// src/common/middleware/rbac.ts
-import { can } from './rbac.policy'
-import { err } from '@/shared/errors/factories'
-
-export function rbacPreHandler(resource: Resource, action: Action) {
-  return async function (req: any) {
-    const disabled = process.env.RBAC_ENABLED === 'false'
-    if (disabled) return // Allow all in test/dev environments
-
-    if (!req.user && action !== 'read') {
-      throw err('UNAUTHORIZED', 'Login required')
-    }
-
-    const meta = req.routeOptions?.config?.rbac || {}
-    const resolved =
-      meta.ownerId || meta.visibility
-        ? meta
-        : await resolveOwnership(req, resource)
-
-    const ok = can({
-      user: req.user,
-      resource,
-      action,
-      ownerId: resolved.ownerId,
-      visibility: resolved.visibility,
-      ownerRole: resolved.ownerRole,
-      targetUserRole: resolved.targetUserRole,
-    })
-
-    if (!ok) throw err('FORBIDDEN', 'Not allowed')
-  }
-}
-```
-
-### Route Registration Example
-
-```ts
-app.post(
-  '/v1/characters',
-  {
-    config: { rbac: { resource: 'characters', action: 'create' } },
-    preHandler: [authPreHandler, rbacPreHandler('characters', 'create')],
   },
-  controller.createCharacter
-)
-
-app.put(
-  '/v1/characters/:id',
-  {
-    config: { rbac: { resource: 'characters', action: 'update' } },
-    preHandler: [authPreHandler, rbacPreHandler('characters', 'update')],
-  },
-  controller.updateCharacter
-)
-```
-
----
-
-## API Examples
-
-### 1. Public Character List
-
-```http
-GET /api/v1/characters?visibility=PUBLIC
-```
-
-- **All roles**: ✅ Allowed
-- **Response**: Only PUBLIC characters returned
-
-### 2. Create Character
-
-```http
-POST /api/v1/characters
-{
-  "name": "Aria",
-  "ownerId": "user-123",
-  "visibility": "PUBLIC"
 }
 ```
 
-- **Anonymous**: ❌ `UNAUTHORIZED` (401)
-- **USER** (if ownerId = self): ✅ Created (201)
-- **USER** (if ownerId ≠ self): ❌ `FORBIDDEN` (403)
-- **MODERATOR/ADMIN**: ✅ Created (201)
+### **3. Repository Layer**
 
-### 3. Update Character
+**Purpose**: Execute database queries with filters that are ALREADY SECURE.
 
-```http
-PUT /api/v1/characters/char-456
-{
-  "name": "Aria Lightblade"
-}
-```
+**Important**: Repository has NO idea about users, roles, or permissions!
 
-- **Owner**: ✅ Updated (200)
-- **MODERATOR** (if owner = USER): ✅ Updated (200)
-- **MODERATOR** (if owner = MODERATOR/ADMIN): ❌ `FORBIDDEN` (403)
-- **ADMIN** (if owner ≠ ADMIN): ✅ Updated (200)
-- **ADMIN** (if owner = other ADMIN): ❌ `FORBIDDEN` (403)
-
-### 4. Ban User
-
-```http
-POST /api/v1/users/user-789/ban
-{
-  "isBanned": true,
-  "banReason": "Spam"
-}
-```
-
-- **USER**: ❌ `FORBIDDEN` (403)
-- **MODERATOR** (if target = USER): ✅ Banned (200)
-- **MODERATOR** (if target = MODERATOR/ADMIN): ❌ `FORBIDDEN` (403)
-- **ADMIN** (if target = USER/MODERATOR): ✅ Banned (200)
-- **ADMIN** (if target = other ADMIN): ❌ `FORBIDDEN` (403)
-
-### 5. Visibility Moderation
-
-```http
-PUT /api/v1/characters/char-456
-{
-  "visibility": "PUBLIC"  // Changing from HIDDEN
-}
-```
-
-- **USER** (owner): ❌ `FORBIDDEN` (403) - Cannot unhide own content
-- **MODERATOR**: ✅ Updated (200) - Can restore visibility
-- **ADMIN**: ✅ Updated (200) - Can restore visibility
-
----
-
-## Error Codes
-
-| Scenario                 | HTTP | Code                            | Message              |
-| ------------------------ | ---- | ------------------------------- | -------------------- |
-| No JWT token             | 401  | `UNAUTHORIZED`                  | "Login required"     |
-| Invalid/expired token    | 401  | `TOKEN_INVALID`/`TOKEN_EXPIRED` | "Invalid token"      |
-| Insufficient permissions | 403  | `FORBIDDEN`                     | "Not allowed"        |
-| Resource not found       | 404  | `RESOURCE_NOT_FOUND`            | "Resource not found" |
-| Owner mismatch           | 403  | `FORBIDDEN`                     | "Not allowed"        |
-| Try to ban admin         | 403  | `FORBIDDEN`                     | "Not allowed"        |
-
----
-
-## Service-Level Implementation
-
-Always re-check permissions in services, even if route preHandlers are present:
-
-```ts
-async function updateCharacter(id: string, data: any, user: User) {
-  const character = await prisma.character.findUnique({
-    where: { id },
-    include: { owner: { select: { role: true } } },
-  })
-
-  if (!character) throw err('RESOURCE_NOT_FOUND')
-
-  // RBAC check
-  if (
-    !can({
-      user,
-      resource: 'characters',
-      action: 'update',
-      ownerId: character.ownerId,
-      visibility: character.visibility,
-      ownerRole: character.owner?.role,
+```typescript
+export const imageRepository = {
+  // Takes pre-built filters and executes query
+  async findImages(filters: any) {
+    return prisma.image.findMany({
+      where: filters, // These filters come pre-secured from service
+      include: { owner: { select: { role: true } } },
     })
-  ) {
-    throw err('FORBIDDEN')
-  }
+  },
 
-  return prisma.character.update({ where: { id }, data })
+  async findById(id: string) {
+    return prisma.image.findUnique({
+      where: { id },
+      include: { owner: { select: { role: true } } },
+    })
+  },
+
+  async update(id: string, data: any) {
+    return prisma.image.update({ where: { id }, data })
+  },
 }
 ```
 
-### Response Filtering
+### **4. Controller Layer**
 
-Filter responses based on permissions:
+**Purpose**: Handle HTTP stuff (parameters, responses) and coordinate service
+calls.
 
-```ts
-function filterUserProfile(user: User, viewer: User | null) {
-  const isOwner = viewer?.id === user.id
-  const isModerator = viewer?.role === 'MODERATOR' || viewer?.role === 'ADMIN'
+**Important**: Controller never makes security decisions!
 
-  if (isOwner || isModerator) {
-    return user // Full profile
-  }
+```typescript
+export const imageController = {
+  async listImages(req: any, reply: any) {
+    // Extract HTTP parameters
+    const params = req.query
+    const user = req.user // Set by auth middleware
 
-  // Public fields only
-  return {
-    id: user.id,
-    name: user.name,
-    createdAt: user.createdAt,
-  }
+    // Delegate everything to service
+    const result = await imageService.listImages(params, user)
+    return reply.send(result)
+  },
+
+  async updateImage(req: any, reply: any) {
+    const { id } = req.params
+    const data = req.body
+    const user = req.user
+
+    // Service handles all business logic and security
+    await imageService.updateImage(id, data, user)
+    return reply.code(204).send()
+  },
 }
+```
+
+---
+
+## 🔄 **Complete Request Flow**
+
+Let's trace a request: `GET /api/v1/images?tags=fantasy`
+
+1. **MIDDLEWARE**: "Can USER role access /images route?" ✅ Yes, USERs can read
+   images
+2. **CONTROLLER**: Extract `tags=fantasy` and `user` from request, call service
+3. **SERVICE**: Build security filters for this user + combine with business
+   filters
+4. **REPOSITORY**: Execute database query with secure filters
+
+```typescript
+// What actually happens:
+// 1. Middleware allows USER to access route
+// 2. Controller extracts: { tags: "fantasy" }, user: { id: "123", role: "USER" }
+// 3. Service builds filters: { OR: [{ visibility: "PUBLIC" }, { ownerId: "123" }], tags: "fantasy" }
+// 4. Repository queries: SELECT * FROM images WHERE (visibility = 'PUBLIC' OR ownerId = '123') AND tags LIKE '%fantasy%'
+```
+
+**Result**: User only sees fantasy images they're allowed to see.
+
+---
+
+## 🔧 **Reusable Helpers**
+
+Create these utility functions to avoid repeating security logic:
+
+```typescript
+// Apply security constraints to any filter object
+export function applySecurityFilters<T>(filters: T, user?: User): T {
+  if (!user) return { ...filters, visibility: 'PUBLIC' } as T
+  if (user.role === 'ADMIN') return filters
+
+  const securityFilter =
+    user.role === 'MODERATOR'
+      ? {
+          OR: [
+            { visibility: 'PUBLIC' },
+            { visibility: 'HIDDEN' },
+            { ownerId: user.id },
+          ],
+        }
+      : { OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }] }
+
+  return { ...filters, ...securityFilter } as T
+}
+
+// Check if user can modify a specific resource
+export function canModifyResource(user: User, resource: any): boolean {
+  if (resource.ownerId === user.id) return true
+  if (user.role === 'ADMIN') return resource.ownerRole !== 'ADMIN'
+  if (user.role === 'MODERATOR') return resource.ownerRole === 'USER'
+  return false
+}
+
+// Check if user can view a specific resource
+export function canViewResource(
+  user: User | undefined,
+  resource: any
+): boolean {
+  if (!user) return resource.visibility === 'PUBLIC'
+  if (user.role === 'ADMIN') return true
+  if (resource.ownerId === user.id) return true
+  if (user.role === 'MODERATOR')
+    return ['PUBLIC', 'HIDDEN'].includes(resource.visibility)
+  return resource.visibility === 'PUBLIC'
+}
+```
+
+---
+
+## ✅ **Best Practices**
+
+### **DO**
+
+- **Defense in depth**: Always re-check permissions in service even if
+  middleware passed
+- **Separation of concerns**: Each layer has ONE responsibility
+- **Pre-secured filters**: Service builds filters, repository applies them
+- **Consistent helpers**: Use centralized utilities for RBAC logic
+
+### **DON'T**
+
+- **Repository with security**: Never put user/role logic in repository
+- **Controller with business**: Never put RBAC checks in controller
+- **Middleware with granular**: Never check ownership in middleware
+- **Service without re-check**: Always re-validate permissions
+
+---
+
+## 🚨 **Common Mistakes**
+
+```typescript
+// ❌ WRONG: Repository knows about users
+async findImagesSecure(user: User) {
+  if (user.role === 'ADMIN') { /* NO! */ }
+}
+
+// ❌ WRONG: Controller makes security decisions
+async deleteImage(req, reply) {
+  if (req.user.id !== image.ownerId) throw err('FORBIDDEN') // NO!
+}
+
+// ❌ WRONG: Middleware checks ownership
+async rbacMiddleware(req) {
+  const image = await db.image.findUnique({ id: req.params.id }) // NO!
+}
+
+// ✅ CORRECT: Clean separation
+// Middleware: route-level permissions
+// Controller: HTTP coordination
+// Service: business logic + granular RBAC
+// Repository: pure data access
+```
+
+---
+
+## 📋 **Quick Templates**
+
+### **Route Setup**
+
+```typescript
+app.METHOD(
+  '/resource/:id?',
+  {
+    preHandler: [authMiddleware, rbac('resource', 'action')],
+  },
+  controller.method
+)
+```
+
+### **Service Method**
+
+```typescript
+async serviceMethod(params: any, user: User) {
+  const resource = await repository.findById(params.id)
+  if (!canDoAction(user, resource)) throw err('FORBIDDEN')
+  return repository.doAction(params)
+}
+```
+
+### **Security Filtering**
+
+```typescript
+const filters = applySecurityFilters(businessFilters, user)
+const results = await repository.find(filters)
 ```

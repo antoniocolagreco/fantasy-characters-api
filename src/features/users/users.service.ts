@@ -12,8 +12,19 @@ import {
     type UserStats,
 } from './index'
 
+import type { AuthenticatedUser } from '@/features/auth'
 import { passwordService } from '@/features/auth/password.service'
 import { err } from '@/shared/errors'
+import {
+    applyUserSecurityFilters,
+    canManageUser,
+    canModifyResource,
+} from '@/shared/utils/rbac.helpers'
+
+// Permission helper for viewing user stats
+function canViewUserStats(user?: AuthenticatedUser): boolean {
+    return user?.role === 'ADMIN' || user?.role === 'MODERATOR'
+}
 
 // ===== User Service =====
 export const userService = {
@@ -29,8 +40,41 @@ export const userService = {
         return userRepository.findByEmail(email)
     },
 
-    async list(query: UserListQuery): Promise<ListUsersResult> {
-        const { users, hasNext, nextCursor } = await userRepository.findMany(query)
+    async list(query: UserListQuery, user?: AuthenticatedUser): Promise<ListUsersResult> {
+        // Build business filters from query parameters
+        const businessFilters: Record<string, unknown> = {}
+
+        if (query.role !== undefined) {
+            businessFilters.role = query.role
+        }
+        if (query.isActive !== undefined) {
+            businessFilters.isActive = query.isActive
+        }
+        if (query.isBanned !== undefined) {
+            businessFilters.isBanned = query.isBanned
+        }
+        if (query.hasProfilePicture !== undefined) {
+            if (query.hasProfilePicture) {
+                businessFilters.profilePictureId = { not: null }
+            } else {
+                businessFilters.profilePictureId = null
+            }
+        }
+        if (query.search) {
+            businessFilters.OR = [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { email: { contains: query.search, mode: 'insensitive' } },
+                { bio: { contains: query.search, mode: 'insensitive' } },
+            ]
+        }
+
+        // Apply security filters using helper
+        const secureFilters = applyUserSecurityFilters(businessFilters, user)
+
+        const { users, hasNext, nextCursor } = await userRepository.findMany({
+            ...query,
+            filters: secureFilters,
+        })
 
         return {
             users,
@@ -72,23 +116,31 @@ export const userService = {
         return userRepository.create(userData)
     },
 
-    async update(id: string, data: UpdateUser): Promise<User> {
+    async update(id: string, data: UpdateUser, user?: AuthenticatedUser): Promise<User> {
         // Check if user exists
         const existingUser = await userRepository.findById(id)
         if (!existingUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
         }
 
-        // UpdateUser doesn't include email changes - that would be a separate endpoint
+        // Check permissions using standardized RBAC helper
+        if (!canModifyResource(user, { ownerId: existingUser.id, ownerRole: existingUser.role })) {
+            throw err('FORBIDDEN', 'Access denied to update this user')
+        }
 
         return userRepository.update(id, data)
     },
 
-    async delete(id: string): Promise<void> {
+    async delete(id: string, user?: AuthenticatedUser): Promise<void> {
         // Check if user exists
         const existingUser = await userRepository.findById(id)
         if (!existingUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
+        }
+
+        // Check permissions using standardized RBAC helper
+        if (!canModifyResource(user, { ownerId: existingUser.id, ownerRole: existingUser.role })) {
+            throw err('FORBIDDEN', 'Access denied to delete this user')
         }
 
         // Revoke all refresh tokens before deletion
@@ -98,11 +150,21 @@ export const userService = {
         await userRepository.delete(id)
     },
 
-    async ban(id: string, banData: BanUser, bannedById: string): Promise<User> {
+    async ban(
+        id: string,
+        banData: BanUser,
+        bannedById: string,
+        user?: AuthenticatedUser
+    ): Promise<User> {
         // Check if user exists
         const existingUser = await userRepository.findById(id)
         if (!existingUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
+        }
+
+        // Check permissions using standardized RBAC helper
+        if (!canManageUser(user, { id: existingUser.id, role: existingUser.role })) {
+            throw err('FORBIDDEN', 'Access denied to ban this user')
         }
 
         // Check if user is already banned
@@ -116,11 +178,16 @@ export const userService = {
         return userRepository.ban(id, banData, bannedById)
     },
 
-    async unban(id: string): Promise<User> {
+    async unban(id: string, user?: AuthenticatedUser): Promise<User> {
         // Check if user exists
         const existingUser = await userRepository.findById(id)
         if (!existingUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
+        }
+
+        // Check permissions using standardized RBAC helper
+        if (!canManageUser(user, { id: existingUser.id, role: existingUser.role })) {
+            throw err('FORBIDDEN', 'Access denied to unban this user')
         }
 
         // Check if user is banned
@@ -131,7 +198,12 @@ export const userService = {
         return userRepository.unban(id)
     },
 
-    async getStats(): Promise<UserStats> {
+    async getStats(user?: AuthenticatedUser): Promise<UserStats> {
+        // Check permissions - only moderators and admins can view stats
+        if (!canViewUserStats(user)) {
+            throw err('FORBIDDEN', 'Access denied to view user statistics')
+        }
+
         return userRepository.getStats()
     },
 
@@ -152,15 +224,25 @@ export const userService = {
         await userRepository.updateLastLogin(id)
     },
 
-    async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
-        const user = await userRepository.findById(id)
-        if (!user) {
+    async changePassword(
+        id: string,
+        currentPassword: string,
+        newPassword: string,
+        user?: AuthenticatedUser
+    ): Promise<void> {
+        const existingUser = await userRepository.findById(id)
+        if (!existingUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
+        }
+
+        // Check permissions - users can only change their own password
+        if (user?.id !== id) {
+            throw err('FORBIDDEN', 'Access denied - can only change your own password')
         }
 
         // Verify current password
         const isValidPassword = await passwordService.verifyPassword(
-            user.passwordHash,
+            existingUser.passwordHash,
             currentPassword
         )
         if (!isValidPassword) {
@@ -189,9 +271,43 @@ export const publicUserService = {
     },
 
     async list(
-        query: UserListQuery
+        query: UserListQuery,
+        user?: AuthenticatedUser
     ): Promise<{ users: PublicUser[]; pagination: ListUsersResult['pagination'] }> {
-        const { users, hasNext, nextCursor } = await publicUserRepository.findMany(query)
+        // Build business filters from query parameters
+        const businessFilters: Record<string, unknown> = {}
+
+        if (query.role !== undefined) {
+            businessFilters.role = query.role
+        }
+        if (query.isActive !== undefined) {
+            businessFilters.isActive = query.isActive
+        }
+        if (query.isBanned !== undefined) {
+            businessFilters.isBanned = query.isBanned
+        }
+        if (query.hasProfilePicture !== undefined) {
+            if (query.hasProfilePicture) {
+                businessFilters.profilePictureId = { not: null }
+            } else {
+                businessFilters.profilePictureId = null
+            }
+        }
+        if (query.search) {
+            businessFilters.OR = [
+                { name: { contains: query.search, mode: 'insensitive' } },
+                { email: { contains: query.search, mode: 'insensitive' } },
+                { bio: { contains: query.search, mode: 'insensitive' } },
+            ]
+        }
+
+        // Apply security filters using helper
+        const secureFilters = applyUserSecurityFilters(businessFilters, user)
+
+        const { users, hasNext, nextCursor } = await publicUserRepository.findMany({
+            ...query,
+            filters: secureFilters,
+        })
 
         return {
             users,

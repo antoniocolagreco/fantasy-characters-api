@@ -26,20 +26,50 @@ export const RegisterResponseSchema = createSuccessResponseSchema(
 
 export const ChangePasswordResponseSchema = Type.Object(
     {
-        message: Type.String(),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+        message: Type.String({
+            description: 'Success message',
+        }),
+        requestId: Type.Optional(
+            Type.String({
+                description: 'Request ID',
+            })
+        ),
+        timestamp: Type.Optional(
+            Type.String({
+                format: 'date-time',
+                description: 'Response timestamp',
+            })
+        ),
     },
-    { $id: 'ChangePasswordResponse' }
+    {
+        $id: 'ChangePasswordResponse',
+        title: 'Change Password Response',
+        description: 'Response for successful password change',
+    }
 )
 
 export const LogoutResponseSchema = Type.Object(
     {
-        message: Type.String(),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+        message: Type.String({
+            description: 'Success message',
+        }),
+        requestId: Type.Optional(
+            Type.String({
+                description: 'Request ID',
+            })
+        ),
+        timestamp: Type.Optional(
+            Type.String({
+                format: 'date-time',
+                description: 'Response timestamp',
+            })
+        ),
     },
-    { $id: 'LogoutResponse' }
+    {
+        $id: 'LogoutResponse',
+        title: 'Logout Response',
+        description: 'Response for successful logout',
+    }
 )
 
 // ===== Response Schemas (HTTP layer) =====
@@ -48,26 +78,62 @@ export const LoginResponseSchema = Type.Object(
         data: Type.Intersect([
             AuthenticatedUserSchema,
             Type.Object({
-                accessToken: Type.String(),
-                refreshToken: Type.String(),
+                accessToken: Type.String({
+                    description: 'JWT access token',
+                }),
+                refreshToken: Type.String({
+                    description: 'Refresh token',
+                }),
             }),
         ]),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+        requestId: Type.Optional(
+            Type.String({
+                description: 'Request ID',
+            })
+        ),
+        timestamp: Type.Optional(
+            Type.String({
+                format: 'date-time',
+                description: 'Response timestamp',
+            })
+        ),
     },
-    { $id: 'LoginResponse' }
+    {
+        $id: 'LoginResponse',
+        title: 'Login Response',
+        description: 'Successful login response with user data and tokens',
+    }
 )
 
 export const RefreshTokenResponseSchema = Type.Object(
     {
         data: Type.Object({
-            accessToken: Type.String(),
-            refreshToken: Type.Optional(Type.String()),
+            accessToken: Type.String({
+                description: 'New JWT access token',
+            }),
+            refreshToken: Type.Optional(
+                Type.String({
+                    description: 'New refresh token (if rotated)',
+                })
+            ),
         }),
-        requestId: Type.Optional(Type.String()),
-        timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+        requestId: Type.Optional(
+            Type.String({
+                description: 'Request ID',
+            })
+        ),
+        timestamp: Type.Optional(
+            Type.String({
+                format: 'date-time',
+                description: 'Response timestamp',
+            })
+        ),
     },
-    { $id: 'RefreshTokenResponse' }
+    {
+        $id: 'RefreshTokenResponse',
+        title: 'Refresh Token Response',
+        description: 'Response for successful token refresh',
+    }
 )
 
 // ===== TypeScript Types =====

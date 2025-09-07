@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify'
 import { beforeAll, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
+import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 
 describe('Image API Integration Tests', () => {
     let app: FastifyInstance
@@ -37,8 +38,19 @@ describe('Image API Integration Tests', () => {
             url: '/api/v1/images',
         })
 
-        // Should either return 401 (if auth required) or 200 (if optional auth)
-        expect([200, 401]).toContain(response.statusCode)
+        // Should return 403 (RBAC denies access) or 401 (auth required)
+        expect([401, 403]).toContain(response.statusCode)
+    })
+
+    it('should allow authenticated users to access image endpoints', async () => {
+        const response = await app.inject({
+            method: 'GET',
+            url: '/api/v1/images',
+            headers: createAuthHeaders({ role: 'ADMIN' }),
+        })
+
+        // Admin should have full access
+        expect(response.statusCode).toBe(200)
     })
 
     it('should have proper OpenAPI structure', async () => {

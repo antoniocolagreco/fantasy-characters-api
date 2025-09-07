@@ -28,9 +28,14 @@ export function applyCursor<T extends Record<string, unknown>>(
     where: T,
     cursor: string | null,
     sortBy: keyof T,
-    sortDir: 'asc' | 'desc'
+    sortDir: string
 ): T {
     if (!cursor) return where
+
+    // Validate sortDir at runtime
+    if (sortDir !== 'asc' && sortDir !== 'desc') {
+        throw err('VALIDATION_ERROR', 'Invalid sort direction')
+    }
 
     try {
         const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) as {
@@ -49,8 +54,13 @@ export function applyCursor<T extends Record<string, unknown>>(
     }
 }
 
-export function buildOrderBy(sortBy: string, sortDir: 'asc' | 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
+export function buildOrderBy(sortBy: string, sortDir?: string) {
+    // Validate sortDir at runtime
+    if (sortDir && sortDir !== 'asc' && sortDir !== 'desc') {
+        throw err('VALIDATION_ERROR', 'Invalid sort direction')
+    }
+    const direction = sortDir || 'desc'
+    return [{ [sortBy]: direction }, { id: direction }]
 }
 
 export function buildPagination<T extends { id: string }>(

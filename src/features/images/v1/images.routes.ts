@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from 'fastify'
 import { imageController } from './images.controller'
 import * as schemas from './images.schema'
 
+import { rbac, toFastifyPreHandler } from '@/features/auth/rbac.middleware'
 import { ErrorResponseSchema } from '@/shared/schemas'
 
 export const imageRoutes: FastifyPluginAsync = async app => {
@@ -13,6 +14,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.get(
         '/images',
         {
+            preHandler: [toFastifyPreHandler(rbac.read('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'List image metadata',
@@ -22,6 +24,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 response: {
                     200: schemas.ImageListResponseSchema,
                     400: ErrorResponseSchema,
+                    403: ErrorResponseSchema,
                     500: ErrorResponseSchema,
                 },
             },
@@ -33,6 +36,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.get(
         '/images/:id',
         {
+            preHandler: [toFastifyPreHandler(rbac.read('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Get image metadata by ID',
@@ -54,6 +58,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.get(
         '/images/:id/file',
         {
+            preHandler: [toFastifyPreHandler(rbac.read('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Get image binary',
@@ -79,6 +84,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.get(
         '/images/stats',
         {
+            preHandler: [toFastifyPreHandler(rbac.read('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Get image statistics',
@@ -86,6 +92,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 security: [{ bearerAuth: [] }],
                 response: {
                     200: schemas.ImageStatsResponseSchema,
+                    403: ErrorResponseSchema,
                     500: ErrorResponseSchema,
                 },
             },
@@ -97,6 +104,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.post(
         '/images',
         {
+            preHandler: [toFastifyPreHandler(rbac.create('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Upload new image',
@@ -107,6 +115,8 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 response: {
                     201: schemas.ImageResponseSchema,
                     400: ErrorResponseSchema,
+                    401: ErrorResponseSchema,
+                    403: ErrorResponseSchema,
                     413: ErrorResponseSchema,
                     500: ErrorResponseSchema,
                 },
@@ -119,6 +129,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.put(
         '/images/:id',
         {
+            preHandler: [toFastifyPreHandler(rbac.update('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Update image metadata or replace file',
@@ -130,6 +141,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 response: {
                     200: schemas.ImageResponseSchema,
                     400: ErrorResponseSchema,
+                    401: ErrorResponseSchema,
                     404: ErrorResponseSchema,
                     403: ErrorResponseSchema,
                     413: ErrorResponseSchema,
@@ -144,6 +156,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
     app.delete(
         '/images/:id',
         {
+            preHandler: [toFastifyPreHandler(rbac.delete('images'))],
             schema: {
                 tags: ['Images'],
                 summary: 'Delete image',
@@ -152,6 +165,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 params: schemas.ImageParamsSchema,
                 response: {
                     204: { type: 'null' },
+                    401: ErrorResponseSchema,
                     404: ErrorResponseSchema,
                     403: ErrorResponseSchema,
                     500: ErrorResponseSchema,
