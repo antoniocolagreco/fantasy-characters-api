@@ -1,6 +1,8 @@
 #!/usr/bin/env tsx
 /* eslint-disable no-console */
 
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { PrismaClient, Rarity, Role, Sex, Slot, Visibility } from '@prisma/client'
 
 import { logger } from '@/infrastructure/logging/logger.service'
@@ -174,6 +176,49 @@ async function main() {
         }),
     ])
 
+    logger.info('Creating sample images...')
+
+    // Helper function to read image file and create image record
+    const createImageFromFile = async (filename: string, description: string) => {
+        try {
+            const filePath = join(process.cwd(), 'assets', filename)
+            const imageBuffer = readFileSync(filePath)
+            
+            return await prisma.image.create({
+                data: {
+                    id: generateUUIDv7(),
+                    blob: imageBuffer,
+                    description,
+                    size: imageBuffer.length,
+                    mimeType: filename.endsWith('.webp')
+                        ? 'image/webp'
+                        : filename.endsWith('.png')
+                          ? 'image/png'
+                          : 'image/jpeg',
+                    width: 350, // Standard width for character portraits
+                    height: 450, // Standard height for character portraits
+                    ownerId: adminUser.id,
+                    visibility: Visibility.PUBLIC,
+                },
+            })
+        } catch (error) {
+            logger.warn(`Failed to load image ${filename}: ${error}`)
+            return null
+        }
+    }
+
+    // Create images for characters
+    const images = await Promise.all([
+        createImageFromFile('male_warrior.webp', 'Portrait of a human warrior'),
+        createImageFromFile('male_elf.webp', 'Portrait of an elven wizard'),
+        createImageFromFile('male_dwarf.webp', 'Portrait of a dwarven cleric'),
+        createImageFromFile('male_halfling.webp', 'Portrait of a halfling rogue'),
+        createImageFromFile('female_cleric.webp', 'Portrait of a female cleric'),
+    ])
+
+    // Filter out any failed image loads
+    const validImages = images.filter(img => img !== null)
+
     logger.info('Creating sample skills...')
 
     // Create sample skills
@@ -328,7 +373,7 @@ async function main() {
 
     logger.info('Creating sample characters...')
 
-    // Create sample characters
+    // Create sample characters with images
     const characters = await Promise.all([
         prisma.character.create({
             data: {
@@ -351,6 +396,7 @@ async function main() {
                 ownerId: adminUser.id,
                 raceId: races[0].id, // Human
                 archetypeId: archetypes[0].id, // Warrior
+                imageId: validImages[0]?.id ?? null,
                 visibility: Visibility.PUBLIC,
             },
         }),
@@ -375,6 +421,7 @@ async function main() {
                 ownerId: adminUser.id,
                 raceId: races[1].id, // Elf
                 archetypeId: archetypes[1].id, // Wizard
+                imageId: validImages[1]?.id ?? null,
                 visibility: Visibility.PUBLIC,
             },
         }),
@@ -399,6 +446,7 @@ async function main() {
                 ownerId: adminUser.id,
                 raceId: races[2].id, // Dwarf
                 archetypeId: archetypes[3].id, // Cleric
+                imageId: validImages[2]?.id ?? null,
                 visibility: Visibility.PUBLIC,
             },
         }),
@@ -423,6 +471,7 @@ async function main() {
                 ownerId: adminUser.id,
                 raceId: races[3].id, // Halfling
                 archetypeId: archetypes[2].id, // Rogue
+                imageId: validImages[3]?.id ?? null,
                 visibility: Visibility.PUBLIC,
             },
         }),
@@ -505,6 +554,7 @@ async function main() {
 
     // Log summary
     const userCount = await prisma.user.count()
+    const imageCount = await prisma.image.count()
     const raceCount = await prisma.race.count()
     const archetypeCount = await prisma.archetype.count()
     const skillCount = await prisma.skill.count()
@@ -516,6 +566,7 @@ async function main() {
 
     logger.info(`Created:
     - Users: ${userCount}
+    - Images: ${imageCount}
     - Races: ${raceCount}
     - Archetypes: ${archetypeCount}
     - Skills: ${skillCount}
