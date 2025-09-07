@@ -218,23 +218,23 @@ Duration: 3-5 days
 
 Duration: 5-7 days
 
-- [ ] 10.01 Scaffold image management feature structure
-- [ ] 10.02 Create Image schemas (types derived from schemas)
-- [ ] 10.03 Implement Image repository layer
-- [ ] 10.04 Create image processing service with Sharp
-- [ ] 10.05 Implement WebP conversion pipeline
-- [ ] 10.06 Create image validation and security
-- [ ] 10.07 Implement `GET /api/v1/images` - List image metadata
-- [ ] 10.08 Implement `GET /api/v1/images/:id` - Get image metadata by ID
-- [ ] 10.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
-- [ ] 10.10 Implement `GET /api/v1/images/stats` - Image statistics
-- [ ] 10.11 Implement `POST /api/v1/images` - Upload new image
-- [ ] 10.12 Implement `PUT /api/v1/images/:id` - Update image metadata or
+- [x] 10.01 Scaffold image management feature structure
+- [x] 10.02 Create Image schemas (types derived from schemas)
+- [x] 10.03 Implement Image repository layer
+- [x] 10.04 Create image processing service with Sharp
+- [x] 10.05 Implement WebP conversion pipeline
+- [x] 10.06 Create image validation and security
+- [x] 10.07 Implement `GET /api/v1/images` - List image metadata
+- [x] 10.08 Implement `GET /api/v1/images/:id` - Get image metadata by ID
+- [x] 10.09 Implement `GET /api/v1/images/:id/file` - Get image binary (WebP)
+- [x] 10.10 Implement `GET /api/v1/images/stats` - Image statistics
+- [x] 10.11 Implement `POST /api/v1/images` - Upload new image
+- [x] 10.12 Implement `PUT /api/v1/images/:id` - Update image metadata or
       replace file
-- [ ] 10.13 Implement `DELETE /api/v1/images/:id` - Delete image
-- [ ] 10.14 Implement error handling for all image operations
-- [ ] 10.15 Write comprehensive tests (80%+ coverage)
-- [ ] 10.16 Update OpenAPI docs for all image endpoints (schemas, params,
+- [x] 10.13 Implement `DELETE /api/v1/images/:id` - Delete image
+- [x] 10.14 Implement error handling for all image operations
+- [x] 10.15 Write comprehensive tests (80%+ coverage)
+- [x] 10.16 Update OpenAPI docs for all image endpoints (schemas, params,
       responses)
 
 ---

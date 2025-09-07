@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import fp from 'fastify-plugin'
 import stripTags from 'striptags'
-import { stripLow } from 'validator'
+import validator from 'validator'
 
 export type SanitizationPluginOptions = {
     methods?: ReadonlyArray<'POST' | 'PUT' | 'PATCH'>
@@ -31,7 +31,7 @@ function stripHtmlToText(input: string): string {
 
 function normalizeText(input: string, maxLen = DEFAULT_MAX_LEN): string {
     // Remove control characters (keep tab/newline/carriage return)
-    let cleaned = stripLow(input, true)
+    let cleaned = validator.stripLow(input, true)
     // Convert any HTML to plain text first
     cleaned = stripHtmlToText(cleaned)
     // Collapse whitespace and trim
