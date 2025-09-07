@@ -29,6 +29,37 @@ vi.mock('@/infrastructure/database', () => ({
     prisma: prismaFake,
 }))
 
+// Mock image processing functions for tests
+vi.mock('../src/features/images/images.processing', () => ({
+    validateImageFile: vi.fn(() => {
+        // Do nothing - skip validation in tests
+    }),
+    processImageToWebP: vi.fn((buffer: Buffer) => {
+        return Promise.resolve({
+            buffer,
+            size: buffer.length,
+            mimeType: 'image/webp',
+            width: 800,
+            height: 600,
+        })
+    }),
+}))
+
+vi.mock('@/features/images/images.processing', () => ({
+    validateImageFile: vi.fn(() => {
+        // Do nothing - skip validation in tests
+    }),
+    processImageToWebP: vi.fn((buffer: Buffer) => {
+        return Promise.resolve({
+            buffer,
+            size: buffer.length,
+            mimeType: 'image/webp',
+            width: 800,
+            height: 600,
+        })
+    }),
+}))
+
 beforeAll(() => {
     // Setup will be added in future milestones
     // For now, just ensure test environment is configured

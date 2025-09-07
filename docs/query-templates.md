@@ -123,7 +123,7 @@ app.get(
       ...query,
       userId: req.user?.id,
     })
-    return reply.send(success(result.items, { pagination: result.pagination }))
+    return reply.send(paginated(result.data, result.pagination, req.id))
   }
 )
 ```
@@ -181,18 +181,18 @@ export function buildOrderBy(sortBy: string, sortDir: 'asc' | 'desc') {
 }
 
 export function buildPagination<T extends { id: string }>(
-  items: T[],
+  data: T[],
   limit: number,
   sortField: keyof T
-): { items: T[]; hasNext: boolean; nextCursor?: string } {
-  const hasNext = items.length > limit
-  const finalItems = hasNext ? items.slice(0, limit) : items
+): { data: T[]; hasNext: boolean; nextCursor?: string } {
+  const hasNext = data.length > limit
+  const finalData = hasNext ? data.slice(0, limit) : data
 
-  if (!hasNext || finalItems.length === 0) {
-    return { items: finalItems, hasNext: false }
+  if (!hasNext || finalData.length === 0) {
+    return { data: finalData, hasNext: false }
   }
 
-  const lastItem = finalItems[finalItems.length - 1]
+  const lastItem = finalData[finalData.length - 1]
   const nextCursor = Buffer.from(
     JSON.stringify({
       lastValue: lastItem[sortField],
@@ -200,7 +200,7 @@ export function buildPagination<T extends { id: string }>(
     })
   ).toString('base64')
 
-  return { items: finalItems, hasNext, nextCursor }
+  return { data: finalData, hasNext, nextCursor }
 }
 ```
 
@@ -234,7 +234,7 @@ export const characterService = {
     const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
 
     // Execute query
-    const items = await prisma.character.findMany({
+    const data = await prisma.character.findMany({
       where: whereWithCursor,
       orderBy: buildOrderBy(sortBy, sortDir), // Automatic tie-breaker
       take: limit + 1,
@@ -242,13 +242,13 @@ export const characterService = {
 
     // Build response with consistent pagination schema
     const {
-      items: finalItems,
+      data: finalData,
       hasNext,
       nextCursor,
-    } = buildPagination(items, limit, sortBy)
+    } = buildPagination(data, limit, sortBy)
 
     return {
-      items: finalItems,
+      data: finalData,
       pagination: {
         limit,
         hasNext,

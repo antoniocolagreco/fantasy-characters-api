@@ -49,20 +49,13 @@ export {
 // Response schemas (depends on error and common)
 export {
     BaseResponseSchema,
-    GenericPaginatedResponseSchema,
-    GenericSuccessResponseSchema,
-    PaginatedResponseSchema,
     PaginationSchema,
-    StandardResponses,
-    SuccessResponseSchema,
     createPaginatedResponseSchema,
+    createPaginatedResultSchema,
     createSuccessResponseSchema,
     type BaseResponse,
     type Pagination,
-    type PaginatedResponse,
-    type PaginatedResponseOf,
-    type SuccessResponse,
-    type SuccessResponseOf,
+    type PaginatedResultOf,
 } from './response.schema'
 
 // Configuration schemas (standalone)

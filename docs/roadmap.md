@@ -157,7 +157,7 @@ Duration: 4–5 days
 - [x] 7.01 Scaffold authentication feature structure
 - [x] 7.02 Create authentication schemas (types derived from schemas)
 - [x] 7.03 Implement JWT token system ([authentication.md](./authentication.md))
-- [x] 7.04 Implement password hashing with Argon2
+- [x] .04 Implement password hashing with Argon2
 - [x] 7.05 Setup JWT middleware for route protection
 - [x] 7.06 Implement authentication service layer
 - [x] 7.07 Implement `POST /api/v1/auth/register`
@@ -170,8 +170,6 @@ Duration: 4–5 days
 - [x] 7.14 Add error handling for all auth operations
 - [x] 7.15 Write auth tests (≥ 80% coverage)
 - [x] 7.16 Update OpenAPI docs for all auth endpoints
-- [ ] 7.17 Gate OAuth providers behind OAUTH_ENABLED flag and env vars
-      (optional)
 
 ---
 
@@ -200,17 +198,18 @@ Cross-links: [feature-dependencies.md](./feature-dependencies.md),
 Duration: 3-5 days
 
 - [ ] 9.01 Scaffold OAuth2 feature structure
-- [ ] 9.02 Create OAuth2 schemas (types derived from schemas)
-- [ ] 9.03 Implement OAuth2 service layer
-- [ ] 9.04 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to
+- [ ] 9.02 Gate OAuth providers behind OAUTH_ENABLED flag and env vars
+- [ ] 9.03 Create OAuth2 schemas (types derived from schemas)
+- [ ] 9.04 Implement OAuth2 service layer
+- [ ] 9.05 Implement `GET /api/v1/auth/oauth/:provider/start` - Redirect to
       provider
-- [ ] 9.05 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle
+- [ ] 9.06 Implement `GET /api/v1/auth/oauth/:provider/callback` - Handle
       callback
-- [ ] 9.06 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
-- [ ] 9.07 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
-- [ ] 9.08 Implement error handling for OAuth operations
-- [ ] 9.09 Write comprehensive OAuth tests (80%+ coverage)
-- [ ] 9.10 Update OpenAPI docs for all OAuth endpoints (schemas, params,
+- [ ] 9.07 Implement `POST /api/v1/auth/oauth/link` - Link provider to account
+- [ ] 9.08 Implement `POST /api/v1/auth/oauth/unlink` - Unlink provider
+- [ ] 9.09 Implement error handling for OAuth operations
+- [ ] 9.10 Write comprehensive OAuth tests (80%+ coverage)
+- [ ] 9.11 Update OpenAPI docs for all OAuth endpoints (schemas, params,
       responses)
 
 ---
