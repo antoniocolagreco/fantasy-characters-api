@@ -1,4 +1,4 @@
-import type { User, Role } from '@prisma/client'
+import type { User, Role, Tag, Visibility, Prisma } from '@prisma/client'
 
 import { passwordService } from '@/features/auth/password.service'
 import prismaService from '@/infrastructure/database/prisma.service'
@@ -124,6 +124,34 @@ export async function createTestUserInDb(
             lastLogin: new Date(),
         },
     })
+}
+
+/**
+ * Creates a single test tag with sensible defaults
+ */
+export async function createTestTag(
+    options: {
+        name?: string
+        description?: string
+        visibility?: Visibility
+        ownerId?: string
+    } = {}
+): Promise<Tag> {
+    const id = generateUUIDv7()
+
+    const baseData = {
+        id,
+        name: options.name || `Test Tag ${id.slice(0, 8)}`,
+        visibility: options.visibility || 'PUBLIC',
+    }
+
+    const dataWithOptionals = {
+        ...baseData,
+        ...(options.description !== undefined && { description: options.description }),
+        ...(options.ownerId !== undefined && { ownerId: options.ownerId }),
+    }
+
+    return prismaService.tag.create({ data: dataWithOptionals as Prisma.TagCreateInput })
 }
 
 /**
