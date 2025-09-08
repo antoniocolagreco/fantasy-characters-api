@@ -8,21 +8,12 @@ vi.stubEnv('DATABASE_URL', 'postgresql://user:pass@localhost:5432/db')
 const USER_1_ID = generateUUIDv7()
 const USER_2_ID = generateUUIDv7()
 
-// Mock randomBytes to return predictable output
+// Mock randomBytes to return predictable output for token generation
 vi.mock('node:crypto', () => ({
     randomBytes: vi.fn().mockReturnValue({
         toString: () => 'a'.repeat(64), // 64 hex chars
     }),
 }))
-
-// Use real uuid helper but make output deterministic
-vi.mock('@/shared/utils', async orig => {
-    const mod: any = await (orig as any)()
-    return {
-        ...mod,
-        generateUUIDv7: () => '11111111-1111-4111-8111-111111111111',
-    }
-})
 
 const { refreshTokenRepository } = await import('@/features/users/refresh-token.repository')
 const prismaServiceModule = await import('@/infrastructure/database/prisma.service')
@@ -38,9 +29,10 @@ describe('refreshTokenRepository', () => {
     })
 
     it('create returns normalized entity', async () => {
+        const mockId = generateUUIDv7()
         const rt = (prismaServiceModule as any).default.refreshToken
         rt.create.mockResolvedValue({
-            id: '11111111-1111-4111-8111-111111111111',
+            id: mockId,
             token: 'tkn',
             userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
@@ -61,7 +53,7 @@ describe('refreshTokenRepository', () => {
         })
 
         expect(entity).toEqual({
-            id: '11111111-1111-4111-8111-111111111111',
+            id: mockId,
             token: 'tkn',
             userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
@@ -120,12 +112,13 @@ describe('refreshTokenRepository', () => {
     })
 
     it('findActiveByUserId maps and normalizes fields', async () => {
+        const testUserId = generateUUIDv7()
         const rt = (prismaServiceModule as any).default.refreshToken
         rt.findMany.mockResolvedValue([
             {
                 id: 'a',
                 token: 't1',
-                userId: generateUUIDv7(),
+                userId: testUserId,
                 expiresAt: new Date('2025-02-01T00:00:00.000Z'),
                 isRevoked: false,
                 createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -136,12 +129,12 @@ describe('refreshTokenRepository', () => {
             },
         ])
 
-        const items = await refreshTokenRepository.findActiveByUserId(generateUUIDv7())
+        const items = await refreshTokenRepository.findActiveByUserId(testUserId)
         expect(items).toEqual([
             {
                 id: 'a',
                 token: 't1',
-                userId: generateUUIDv7(),
+                userId: testUserId,
                 expiresAt: '2025-02-01T00:00:00.000Z',
                 isRevoked: false,
                 createdAt: '2025-01-01T00:00:00.000Z',

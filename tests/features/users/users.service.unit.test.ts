@@ -25,7 +25,7 @@ async function createMockAuthUser(
 ): Promise<import('@/features/auth').AuthenticatedUser> {
     const uniqueId = generateUUIDv7().slice(-8)
     return {
-        id: 'mock-auth-user-id',
+        id: generateUUIDv7(),
         role,
         email: `mock-${uniqueId}@test.local`,
     }

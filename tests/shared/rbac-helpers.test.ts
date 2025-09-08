@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { generateUUIDv7 } from '@/shared/utils'
 import {
     applySecurityFilters,
     applyUserSecurityFilters,
@@ -10,13 +11,18 @@ import {
 } from '@/shared/utils/rbac.helpers'
 
 describe('RBAC Helpers', () => {
-    const mockUser = { id: 'user-1', role: 'USER' as const, email: 'user@test.com' }
-    const mockModerator = { id: 'mod-1', role: 'MODERATOR' as const, email: 'mod@test.com' }
-    const mockAdmin = { id: 'admin-1', role: 'ADMIN' as const, email: 'admin@test.com' }
+    const mockUserId = generateUUIDv7()
+    const mockModeratorId = generateUUIDv7()
+    const mockAdminId = generateUUIDv7()
+    const mockResourceId = generateUUIDv7()
+    
+    const mockUser = { id: mockUserId, role: 'USER' as const, email: 'user@test.com' }
+    const mockModerator = { id: mockModeratorId, role: 'MODERATOR' as const, email: 'mod@test.com' }
+    const mockAdmin = { id: mockAdminId, role: 'ADMIN' as const, email: 'admin@test.com' }
 
     const mockResource = {
-        id: 'resource-1',
-        ownerId: 'user-1',
+        id: mockResourceId,
+        ownerId: mockUserId,
         ownerRole: 'USER' as const,
         visibility: 'PUBLIC' as const,
     }
@@ -45,7 +51,11 @@ describe('RBAC Helpers', () => {
 
             expect(result).toMatchObject({
                 category: 'test',
-                OR: [{ visibility: 'PUBLIC' }, { visibility: 'HIDDEN' }, { ownerId: 'mod-1' }],
+                OR: [
+                    { visibility: 'PUBLIC' },
+                    { visibility: 'HIDDEN' },
+                    { ownerId: mockModeratorId },
+                ],
             })
         })
 
@@ -55,7 +65,7 @@ describe('RBAC Helpers', () => {
 
             expect(result).toMatchObject({
                 category: 'test',
-                OR: [{ visibility: 'PUBLIC' }, { ownerId: 'user-1' }],
+                OR: [{ visibility: 'PUBLIC' }, { ownerId: mockUserId }],
             })
         })
     })
@@ -160,7 +170,7 @@ describe('RBAC Helpers', () => {
                         OR: [
                             { visibility: 'PUBLIC' },
                             { visibility: 'HIDDEN' },
-                            { ownerId: 'mod-1' },
+                            { ownerId: mockModeratorId },
                         ],
                     },
                 ],
@@ -174,7 +184,7 @@ describe('RBAC Helpers', () => {
             expect(result).toEqual({
                 AND: [
                     { OR: [{ category: 'test1' }, { category: 'test2' }] },
-                    { OR: [{ visibility: 'PUBLIC' }, { ownerId: 'user-1' }] },
+                    { OR: [{ visibility: 'PUBLIC' }, { ownerId: mockUserId }] },
                 ],
             })
         })
@@ -255,7 +265,7 @@ describe('RBAC Helpers', () => {
 
             expect(result).toEqual({
                 isActive: true,
-                OR: [{ role: 'USER' }, { id: 'mod-1' }],
+                OR: [{ role: 'USER' }, { id: mockModeratorId }],
             })
         })
 
@@ -265,15 +275,19 @@ describe('RBAC Helpers', () => {
 
             expect(result).toEqual({
                 isActive: true,
-                id: 'user-1',
+                id: mockUserId,
             })
         })
     })
 
     describe('canManageUser', () => {
-        const targetUser = { id: 'target-user', role: 'USER' as const }
-        const targetModerator = { id: 'target-moderator', role: 'MODERATOR' as const }
-        const targetAdmin = { id: 'target-admin', role: 'ADMIN' as const }
+        const targetUserId = generateUUIDv7()
+        const targetModeratorId = generateUUIDv7()
+        const targetAdminId = generateUUIDv7()
+        
+        const targetUser = { id: targetUserId, role: 'USER' as const }
+        const targetModerator = { id: targetModeratorId, role: 'MODERATOR' as const }
+        const targetAdmin = { id: targetAdminId, role: 'ADMIN' as const }
 
         it('denies anonymous users from managing anyone', () => {
             expect(canManageUser(undefined, targetUser)).toBe(false)
