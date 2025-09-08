@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { RoleLiterals } from '@/shared/schemas/common.schema'
-import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
+import { generateUUIDv7 } from '@/shared/utils/uuid'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
+import { testPrisma } from '@/tests/setup'
+
+const USER_1_ID = generateUUIDv7()
+const ADMIN_1_ID = generateUUIDv7()
 
 async function getImageService() {
     const serviceMod = await import('@/features/images/images.service')
@@ -10,7 +15,7 @@ async function getImageService() {
 
 async function seedTestUser(id: string, role: 'USER' | 'ADMIN' = 'USER') {
     const now = new Date()
-    return prismaFake.user.create({
+    return testPrisma.user.create({
         data: {
             id,
             email: `user-${id}@test.local`,
@@ -47,14 +52,14 @@ function createAuthUser(user: any) {
 }
 
 describe('Image Service Unit Tests', () => {
-    beforeEach(() => {
-        resetDb()
+    beforeEach(async () => {
+        await cleanupTestData()
     })
 
     describe('createImage', () => {
         it('should create image with valid file data', async () => {
             const imageService = await getImageService()
-            const user = await seedTestUser('user-1')
+            const user = await seedTestUser(USER_1_ID)
 
             const fakeBuffer = Buffer.from('fake-image-data')
             const mockFile = {
@@ -84,7 +89,7 @@ describe('Image Service Unit Tests', () => {
 
         it('should allow admin to create system image without specific owner', async () => {
             const imageService = await getImageService()
-            const admin = await seedTestUser('admin-1', 'ADMIN')
+            const admin = await seedTestUser(ADMIN_1_ID, 'ADMIN')
 
             const fakeBuffer = Buffer.from('fake-image-data')
             const mockFile = {
@@ -107,7 +112,7 @@ describe('Image Service Unit Tests', () => {
     describe('listImages', () => {
         it('should list only public images for unauthenticated user', async () => {
             const imageService = await getImageService()
-            const user1 = await seedTestUser('user-1')
+            const user1 = await seedTestUser(USER_1_ID)
 
             const fakeBuffer = Buffer.from('image-data')
 
@@ -127,7 +132,7 @@ describe('Image Service Unit Tests', () => {
 
         it('should handle pagination', async () => {
             const imageService = await getImageService()
-            const user = await seedTestUser('user-1')
+            const user = await seedTestUser(USER_1_ID)
 
             const fakeBuffer = Buffer.from('image-data')
 
@@ -157,8 +162,8 @@ describe('Image Service Unit Tests', () => {
     describe('getImageStats', () => {
         it('should return basic image statistics', async () => {
             const imageService = await getImageService()
-            const admin = await seedTestUser('admin-1', 'ADMIN')
-            const user = await seedTestUser('user-1')
+            const admin = await seedTestUser(ADMIN_1_ID, 'ADMIN')
+            const user = await seedTestUser(USER_1_ID)
 
             const fakeBuffer = Buffer.from('image-data')
 

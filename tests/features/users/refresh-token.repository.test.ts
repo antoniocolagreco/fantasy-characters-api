@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { generateUUIDv7 } from '@/shared/utils'
+
 vi.stubEnv('NODE_ENV', 'test')
 vi.stubEnv('DATABASE_URL', 'postgresql://user:pass@localhost:5432/db')
+
+const USER_1_ID = generateUUIDv7()
+const USER_2_ID = generateUUIDv7()
 
 // Mock randomBytes to return predictable output
 vi.mock('node:crypto', () => ({
@@ -37,7 +42,7 @@ describe('refreshTokenRepository', () => {
         rt.create.mockResolvedValue({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -46,20 +51,19 @@ describe('refreshTokenRepository', () => {
             ipAddress: '127.0.0.1',
             userAgent: 'UA',
         })
-
-        const created = await refreshTokenRepository.create({
+        const entity = await refreshTokenRepository.create({
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
             deviceInfo: 'ios',
             ipAddress: '127.0.0.1',
             userAgent: 'UA',
         })
 
-        expect(created).toEqual({
+        expect(entity).toEqual({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
             isRevoked: false,
             createdAt: '2025-01-01T00:00:00.000Z',
@@ -82,7 +86,7 @@ describe('refreshTokenRepository', () => {
         rt.findFirst.mockResolvedValue({
             id: 'id',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -121,7 +125,7 @@ describe('refreshTokenRepository', () => {
             {
                 id: 'a',
                 token: 't1',
-                userId: 'u',
+                userId: generateUUIDv7(),
                 expiresAt: new Date('2025-02-01T00:00:00.000Z'),
                 isRevoked: false,
                 createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -132,12 +136,12 @@ describe('refreshTokenRepository', () => {
             },
         ])
 
-        const items = await refreshTokenRepository.findActiveByUserId('u')
+        const items = await refreshTokenRepository.findActiveByUserId(generateUUIDv7())
         expect(items).toEqual([
             {
                 id: 'a',
                 token: 't1',
-                userId: 'u',
+                userId: generateUUIDv7(),
                 expiresAt: '2025-02-01T00:00:00.000Z',
                 isRevoked: false,
                 createdAt: '2025-01-01T00:00:00.000Z',
@@ -153,7 +157,7 @@ describe('refreshTokenRepository', () => {
         rt.create.mockResolvedValue({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'generated-random-token',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -162,7 +166,7 @@ describe('refreshTokenRepository', () => {
 
         await refreshTokenRepository.create({
             token: '', // Empty string should trigger random generation
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
         })
 
@@ -170,7 +174,7 @@ describe('refreshTokenRepository', () => {
             data: expect.objectContaining({
                 id: expect.any(String),
                 token: expect.any(String),
-                userId: 'user-1',
+                userId: USER_1_ID,
                 expiresAt: '2025-01-10T00:00:00.000Z',
             }),
         })
@@ -186,7 +190,7 @@ describe('refreshTokenRepository', () => {
         rt.create.mockResolvedValue({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'generated-random-token',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -195,7 +199,7 @@ describe('refreshTokenRepository', () => {
 
         await refreshTokenRepository.create({
             // No token field provided (undefined)
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
         } as any)
 
@@ -203,7 +207,7 @@ describe('refreshTokenRepository', () => {
             data: expect.objectContaining({
                 id: expect.any(String),
                 token: expect.any(String),
-                userId: 'user-1',
+                userId: USER_1_ID,
                 expiresAt: '2025-01-10T00:00:00.000Z',
             }),
         })
@@ -219,7 +223,7 @@ describe('refreshTokenRepository', () => {
         rt.create.mockResolvedValue({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -231,7 +235,7 @@ describe('refreshTokenRepository', () => {
 
         const created = await refreshTokenRepository.create({
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
         })
 
@@ -239,7 +243,7 @@ describe('refreshTokenRepository', () => {
         expect(created).toEqual({
             id: '11111111-1111-4111-8111-111111111111',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
             isRevoked: false,
             createdAt: '2025-01-01T00:00:00.000Z',
@@ -255,7 +259,7 @@ describe('refreshTokenRepository', () => {
         rt.findFirst.mockResolvedValue({
             id: 'id',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: new Date('2025-01-10T00:00:00.000Z'),
             isRevoked: false,
             createdAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -270,7 +274,7 @@ describe('refreshTokenRepository', () => {
         expect(found).toEqual({
             id: 'id',
             token: 'tkn',
-            userId: 'user-1',
+            userId: USER_1_ID,
             expiresAt: '2025-01-10T00:00:00.000Z',
             isRevoked: false,
             createdAt: '2025-01-01T00:00:00.000Z',
@@ -285,10 +289,10 @@ describe('refreshTokenRepository', () => {
         const rt = (prismaServiceModule as any).default.refreshToken
         rt.updateMany.mockResolvedValue({ count: 5 })
 
-        await expect(refreshTokenRepository.revokeAllByUserId('user-1')).resolves.toBeUndefined()
+        await expect(refreshTokenRepository.revokeAllByUserId(USER_1_ID)).resolves.toBeUndefined()
 
         expect(rt.updateMany).toHaveBeenCalledWith({
-            where: { userId: 'user-1', isRevoked: false },
+            where: { userId: USER_1_ID, isRevoked: false },
             data: { isRevoked: true },
         })
     })
@@ -299,7 +303,7 @@ describe('refreshTokenRepository', () => {
             {
                 id: 'token1',
                 token: 'token-value-1',
-                userId: 'user-123',
+                userId: USER_2_ID,
                 expiresAt: new Date('2025-12-31T23:59:59.000Z'),
                 isRevoked: false,
                 createdAt: new Date('2025-01-01T12:00:00.000Z'),
@@ -311,7 +315,7 @@ describe('refreshTokenRepository', () => {
             {
                 id: 'token2',
                 token: 'token-value-2',
-                userId: 'user-123',
+                userId: USER_2_ID,
                 expiresAt: new Date('2025-11-30T23:59:59.000Z'),
                 isRevoked: false,
                 createdAt: new Date('2025-01-02T12:00:00.000Z'),
@@ -322,13 +326,13 @@ describe('refreshTokenRepository', () => {
             },
         ])
 
-        const tokens = await refreshTokenRepository.findActiveByUserId('user-123')
+        const tokens = await refreshTokenRepository.findActiveByUserId(USER_2_ID)
 
         expect(tokens).toEqual([
             {
                 id: 'token1',
                 token: 'token-value-1',
-                userId: 'user-123',
+                userId: USER_2_ID,
                 expiresAt: '2025-12-31T23:59:59.000Z',
                 isRevoked: false,
                 createdAt: '2025-01-01T12:00:00.000Z',
@@ -340,7 +344,7 @@ describe('refreshTokenRepository', () => {
             {
                 id: 'token2',
                 token: 'token-value-2',
-                userId: 'user-123',
+                userId: USER_2_ID,
                 expiresAt: '2025-11-30T23:59:59.000Z',
                 isRevoked: false,
                 createdAt: '2025-01-02T12:00:00.000Z',

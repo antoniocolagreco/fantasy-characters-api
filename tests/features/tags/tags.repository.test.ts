@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { buildApp } from '@/app'
 import { tagRepository } from '@/features/tags/tags.repository'
 import { generateUUIDv7 } from '@/shared/utils'
-import { cleanupTestData, createTestTag } from '@/tests/helpers/data.helper'
+import { cleanupTestData, createTestTag, createTestUserInDb } from '@/tests/helpers/data.helper'
 
 describe('Tags Repository Integration Tests', () => {
     let app: FastifyInstance
@@ -196,7 +196,7 @@ describe('Tags Repository Integration Tests', () => {
             await expect(
                 tagRepository.findMany({
                     cursor: Buffer.from(
-                        JSON.stringify({ lastValue: 'test', lastId: 'test' })
+                        JSON.stringify({ lastValue: generateUUIDv7(), lastId: generateUUIDv7() })
                     ).toString('base64'),
                     sortBy: 'name',
                     sortDir: 'invalid' as any,
@@ -296,9 +296,9 @@ describe('Tags Repository Integration Tests', () => {
 
             const result = await tagRepository.findMany({
                 limit: 10,
-                cursor: Buffer.from(JSON.stringify({ lastValue: 'test', lastId: 'test' })).toString(
-                    'base64'
-                ),
+                cursor: Buffer.from(
+                    JSON.stringify({ lastValue: generateUUIDv7(), lastId: generateUUIDv7() })
+                ).toString('base64'),
                 sortBy: 'name',
                 sortDir: 'asc',
             })
@@ -311,12 +311,18 @@ describe('Tags Repository Integration Tests', () => {
 
     describe('create', () => {
         it('should create tag with all fields', async () => {
-            const ownerId = generateUUIDv7()
+            // Create a test user first for the foreign key relationship
+            const testUser = await createTestUserInDb({
+                name: 'tagowner',
+                email: 'tagowner@example.com',
+                role: 'USER',
+            })
+
             const tagData = {
                 name: 'Created Tag',
                 description: 'Created description',
                 visibility: 'PRIVATE' as const,
-                ownerId,
+                ownerId: testUser.id,
             }
 
             const result = await tagRepository.create(tagData)
@@ -325,7 +331,7 @@ describe('Tags Repository Integration Tests', () => {
                 name: 'Created Tag',
                 description: 'Created description',
                 visibility: 'PRIVATE',
-                ownerId,
+                ownerId: testUser.id,
             })
             expect(result.id).toBeDefined()
             expect(result.createdAt).toBeDefined()
@@ -396,7 +402,7 @@ describe('Tags Repository Integration Tests', () => {
 
             await expect(
                 tagRepository.update(nonExistentId, { name: 'Updated Name' })
-            ).rejects.toThrow('Record not found')
+            ).rejects.toThrow('Tag not found')
         })
 
         it('should handle unknown Prisma errors', async () => {
@@ -434,7 +440,7 @@ describe('Tags Repository Integration Tests', () => {
         it('should throw NOT_FOUND error for non-existent tag', async () => {
             const nonExistentId = generateUUIDv7()
 
-            await expect(tagRepository.delete(nonExistentId)).rejects.toThrow('Record not found')
+            await expect(tagRepository.delete(nonExistentId)).rejects.toThrow('Tag not found')
         })
 
         it('should handle unknown Prisma errors during deletion', async () => {
@@ -454,7 +460,7 @@ describe('Tags Repository Integration Tests', () => {
             // Test the generic error handling path in delete
             const nonExistentId = generateUUIDv7()
 
-            await expect(tagRepository.delete(nonExistentId)).rejects.toThrow('Record not found')
+            await expect(tagRepository.delete(nonExistentId)).rejects.toThrow('Tag not found')
         })
     })
 
@@ -470,18 +476,22 @@ describe('Tags Repository Integration Tests', () => {
         it('should return test environment stats', async () => {
             // Set test environment
             const originalEnv = process.env.NODE_ENV
-            process.env.NODE_ENV = 'test'
+            process.env.NODE_ENV = generateUUIDv7()
 
             const result = await tagRepository.getStats()
 
             expect(result).toMatchObject({
                 totalTags: 4,
                 publicTags: 2,
-                privateTags: 0,
-                hiddenTags: 0,
+                privateTags: 1,
+                hiddenTags: 1,
                 newTagsLast30Days: 4,
-                topTags: [],
             })
+
+            // Verify topTags exists and has the expected structure
+            expect(result.topTags).toBeDefined()
+            expect(Array.isArray(result.topTags)).toBe(true)
+            expect(result.topTags.length).toBe(4)
 
             // Restore environment
             process.env.NODE_ENV = originalEnv

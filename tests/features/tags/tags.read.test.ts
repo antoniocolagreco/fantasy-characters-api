@@ -4,7 +4,8 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { buildApp } from '@/app'
 import { generateUUIDv7 } from '@/shared/utils'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
-import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
+import { cleanupTestData, createTestUserInDb } from '@/tests/helpers/data.helper'
+import { testPrisma } from '@/tests/setup'
 
 describe('Tags API v1 - Read Operations', () => {
     let app: FastifyInstance
@@ -35,27 +36,20 @@ describe('Tags API v1 - Read Operations', () => {
         originalRbacEnabled = process.env.RBAC_ENABLED
 
         // Clean database
-        resetDb()
+        cleanupTestData()
 
         // Enable RBAC for authorization tests
         process.env.RBAC_ENABLED = 'true'
 
         // Create test user
-        testUserId = generateUUIDv7()
-        await prismaFake.user.create({
-            data: {
-                id: testUserId,
-                email: 'test@example.com',
-                passwordHash: 'hashedpassword',
-                role: 'USER',
-                isEmailVerified: true,
-                isActive: true,
-                lastLogin: new Date(),
-            },
+        const testUser = await createTestUserInDb({
+            email: 'test@example.com',
+            role: 'USER',
         })
+        testUserId = testUser.id
 
         // Create test tag
-        testTag = await prismaFake.tag.create({
+        testTag = await testPrisma.tag.create({
             data: {
                 id: generateUUIDv7(),
                 name: 'Test Tag',
@@ -98,26 +92,18 @@ describe('Tags API v1 - Read Operations', () => {
 
         it('should return 404 for private tag if not owner', async () => {
             // Create private tag owned by different user
-            const otherUserId = generateUUIDv7()
-            await prismaFake.user.create({
-                data: {
-                    id: otherUserId,
-                    email: 'other@example.com',
-                    passwordHash: 'hashedpassword',
-                    role: 'USER',
-                    isEmailVerified: true,
-                    isActive: true,
-                    lastLogin: new Date(),
-                },
+            const otherUser = await createTestUserInDb({
+                email: 'other@example.com',
+                role: 'USER',
             })
 
-            const privateTag = await prismaFake.tag.create({
+            const privateTag = await testPrisma.tag.create({
                 data: {
                     id: generateUUIDv7(),
                     name: 'Private Tag',
                     description: 'A private tag',
                     visibility: 'PRIVATE',
-                    ownerId: otherUserId,
+                    ownerId: otherUser.id,
                 },
             })
 
@@ -134,7 +120,7 @@ describe('Tags API v1 - Read Operations', () => {
     describe('GET /api/v1/tags', () => {
         beforeEach(async () => {
             // Create multiple tags for listing tests
-            await prismaFake.tag.create({
+            await testPrisma.tag.create({
                 data: {
                     id: generateUUIDv7(),
                     name: 'Public Tag 1',
@@ -143,7 +129,7 @@ describe('Tags API v1 - Read Operations', () => {
                     ownerId: testUserId,
                 },
             })
-            await prismaFake.tag.create({
+            await testPrisma.tag.create({
                 data: {
                     id: generateUUIDv7(),
                     name: 'Public Tag 2',
@@ -152,7 +138,7 @@ describe('Tags API v1 - Read Operations', () => {
                     ownerId: testUserId,
                 },
             })
-            await prismaFake.tag.create({
+            await testPrisma.tag.create({
                 data: {
                     id: generateUUIDv7(),
                     name: 'Private Tag',

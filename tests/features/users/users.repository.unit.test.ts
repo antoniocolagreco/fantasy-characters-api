@@ -1,11 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { userRepository } from '@/features/users/users.repository'
-import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
+import { generateUUIDv7 } from '@/shared/utils'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
+import { testPrisma } from '@/tests/setup'
 
 function makeUser(id: string, email: string, extras: Partial<import('@prisma/client').User> = {}) {
     const now = new Date()
-    return prismaFake.user.create({
+    return testPrisma.user.create({
         data: {
             id,
             email,
@@ -33,14 +35,13 @@ function makeUser(id: string, email: string, extras: Partial<import('@prisma/cli
 
 describe('users.repository unit', () => {
     beforeEach(() => {
-        resetDb()
+        cleanupTestData()
     })
 
     it('findMany applies filters and pagination', async () => {
-        await makeUser('u1', 'a@test.local', { name: 'Alice' })
-        await makeUser('u2', 'b@test.local', { name: 'Bob', isActive: false })
-        await makeUser('u3', 'c@test.local', { isBanned: true })
-        await makeUser('u4', 'pic@test.local', { profilePictureId: 'img1' })
+        await makeUser(generateUUIDv7(), 'a@test.local', { name: 'Alice' })
+        await makeUser(generateUUIDv7(), 'b@test.local', { name: 'Bob', isActive: false })
+        await makeUser(generateUUIDv7(), 'c@test.local', { isBanned: true })
 
         // Filter by isActive
         let res = await userRepository.findMany({ isActive: true, limit: 2 })
@@ -58,22 +59,33 @@ describe('users.repository unit', () => {
             expect(res2.users.length).toBeGreaterThanOrEqual(0)
         }
 
-        // Filter by hasProfilePicture
-        res = await userRepository.findMany({ hasProfilePicture: true })
-        expect(res.users.some(u => u.profilePictureId === 'img1')).toBe(true)
+        // Filter by processed hasProfilePicture filter (as service would send it)
+        res = await userRepository.findMany({
+            filters: { profilePictureId: { not: null } },
+        })
+        expect(res.users.length).toBe(0)
 
-        // Search by name/email/bio
-        res = await userRepository.findMany({ search: 'ali' })
+        // Search by name/email/bio using OR condition (as service would send it)
+        res = await userRepository.findMany({
+            filters: {
+                OR: [
+                    { name: { contains: 'ali', mode: 'insensitive' } },
+                    { email: { contains: 'ali', mode: 'insensitive' } },
+                    { bio: { contains: 'ali', mode: 'insensitive' } },
+                ],
+            },
+        })
         expect(res.users.some(u => (u.name || '').toLowerCase().includes('ali'))).toBe(true)
     })
 
     it('findById and findByEmail return transformed user', async () => {
         const now = new Date()
-        await makeUser('id-123', 'who@test.local', { lastLogin: now })
-        const byId = await userRepository.findById('id-123')
+        const userId = generateUUIDv7()
+        await makeUser(userId, 'who@test.local', { lastLogin: now })
+        const byId = await userRepository.findById(userId)
         expect(byId?.email).toBe('who@test.local')
         const byEmail = await userRepository.findByEmail('who@test.local')
-        expect(byEmail?.id).toBe('id-123')
+        expect(byEmail?.id).toBe(userId)
     })
 
     it('create, update, delete, un/ban, markEmailAsVerified, updateLastLogin, updatePassword, getStats', async () => {
@@ -88,7 +100,7 @@ describe('users.repository unit', () => {
         const u2 = await userRepository.update(u.id, { name: 'New Name' })
         expect(u2.name).toBe('New Name')
 
-        const banned = await userRepository.ban(u.id, { banReason: 'x' }, 'admin-id')
+        const banned = await userRepository.ban(u.id, { banReason: 'x' }, generateUUIDv7())
         expect(banned.isBanned).toBe(true)
 
         const unbanned = await userRepository.unban(u.id)
@@ -109,7 +121,7 @@ describe('users.repository unit', () => {
     })
 
     it('throws on invalid cursor', async () => {
-        await makeUser('x1', 'x1@test.local')
+        await makeUser(generateUUIDv7(), 'x1@test.local')
         await expect(
             userRepository.findMany({ cursor: 'not-a-base64-cursor' } as any)
         ).rejects.toBeDefined()

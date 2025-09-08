@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
-import { resetDb } from '@/tests/helpers/inmemory-prisma'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
 
 async function createTestApp() {
     const app = await buildApp()
@@ -11,7 +11,7 @@ async function createTestApp() {
 
 describe('Images API v1 Integration Tests', () => {
     beforeEach(() => {
-        resetDb()
+        cleanupTestData()
     })
 
     describe('Basic endpoint availability', () => {
@@ -57,7 +57,10 @@ describe('Images API v1 Integration Tests', () => {
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/images/stats',
-                headers: createAuthHeaders({ email: 'admin@test.local', role: 'ADMIN' }),
+                headers: createAuthHeaders({
+                    email: `admin-${Date.now()}@test.local`,
+                    role: 'ADMIN',
+                }),
             })
 
             // Should either work (200) or fail due to auth setup issues

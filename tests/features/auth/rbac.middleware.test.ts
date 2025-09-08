@@ -1,11 +1,13 @@
+import * as argon2 from 'argon2'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-
-import { prismaFake, resetDb } from '../../helpers/inmemory-prisma'
 
 // Import without mocking
 import { createRbacMiddleware, rbac, resolveOwnership } from '@/features/auth/rbac.middleware'
 import * as rbacPolicy from '@/features/auth/rbac.policy'
 import { AppError } from '@/shared/errors'
+import { generateUUIDv7 } from '@/shared/utils/uuid'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
+import { testPrisma } from '@/tests/setup'
 
 // We'll use spyOn instead of global mock to avoid test pollution
 
@@ -29,22 +31,30 @@ describe('RBAC Middleware', () => {
     let mockReply: MockReply
     let originalRbacEnabled: string | undefined
     let canSpy: any
+    let testUserId: string
+    let targetResourceId: string
+    let routeOwnerId: string
 
     beforeEach(() => {
         // Save original RBAC_ENABLED value
         originalRbacEnabled = process.env.RBAC_ENABLED
 
+        // Generate UUIDs for consistent use across tests
+        testUserId = generateUUIDv7()
+        targetResourceId = generateUUIDv7()
+        routeOwnerId = generateUUIDv7()
+
         // Create a spy on the can function (no global mock pollution!)
         canSpy = vi.spyOn(rbacPolicy, 'can').mockImplementation(() => true)
 
         // Reset the in-memory database
-        resetDb()
+        cleanupTestData()
 
         mockRequest = {
-            params: { id: 'test-id' },
+            params: { id: targetResourceId },
             body: {},
-            user: { id: 'user-123', role: 'USER' },
-            prisma: prismaFake,
+            user: { id: testUserId, role: 'USER' },
+            prisma: testPrisma,
             routeOptions: {},
         }
 
@@ -76,7 +86,7 @@ describe('RBAC Middleware', () => {
             // Since we can't easily add character data, we'll test the null case and body fallback
             const result = await resolveOwnership(mockRequest, 'characters')
 
-            // Since no character exists with 'test-id', it should return default values
+            // Since no character exists with this ID, it should return default values
             expect(result).toEqual({
                 ownerId: null,
                 visibility: null,
@@ -85,19 +95,22 @@ describe('RBAC Middleware', () => {
         })
 
         it('should resolve user ownership correctly', async () => {
-            // Create a test user in the in-memory database
-            await prismaFake.user.create({
+            // Create a test user in the database
+            const password = 'test1234'
+            const passwordHash = await argon2.hash(password)
+            await testPrisma.user.create({
                 data: {
-                    id: 'test-id',
+                    id: targetResourceId,
                     email: 'test@example.com',
                     role: 'MODERATOR',
+                    passwordHash,
                 },
             })
 
             const result = await resolveOwnership(mockRequest, 'users')
 
             expect(result).toEqual({
-                ownerId: 'test-id',
+                ownerId: targetResourceId,
                 targetUserRole: 'MODERATOR',
             })
         })
@@ -170,7 +183,7 @@ describe('RBAC Middleware', () => {
             // Test with a request that would normally cause an error
             // Since the in-memory database doesn't throw errors for missing records,
             // we'll test the null response case instead
-            mockRequest.params = { id: 'non-existent-id' }
+            mockRequest.params = { id: generateUUIDv7() } // Use a non-existent but valid UUID
 
             const result = await resolveOwnership(mockRequest, 'characters')
 
@@ -243,7 +256,6 @@ describe('RBAC Middleware', () => {
 
         it('should handle default case for unknown resource', async () => {
             // Test default case for unknown resource type
-            // @ts-expect-error Testing invalid resource type
             const result = await resolveOwnership(mockRequest, 'unknown-resource')
 
             expect(result).toEqual({})
@@ -300,7 +312,7 @@ describe('RBAC Middleware', () => {
             mockRequest.routeOptions = {
                 config: {
                     rbac: {
-                        ownerId: 'route-owner-123',
+                        ownerId: routeOwnerId,
                         visibility: 'PUBLIC',
                     },
                 },
@@ -311,10 +323,10 @@ describe('RBAC Middleware', () => {
             await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
 
             expect(canSpy).toHaveBeenCalledWith({
-                user: { id: 'user-123', role: 'USER' },
+                user: { id: testUserId, role: 'USER' },
                 resource: 'characters',
                 action: 'read',
-                ownerId: 'route-owner-123',
+                ownerId: routeOwnerId,
                 visibility: 'PUBLIC',
                 ownerRole: undefined,
                 targetUserRole: undefined,
@@ -355,7 +367,7 @@ describe('RBAC Middleware', () => {
             canSpy.mockReturnValue(true)
 
             // Invalid role
-            mockRequest.user = { id: 'user-123', role: 'INVALID_ROLE' }
+            mockRequest.user = { id: testUserId, role: 'INVALID_ROLE' }
 
             const middleware = createRbacMiddleware('characters', 'read')
 

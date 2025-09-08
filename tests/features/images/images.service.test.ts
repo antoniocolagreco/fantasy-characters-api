@@ -1,7 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import type { RoleLiterals } from '@/shared/schemas/common.schema'
-import { prismaFake, resetDb } from '@/tests/helpers/inmemory-prisma'
+import { generateUUIDv7 } from '@/shared/utils/uuid'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
+import { testPrisma } from '@/tests/setup'
+
+const USER_1_ID = generateUUIDv7()
+const USER_2_ID = generateUUIDv7()
+const USER_3_ID = generateUUIDv7()
+const ADMIN_ID = generateUUIDv7()
+const OTHER_ID = generateUUIDv7()
+const OWNER_1_ID = generateUUIDv7()
+const OWNER_2_ID = generateUUIDv7()
+const VIEWER_ID = generateUUIDv7()
 
 async function getImageService() {
     const serviceMod = await import('@/features/images/images.service')
@@ -21,7 +32,7 @@ async function createAuthUser(user: any) {
 
 async function seedTestUser(id: string, role: 'USER' | 'MODERATOR' | 'ADMIN' = 'USER') {
     const now = new Date()
-    return prismaFake.user.create({
+    return testPrisma.user.create({
         data: {
             id,
             email: `user-${id}@test.local`,
@@ -47,14 +58,14 @@ async function seedTestUser(id: string, role: 'USER' | 'MODERATOR' | 'ADMIN' = '
 }
 
 describe('Image Service Unit Tests', () => {
-    beforeEach(() => {
-        resetDb()
+    beforeEach(async () => {
+        await cleanupTestData()
     })
 
     describe('createImage', () => {
         it('should create image with valid data', async () => {
             const imageService = await getImageService()
-            const user = await seedTestUser('user-1')
+            const user = await seedTestUser(USER_1_ID)
             const authUser = await createAuthUser(user)
 
             const result = await imageService.createImage(
@@ -88,7 +99,7 @@ describe('Image Service Unit Tests', () => {
 
         it('should allow admin to create system image without specific owner', async () => {
             const imageService = await getImageService()
-            const admin = await seedTestUser('admin-1', 'ADMIN')
+            const admin = await seedTestUser(ADMIN_ID, 'ADMIN')
 
             const result = await imageService.createImage(
                 { description: 'System image' },
@@ -105,8 +116,8 @@ describe('Image Service Unit Tests', () => {
     describe('getImageById', () => {
         it('should return image metadata for valid ID', async () => {
             const imageService = await getImageService()
-            const owner = await seedTestUser('owner-1')
-            const viewer = await seedTestUser('viewer-1')
+            const owner = await seedTestUser(OWNER_1_ID)
+            const viewer = await seedTestUser(VIEWER_ID)
 
             // Create image first
             const created = await imageService.createImage(
@@ -133,8 +144,8 @@ describe('Image Service Unit Tests', () => {
 
         it('should deny access to private image from non-owner', async () => {
             const imageService = await getImageService()
-            const owner = await seedTestUser('owner-2')
-            const other = await seedTestUser('other-2')
+            const owner = await seedTestUser(OWNER_2_ID)
+            const other = await seedTestUser(OTHER_ID)
 
             // Create private image
             const created = await imageService.createImage(
@@ -157,10 +168,10 @@ describe('Image Service Unit Tests', () => {
 
         it('should return null for non-existent image', async () => {
             const imageService = await getImageService()
-            const user = await seedTestUser('user-3')
+            const user = await seedTestUser(USER_2_ID)
 
             const result = await imageService.getImageById(
-                'non-existent-id',
+                generateUUIDv7(), // Non-existent UUID
                 await createAuthUser(user)
             )
 
@@ -171,7 +182,7 @@ describe('Image Service Unit Tests', () => {
     describe('listImages', () => {
         it('should return empty list when no images exist', async () => {
             const imageService = await getImageService()
-            const user = await seedTestUser('user-4')
+            const user = await seedTestUser(USER_3_ID)
 
             const result = await imageService.listImages({}, await createAuthUser(user))
 
@@ -183,7 +194,7 @@ describe('Image Service Unit Tests', () => {
     describe('getImageStats', () => {
         it('should return stats for admin user', async () => {
             const imageService = await getImageService()
-            const admin = await seedTestUser('admin-1', 'ADMIN')
+            const admin = await seedTestUser(ADMIN_ID, 'ADMIN')
 
             const result = await imageService.getImageStats(undefined, await createAuthUser(admin))
 

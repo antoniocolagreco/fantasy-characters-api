@@ -16,6 +16,12 @@ vi.mock('@/features/images/images.service', () => ({
 
 import { imageService } from '@/features/images/images.service'
 import { imageController } from '@/features/images/v1/images.controller'
+import { generateUUIDv7 } from '@/shared/utils'
+
+// Test constants
+const USER_ID = generateUUIDv7()
+const IMAGE_ID = generateUUIDv7()
+const TEST_DESC = 'Test description'
 
 const mockService = imageService as unknown as {
     createImage: ReturnType<typeof vi.fn>
@@ -59,8 +65,8 @@ describe('Images Controller - unit', () => {
         }
         const request = {
             file: vi.fn().mockResolvedValue(file),
-            body: { description: 'd' },
-            user: { id: 'u1', role: 'USER' },
+            body: { description: TEST_DESC },
+            user: { id: USER_ID, role: 'USER' },
             id: 'req-1',
         } as unknown as any
         const { reply } = createReply()
@@ -68,10 +74,10 @@ describe('Images Controller - unit', () => {
         await imageController.uploadImage(request, reply)
 
         expect(mockService.createImage).toHaveBeenCalledWith(
-            { description: 'd' },
+            { description: TEST_DESC },
             { mimetype: 'image/jpeg', filename: 'a.jpg' },
             buff,
-            { id: 'u1', role: 'USER' }
+            { id: USER_ID, role: 'USER' }
         )
         expect(reply.code).toHaveBeenCalledWith(201)
         expect(reply.send).toHaveBeenCalled()
@@ -98,7 +104,7 @@ describe('Images Controller - unit', () => {
 
     it('getImageById: not found', async () => {
         mockService.getImageById.mockResolvedValue(null)
-        const request = { params: { id: 'nope' } } as unknown as any
+        const request = { params: { id: generateUUIDv7() } } as unknown as any
         const { reply } = createReply()
         await expect(imageController.getImageById(request, reply)).rejects.toThrow(
             'Image not found'
@@ -108,10 +114,10 @@ describe('Images Controller - unit', () => {
     it('getImageFile: sets headers and returns blob', async () => {
         const blob = Buffer.from('bin')
         mockService.getImageFile.mockResolvedValue({ blob, mimeType: 'image/webp', size: 3 })
-        const request = { params: { id: 'img' } } as unknown as any
+        const request = { params: { id: IMAGE_ID } } as unknown as any
         const { reply, headers } = createReply()
         await imageController.getImageFile(request, reply)
-        expect(mockService.getImageFile).toHaveBeenCalledWith('img', undefined)
+        expect(mockService.getImageFile).toHaveBeenCalledWith(IMAGE_ID, undefined)
         expect(headers['Content-Type']).toBe('image/webp')
         expect(headers['Content-Length']).toBe(3)
         expect(headers['Cache-Control']).toBe('public, max-age=31536000, immutable')
@@ -119,7 +125,7 @@ describe('Images Controller - unit', () => {
 
     it('getImageFile: not found', async () => {
         mockService.getImageFile.mockResolvedValue(null)
-        const request = { params: { id: 'missing' } } as unknown as any
+        const request = { params: { id: generateUUIDv7() } } as unknown as any
         const { reply } = createReply()
         await expect(imageController.getImageFile(request, reply)).rejects.toThrow(
             'Image not found'
@@ -131,7 +137,7 @@ describe('Images Controller - unit', () => {
             data: [],
             pagination: { limit: 1, hasNext: false, hasPrev: false },
         })
-        const request = { query: {}, id: 'req' } as unknown as any
+        const request = { query: {}, id: generateUUIDv7() } as unknown as any
         const { reply } = createReply()
         await imageController.listImages(request, reply)
         expect(mockService.listImages).toHaveBeenCalledWith({}, undefined)
@@ -139,10 +145,10 @@ describe('Images Controller - unit', () => {
     })
 
     it('updateImage: ok and not found', async () => {
-        mockService.updateImage.mockResolvedValueOnce({ id: 'img' })
+        mockService.updateImage.mockResolvedValueOnce({ id: IMAGE_ID })
         const { reply: replyOk } = createReply()
         await imageController.updateImage(
-            { params: { id: 'img' }, body: {}, id: 'r' } as any,
+            { params: { id: IMAGE_ID }, body: {}, id: generateUUIDv7() } as any,
             replyOk
         )
         expect(replyOk.code).toHaveBeenCalledWith(200)
@@ -150,27 +156,27 @@ describe('Images Controller - unit', () => {
         mockService.updateImage.mockResolvedValueOnce(null)
         const { reply: replyNot } = createReply()
         await expect(
-            imageController.updateImage({ params: { id: 'img' }, body: {} } as any, replyNot)
+            imageController.updateImage({ params: { id: IMAGE_ID }, body: {} } as any, replyNot)
         ).rejects.toThrow('Image not found')
     })
 
     it('replaceImageFile: ok and file missing', async () => {
-        mockService.replaceImageFile.mockResolvedValue({ id: 'img' })
+        mockService.replaceImageFile.mockResolvedValue({ id: IMAGE_ID })
         const file = {
             mimetype: 'image/jpeg',
             filename: 'a.jpg',
             toBuffer: vi.fn().mockResolvedValue(Buffer.from('x')),
         }
         const okReq = {
-            params: { id: 'img' },
+            params: { id: IMAGE_ID },
             file: vi.fn().mockResolvedValue(file),
-            id: 'r',
+            id: generateUUIDv7(),
         } as any
         const { reply: replyOk } = createReply()
         await imageController.replaceImageFile(okReq, replyOk)
         expect(replyOk.code).toHaveBeenCalledWith(200)
 
-        const badReq = { params: { id: 'img' }, file: vi.fn().mockResolvedValue(null) } as any
+        const badReq = { params: { id: IMAGE_ID }, file: vi.fn().mockResolvedValue(null) } as any
         const { reply: replyBad } = createReply()
         await expect(imageController.replaceImageFile(badReq, replyBad)).rejects.toThrow(
             'No file provided'
@@ -184,7 +190,10 @@ describe('Images Controller - unit', () => {
             filename: 'a.jpg',
             toBuffer: vi.fn().mockResolvedValue(Buffer.from('x')),
         }
-        const req = { params: { id: 'missing' }, file: vi.fn().mockResolvedValue(file) } as any
+        const req = {
+            params: { id: generateUUIDv7() },
+            file: vi.fn().mockResolvedValue(file),
+        } as any
         const { reply } = createReply()
         await expect(imageController.replaceImageFile(req, reply)).rejects.toThrow(
             'Image not found'
@@ -194,13 +203,13 @@ describe('Images Controller - unit', () => {
     it('deleteImage: returns 204 or not found', async () => {
         mockService.deleteImage.mockResolvedValueOnce(true)
         const { reply: replyOk } = createReply()
-        await imageController.deleteImage({ params: { id: 'img' } } as any, replyOk)
+        await imageController.deleteImage({ params: { id: IMAGE_ID } } as any, replyOk)
         expect(replyOk.code).toHaveBeenCalledWith(204)
 
         mockService.deleteImage.mockResolvedValueOnce(false)
         const { reply: replyNot } = createReply()
         await expect(
-            imageController.deleteImage({ params: { id: 'img' } } as any, replyNot)
+            imageController.deleteImage({ params: { id: IMAGE_ID } } as any, replyNot)
         ).rejects.toThrow('Image not found')
     })
 
@@ -215,7 +224,7 @@ describe('Images Controller - unit', () => {
             averageHeight: 0,
         }
         mockService.getImageStats.mockResolvedValue(stats)
-        const request = { query: {}, id: 'req' } as unknown as any
+        const request = { query: {}, id: generateUUIDv7() } as unknown as any
         const { reply } = createReply()
         await imageController.getImageStats(request, reply)
         expect(mockService.getImageStats).toHaveBeenCalledWith(undefined, undefined)

@@ -10,10 +10,11 @@ import {
     listImagesInDb,
     updateImageInDb,
 } from '@/features/images/images.repository'
-import { resetDb } from '@/tests/helpers/inmemory-prisma'
+import { generateUUIDv7 } from '@/shared/utils'
+import { cleanupTestData } from '@/tests/helpers/data.helper'
 
 describe('Images Repository - unit', () => {
-    beforeEach(() => resetDb())
+    beforeEach(() => cleanupTestData())
 
     async function seedOne() {
         const img = await createImageInDb({
@@ -36,11 +37,13 @@ describe('Images Repository - unit', () => {
     })
 
     it('updateImageInDb propagates P2025 in in-memory fake (align with prismaFake)', async () => {
-        await expect(updateImageInDb('missing', { description: 'x' })).rejects.toThrow('P2025')
+        await expect(updateImageInDb(generateUUIDv7(), { description: 'x' })).rejects.toThrow(
+            'No record was found'
+        )
     })
 
     it('deleteImageFromDb propagates P2025 in in-memory fake (align with prismaFake)', async () => {
-        await expect(deleteImageFromDb('missing')).rejects.toThrow('P2025')
+        await expect(deleteImageFromDb(generateUUIDv7())).rejects.toThrow('No record was found')
     })
 
     it('listImagesInDb ignores invalid cursor', async () => {

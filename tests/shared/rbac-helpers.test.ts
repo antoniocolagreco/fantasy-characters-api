@@ -238,7 +238,7 @@ describe('RBAC Helpers', () => {
 
             expect(result).toEqual({
                 role: 'USER',
-                id: 'never-match',
+                id: '00000000-0000-0000-0000-000000000000',
             })
         })
 

@@ -149,8 +149,8 @@ export function applyUserSecurityFilters<T extends Record<string, unknown>>(
     user?: AuthenticatedUser
 ): T {
     if (!user) {
-        // Anonymous: no users visible
-        return { ...filters, id: 'never-match' } as T
+        // Anonymous: no users visible - use a UUID format that will never match
+        return { ...filters, id: '00000000-0000-0000-0000-000000000000' } as T
     }
 
     if (user.role === 'ADMIN') {

@@ -1,7 +1,8 @@
-import type { User, Role, Tag, Visibility, Prisma } from '@prisma/client'
+import type { Prisma, Role, Tag, User, Visibility } from '@prisma/client'
+
+import { testPrisma } from '../setup'
 
 import { passwordService } from '@/features/auth/password.service'
-import prismaService from '@/infrastructure/database/prisma.service'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 interface TestData {
@@ -15,11 +16,18 @@ interface TestData {
 export async function setupTestUsers(count: number = 3): Promise<TestData> {
     const users: User[] = []
 
+    // Generate unique email suffixes to avoid conflicts
+    const testId = generateUUIDv7().slice(-8)
+
     // Create different types of users for comprehensive testing
     const userConfigs = [
-        { role: 'ADMIN' as Role, email: 'admin@test.local', name: 'Admin User' },
-        { role: 'MODERATOR' as Role, email: 'moderator@test.local', name: 'Moderator User' },
-        { role: 'USER' as Role, email: 'user@test.local', name: 'Regular User' },
+        { role: 'ADMIN' as Role, email: `admin-${testId}@test.local`, name: 'Admin User' },
+        {
+            role: 'MODERATOR' as Role,
+            email: `moderator-${testId}@test.local`,
+            name: 'Moderator User',
+        },
+        { role: 'USER' as Role, email: `user-${testId}@test.local`, name: 'Regular User' },
     ]
 
     for (let i = 0; i < Math.min(count, userConfigs.length); i++) {
@@ -28,7 +36,7 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
 
         const passwordHash = await passwordService.hashPassword('test-password-123')
 
-        const user = await prismaService.user.create({
+        const user = await testPrisma.user.create({
             data: {
                 id: generateUUIDv7(),
                 email: config.email,
@@ -50,7 +58,7 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
         const passwordHash = await passwordService.hashPassword('test-password-123')
         const id = generateUUIDv7()
 
-        const user = await prismaService.user.create({
+        const user = await testPrisma.user.create({
             data: {
                 id,
                 email: `user-${i}@test.local`,
@@ -69,30 +77,15 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
 
     const cleanup = async () => {
         // Clean up in reverse dependency order
-        await prismaService.refreshToken.deleteMany({
+        await testPrisma.refreshToken.deleteMany({
             where: { userId: { in: users.map(u => u.id) } },
         })
-        await prismaService.user.deleteMany({
+        await testPrisma.user.deleteMany({
             where: { id: { in: users.map(u => u.id) } },
         })
     }
 
     return { users, cleanup }
-}
-
-/**
- * Comprehensive test database cleanup
- */
-export async function cleanupTestData(): Promise<void> {
-    // Clean up in dependency order (children first, then parents)
-    await prismaService.refreshToken.deleteMany()
-    await prismaService.tag.deleteMany()
-    await prismaService.user.deleteMany()
-
-    // Add more entities as they're implemented
-    // await prismaService.character.deleteMany()
-    // await prismaService.item.deleteMany()
-    // etc.
 }
 
 /**
@@ -111,7 +104,7 @@ export async function createTestUserInDb(
     const id = generateUUIDv7()
     const passwordHash = await passwordService.hashPassword('test-password-123')
 
-    return prismaService.user.create({
+    return testPrisma.user.create({
         data: {
             id,
             email: options.email || `test-${id.slice(0, 8)}@example.com`,
@@ -151,7 +144,7 @@ export async function createTestTag(
         ...(options.ownerId !== undefined && { ownerId: options.ownerId }),
     }
 
-    return prismaService.tag.create({ data: dataWithOptionals as Prisma.TagCreateInput })
+    return testPrisma.tag.create({ data: dataWithOptionals as Prisma.TagCreateInput })
 }
 
 /**
@@ -165,31 +158,34 @@ export async function seedTestDatabase(): Promise<{
     inactiveUser: User
     cleanup: () => Promise<void>
 }> {
+    // Generate unique identifier for this test run to avoid email conflicts
+    const testId = generateUUIDv7().slice(-8)
+
     const [adminUser, moderatorUser, regularUser, bannedUser, inactiveUser] = await Promise.all([
         createTestUserInDb({
             role: 'ADMIN',
-            email: 'admin@test.local',
+            email: `admin-${testId}@test.local`,
             name: 'Admin User',
         }),
         createTestUserInDb({
             role: 'MODERATOR',
-            email: 'moderator@test.local',
+            email: `moderator-${testId}@test.local`,
             name: 'Moderator User',
         }),
         createTestUserInDb({
             role: 'USER',
-            email: 'user@test.local',
+            email: `user-${testId}@test.local`,
             name: 'Regular User',
         }),
         createTestUserInDb({
             role: 'USER',
-            email: 'banned@test.local',
+            email: `banned-${testId}@test.local`,
             name: 'Banned User',
             isBanned: true,
         }),
         createTestUserInDb({
             role: 'USER',
-            email: 'inactive@test.local',
+            email: `inactive-${testId}@test.local`,
             name: 'Inactive User',
             isActive: false,
         }),
@@ -207,4 +203,15 @@ export async function seedTestDatabase(): Promise<{
         inactiveUser,
         cleanup,
     }
+}
+
+/**
+ * Cleans up all test data from the database
+ */
+export async function cleanupTestData(): Promise<void> {
+    // Delete all test data in dependency order (child tables first)
+    await testPrisma.refreshToken.deleteMany({})
+    await testPrisma.image.deleteMany({})
+    await testPrisma.tag.deleteMany({})
+    await testPrisma.user.deleteMany({})
 }

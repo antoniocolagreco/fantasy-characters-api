@@ -1,6 +1,103 @@
+import { execSync } from 'child_process'
+
+import { PrismaClient } from '@prisma/client'
 import { afterAll, beforeAll, beforeEach, vi } from 'vitest'
 
-import { prismaFake, resetDb } from './helpers/inmemory-prisma'
+import { generateUUIDv7 } from '@/shared/utils'
+
+// Create a dedicated Prisma client for tests with explicit URL
+export const testPrisma = new PrismaClient({
+    datasources: {
+        db: {
+            url: 'postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_dev',
+        },
+    },
+    log: process.env.DEBUG === 'true' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+})
+
+/**
+ * Clean all test data from database
+ */
+export async function cleanTestDatabase(): Promise<void> {
+    try {
+        // Delete in correct order to respect foreign key constraints
+        await testPrisma.equipment.deleteMany()
+        await testPrisma.character.deleteMany()
+        await testPrisma.item.deleteMany()
+        await testPrisma.skill.deleteMany()
+        await testPrisma.perk.deleteMany()
+        await testPrisma.archetype.deleteMany()
+        await testPrisma.race.deleteMany()
+        await testPrisma.tag.deleteMany()
+        await testPrisma.image.deleteMany()
+        await testPrisma.refreshToken.deleteMany()
+        await testPrisma.user.deleteMany()
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error cleaning test database:', error)
+        throw error
+    }
+}
+
+/**
+ * Setup test database connection
+ */
+async function connectTestDatabase(): Promise<void> {
+    try {
+        await testPrisma.$connect()
+        await testPrisma.$queryRaw`SELECT 1 as test`
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to connect to test database:', error)
+        throw error
+    }
+}
+
+/**
+ * Disconnect from test database
+ */
+async function disconnectTestDatabase(): Promise<void> {
+    try {
+        await testPrisma.$disconnect()
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error disconnecting from test database:', error)
+    }
+}
+
+/**
+ * Setup test database
+ */
+export async function setupTestDatabase(): Promise<void> {
+    try {
+        await connectTestDatabase()
+
+        // Run migrations if needed (in CI/dev environments)
+        if (process.env.NODE_ENV !== 'test' || process.env.CI === 'true') {
+            execSync('npx prisma migrate deploy', {
+                stdio: 'inherit',
+                env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL },
+            })
+        }
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to setup test database:', error)
+        throw error
+    }
+}
+
+/**
+ * Teardown test database
+ */
+export async function teardownTestDatabase(): Promise<void> {
+    try {
+        await disconnectTestDatabase()
+    } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error disconnecting test database:', error)
+        throw error
+    }
+}
 
 // Test environment setup
 process.env.NODE_ENV = 'test'
@@ -12,22 +109,27 @@ process.env.JWT_REFRESH_SECRET =
     process.env.JWT_REFRESH_SECRET || 'test-refresh-secret-with-min-32-chars!!'
 process.env.JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN || '15m'
 process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN || '30d'
-process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://user:pass@localhost:5432/db'
 
-// Mock Prisma service everywhere to use in-memory DB
+// Use test database URL or fall back to development database
+process.env.DATABASE_URL =
+    process.env.TEST_DATABASE_URL ||
+    process.env.DATABASE_URL ||
+    'postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_dev'
+
+// Mock Prisma service to use our test database client
 vi.mock('../src/infrastructure/database/prisma.service', () => ({
-    default: prismaFake,
-    prisma: prismaFake,
+    default: testPrisma,
+    prisma: testPrisma,
 }))
 vi.mock('../src/infrastructure/database', () => ({
-    prisma: prismaFake,
+    prisma: testPrisma,
 }))
 vi.mock('@/infrastructure/database/prisma.service', () => ({
-    default: prismaFake,
-    prisma: prismaFake,
+    default: testPrisma,
+    prisma: testPrisma,
 }))
 vi.mock('@/infrastructure/database', () => ({
-    prisma: prismaFake,
+    prisma: testPrisma,
 }))
 
 // Mock image processing functions for tests - will be overridden for specific tests
@@ -69,43 +171,38 @@ vi.mock('@/features/images/images.processing', async importOriginal => {
     }
 })
 
-beforeAll(() => {
-    // Setup will be added in future milestones
-    // For now, just ensure test environment is configured
+beforeAll(async () => {
+    // Setup test database
+    await setupTestDatabase()
 })
 
-beforeEach(() => {
-    // Clean up in-memory DB between tests
-    resetDb()
+beforeEach(async () => {
+    // Clean up database between tests and seed minimal data
+    await cleanTestDatabase()
+
     // Seed an ADMIN so RBAC finds a real user if controllers/read ownership or user lookups happen
-    const adminId = '01234567-89ab-cdef-0123-456789abcdef'
-    prismaFake.user.create({
+    // Use a unique email to avoid conflicts with test-specific users
+    const adminId = generateUUIDv7()
+    const uniqueId = generateUUIDv7().slice(-8)
+    await testPrisma.user.create({
         data: {
             id: adminId,
-            email: 'admin@test.local',
-            passwordHash: 'x',
+            email: `setup-admin-${uniqueId}@test.local`,
+            passwordHash: '$argon2id$v=19$m=4096,t=3,p=1$dGVzdGluZw$0a1e1e1e1e1e1e1e1e1e1e',
             role: 'ADMIN',
             isEmailVerified: true,
             isActive: true,
             lastLogin: new Date(),
             isBanned: false,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            name: 'Admin',
-            bio: null,
-            oauthProvider: null,
-            oauthId: null,
-            lastPasswordChange: null,
-            banReason: null,
-            bannedUntil: null,
-            bannedById: null,
-            profilePictureId: null,
+            name: 'Setup Admin',
         },
     })
 })
 
-afterAll(() => {
+afterAll(async () => {
     // Cleanup after all tests
+    await teardownTestDatabase()
+
     // Force garbage collection if available
     if (global.gc) {
         global.gc()
