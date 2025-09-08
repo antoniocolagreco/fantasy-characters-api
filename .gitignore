@@ -143,3 +143,6 @@ yarn.lock
 # Local configuration overrides
 config.local.js
 config.local.ts
+
+# Open Api
+openapi.json

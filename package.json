@@ -30,6 +30,7 @@
     "validate:coverage": "tsx scripts/validate-coverage.ts",
     "validate:env": "tsx scripts/validate-env.ts",
     "validate:openapi": "tsx scripts/validate-openapi.ts",
+    "generate:openapi": "tsx scripts/generate-openapi.ts",
     "validate": "pnpm format && pnpm typecheck && pnpm lint:fix && pnpm test:coverage && pnpm validate:coverage",
     "smoke:test": "tsx scripts/smoke-tests.ts",
     "ci": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm validate:env",

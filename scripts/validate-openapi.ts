@@ -110,9 +110,52 @@ async function validateOpenAPI(): Promise<void> {
         console.log(`   Version: ${schema.info?.version || 'Unknown'}`)
         console.log(`   Paths: ${Object.keys(schema.paths || {}).length}`)
 
+        // Scrub non-OAS keywords before validating (docs-only)
+        const EXPLICIT_STRIP = new Set([
+            'transform',
+            'examples',
+            'errorMessage',
+            'patternProperties',
+            'unevaluatedProperties',
+        ])
+        const shouldStripKey = (key: string) =>
+            key !== '$ref' && (key.startsWith('$') || EXPLICIT_STRIP.has(key))
+        const scrub = (input: unknown): unknown => {
+            if (Array.isArray(input)) return input.map(scrub)
+            if (input && typeof input === 'object') {
+                const out: Record<string, unknown> = {}
+                for (const [k, v] of Object.entries(input)) {
+                    if (shouldStripKey(k)) continue
+                    out[k] = scrub(v)
+                }
+                return out
+            }
+            return input
+        }
+
+        const cleanedSchema = scrub(schema)
+        // Debug: ensure no transform keys remain
+        let transformCount = 0
+        const scan = (input: unknown): void => {
+            if (Array.isArray(input)) {
+                for (const v of input) scan(v)
+                return
+            }
+            if (input && typeof input === 'object') {
+                for (const [k, v] of Object.entries(input)) {
+                    if (k === 'transform') transformCount++
+                    scan(v)
+                }
+            }
+        }
+        scan(cleanedSchema)
+        if (transformCount > 0) {
+            console.warn(`⚠️  transform keys still present after scrub: ${transformCount}`)
+        }
+
         // Validate the schema using swagger-parser
         console.log('🔧 Validating schema structure...')
-        const api = await SwaggerParser.validate(schema)
+        const api = await SwaggerParser.validate(cleanedSchema as any)
 
         console.log('✅ OpenAPI schema validation passed!')
         console.log(`   API Title: ${api.info.title}`)

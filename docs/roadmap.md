@@ -264,19 +264,19 @@ Duration: 2-3 days
 
 Duration: 2-3 days
 
-- [ ] 12.01 Scaffold skills feature structure
-- [ ] 12.02 Create Skill schemas (types derived from schemas)
-- [ ] 12.03 Implement Skill repository layer
-- [ ] 12.04 Create skill service layer
-- [ ] 12.05 Implement `GET /api/v1/skills` - List skills
-- [ ] 12.06 Implement `GET /api/v1/skills/:id` - Get skill by ID
-- [ ] 12.07 Implement `GET /api/v1/skills/stats` - Skill statistics
-- [ ] 12.08 Implement `POST /api/v1/skills` - Create skill
-- [ ] 12.09 Implement `PUT /api/v1/skills/:id` - Update skill
-- [ ] 12.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
-- [ ] 12.11 Implement error handling for all skill operations
-- [ ] 12.12 Write comprehensive tests (80%+ coverage)
-- [ ] 12.13 Update OpenAPI docs for all skill endpoints (schemas, params,
+- [x] 12.01 Scaffold skills feature structure
+- [x] 12.02 Create Skill schemas (types derived from schemas)
+- [x] 12.03 Implement Skill repository layer
+- [x] 12.04 Create skill service layer
+- [x] 12.05 Implement `GET /api/v1/skills` - List skills
+- [x] 12.06 Implement `GET /api/v1/skills/:id` - Get skill by ID
+- [x] 12.07 Implement `GET /api/v1/skills/stats` - Skill statistics
+- [x] 12.08 Implement `POST /api/v1/skills` - Create skill
+- [x] 12.09 Implement `PUT /api/v1/skills/:id` - Update skill
+- [x] 12.10 Implement `DELETE /api/v1/skills/:id` - Delete skill
+- [x] 12.11 Implement error handling for all skill operations
+- [x] 12.12 Write comprehensive tests (80%+ coverage)
+- [x] 12.13 Update OpenAPI docs for all skill endpoints (schemas, params,
       responses)
 
 ---
