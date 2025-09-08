@@ -19,8 +19,8 @@ export const swaggerPlugin = fp(
                         'A comprehensive API for managing fantasy characters, races, classes, and equipment',
                     version: '1.0.0',
                     contact: {
-                        name: 'API Support',
-                        email: 'support@fantasy-characters-api.com',
+                        name: 'Antonio Colagreco',
+                        email: 'nevenbridge@gmail.com',
                     },
                     license: {
                         name: 'MIT',

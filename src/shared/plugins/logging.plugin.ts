@@ -8,38 +8,43 @@ import { generateUUIDv7 } from '@/shared/utils/uuid'
  * Configures request ID generation and log redaction
  */
 function loggingPlugin(fastify: FastifyInstance, _opts: unknown, done: () => void): void {
+    // Confirm plugin registration at startup
+    fastify.log.info({ plugin: 'logging-plugin' }, 'Logging plugin registered')
     // Add request correlation ID if not already present
-    fastify.addHook('onRequest', (request, _reply, hookDone) => {
+    fastify.addHook('onRequest', (request, reply, hookDone) => {
         if (!request.id) {
             request.id = generateUUIDv7()
         }
+        // Expose correlation id to clients early
+        reply.header('x-request-id', request.id)
+        // Mark start time for response time calculation (high-resolution)
+        request.requestStartTime = process.hrtime.bigint()
         hookDone()
     })
 
     // Add response time logging
     fastify.addHook('onResponse', (request, reply, hookDone) => {
-        const responseTime = reply.elapsedTime
+        const start = request.requestStartTime
+        let responseTimeMs: number | undefined
+        if (typeof start === 'bigint') {
+            const diff = process.hrtime.bigint() - start
+            responseTimeMs = Number(diff / 1_000_000n)
+        }
         request.log.info(
             {
+                source: 'logging-plugin',
+                reqId: request.id,
                 requestId: request.id,
                 method: request.method,
                 url: request.url,
                 statusCode: reply.statusCode,
-                responseTime: `${responseTime}ms`,
+                responseTime: responseTimeMs !== undefined ? `${responseTimeMs}ms` : undefined,
                 userAgent: request.headers['user-agent'],
                 ip: request.ip,
-                userId: (request as { user?: { id: string } }).user?.id,
+                userId: request.user?.id,
             },
             'Request completed'
         )
-        hookDone()
-    })
-
-    // Expose correlation id to clients
-    fastify.addHook('onSend', (request, reply, _payload, hookDone) => {
-        if (request.id) {
-            reply.header('x-request-id', String(request.id))
-        }
         hookDone()
     })
 
@@ -51,11 +56,10 @@ function loggingPlugin(fastify: FastifyInstance, _opts: unknown, done: () => voi
                 error: {
                     message: error.message,
                     stack: error.stack,
-                    code: error.code,
                 },
                 method: request.method,
                 url: request.url,
-                userId: (request as { user?: { id: string } }).user?.id,
+                userId: request.user?.id,
             },
             'Request error occurred'
         )

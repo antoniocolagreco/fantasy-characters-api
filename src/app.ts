@@ -39,6 +39,7 @@ export async function buildApp(): Promise<FastifyInstance> {
                 remove: true,
             },
         },
+        disableRequestLogging: true,
         genReqId: () => {
             return generateUUIDv7()
         },
@@ -115,7 +116,7 @@ export async function startServer(): Promise<FastifyInstance> {
             host: '0.0.0.0',
         })
 
-        // app.log.info(`Server listening on port ${config.PORT}`)
+        app.log.info(`Docs available at http://localhost:${config.PORT}/docs`)
         return app
     } catch (error) {
         app.log.error(error)

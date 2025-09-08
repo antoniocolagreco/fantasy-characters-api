@@ -6,5 +6,6 @@ declare module 'fastify' {
     interface FastifyRequest {
         user?: AuthenticatedUser
         prisma?: PrismaClient
+        requestStartTime?: bigint
     }
 }
