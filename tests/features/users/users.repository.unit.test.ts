@@ -34,8 +34,8 @@ function makeUser(id: string, email: string, extras: Partial<import('@prisma/cli
 }
 
 describe('users.repository unit', () => {
-    beforeEach(() => {
-        cleanupTestData()
+    beforeEach(async () => {
+        await cleanupTestData()
     })
 
     it('findMany applies filters and pagination', async () => {

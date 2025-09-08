@@ -15,7 +15,7 @@ describe('RBAC Helpers', () => {
     const mockModeratorId = generateUUIDv7()
     const mockAdminId = generateUUIDv7()
     const mockResourceId = generateUUIDv7()
-    
+
     const mockUser = { id: mockUserId, role: 'USER' as const, email: 'user@test.com' }
     const mockModerator = { id: mockModeratorId, role: 'MODERATOR' as const, email: 'mod@test.com' }
     const mockAdmin = { id: mockAdminId, role: 'ADMIN' as const, email: 'admin@test.com' }
@@ -284,7 +284,7 @@ describe('RBAC Helpers', () => {
         const targetUserId = generateUUIDv7()
         const targetModeratorId = generateUUIDv7()
         const targetAdminId = generateUUIDv7()
-        
+
         const targetUser = { id: targetUserId, role: 'USER' as const }
         const targetModerator = { id: targetModeratorId, role: 'MODERATOR' as const }
         const targetAdmin = { id: targetAdminId, role: 'ADMIN' as const }

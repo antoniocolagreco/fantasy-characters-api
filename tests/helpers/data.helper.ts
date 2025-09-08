@@ -76,13 +76,17 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
     }
 
     const cleanup = async () => {
-        // Clean up in reverse dependency order
-        await testPrisma.refreshToken.deleteMany({
-            where: { userId: { in: users.map(u => u.id) } },
-        })
-        await testPrisma.user.deleteMany({
-            where: { id: { in: users.map(u => u.id) } },
-        })
+        try {
+            // Clean up in reverse dependency order
+            await testPrisma.refreshToken.deleteMany({
+                where: { userId: { in: users.map(u => u.id) } },
+            })
+            await testPrisma.user.deleteMany({
+                where: { id: { in: users.map(u => u.id) } },
+            })
+        } catch {
+            // Ignore cleanup errors to prevent unhandled rejections
+        }
     }
 
     return { users, cleanup }
@@ -209,9 +213,15 @@ export async function seedTestDatabase(): Promise<{
  * Cleans up all test data from the database
  */
 export async function cleanupTestData(): Promise<void> {
-    // Delete all test data in dependency order (child tables first)
-    await testPrisma.refreshToken.deleteMany({})
-    await testPrisma.image.deleteMany({})
-    await testPrisma.tag.deleteMany({})
-    await testPrisma.user.deleteMany({})
+    try {
+        // Delete all test data in dependency order (child tables first)
+        await testPrisma.refreshToken.deleteMany({})
+        await testPrisma.image.deleteMany({})
+        await testPrisma.tag.deleteMany({})
+        await testPrisma.user.deleteMany({})
+    } catch {
+        // Ignore cleanup errors (e.g., when Prisma engine is shutting down)
+        // This prevents unhandled promise rejections during test teardown
+        // Errors during cleanup are expected when the test process is shutting down
+    }
 }

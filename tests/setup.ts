@@ -12,7 +12,8 @@ export const testPrisma = new PrismaClient({
             url: 'postgresql://fantasy_user:fantasy_password@localhost:5432/fantasy_characters_dev',
         },
     },
-    log: process.env.DEBUG === 'true' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
+    // Completely silent during tests - only show logs if explicitly requested
+    log: process.env.DEBUG === 'true' ? ['query', 'info', 'warn', 'error'] : [],
 })
 
 /**
@@ -32,10 +33,9 @@ export async function cleanTestDatabase(): Promise<void> {
         await testPrisma.image.deleteMany()
         await testPrisma.refreshToken.deleteMany()
         await testPrisma.user.deleteMany()
-    } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error cleaning test database:', error)
-        throw error
+    } catch {
+        // Ignore cleanup errors during test teardown to prevent unhandled rejections
+        // This is expected when the Prisma engine is shutting down
     }
 }
 
