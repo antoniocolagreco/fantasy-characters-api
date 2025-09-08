@@ -86,6 +86,7 @@ export async function setupTestUsers(count: number = 3): Promise<TestData> {
 export async function cleanupTestData(): Promise<void> {
     // Clean up in dependency order (children first, then parents)
     await prismaService.refreshToken.deleteMany()
+    await prismaService.tag.deleteMany()
     await prismaService.user.deleteMany()
 
     // Add more entities as they're implemented

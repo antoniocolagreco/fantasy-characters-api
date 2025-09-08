@@ -35,7 +35,7 @@ export const SortQuerySchema = Type.Object(
     {
         sortBy: Type.Optional(
             Type.String({
-                enum: ['createdAt', 'name', 'updatedAt', 'level'],
+                enum: ['createdAt', 'updatedAt', 'name'],
                 description: 'Field to sort by',
             })
         ),

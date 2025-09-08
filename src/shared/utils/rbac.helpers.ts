@@ -20,6 +20,12 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
 ): T {
     if (!user) {
         // Anonymous users: only PUBLIC content
+        if (filters.OR) {
+            // If there are existing OR conditions, combine with AND
+            return {
+                AND: [{ OR: filters.OR }, { visibility: 'PUBLIC' }],
+            } as unknown as T
+        }
         return { ...filters, visibility: 'PUBLIC' } as T
     }
 
@@ -33,12 +39,26 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
         const securityFilter = {
             OR: [{ visibility: 'PUBLIC' }, { visibility: 'HIDDEN' }, { ownerId: user.id }],
         }
+
+        if (filters.OR) {
+            // If there are existing OR conditions, combine with AND
+            return {
+                AND: [{ OR: filters.OR }, securityFilter],
+            } as unknown as T
+        }
         return { ...filters, ...securityFilter } as T
     }
 
     // Regular USER: PUBLIC + own content
     const securityFilter = {
         OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }],
+    }
+
+    if (filters.OR) {
+        // If there are existing OR conditions, combine with AND
+        return {
+            AND: [{ OR: filters.OR }, securityFilter],
+        } as unknown as T
     }
     return { ...filters, ...securityFilter } as T
 }

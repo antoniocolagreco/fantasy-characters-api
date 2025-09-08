@@ -13,6 +13,16 @@ async function getServices() {
     }
 }
 
+async function createMockAuthUser(
+    role: 'ADMIN' | 'MODERATOR' | 'USER' = 'ADMIN'
+): Promise<import('@/features/auth').AuthenticatedUser> {
+    return {
+        id: 'mock-auth-user-id',
+        role,
+        email: 'mock@test.local',
+    }
+}
+
 async function seedUser(
     id: string,
     email: string,
@@ -293,8 +303,9 @@ describe('users.service unit', () => {
 
         it('getById returns public user data', async () => {
             const { publicUserService } = await getServices()
+            const mockUser = await createMockAuthUser('ADMIN')
             const u = await seedUser('pub-user', 'public@test.local')
-            const result = await publicUserService.getById(u.id)
+            const result = await publicUserService.getById(u.id, mockUser)
             expect(result.id).toBe(u.id)
             expect(result.email).toBe(u.email)
             // Should not include sensitive fields like passwordHash
@@ -303,10 +314,11 @@ describe('users.service unit', () => {
 
         it('list returns paginated public users', async () => {
             const { publicUserService } = await getServices()
+            const mockUser = await createMockAuthUser('ADMIN')
             await seedUser('pub1', 'pub1@test.local')
             await seedUser('pub2', 'pub2@test.local')
 
-            const result = await publicUserService.list({ limit: 10 })
+            const result = await publicUserService.list({ limit: 10 }, mockUser)
 
             expect(result.users).toHaveLength(2)
             expect(result.pagination.hasNext).toBe(false)

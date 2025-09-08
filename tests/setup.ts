@@ -5,6 +5,7 @@ import { prismaFake, resetDb } from './helpers/inmemory-prisma'
 // Test environment setup
 process.env.NODE_ENV = 'test'
 process.env.LOG_LEVEL = 'silent'
+process.env.RBAC_ENABLED = 'true'
 // Ensure required env vars for config and auth across all tests
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-key-with-minimum-32-characters!!'
 process.env.JWT_REFRESH_SECRET =

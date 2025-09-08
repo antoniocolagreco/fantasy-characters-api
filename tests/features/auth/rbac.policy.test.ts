@@ -358,7 +358,7 @@ describe('RBAC Policy', () => {
                 ownerId: null,
             }
 
-            expect(can(context)).toBe(false) // Regular users cannot modify orphaned content
+            expect(can(context)).toBe(true) // Allow attempt - service layer will check ownership/existence
         })
     })
 
@@ -388,7 +388,7 @@ describe('RBAC Policy', () => {
                 visibility: 'PUBLIC',
             })
 
-            expect(result).toBe(false) // Should treat as no owner
+            expect(result).toBe(true) // Allow attempt - service layer will determine final authorization
         })
     })
 })

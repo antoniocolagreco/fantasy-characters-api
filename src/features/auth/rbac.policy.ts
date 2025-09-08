@@ -9,6 +9,7 @@ export function can(ctx: RbacContext): boolean {
     const role = user?.role
 
     // 1) Anonymous users - only read PUBLIC content
+    // Only allow reads of specific resources with PUBLIC visibility
     if (!role) {
         return action === 'read' && visibility === 'PUBLIC'
     }
@@ -54,6 +55,11 @@ export function can(ctx: RbacContext): boolean {
             return true
         }
 
+        // Can create content
+        if (action === 'create') {
+            return true
+        }
+
         // Users resource: can only manage bans for USER targets
         if (resource === 'users') {
             if (action === 'manage') {
@@ -72,8 +78,34 @@ export function can(ctx: RbacContext): boolean {
         return false
     }
 
-    // 5) Regular user (non-owner) - can only read PUBLIC content
-    return action === 'read' && visibility === 'PUBLIC'
+    // 5) Regular user - can create content and read PUBLIC content
+    if (role === 'USER') {
+        // Can create their own content (ownerId should match user.id or be undefined for new content)
+        if (action === 'create') {
+            // For create operations, either no ownerId is set (new content) or it matches the user
+            return !ownerId || ownerId === user.id
+        }
+
+        // Can only read PUBLIC content
+        // Allow read attempts when visibility is undefined (service layer will handle filtering)
+        if (action === 'read' && (visibility === 'PUBLIC' || visibility === undefined)) {
+            return true
+        }
+
+        // Allow update/delete attempts on their own content or non-existent resources
+        // Service layer will handle 404 for non-existent and 403 for unauthorized access
+        if (
+            (action === 'update' || action === 'delete') &&
+            (ownerId === user.id || ownerId === undefined || ownerId === null)
+        ) {
+            return true
+        }
+
+        return false
+    }
+
+    // 6) Fallback for any other cases - deny
+    return false
 }
 
 /**

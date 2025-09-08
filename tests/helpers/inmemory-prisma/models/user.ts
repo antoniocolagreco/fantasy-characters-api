@@ -57,6 +57,17 @@ export const userModel = {
         return user
     },
 
+    async createMany(args: {
+        data: Array<Partial<User> & { id: string; email: string }>
+    }): Promise<{ count: number }> {
+        const results = []
+        for (const userData of args.data) {
+            const user = await this.create({ data: userData })
+            results.push(user)
+        }
+        return { count: results.length }
+    },
+
     async findUnique(args: {
         where: UserWhereUnique
         select?: { id?: boolean; role?: boolean }

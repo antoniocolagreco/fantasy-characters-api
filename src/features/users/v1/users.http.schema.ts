@@ -7,7 +7,6 @@ import {
 } from '@/features/users/users.domain.schema'
 import {
     PaginationQuerySchema,
-    SortQuerySchema,
     createPaginatedResponseSchema,
     createSuccessResponseSchema,
     RoleSchema,
@@ -150,6 +149,33 @@ export const UserParamsSchema = Type.Object(
 )
 
 // ===== Query Schemas =====
+
+/**
+ * User-specific sorting query parameters
+ */
+export const UserSortQuerySchema = Type.Object(
+    {
+        sortBy: Type.Optional(
+            Type.String({
+                enum: ['createdAt', 'updatedAt', 'name', 'email', 'lastLogin'],
+                description: 'Field to sort by',
+            })
+        ),
+        sortDir: Type.Optional(
+            Type.String({
+                enum: ['asc', 'desc'],
+                default: 'desc',
+                description: 'Sort direction',
+            })
+        ),
+    },
+    {
+        $id: 'UserSortQuery',
+        title: 'User Sort Query',
+        description: 'Sorting parameters for user endpoints',
+    }
+)
+
 export const UserListQuerySchema = Type.Intersect(
     [
         Type.Object({
@@ -179,7 +205,7 @@ export const UserListQuerySchema = Type.Intersect(
             ),
         }),
         PaginationQuerySchema,
-        SortQuerySchema,
+        UserSortQuerySchema,
     ],
     {
         $id: 'UserListQuery',
@@ -255,5 +281,6 @@ export type CreateUser = Static<typeof CreateUserSchema>
 export type UpdateUser = Static<typeof UpdateUserSchema>
 export type BanUser = Static<typeof BanUserSchema>
 export type UserParams = Static<typeof UserParamsSchema>
+export type UserSortQuery = Static<typeof UserSortQuerySchema>
 export type UserListQuery = Static<typeof UserListQuerySchema>
 export type UserStats = Static<typeof UserStatsSchema>

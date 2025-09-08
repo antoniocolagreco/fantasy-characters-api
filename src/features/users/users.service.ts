@@ -19,6 +19,7 @@ import {
     applyUserSecurityFilters,
     canManageUser,
     canModifyResource,
+    canViewResource,
 } from '@/shared/utils/rbac.helpers'
 
 // Permission helper for viewing user stats
@@ -262,18 +263,32 @@ export const userService = {
 
 // ===== Public User Service (safe for API responses) =====
 export const publicUserService = {
-    async getById(id: string): Promise<PublicUser> {
-        const user = await publicUserRepository.findById(id)
-        if (!user) {
+    async getById(id: string, user?: AuthenticatedUser): Promise<PublicUser> {
+        // First, check if the target user exists
+        const targetUser = await publicUserRepository.findById(id)
+        if (!targetUser) {
             throw err('RESOURCE_NOT_FOUND', 'User not found')
         }
-        return user
+
+        // Apply security constraints using the helper
+        const canAccess = canViewResource(user, { ownerId: targetUser.id, visibility: null })
+
+        if (!canAccess) {
+            throw err('FORBIDDEN', 'Access denied to view this user')
+        }
+
+        return targetUser
     },
 
     async list(
         query: UserListQuery,
         user?: AuthenticatedUser
     ): Promise<{ users: PublicUser[]; pagination: ListUsersResult['pagination'] }> {
+        // Check permissions - only admins and moderators can list users
+        if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+            throw err('FORBIDDEN', 'Access denied to list users')
+        }
+
         // Build business filters from query parameters
         const businessFilters: Record<string, unknown> = {}
 

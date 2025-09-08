@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify'
 import { createOptionalAuthMiddleware } from '@/features/auth/auth.middleware'
 import { authRoutesV1 } from '@/features/auth/v1/auth.routes'
 import { imageRoutes } from '@/features/images/v1/images.routes'
+import { tagsRoutesV1 } from '@/features/tags/v1/tags.routes'
 import { usersRoutesV1 } from '@/features/users/v1/users.routes'
 import { config } from '@/infrastructure/config'
 import prismaService from '@/infrastructure/database/prisma.service'
@@ -99,6 +100,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     // API v1 routes
     await app.register(authRoutesV1, { prefix: '/api/v1' })
     await app.register(usersRoutesV1, { prefix: '/api/v1' })
+    await app.register(tagsRoutesV1, { prefix: '/api/v1' })
     await app.register(imageRoutes, { prefix: '/api/v1' })
 
     return app

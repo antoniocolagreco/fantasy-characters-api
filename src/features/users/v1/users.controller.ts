@@ -14,7 +14,7 @@ import { paginated, success } from '@/shared/utils'
 
 export const userController = {
     async getUserById(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
-        const user = await publicUserService.getById(request.params.id)
+        const user = await publicUserService.getById(request.params.id, request.user)
         return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
     },
 

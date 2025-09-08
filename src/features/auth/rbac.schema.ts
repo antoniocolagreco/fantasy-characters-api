@@ -38,6 +38,7 @@ export const OwnershipDataSchema = Type.Object(
                     description: 'ID of the resource owner',
                 }),
                 Type.Null(),
+                Type.Undefined(),
             ])
         ),
         visibility: Type.Optional(Type.Union([VisibilitySchema, Type.Null()])),

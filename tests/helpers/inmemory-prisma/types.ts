@@ -46,6 +46,10 @@ export type OwnershipWhereInput = {
     id?: string
     ownerId?: string | null
     visibility?: Visibility
+    name?: { contains?: string; mode?: 'insensitive' }
+    description?: { contains?: string; mode?: 'insensitive' }
+    OR?: OwnershipWhereInput[]
+    AND?: OwnershipWhereInput[]
 }
 
 export type PrismaFake = {
@@ -156,15 +160,18 @@ export type PrismaFake = {
     tag: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
         findUnique(args: {
-            where: { id: string }
+            where: { id: string } | { name: string }
             select?: { ownerId?: boolean; owner?: { select: { role: boolean } } }
-        }): Promise<{ ownerId?: string | null; owner?: { role: Role } } | null>
+        }): Promise<Tag | { ownerId?: string | null; owner?: { role: Role } } | null>
         findMany(args: {
             where?: OwnershipWhereInput
             orderBy?: OrderBy
             take?: number
         }): Promise<Tag[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Tag> & { id: string } }): Promise<Tag>
+        update(args: { where: { id: string }; data: Partial<Tag> }): Promise<Tag>
+        delete(args: { where: { id: string } }): Promise<Tag>
     }
     skill: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
@@ -178,6 +185,7 @@ export type PrismaFake = {
             take?: number
         }): Promise<Skill[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Skill> & { id: string } }): Promise<Skill>
     }
     perk: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
@@ -191,6 +199,7 @@ export type PrismaFake = {
             take?: number
         }): Promise<Perk[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Perk> & { id: string } }): Promise<Perk>
     }
     race: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
@@ -204,6 +213,7 @@ export type PrismaFake = {
             take?: number
         }): Promise<Race[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Race> & { id: string } }): Promise<Race>
     }
     archetype: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
@@ -217,6 +227,7 @@ export type PrismaFake = {
             take?: number
         }): Promise<Archetype[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Archetype> & { id: string } }): Promise<Archetype>
     }
     item: {
         deleteMany(args?: { where?: { id?: { in?: string[] } } }): Promise<DeleteManyResult>
@@ -230,5 +241,6 @@ export type PrismaFake = {
             take?: number
         }): Promise<Item[]>
         count(args?: { where?: OwnershipWhereInput }): Promise<CountResult>
+        create(args: { data: Partial<Item> & { id: string } }): Promise<Item>
     }
 }
