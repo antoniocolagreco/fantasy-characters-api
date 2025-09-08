@@ -285,19 +285,19 @@ Duration: 2-3 days
 
 Duration: 2-3 days
 
-- [ ] 13.01 Scaffold perks feature structure
-- [ ] 13.02 Create Perk schemas (types derived from schemas)
-- [ ] 13.03 Implement Perk repository layer
-- [ ] 13.04 Create perk service layer
-- [ ] 13.05 Implement `GET /api/v1/perks` - List perks
-- [ ] 13.06 Implement `GET /api/v1/perks/:id` - Get perk by ID
-- [ ] 13.07 Implement `GET /api/v1/perks/stats` - Perk statistics
-- [ ] 13.08 Implement `POST /api/v1/perks` - Create perk
-- [ ] 13.09 Implement `PUT /api/v1/perks/:id` - Update perk
-- [ ] 13.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
-- [ ] 13.11 Implement error handling for all perk operations
-- [ ] 13.12 Write comprehensive tests (80%+ coverage)
-- [ ] 13.13 Update OpenAPI docs for all perk endpoints (schemas, params,
+- [x] 13.01 Scaffold perks feature structure
+- [x] 13.02 Create Perk schemas (types derived from schemas)
+- [x] 13.03 Implement Perk repository layer
+- [x] 13.04 Create perk service layer
+- [x] 13.05 Implement `GET /api/v1/perks` - List perks
+- [x] 13.06 Implement `GET /api/v1/perks/:id` - Get perk by ID
+- [x] 13.07 Implement `GET /api/v1/perks/stats` - Perk statistics
+- [x] 13.08 Implement `POST /api/v1/perks` - Create perk
+- [x] 13.09 Implement `PUT /api/v1/perks/:id` - Update perk
+- [x] 13.10 Implement `DELETE /api/v1/perks/:id` - Delete perk
+- [x] 13.11 Implement error handling for all perk operations
+- [x] 13.12 Write comprehensive tests (80%+ coverage)
+- [x] 13.13 Update OpenAPI docs for all perk endpoints (schemas, params,
       responses)
 
 ---
