@@ -212,6 +212,79 @@ describe('users.service unit', () => {
         }
     })
 
+    describe('list method filters', () => {
+        it('filters by role', async () => {
+            const { userService } = await getServices()
+            await seedUser('admin', 'admin@test.local', { role: 'ADMIN' })
+            await seedUser('user', 'user@test.local', { role: 'USER' })
+
+            const result = await userService.list({ role: 'ADMIN' })
+            expect(result.users).toHaveLength(1)
+            expect(result.users[0]?.role).toBe('ADMIN')
+        })
+
+        it('filters by isActive', async () => {
+            const { userService } = await getServices()
+            await seedUser('active', 'active@test.local', { isActive: true })
+            await seedUser('inactive', 'inactive@test.local', { isActive: false })
+
+            const result = await userService.list({ isActive: true })
+            expect(result.users).toHaveLength(1)
+            expect(result.users[0]?.isActive).toBe(true)
+        })
+
+        it('filters by isBanned', async () => {
+            const { userService } = await getServices()
+            await seedUser('banned', 'banned@test.local', { isBanned: true })
+            await seedUser('normal', 'normal@test.local', { isBanned: false })
+
+            const result = await userService.list({ isBanned: false })
+            expect(result.users).toHaveLength(1)
+            expect(result.users[0]?.isBanned).toBe(false)
+        })
+
+        it('filters by hasProfilePicture true', async () => {
+            const { userService } = await getServices()
+            await seedUser('with-pic', 'with@test.local', { profilePictureId: 'pic-123' })
+            await seedUser('no-pic', 'no@test.local', { profilePictureId: null })
+
+            const result = await userService.list({ hasProfilePicture: true })
+            expect(result.users).toHaveLength(1)
+            expect(result.users[0]?.profilePictureId).toBe('pic-123')
+        })
+
+        it('filters by hasProfilePicture false', async () => {
+            const { userService } = await getServices()
+            await seedUser('with-pic', 'with@test.local', { profilePictureId: 'pic-123' })
+            await seedUser('no-pic', 'no@test.local', { profilePictureId: null })
+
+            const result = await userService.list({ hasProfilePicture: false })
+            expect(result.users).toHaveLength(1)
+            // Note: in-memory DB might return undefined instead of null
+            expect(result.users[0]?.profilePictureId).toBeFalsy()
+        })
+
+        it('filters by search term', async () => {
+            const { userService } = await getServices()
+            await seedUser('john', 'john@test.local', { name: 'John Doe', bio: 'Developer' })
+            await seedUser('jane', 'jane@test.local', { name: 'Jane Smith', bio: 'Designer' })
+
+            const result = await userService.list({ search: 'john' })
+            expect(result.users).toHaveLength(1)
+            expect(result.users[0]?.email).toBe('john@test.local')
+        })
+
+        it('returns pagination without cursor', async () => {
+            const { userService } = await getServices()
+            await seedUser('user1', 'user1@test.local')
+            await seedUser('user2', 'user2@test.local')
+
+            const result = await userService.list({ limit: 1 })
+            expect(result.pagination.hasPrev).toBe(false)
+            expect(result.pagination.startCursor).toBeUndefined()
+        })
+    })
+
     describe('PublicUserService', () => {
         it('getById throws when user not found', async () => {
             const { publicUserService } = await getServices()
@@ -239,6 +312,67 @@ describe('users.service unit', () => {
             expect(result.pagination.hasNext).toBe(false)
             expect(result.pagination.hasPrev).toBe(false)
             expect(result.pagination.limit).toBe(10)
+        })
+    })
+
+    describe('Error handling', () => {
+        it('throws error when creating user with existing email', async () => {
+            const { userService } = await getServices()
+            await seedUser('existing', 'exists@test.local')
+
+            await expect(
+                userService.create({
+                    email: 'exists@test.local',
+                    name: 'Duplicate User',
+                    password: 'password123',
+                    role: 'USER',
+                })
+            ).rejects.toThrow('User with this email already exists')
+        })
+
+        it('throws error when updating user not found', async () => {
+            const { userService } = await getServices()
+
+            await expect(
+                userService.update('non-existent-id', { name: 'New Name' })
+            ).rejects.toThrow('User not found')
+        })
+
+        it('throws error when deleting user not found', async () => {
+            const { userService } = await getServices()
+
+            await expect(userService.delete('non-existent-id')).rejects.toThrow('User not found')
+        })
+
+        it('throws error when banning user not found', async () => {
+            const { userService } = await getServices()
+            const admin = await seedUser('admin', 'admin@test.local', { role: 'ADMIN' })
+
+            await expect(
+                userService.ban(
+                    'non-existent-id',
+                    { banReason: 'spam', bannedUntil: '2024-12-31T23:59:59.999Z' },
+                    admin.id,
+                    admin
+                )
+            ).rejects.toThrow('User not found')
+        })
+
+        it('throws error when unbanning user not found', async () => {
+            const { userService } = await getServices()
+            const admin = await seedUser('admin', 'admin@test.local', { role: 'ADMIN' })
+
+            await expect(userService.unban('non-existent-id', admin)).rejects.toThrow(
+                'User not found'
+            )
+        })
+
+        it('throws error with invalid cursor format', async () => {
+            const { userService } = await getServices()
+
+            await expect(userService.list({ cursor: 'invalid-cursor' })).rejects.toThrow(
+                'Invalid cursor format'
+            )
         })
     })
 })
