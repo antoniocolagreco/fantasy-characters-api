@@ -18,9 +18,7 @@ describe('Tags Repository Integration Tests', () => {
         await app.close()
     })
 
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
+    // Global cleanup is handled in tests/setup.ts
 
     describe('findById', () => {
         it('should return tag when it exists', async () => {

@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import type { RoleLiterals } from '@/shared/schemas/common.schema'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 const USER_1_ID = generateUUIDv7()
@@ -58,10 +57,6 @@ async function seedTestUser(id: string, role: 'USER' | 'MODERATOR' | 'ADMIN' = '
 }
 
 describe('Image Service Unit Tests', () => {
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
-
     describe('createImage', () => {
         it('should create image with valid data', async () => {
             const imageService = await getImageService()

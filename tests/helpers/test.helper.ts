@@ -2,8 +2,12 @@ import type { User, Role } from '@prisma/client'
 import { expect } from 'vitest'
 
 import type { AuthenticatedUser } from '@/features/auth'
-import { jwtService } from '@/features/auth/jwt.service'
+import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
+import {
+    createAuthHeaders as baseCreateAuthHeaders,
+    generateTestToken as baseGenerateTestToken,
+} from '@/tests/helpers/auth.helper'
 
 interface TestUser extends Partial<User> {
     id: string
@@ -26,15 +30,7 @@ export interface TestResponse {
     headers?: Record<string, unknown>
 }
 
-function getTestJwtConfig() {
-    return {
-        secret: process.env.JWT_SECRET || 'test-secret-key-with-minimum-32-characters!!',
-        accessTokenTtl: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-        refreshTokenTtl: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
-        issuer: 'fantasy-characters-api',
-        audience: 'fantasy-characters-app',
-    }
-}
+// Note: JWT config/token helpers are centralized in tests/helpers/auth.helper.ts
 
 /**
  * Creates a test user with reasonable defaults
@@ -80,18 +76,14 @@ export function createAuthenticatedUser(options: TestUserOptions = {}): Authenti
  * Generates a test JWT token
  */
 export function generateTestToken(options: TestUserOptions = {}): string {
-    const authUser = createAuthenticatedUser(options)
-    return jwtService.generateAccessToken(authUser, getTestJwtConfig())
+    return baseGenerateTestToken(createAuthenticatedUser(options))
 }
 
 /**
  * Creates Authorization headers for test requests
  */
 export function createAuthHeaders(options: TestUserOptions = {}) {
-    const token = generateTestToken(options)
-    return {
-        Authorization: `Bearer ${token}`,
-    }
+    return baseCreateAuthHeaders(createAuthenticatedUser(options))
 }
 
 /**
@@ -109,17 +101,7 @@ export function createUserPayload(options: Partial<TestUser> = {}) {
 /**
  * Standard HTTP status codes for tests
  */
-export const HTTP_STATUS = {
-    OK: 200,
-    CREATED: 201,
-    NO_CONTENT: 204,
-    BAD_REQUEST: 400,
-    UNAUTHORIZED: 401,
-    FORBIDDEN: 403,
-    NOT_FOUND: 404,
-    CONFLICT: 409,
-    INTERNAL_SERVER_ERROR: 500,
-} as const
+export { HTTP_STATUS }
 
 /**
  * Standard test timeouts

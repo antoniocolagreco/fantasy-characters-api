@@ -1,8 +1,7 @@
 import type { FastifyInstance } from 'fastify'
-import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 
 import { buildApp } from '@/app'
-import prismaService from '@/infrastructure/database/prisma.service'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 
 describe('Auth Routes Integration Tests', () => {
@@ -17,11 +16,7 @@ describe('Auth Routes Integration Tests', () => {
         await app.close()
     })
 
-    beforeEach(async () => {
-        // Clean database before each test
-        await prismaService.refreshToken.deleteMany()
-        await prismaService.user.deleteMany()
-    })
+    // Database cleanup is handled globally in tests/setup.ts
 
     describe('POST /api/v1/auth/register', () => {
         it('should validate email format', async () => {

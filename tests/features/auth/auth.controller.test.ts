@@ -12,11 +12,12 @@ vi.mock('@/features/auth/auth.service', () => ({
     },
 }))
 
-import { authService, type LoginResult } from '@/features/auth/auth.service'
+import { authService } from '@/features/auth/auth.service'
 import { authController } from '@/features/auth/v1/auth.controller'
+import { createReplyStub, createRequestStub } from '@/tests/helpers/fastify-stubs'
 
-// Type assertion for mocked service
-const mockAuthService = authService as any
+// Strongly typed mocked service
+const mockAuthService = vi.mocked(authService)
 
 describe('AuthController', () => {
     beforeEach(() => {
@@ -30,7 +31,7 @@ describe('AuthController', () => {
                 password: 'password123',
             }
 
-            const loginResult: LoginResult = {
+            const loginResult = {
                 id: 'user-123',
                 email: 'test@example.com',
                 role: 'USER',
@@ -40,22 +41,17 @@ describe('AuthController', () => {
 
             mockAuthService.login.mockResolvedValue(loginResult)
 
-            const request = {
-                body: loginData,
+            const request = createRequestStub(loginData, {
                 headers: { 'user-agent': 'test-browser' },
                 id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            })
+            const reply = createReplyStub()
 
             await authController.login(request, reply)
 
             expect(mockAuthService.login).toHaveBeenCalledWith(loginData, 'test-browser')
-            expect(reply.code).toHaveBeenCalledWith(200)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(200)
+            expect(reply.sentPayloads[0]).toEqual({
                 data: loginResult,
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -80,21 +76,14 @@ describe('AuthController', () => {
 
             mockAuthService.register.mockResolvedValue(createdUser)
 
-            const request = {
-                body: registerData,
-                id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            const request = createRequestStub(registerData, { id: 'test-request-id' })
+            const reply = createReplyStub()
 
             await authController.register(request, reply)
 
             expect(mockAuthService.register).toHaveBeenCalledWith(registerData)
-            expect(reply.code).toHaveBeenCalledWith(201)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(201)
+            expect(reply.sentPayloads[0]).toEqual({
                 data: createdUser,
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -115,16 +104,11 @@ describe('AuthController', () => {
 
             mockAuthService.refreshTokens.mockResolvedValue(newTokens)
 
-            const request = {
-                body: refreshTokenData,
+            const request = createRequestStub(refreshTokenData, {
                 headers: { 'user-agent': 'test-browser' },
                 id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            })
+            const reply = createReplyStub()
 
             await authController.refreshToken(request, reply)
 
@@ -132,8 +116,8 @@ describe('AuthController', () => {
                 'old-refresh-token',
                 'test-browser'
             )
-            expect(reply.code).toHaveBeenCalledWith(200)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(200)
+            expect(reply.sentPayloads[0]).toEqual({
                 data: newTokens,
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -149,21 +133,14 @@ describe('AuthController', () => {
 
             mockAuthService.logout.mockResolvedValue(undefined)
 
-            const request = {
-                body: logoutData,
-                id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            const request = createRequestStub(logoutData, { id: 'test-request-id' })
+            const reply = createReplyStub()
 
             await authController.logout(request, reply)
 
             expect(mockAuthService.logout).toHaveBeenCalledWith('token-to-logout')
-            expect(reply.code).toHaveBeenCalledWith(200)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(200)
+            expect(reply.sentPayloads[0]).toEqual({
                 message: 'Logged out successfully',
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -175,21 +152,17 @@ describe('AuthController', () => {
         it('should logout from all devices successfully', async () => {
             mockAuthService.logoutAll.mockResolvedValue(undefined)
 
-            const request = {
-                user: { id: 'user-123' },
-                id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            const request = createRequestStub(
+                {},
+                { id: 'test-request-id', user: { id: 'user-123' } }
+            )
+            const reply = createReplyStub()
 
             await authController.logoutAll(request, reply)
 
             expect(mockAuthService.logoutAll).toHaveBeenCalledWith('user-123')
-            expect(reply.code).toHaveBeenCalledWith(200)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(200)
+            expect(reply.sentPayloads[0]).toEqual({
                 message: 'Logged out from all devices',
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -197,15 +170,8 @@ describe('AuthController', () => {
         })
 
         it('should throw error when user is not authenticated', async () => {
-            const request = {
-                user: undefined,
-                id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            const request = createRequestStub({}, { id: 'test-request-id' })
+            const reply = createReplyStub()
 
             await expect(authController.logoutAll(request, reply)).rejects.toThrow(
                 'Authentication required'
@@ -224,16 +190,11 @@ describe('AuthController', () => {
 
             mockAuthService.changePassword.mockResolvedValue(undefined)
 
-            const request = {
-                body: changePasswordData,
-                user: { id: 'user-123' },
+            const request = createRequestStub(changePasswordData, {
                 id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+                user: { id: 'user-123' },
+            })
+            const reply = createReplyStub()
 
             await authController.changePassword(request, reply)
 
@@ -242,8 +203,8 @@ describe('AuthController', () => {
                 'old-password',
                 'new-password'
             )
-            expect(reply.code).toHaveBeenCalledWith(200)
-            expect(reply.send).toHaveBeenCalledWith({
+            expect(reply.codeCalls).toContain(200)
+            expect(reply.sentPayloads[0]).toEqual({
                 message: 'Password changed successfully',
                 requestId: 'test-request-id',
                 timestamp: expect.any(String),
@@ -256,16 +217,10 @@ describe('AuthController', () => {
                 newPassword: 'new-password',
             }
 
-            const request = {
-                body: changePasswordData,
-                user: undefined,
+            const request = createRequestStub(changePasswordData, {
                 id: 'test-request-id',
-            } as any
-
-            const reply = {
-                code: vi.fn().mockReturnThis(),
-                send: vi.fn(),
-            } as any
+            })
+            const reply = createReplyStub()
 
             await expect(authController.changePassword(request, reply)).rejects.toThrow(
                 'Authentication required'

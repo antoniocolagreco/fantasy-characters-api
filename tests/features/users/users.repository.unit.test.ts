@@ -1,8 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 
 import { userRepository } from '@/features/users/users.repository'
 import { generateUUIDv7 } from '@/shared/utils'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 function makeUser(id: string, email: string, extras: Partial<import('@prisma/client').User> = {}) {
@@ -34,10 +33,6 @@ function makeUser(id: string, email: string, extras: Partial<import('@prisma/cli
 }
 
 describe('users.repository unit', () => {
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
-
     it('findMany applies filters and pagination', async () => {
         await makeUser(generateUUIDv7(), 'a@test.local', { name: 'Alice' })
         await makeUser(generateUUIDv7(), 'b@test.local', { name: 'Bob', isActive: false })

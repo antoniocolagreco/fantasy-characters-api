@@ -243,19 +243,19 @@ Duration: 5-7 days
 
 Duration: 2-3 days
 
-- [ ] 11.01 Scaffold tags feature structure
-- [ ] 11.02 Create Tag schemas (types derived from schemas)
-- [ ] 11.03 Implement Tag repository layer
-- [ ] 11.04 Create tag service layer
-- [ ] 11.05 Implement `GET /api/v1/tags` - List tags
-- [ ] 11.06 Implement `GET /api/v1/tags/:id` - Get tag by ID
-- [ ] 11.07 Implement `GET /api/v1/tags/stats` - Tag statistics
-- [ ] 11.08 Implement `POST /api/v1/tags` - Create tag
-- [ ] 11.09 Implement `PUT /api/v1/tags/:id` - Update tag
-- [ ] 11.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
-- [ ] 11.11 Implement error handling for all tag operations
-- [ ] 11.12 Write comprehensive tests (80%+ coverage)
-- [ ] 11.13 Update OpenAPI docs for all tag endpoints (schemas, params,
+- [x] 11.01 Scaffold tags feature structure
+- [x] 11.02 Create Tag schemas (types derived from schemas)
+- [x] 11.03 Implement Tag repository layer
+- [x] 11.04 Create tag service layer
+- [x] 11.05 Implement `GET /api/v1/tags` - List tags
+- [x] 11.06 Implement `GET /api/v1/tags/:id` - Get tag by ID
+- [x] 11.07 Implement `GET /api/v1/tags/stats` - Tag statistics
+- [x] 11.08 Implement `POST /api/v1/tags` - Create tag
+- [x] 11.09 Implement `PUT /api/v1/tags/:id` - Update tag
+- [x] 11.10 Implement `DELETE /api/v1/tags/:id` - Delete tag
+- [x] 11.11 Implement error handling for all tag operations
+- [x] 11.12 Write comprehensive tests (80%+ coverage)
+- [x] 11.13 Update OpenAPI docs for all tag endpoints (schemas, params,
       responses)
 
 ---

@@ -4,7 +4,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { buildApp } from '@/app'
 import { generateUUIDv7 } from '@/shared/utils'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
-import { cleanupTestData, createTestUserInDb } from '@/tests/helpers/data.helper'
+import { createTestUserInDb } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 describe('Tags API v1 - Read Operations', () => {
@@ -34,9 +34,6 @@ describe('Tags API v1 - Read Operations', () => {
     beforeEach(async () => {
         // Save original RBAC_ENABLED value
         originalRbacEnabled = process.env.RBAC_ENABLED
-
-        // Clean database
-        cleanupTestData()
 
         // Enable RBAC for authorization tests
         process.env.RBAC_ENABLED = 'true'

@@ -2,8 +2,8 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
-import prismaService from '@/infrastructure/database/prisma.service'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
+import { HTTP_STATUS, expectSuccessResponse, type TestResponse } from '@/tests/helpers/test.helper'
 
 describe('Users API v1 - Create Operations', () => {
     let app: FastifyInstance
@@ -31,10 +31,6 @@ describe('Users API v1 - Create Operations', () => {
         // Save original RBAC_ENABLED value
         originalRbacEnabled = process.env.RBAC_ENABLED
 
-        // Clean database
-        await prismaService.refreshToken.deleteMany()
-        await prismaService.user.deleteMany()
-
         // Enable RBAC for authorization tests
         process.env.RBAC_ENABLED = 'true'
     })
@@ -58,9 +54,10 @@ describe('Users API v1 - Create Operations', () => {
                 },
             })
 
-            expect(response.statusCode).toBe(201)
-            const body = response.json()
-            expect(body).toHaveProperty('data')
+            const body = expectSuccessResponse(
+                response as unknown as TestResponse,
+                HTTP_STATUS.CREATED
+            )
             expect(body.data).toMatchObject({
                 email: userData.email,
                 name: userData.name,
@@ -69,10 +66,10 @@ describe('Users API v1 - Create Operations', () => {
                 isEmailVerified: false,
                 isBanned: false,
             })
-            expect(body.data).toHaveProperty('id')
-            expect(body.data).toHaveProperty('createdAt')
-            expect(body.data).toHaveProperty('updatedAt')
-            expect(body.data).not.toHaveProperty('password')
+            expect(body.data as Record<string, unknown>).toHaveProperty('id')
+            expect(body.data as Record<string, unknown>).toHaveProperty('createdAt')
+            expect(body.data as Record<string, unknown>).toHaveProperty('updatedAt')
+            expect(body.data as Record<string, unknown>).not.toHaveProperty('password')
         })
 
         it('should reject duplicate email', async () => {
@@ -104,7 +101,7 @@ describe('Users API v1 - Create Operations', () => {
                 },
             })
 
-            expect(response.statusCode).toBe(409)
+            expect(response.statusCode).toBe(HTTP_STATUS.CONFLICT)
         })
 
         it('should reject unauthorized request', async () => {
@@ -115,7 +112,7 @@ describe('Users API v1 - Create Operations', () => {
                 headers: { 'content-type': 'application/json' },
             })
 
-            expect(response.statusCode).toBe(401)
+            expect(response.statusCode).toBe(HTTP_STATUS.UNAUTHORIZED)
         })
     })
 })

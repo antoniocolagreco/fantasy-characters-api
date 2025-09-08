@@ -20,11 +20,6 @@ describe('Tags API v1 - Create Operations', () => {
     })
 
     beforeEach(async () => {
-        // Clean database
-        await prismaService.tag.deleteMany()
-        await prismaService.refreshToken.deleteMany()
-        await prismaService.user.deleteMany()
-
         // Enable RBAC for authorization tests
         process.env.RBAC_ENABLED = 'true'
     })

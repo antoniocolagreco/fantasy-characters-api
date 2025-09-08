@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { imageService } from '@/features/images/images.service'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 const USER_ID = generateUUIDv7()
@@ -42,10 +41,6 @@ function auth(u: any) {
 }
 
 describe('Image Service - additional paths', () => {
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
-
     async function create(owner?: any) {
         return imageService.createImage(
             { description: 'd', visibility: 'PUBLIC' },

@@ -1,8 +1,8 @@
 import type { FastifyInstance } from 'fastify'
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
-import { cleanupTestData, seedTestDatabase } from '@/tests/helpers/data.helper'
+import { seedTestDatabase } from '@/tests/helpers/data.helper'
 import {
     createAuthHeaders,
     expectSuccessResponse,
@@ -25,9 +25,7 @@ describe('Users API - Read Operations', () => {
         await app.close()
     })
 
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
+    // Database cleanup handled globally in tests/setup.ts
 
     describe('GET /api/v1/users/:id', () => {
         it('should return user data for valid request by admin', async () => {

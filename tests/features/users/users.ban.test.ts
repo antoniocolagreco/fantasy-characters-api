@@ -3,7 +3,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 
 import { buildApp } from '@/app'
 import type { User } from '@/features/users'
-import prismaService from '@/infrastructure/database/prisma.service'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
 
 describe('Users API v1 - Ban Operations', () => {
@@ -32,10 +31,6 @@ describe('Users API v1 - Ban Operations', () => {
     beforeEach(async () => {
         // Save original RBAC_ENABLED value
         originalRbacEnabled = process.env.RBAC_ENABLED
-
-        // Clean database
-        await prismaService.refreshToken.deleteMany()
-        await prismaService.user.deleteMany()
 
         // Enable RBAC for authorization tests
         process.env.RBAC_ENABLED = 'true'

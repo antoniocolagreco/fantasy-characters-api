@@ -11,7 +11,6 @@ import {
     createTestRequest,
     expectErrorResponse,
     expectPaginatedResponse,
-    expectSafeUserData,
     expectSuccessResponse,
     HTTP_STATUS,
     type TestResponse,
@@ -60,10 +59,9 @@ export function createIntegrationTestSuite(suite: TestSuite) {
         })
 
         beforeEach(async () => {
-            await cleanupTestData()
-            cleanup = async () => {
-                await cleanupTestData()
-            }
+            // Global tests/setup.ts already cleans DB before each test.
+            // Expose a cleanup function for ad-hoc use within tests when needed.
+            cleanup = cleanupTestData
         })
 
         suite.tests.forEach(testCase => {
@@ -126,7 +124,11 @@ export const testPatterns = {
     getById: {
         success: (
             resource: string,
-            testData: { validId: string; expectedData: Record<string, unknown> }
+            testData: {
+                validId: string
+                expectedData: Record<string, unknown>
+                validate?: (data: unknown) => void
+            }
         ) => ({
             name: `should return ${resource} data for valid ID`,
             test: async ({ app }: TestContext) => {
@@ -140,9 +142,7 @@ export const testPatterns = {
 
                 const body = expectSuccessResponse(response as unknown as TestResponse)
                 expect(body.data).toMatchObject(testData.expectedData)
-                if (body.data && typeof body.data === 'object') {
-                    expectSafeUserData(body.data as Record<string, unknown>)
-                }
+                testData.validate?.(body.data)
             },
         }),
 
@@ -192,7 +192,7 @@ export const testPatterns = {
      * Tests for GET /{resource} endpoints (lists)
      */
     list: {
-        success: (resource: string) => ({
+        success: (resource: string, options?: { validateItem?: (item: unknown) => void }) => ({
             name: `should return paginated list of ${resource}`,
             test: async ({ app }: TestContext) => {
                 await seedTestDatabase()
@@ -207,11 +207,9 @@ export const testPatterns = {
                 expect(Array.isArray(body.data)).toBe(true)
                 if (Array.isArray(body.data) && body.data.length > 0) {
                     expect(body.data.length).toBeGreaterThan(0)
-                    body.data.forEach((item: unknown) => {
-                        if (item && typeof item === 'object') {
-                            expectSafeUserData(item as Record<string, unknown>)
-                        }
-                    })
+                    if (options?.validateItem) {
+                        body.data.forEach(options.validateItem)
+                    }
                 }
             },
         }),
@@ -234,7 +232,11 @@ export const testPatterns = {
      * Tests for POST /{resource} endpoints
      */
     create: {
-        success: (resource: string, validPayload: Record<string, unknown>) => ({
+        success: (
+            resource: string,
+            validPayload: Record<string, unknown>,
+            options?: { validate?: (data: unknown) => void }
+        ) => ({
             name: `should create ${resource} with valid data`,
             test: async ({ app }: TestContext) => {
                 const response = await app.inject(
@@ -246,9 +248,7 @@ export const testPatterns = {
 
                 const body = expectSuccessResponse(response as unknown as TestResponse, 201)
                 expect(body.data).toMatchObject(validPayload)
-                if (body.data && typeof body.data === 'object') {
-                    expectSafeUserData(body.data as Record<string, unknown>)
-                }
+                options?.validate?.(body.data)
             },
         }),
 
@@ -287,7 +287,11 @@ export const testPatterns = {
     update: {
         success: (
             resource: string,
-            testData: { id: string; updatePayload: Record<string, unknown> }
+            testData: {
+                id: string
+                updatePayload: Record<string, unknown>
+                validate?: (data: unknown) => void
+            }
         ) => ({
             name: `should update ${resource} with valid data`,
             test: async ({ app }: TestContext) => {
@@ -300,9 +304,7 @@ export const testPatterns = {
 
                 const body = expectSuccessResponse(response as unknown as TestResponse)
                 expect(body.data).toMatchObject(testData.updatePayload)
-                if (body.data && typeof body.data === 'object') {
-                    expectSafeUserData(body.data as Record<string, unknown>)
-                }
+                testData.validate?.(body.data)
             },
         }),
 

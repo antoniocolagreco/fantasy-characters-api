@@ -9,6 +9,7 @@ describe('Image API Integration Tests', () => {
 
     beforeAll(async () => {
         app = await buildApp()
+        await app.ready()
     })
 
     it('should have image endpoints in OpenAPI spec', async () => {

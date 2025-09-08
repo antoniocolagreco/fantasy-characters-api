@@ -1,23 +1,23 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import type { FastifyInstance } from 'fastify'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
-
-async function createTestApp() {
-    const app = await buildApp()
-    return app
-}
 
 describe('Images API v1 Integration Tests', () => {
-    beforeEach(() => {
-        cleanupTestData()
+    let app: FastifyInstance
+
+    beforeAll(async () => {
+        app = await buildApp()
+        await app.ready()
+    })
+
+    afterAll(async () => {
+        await app.close()
     })
 
     describe('Basic endpoint availability', () => {
         it('should respond to image list endpoint', async () => {
-            const app = await createTestApp()
-
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/images',
@@ -28,8 +28,6 @@ describe('Images API v1 Integration Tests', () => {
         })
 
         it('should handle non-existent image requests appropriately', async () => {
-            const app = await createTestApp()
-
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/images/non-existent-uuid',
@@ -40,8 +38,6 @@ describe('Images API v1 Integration Tests', () => {
         })
 
         it('should protect stats endpoint', async () => {
-            const app = await createTestApp()
-
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/images/stats',
@@ -52,8 +48,6 @@ describe('Images API v1 Integration Tests', () => {
         })
 
         it('should allow admin access to stats endpoint', async () => {
-            const app = await createTestApp()
-
             const response = await app.inject({
                 method: 'GET',
                 url: '/api/v1/images/stats',
@@ -70,8 +64,6 @@ describe('Images API v1 Integration Tests', () => {
 
     describe('Route configuration', () => {
         it('should have all expected routes configured', async () => {
-            const app = await createTestApp()
-
             // Test that the routes are registered by checking they don't return 404
             const routes = ['/api/v1/images', '/api/v1/images/stats']
 

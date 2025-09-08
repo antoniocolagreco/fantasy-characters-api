@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
     createImageInDb,
@@ -11,10 +11,9 @@ import {
     updateImageInDb,
 } from '@/features/images/images.repository'
 import { generateUUIDv7 } from '@/shared/utils'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 
 describe('Images Repository - unit', () => {
-    beforeEach(() => cleanupTestData())
+    // Global cleanup is handled in tests/setup.ts
 
     async function seedOne() {
         const img = await createImageInDb({

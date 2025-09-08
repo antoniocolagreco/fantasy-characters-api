@@ -6,7 +6,6 @@ import { createRbacMiddleware, rbac, resolveOwnership } from '@/features/auth/rb
 import * as rbacPolicy from '@/features/auth/rbac.policy'
 import { AppError } from '@/shared/errors'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 // We'll use spyOn instead of global mock to avoid test pollution
@@ -47,8 +46,7 @@ describe('RBAC Middleware', () => {
         // Create a spy on the can function (no global mock pollution!)
         canSpy = vi.spyOn(rbacPolicy, 'can').mockImplementation(() => true)
 
-        // Reset the in-memory database
-        cleanupTestData()
+        // Global setup handles DB cleanup between tests
 
         mockRequest = {
             params: { id: targetResourceId },

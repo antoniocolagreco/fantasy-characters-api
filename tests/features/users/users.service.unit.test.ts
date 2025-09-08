@@ -1,8 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { passwordService } from '@/features/auth/password.service'
 import { generateUUIDv7 } from '@/shared/utils'
-import { cleanupTestData } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 // Test utilities
@@ -57,10 +56,6 @@ async function seedUser(name: string, email: string, overrides: Partial<any> = {
 }
 
 describe('users.service unit', () => {
-    beforeEach(async () => {
-        await cleanupTestData()
-    })
-
     it('create throws on duplicate email', async () => {
         const { userService } = await getServices()
         const email = generateUniqueEmail('dup')
