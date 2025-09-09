@@ -348,19 +348,19 @@ Duration: 2-3 days
 
 Duration: 4-6 days
 
-- [ ] 16.01 Scaffold items feature structure
-- [ ] 16.02 Create Item schemas (types derived from schemas)
-- [ ] 16.03 Implement Item repository layer
-- [ ] 16.04 Create item service layer
-- [ ] 16.05 Implement `GET /api/v1/items` - List items
-- [ ] 16.06 Implement `GET /api/v1/items/:id` - Get item by ID
-- [ ] 16.07 Implement `GET /api/v1/items/stats` - Item statistics
-- [ ] 16.08 Implement `POST /api/v1/items` - Create item
-- [ ] 16.09 Implement `PUT /api/v1/items/:id` - Update item
-- [ ] 16.10 Implement `DELETE /api/v1/items/:id` - Delete item
-- [ ] 16.11 Implement error handling for all item operations
-- [ ] 16.12 Write comprehensive tests (80%+ coverage)
-- [ ] 16.13 Update OpenAPI docs for all item endpoints (schemas, params,
+- [x] 16.01 Scaffold items feature structure
+- [x] 16.02 Create Item schemas (types derived from schemas)
+- [x] 16.03 Implement Item repository layer
+- [x] 16.04 Create item service layer
+- [x] 16.05 Implement `GET /api/v1/items` - List items
+- [x] 16.06 Implement `GET /api/v1/items/:id` - Get item by ID
+- [x] 16.07 Implement `GET /api/v1/items/stats` - Item statistics
+- [x] 16.08 Implement `POST /api/v1/items` - Create item
+- [x] 16.09 Implement `PUT /api/v1/items/:id` - Update item
+- [x] 16.10 Implement `DELETE /api/v1/items/:id` - Delete item
+- [x] 16.11 Implement error handling for all item operations
+- [x] 16.12 Write comprehensive tests (80%+ coverage)
+- [x] 16.13 Update OpenAPI docs for all item endpoints (schemas, params,
       responses)
 
 ---

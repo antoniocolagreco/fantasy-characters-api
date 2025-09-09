@@ -8,8 +8,6 @@ import { generateUUIDv7 } from '@/shared/utils/uuid'
  * Configures request ID generation and log redaction
  */
 function loggingPlugin(fastify: FastifyInstance, _opts: unknown, done: () => void): void {
-    // Confirm plugin registration at startup
-    fastify.log.info({ plugin: 'logging-plugin' }, 'Logging plugin registered')
     // Add request correlation ID if not already present
     fastify.addHook('onRequest', (request, reply, hookDone) => {
         if (!request.id) {

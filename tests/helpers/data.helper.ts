@@ -1,4 +1,4 @@
-import type { Prisma, Role, Tag, User, Visibility } from '@prisma/client'
+import type { Prisma, Role, Tag, User, Visibility, Item, Rarity, Slot } from '@prisma/client'
 
 import { testPrisma } from '../setup'
 
@@ -152,6 +152,80 @@ export async function createTestTag(
 }
 
 /**
+ * Creates a single test item with sensible defaults
+ */
+export async function createTestItem(
+    options: {
+        name?: string
+        description?: string
+        visibility?: Visibility
+        ownerId?: string
+        rarity?: string
+        slot?: string
+        requiredLevel?: number
+        weight?: number
+        durability?: number
+        maxDurability?: number
+        value?: number
+    } = {}
+): Promise<Item> {
+    const id = generateUUIDv7()
+
+    const rarityValue = ((): Rarity => {
+        const r = options.rarity
+        if (r === 'COMMON' || r === 'UNCOMMON' || r === 'RARE' || r === 'EPIC' || r === 'LEGENDARY')
+            return r
+        return 'COMMON'
+    })()
+    const slotValue = ((): Slot => {
+        const s = options.slot
+        const allowed: Slot[] = [
+            'NONE',
+            'HEAD',
+            'FACE',
+            'CHEST',
+            'LEGS',
+            'FEET',
+            'HANDS',
+            'ONE_HAND',
+            'TWO_HANDS',
+            'RING',
+            'AMULET',
+            'BELT',
+            'BACKPACK',
+            'CLOAK',
+        ]
+        return allowed.includes(s as Slot) ? (s as Slot) : 'NONE'
+    })()
+
+    const baseData: Prisma.ItemCreateInput = {
+        id,
+        name: options.name || `Test Item ${id.slice(0, 8)}`,
+        visibility: (options.visibility as Visibility) || 'PUBLIC',
+        rarity: rarityValue,
+        slot: slotValue,
+        requiredLevel: options.requiredLevel ?? 1,
+        weight: options.weight ?? 1.0,
+        durability: options.durability ?? 100,
+        maxDurability: options.maxDurability ?? options.durability ?? 100,
+        value: options.value ?? 0,
+        is2Handed: false,
+        isThrowable: false,
+        isConsumable: false,
+        isQuestItem: false,
+        isTradeable: true,
+    }
+
+    const dataWithOptionals: Prisma.ItemCreateInput = {
+        ...baseData,
+        ...(options.description !== undefined && { description: options.description }),
+        ...(options.ownerId !== undefined && { owner: { connect: { id: options.ownerId } } }),
+    }
+
+    return testPrisma.item.create({ data: dataWithOptionals })
+}
+
+/**
  * Seeds the database with comprehensive test data
  */
 export async function seedTestDatabase(): Promise<{
@@ -216,6 +290,7 @@ export async function cleanupTestData(): Promise<void> {
     try {
         // Delete all test data in dependency order (child tables first)
         await testPrisma.refreshToken.deleteMany({})
+        await testPrisma.item.deleteMany({})
         await testPrisma.image.deleteMany({})
         await testPrisma.tag.deleteMany({})
         await testPrisma.user.deleteMany({})
