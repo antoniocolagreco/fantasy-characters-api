@@ -40,6 +40,61 @@ export const characterService = {
                 { description: { contains: query.search, mode: 'insensitive' } },
             ]
         }
+        // Categorical dual-mode filters: if UUID treat as id, else substring on related name
+        const uuidRegex =
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        if (query.race) {
+            if (uuidRegex.test(query.race)) businessFilters.raceId = query.race
+            else
+                businessFilters.race = {
+                    name: { contains: query.race, mode: 'insensitive' },
+                }
+        }
+        if (query.archetype) {
+            if (uuidRegex.test(query.archetype)) businessFilters.archetypeId = query.archetype
+            else
+                businessFilters.archetype = {
+                    name: { contains: query.archetype, mode: 'insensitive' },
+                }
+        }
+        if (query.sex) businessFilters.sex = query.sex
+
+        // Helper for range construction & validation
+        function range(min?: number, max?: number) {
+            if (min !== undefined && max !== undefined && min > max) {
+                throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
+            }
+            if (min === undefined && max === undefined) return undefined
+            return {
+                ...(min !== undefined ? { gte: min } : {}),
+                ...(max !== undefined ? { lte: max } : {}),
+            }
+        }
+
+        const levelRange = range(query.levelMin, query.levelMax)
+        if (levelRange) businessFilters.level = levelRange
+        const experienceRange = range(query.experienceMin, query.experienceMax)
+        if (experienceRange) businessFilters.experience = experienceRange
+        const healthRange = range(query.healthMin, query.healthMax)
+        if (healthRange) businessFilters.health = healthRange
+        const manaRange = range(query.manaMin, query.manaMax)
+        if (manaRange) businessFilters.mana = manaRange
+        const staminaRange = range(query.staminaMin, query.staminaMax)
+        if (staminaRange) businessFilters.stamina = staminaRange
+        const strengthRange = range(query.strengthMin, query.strengthMax)
+        if (strengthRange) businessFilters.strength = strengthRange
+        const constitutionRange = range(query.constitutionMin, query.constitutionMax)
+        if (constitutionRange) businessFilters.constitution = constitutionRange
+        const dexterityRange = range(query.dexterityMin, query.dexterityMax)
+        if (dexterityRange) businessFilters.dexterity = dexterityRange
+        const intelligenceRange = range(query.intelligenceMin, query.intelligenceMax)
+        if (intelligenceRange) businessFilters.intelligence = intelligenceRange
+        const wisdomRange = range(query.wisdomMin, query.wisdomMax)
+        if (wisdomRange) businessFilters.wisdom = wisdomRange
+        const charismaRange = range(query.charismaMin, query.charismaMax)
+        if (charismaRange) businessFilters.charisma = charismaRange
+        const ageRange = range(query.ageMin, query.ageMax)
+        if (ageRange) businessFilters.age = ageRange
         const secureFilters = applySecurityFilters(businessFilters, user)
         const { characters, hasNext, nextCursor } = await characterRepository.findMany({
             ...query,

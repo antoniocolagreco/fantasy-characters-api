@@ -67,7 +67,55 @@ const CharacterSortQuerySchema = Type.Object(
 )
 
 export const CharacterListQuerySchema = Type.Intersect(
-    [SearchQuerySchema, VisibilityQuerySchema, PaginationQuerySchema, CharacterSortQuerySchema],
+    [
+        SearchQuerySchema,
+        VisibilityQuerySchema,
+        PaginationQuerySchema,
+        CharacterSortQuerySchema,
+        Type.Object({
+            // Categorical filters (dual-mode: UUID exact or substring on name)
+            race: Type.Optional(
+                Type.String({
+                    minLength: 2,
+                    maxLength: 50,
+                    description: 'Race id (UUID) or name substring',
+                })
+            ),
+            archetype: Type.Optional(
+                Type.String({
+                    minLength: 2,
+                    maxLength: 50,
+                    description: 'Archetype id (UUID) or name substring',
+                })
+            ),
+            sex: Type.Optional(Type.String({ enum: ['MALE', 'FEMALE'] })),
+            // Numeric range filters (min/max pairs)
+            levelMin: Type.Optional(Type.Integer({ minimum: 1, maximum: 1000 })),
+            levelMax: Type.Optional(Type.Integer({ minimum: 1, maximum: 1000 })),
+            experienceMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000_000 })),
+            experienceMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000_000 })),
+            healthMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            healthMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            manaMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            manaMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            staminaMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            staminaMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 1_000_000 })),
+            strengthMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            strengthMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            constitutionMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            constitutionMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            dexterityMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            dexterityMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            intelligenceMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            intelligenceMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            wisdomMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            wisdomMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            charismaMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            charismaMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10_000 })),
+            ageMin: Type.Optional(Type.Integer({ minimum: 0, maximum: 10000 })),
+            ageMax: Type.Optional(Type.Integer({ minimum: 0, maximum: 10000 })),
+        }),
+    ],
     { $id: 'CharacterListQuery' }
 )
 
