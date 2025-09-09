@@ -1,4 +1,17 @@
-import type { Prisma, Role, Tag, User, Visibility, Item, Rarity, Slot } from '@prisma/client'
+import type {
+    Prisma,
+    Role,
+    Tag,
+    User,
+    Visibility,
+    Item,
+    Rarity,
+    Slot,
+    Race,
+    Archetype,
+    Character,
+    Sex,
+} from '@prisma/client'
 
 import { testPrisma } from '../setup'
 
@@ -108,10 +121,12 @@ export async function createTestUserInDb(
     const id = generateUUIDv7()
     const passwordHash = await passwordService.hashPassword('test-password-123')
 
+    // Use full id to guarantee uniqueness + random microtime
+    const uniqueEmail = options.email || `test-${id}-${Date.now()}@example.com`
     return testPrisma.user.create({
         data: {
             id,
-            email: options.email || `test-${id.slice(0, 8)}@example.com`,
+            email: uniqueEmail,
             passwordHash,
             role: options.role || 'USER',
             name: options.name || `Test User ${id.slice(0, 8)}`,
@@ -226,6 +241,84 @@ export async function createTestItem(
 }
 
 /**
+ * Creates a single test race with sensible defaults
+ */
+export async function createTestRace(
+    options: {
+        name?: string
+        description?: string
+        visibility?: Visibility
+        ownerId?: string
+    } = {}
+): Promise<Race> {
+    const id = generateUUIDv7()
+    const baseData: Prisma.RaceCreateInput = {
+        id,
+        name: options.name || `Test Race ${id.slice(0, 8)}`,
+        visibility: (options.visibility as Visibility) || 'PUBLIC',
+        // default attribute modifiers rely on Prisma defaults; only override when needed
+    }
+    const dataWithOptionals: Prisma.RaceCreateInput = {
+        ...baseData,
+        ...(options.description !== undefined && { description: options.description }),
+        ...(options.ownerId !== undefined && { owner: { connect: { id: options.ownerId } } }),
+    }
+    return testPrisma.race.create({ data: dataWithOptionals })
+}
+
+/**
+ * Creates a single test archetype with sensible defaults
+ */
+export async function createTestArchetype(
+    options: {
+        name?: string
+        description?: string
+        visibility?: Visibility
+        ownerId?: string
+    } = {}
+): Promise<Archetype> {
+    const id = generateUUIDv7()
+    const baseData: Prisma.ArchetypeCreateInput = {
+        id,
+        name: options.name || `Test Archetype ${id.slice(0, 8)}`,
+        visibility: (options.visibility as Visibility) || 'PUBLIC',
+    }
+    const dataWithOptionals: Prisma.ArchetypeCreateInput = {
+        ...baseData,
+        ...(options.description !== undefined && { description: options.description }),
+        ...(options.ownerId !== undefined && { owner: { connect: { id: options.ownerId } } }),
+    }
+    return testPrisma.archetype.create({ data: dataWithOptionals })
+}
+
+/**
+ * Creates a single test character with sensible defaults
+ */
+export async function createTestCharacter(options: {
+    name?: string
+    visibility?: Visibility
+    ownerId: string
+    raceId: string
+    archetypeId: string
+    level?: number
+    sex?: Sex
+}): Promise<Character> {
+    const id = generateUUIDv7()
+    return testPrisma.character.create({
+        data: {
+            id,
+            name: options.name || `Test Character ${id.slice(0, 8)}`,
+            visibility: (options.visibility as Visibility) || 'PUBLIC',
+            owner: { connect: { id: options.ownerId } },
+            race: { connect: { id: options.raceId } },
+            archetype: { connect: { id: options.archetypeId } },
+            level: options.level ?? 1,
+            sex: options.sex || 'MALE',
+        },
+    })
+}
+
+/**
  * Seeds the database with comprehensive test data
  */
 export async function seedTestDatabase(): Promise<{
@@ -290,8 +383,11 @@ export async function cleanupTestData(): Promise<void> {
     try {
         // Delete all test data in dependency order (child tables first)
         await testPrisma.refreshToken.deleteMany({})
+        await testPrisma.character.deleteMany({})
         await testPrisma.item.deleteMany({})
         await testPrisma.image.deleteMany({})
+        await testPrisma.archetype.deleteMany({})
+        await testPrisma.race.deleteMany({})
         await testPrisma.tag.deleteMany({})
         await testPrisma.user.deleteMany({})
     } catch {

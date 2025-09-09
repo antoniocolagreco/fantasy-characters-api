@@ -369,19 +369,19 @@ Duration: 4-6 days
 
 Duration: 5-7 days
 
-- [ ] 17.01 Scaffold characters feature structure
-- [ ] 17.02 Create Character schemas (types derived from schemas)
-- [ ] 17.03 Implement Character repository layer
-- [ ] 17.04 Create character service layer (prepare for derived stats later)
-- [ ] 17.05 Implement `GET /api/v1/characters` - List characters
-- [ ] 17.06 Implement `GET /api/v1/characters/:id` - Get character by ID
-- [ ] 17.07 Implement `GET /api/v1/characters/stats` - Character statistics
-- [ ] 17.08 Implement `POST /api/v1/characters` - Create character
-- [ ] 17.09 Implement `PUT /api/v1/characters/:id` - Update character
-- [ ] 17.10 Implement `DELETE /api/v1/characters/:id` - Delete character
-- [ ] 17.11 Implement error handling for all character operations
-- [ ] 17.12 Write comprehensive tests (80%+ coverage)
-- [ ] 17.13 Update OpenAPI docs for all character endpoints (schemas, params,
+- [x] 17.01 Scaffold characters feature structure
+- [x] 17.02 Create Character schemas (types derived from schemas)
+- [x] 17.03 Implement Character repository layer
+- [x] 17.04 Create character service layer (prepare for derived stats later)
+- [x] 17.05 Implement `GET /api/v1/characters` - List characters
+- [x] 17.06 Implement `GET /api/v1/characters/:id` - Get character by ID
+- [x] 17.07 Implement `GET /api/v1/characters/stats` - Character statistics
+- [x] 17.08 Implement `POST /api/v1/characters` - Create character
+- [x] 17.09 Implement `PUT /api/v1/characters/:id` - Update character
+- [x] 17.10 Implement `DELETE /api/v1/characters/:id` - Delete character
+- [x] 17.11 Implement error handling for all character operations
+- [x] 17.12 Write comprehensive tests (80%+ coverage)
+- [x] 17.13 Update OpenAPI docs for all character endpoints (schemas, params,
       responses)
 
 ---

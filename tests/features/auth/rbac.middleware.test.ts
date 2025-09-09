@@ -303,9 +303,7 @@ describe('RBAC Middleware', () => {
             }
         })
 
-        it('should use route config when available', async () => {
-            canSpy.mockReturnValue(true)
-
+        it('should use route config when available (read action bypasses policy)', async () => {
             // Set up route config
             mockRequest.routeOptions = {
                 config: {
@@ -315,71 +313,35 @@ describe('RBAC Middleware', () => {
                     },
                 },
             }
-
             const middleware = createRbacMiddleware('characters', 'read')
-
             await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
-
-            expect(canSpy).toHaveBeenCalledWith({
-                user: { id: testUserId, role: 'USER' },
-                resource: 'characters',
-                action: 'read',
-                ownerId: routeOwnerId,
-                visibility: 'PUBLIC',
-                ownerRole: undefined,
-                targetUserRole: undefined,
-            })
+            // read bypass: policy not invoked
+            expect(canSpy).not.toHaveBeenCalled()
         })
 
-        it('should handle route config without rbac property', async () => {
-            canSpy.mockReturnValue(true)
-
-            // Set up route config without rbac
+        it('should handle route config without rbac property (read bypass)', async () => {
             mockRequest.routeOptions = {
                 config: {
                     otherProperty: 'value',
                 },
             }
-
             const middleware = createRbacMiddleware('characters', 'read')
-
             await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
-
-            expect(canSpy).toHaveBeenCalled()
+            expect(canSpy).not.toHaveBeenCalled()
         })
 
-        it('should handle missing route config', async () => {
-            canSpy.mockReturnValue(true)
-
-            // No route config
+        it('should handle missing route config (read bypass)', async () => {
             mockRequest.routeOptions = undefined
-
             const middleware = createRbacMiddleware('characters', 'read')
-
             await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
-
-            expect(canSpy).toHaveBeenCalled()
+            expect(canSpy).not.toHaveBeenCalled()
         })
 
-        it('should handle invalid user role', async () => {
-            canSpy.mockReturnValue(true)
-
-            // Invalid role
+        it('should handle invalid user role (read bypass)', async () => {
             mockRequest.user = { id: testUserId, role: 'INVALID_ROLE' }
-
             const middleware = createRbacMiddleware('characters', 'read')
-
             await expect(middleware(mockRequest, mockReply)).resolves.toBeUndefined()
-
-            expect(canSpy).toHaveBeenCalledWith({
-                user: undefined,
-                resource: 'characters',
-                action: 'read',
-                ownerId: undefined,
-                visibility: undefined,
-                ownerRole: undefined,
-                targetUserRole: undefined,
-            })
+            expect(canSpy).not.toHaveBeenCalled()
         })
     })
 

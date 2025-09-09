@@ -14,6 +14,7 @@ describe('Anonymous Access - Public Entities', () => {
 
     afterAll(async () => await app.close())
 
+    //TODO: missing endpoints
     const publicEndpoints = [
         '/api/v1/images',
         '/api/v1/items',

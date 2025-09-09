@@ -224,6 +224,12 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
             throw err('UNAUTHORIZED', 'Login required')
         }
 
+        // Concealment policy: allow all read requests to proceed. Service layer will
+        // enforce visibility (returning 404 when resource not viewable) and RBAC nuances.
+        if (action === 'read') {
+            return
+        }
+
         // Get route-specific RBAC config if available
         const routeConfig = (() => {
             const ro = request.routeOptions as { config?: unknown } | undefined
@@ -234,7 +240,7 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
             return undefined
         })()
 
-        // Resolve ownership context
+        // Resolve ownership context (only needed for non-read actions)
         const resolved =
             routeConfig?.ownerId || routeConfig?.visibility
                 ? routeConfig

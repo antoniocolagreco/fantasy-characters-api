@@ -4,6 +4,7 @@ import Fastify, { type FastifyInstance } from 'fastify'
 import { archetypesRoutesV1 } from '@/features/archetypes/v1/archetypes.routes'
 import { createOptionalAuthMiddleware } from '@/features/auth/auth.middleware'
 import { authRoutesV1 } from '@/features/auth/v1/auth.routes'
+import { charactersRoutesV1 } from '@/features/characters/v1/characters.routes'
 import { imageRoutes } from '@/features/images/v1/images.routes'
 import { itemsRoutesV1 } from '@/features/items/v1/items.routes'
 import { perksRoutesV1 } from '@/features/perks/v1/perks.routes'
@@ -112,6 +113,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(archetypesRoutesV1, { prefix: '/api/v1' })
     await app.register(imageRoutes, { prefix: '/api/v1' })
     await app.register(itemsRoutesV1, { prefix: '/api/v1' })
+    await app.register(charactersRoutesV1, { prefix: '/api/v1' })
 
     return app
 }
