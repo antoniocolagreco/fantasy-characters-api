@@ -306,19 +306,19 @@ Duration: 2-3 days
 
 Duration: 2-3 days
 
-- [ ] 14.01 Scaffold races feature structure
-- [ ] 14.02 Create Race schemas (types derived from schemas)
-- [ ] 14.03 Implement Race repository layer
-- [ ] 14.04 Create race service layer
-- [ ] 14.05 Implement `GET /api/v1/races` - List races
-- [ ] 14.06 Implement `GET /api/v1/races/:id` - Get race by ID
-- [ ] 14.07 Implement `GET /api/v1/races/stats` - Race statistics
-- [ ] 14.08 Implement `POST /api/v1/races` - Create race
-- [ ] 14.09 Implement `PUT /api/v1/races/:id` - Update race
-- [ ] 14.10 Implement `DELETE /api/v1/races/:id` - Delete race
-- [ ] 14.11 Implement error handling for all race operations
-- [ ] 14.12 Write comprehensive tests (80%+ coverage)
-- [ ] 14.13 Update OpenAPI docs for all race endpoints (schemas, params,
+- [x] 14.01 Scaffold races feature structure
+- [x] 14.02 Create Race schemas (types derived from schemas)
+- [x] 14.03 Implement Race repository layer
+- [x] 14.04 Create race service layer
+- [x] 14.05 Implement `GET /api/v1/races` - List races
+- [x] 14.06 Implement `GET /api/v1/races/:id` - Get race by ID
+- [x] 14.07 Implement `GET /api/v1/races/stats` - Race statistics
+- [x] 14.08 Implement `POST /api/v1/races` - Create race
+- [x] 14.09 Implement `PUT /api/v1/races/:id` - Update race
+- [x] 14.10 Implement `DELETE /api/v1/races/:id` - Delete race
+- [x] 14.11 Implement error handling for all race operations
+- [x] 14.12 Write comprehensive tests (80%+ coverage)
+- [x] 14.13 Update OpenAPI docs for all race endpoints (schemas, params,
       responses)
 
 ---
