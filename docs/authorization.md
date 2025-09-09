@@ -1,33 +1,40 @@
 # RBAC Implementation Guide
 
-**Core Principle**: RBAC logic is distributed across 4 layers, each with
-specific responsibilities.
+**Core Principle**: Security is handled at 4 different layers. Each layer has a
+single, clear responsibility and works together to create defense in depth.
 
 ---
 
-## 🏗️ **Layer Architecture**
+## 🏗️ **4-Layer Security Architecture**
 
-Think of your application as a pipeline where each layer has ONE job:
+Your API request flows through 4 layers, each doing one specific job:
 
 ```text
-MIDDLEWARE → CONTROLLER → SERVICE → REPOSITORY
-   ↓            ↓          ↓         ↓
-Auth + Role   HTTP only   Business   Data only
-check macro   coordinate  + RBAC     zero logic
-permissions   requests    granular   pure queries
+1. MIDDLEWARE  →  2. CONTROLLER  →  3. SERVICE  →  4. REPOSITORY
+   "Can this      "What data       "What can     "Execute the
+    user access    does the user    THIS user     database query
+    this route?"   want?"          do with       with filters"
+                                   THIS data?"
 ```
 
-### **Layer Responsibilities**
+### **What Each Layer Does**
 
-| Layer      | Does                            | Does NOT                     |
-| ---------- | ------------------------------- | ---------------------------- |
-| MIDDLEWARE | JWT auth, macro role check      | Business logic, DB queries   |
-| CONTROLLER | HTTP params, response format    | RBAC logic, business rules   |
-| SERVICE    | Business logic, granular RBAC   | HTTP concerns, direct DB     |
-| REPOSITORY | Query DB with pre-built filters | Security logic, user context |
+| Layer          | Primary Job                           | Security Role                     |
+| -------------- | ------------------------------------- | --------------------------------- |
+| **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access    |
+| **CONTROLLER** | Handle HTTP request/response          | Transport user context to service |
+| **SERVICE**    | Apply business rules                  | Check specific permissions        |
+| **REPOSITORY** | Execute database operations           | Use pre-filtered, secure queries  |
 
-**Key insight**: Each layer trusts the previous one but RE-VALIDATES everything
-for security.
+### **Security Strategy**
+
+Each layer **validates independently** - never trust that previous layers got it
+right:
+
+- **Middleware**: "Are you even allowed to try this endpoint?"
+- **Controller**: "Here's the user info and request data" (security courier)
+- **Service**: "Can you actually do this specific action on this specific data?"
+- **Repository**: "Here's your data, pre-filtered for security"
 
 ---
 
@@ -35,8 +42,10 @@ for security.
 
 ### **User Roles**
 
-- **ADMIN**: Can do everything except modify other admins
-- **MODERATOR**: Manages USER content, can see HIDDEN content
+- **ADMIN**: Can do everything except, modify other admins. Can promote users to
+  moderator and viceversa.
+- **MODERATOR**: Manages USER content, can see HIDDEN content. Can edit/delete
+  content, ban/unban users, can't create/update/delete users.
 - **USER**: Only manages their own content
 - **Anonymous**: Only reads PUBLIC content
 

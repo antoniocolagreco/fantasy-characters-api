@@ -35,9 +35,14 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
     }
 
     if (user.role === 'MODERATOR') {
-        // Moderator: PUBLIC + HIDDEN + own content
+        // Moderator: PUBLIC + PRIVATE + HIDDEN + own content (read-only for others' PRIVATE/HIDDEN)
         const securityFilter = {
-            OR: [{ visibility: 'PUBLIC' }, { visibility: 'HIDDEN' }, { ownerId: user.id }],
+            OR: [
+                { visibility: 'PUBLIC' },
+                { visibility: 'PRIVATE' },
+                { visibility: 'HIDDEN' },
+                { ownerId: user.id },
+            ],
         }
 
         if (filters.OR) {
@@ -70,7 +75,7 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
  */
 export function canModifyResource(
     user: AuthenticatedUser | undefined,
-    resource: { ownerId?: string | null; ownerRole?: Role | null }
+    resource: { ownerId?: string | null; ownerRole?: Role | null; visibility?: string | null }
 ): boolean {
     if (!user) return false
 
@@ -84,6 +89,11 @@ export function canModifyResource(
 
     // Moderator can modify USER content or orphaned content
     if (user.role === 'MODERATOR') {
+        // Cannot modify others' PRIVATE or HIDDEN content
+        const isOthers = resource.ownerId && resource.ownerId !== user.id
+        const isRestrictedVisibility =
+            resource.visibility === 'PRIVATE' || resource.visibility === 'HIDDEN'
+        if (isOthers && isRestrictedVisibility) return false
         return !resource.ownerId || resource.ownerRole === 'USER'
     }
 
@@ -109,7 +119,7 @@ export function canViewResource(
 
     // Moderator can see PUBLIC and HIDDEN
     if (user.role === 'MODERATOR') {
-        return ['PUBLIC', 'HIDDEN'].includes(resource.visibility as string)
+        return ['PUBLIC', 'HIDDEN', 'PRIVATE'].includes(resource.visibility as string)
     }
 
     // Regular user can only see PUBLIC

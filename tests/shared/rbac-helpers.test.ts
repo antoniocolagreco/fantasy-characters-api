@@ -45,7 +45,7 @@ describe('RBAC Helpers', () => {
             expect(result).toEqual({ category: 'test' })
         })
 
-        it('allows moderators to see PUBLIC, HIDDEN, and own content', () => {
+        it('allows moderators to see PUBLIC, PRIVATE, HIDDEN, and own content', () => {
             const filters = { category: 'test' }
             const result = applySecurityFilters(filters, mockModerator)
 
@@ -53,6 +53,7 @@ describe('RBAC Helpers', () => {
                 category: 'test',
                 OR: [
                     { visibility: 'PUBLIC' },
+                    { visibility: 'PRIVATE' },
                     { visibility: 'HIDDEN' },
                     { ownerId: mockModeratorId },
                 ],
@@ -159,7 +160,7 @@ describe('RBAC Helpers', () => {
             })
         })
 
-        it('handles existing OR conditions for moderators', () => {
+        it('handles existing OR conditions for moderators (including PRIVATE)', () => {
             const filters = { OR: [{ category: 'test1' }, { category: 'test2' }] }
             const result = applySecurityFilters(filters, mockModerator)
 
@@ -169,6 +170,7 @@ describe('RBAC Helpers', () => {
                     {
                         OR: [
                             { visibility: 'PUBLIC' },
+                            { visibility: 'PRIVATE' },
                             { visibility: 'HIDDEN' },
                             { ownerId: mockModeratorId },
                         ],
