@@ -1,0 +1,5 @@
+export { equipmentRepository } from './equipment.repository'
+export { equipmentService } from './equipment.service'
+export { equipmentRoutesV1 } from './v1/equipment.routes'
+export * from './v1/equipment.schema'
+export { equipmentController } from './v1/equipment.controller'

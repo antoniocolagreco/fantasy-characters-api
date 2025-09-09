@@ -5,34 +5,50 @@
  * cursor pagination stability.
  */
 
+import { randomBytes as nodeRandomBytes } from 'node:crypto'
+
+let lastTimestampMs = 0
+let sequence = 0 // 12-bit monotonic counter for same-ms generations
+
 /**
- * Generate a UUID v7 (time-ordered)
- * UUIDv7 embeds a 48-bit timestamp for better database performance
+ * Generate a UUID v7 (time-ordered, monotonic within the same millisecond)
+ * UUIDv7 embeds a 48-bit timestamp for better DB performance. We also use a
+ * 12-bit sequence as the high random nibble block (rand_a) to guarantee
+ * lexicographic monotonicity when multiple UUIDs are generated within the
+ * same millisecond.
  */
 export function generateUUIDv7(): string {
-    // Get current timestamp in milliseconds
     const timestamp = Date.now()
-
-    // Convert timestamp to 48-bit hex string
-    const timestampHex = timestamp.toString(16).padStart(12, '0')
-
-    // Generate 12 random bytes (96 bits)
-    const randomBytes: number[] = []
-    for (let i = 0; i < 12; i++) {
-        randomBytes[i] = Math.floor(Math.random() * 256)
+    if (timestamp === lastTimestampMs) {
+        sequence = (sequence + 1) & 0xfff // 12-bit wraparound
+    } else {
+        lastTimestampMs = timestamp
+        sequence = 0
     }
 
-    // Convert random bytes to hex
-    const randomHex = randomBytes.map(byte => byte.toString(16).padStart(2, '0')).join('')
+    // 48-bit timestamp to hex (12 chars)
+    const tsHex = timestamp.toString(16).padStart(12, '0')
 
-    // Construct UUID v7 format: xxxxxxxx-xxxx-7xxx-xxxx-xxxxxxxxxxxx
-    // Where the first 48 bits are timestamp, version 7, and variant bits
+    // Random payload: we need 10.5 bytes after the version nibble and variant nibble
+    // Easiest: generate 12 bytes and then splice as needed.
+    const rnd = nodeRandomBytes(12)
+    const rndHex = Array.from(rnd)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('')
+
+    // Build the 3 hex chars for rand_a from the sequence
+    const randA = sequence.toString(16).padStart(3, '0')
+
+    // Variant nibble (10xx binary) -> 8..b
+    const variantNibble = ((parseInt(rndHex.slice(3, 4), 16) & 0x3) | 0x8).toString(16)
+
+    // Assemble: time_hi (8) - time_mid (4) - version(1)+rand_a(3) - variant(1)+rand_b(3) - rand_c(12)
     const uuid = [
-        timestampHex.slice(0, 8),
-        timestampHex.slice(8, 12),
-        `7${randomHex.slice(0, 3)}`, // Version 7
-        ((parseInt(randomHex.slice(3, 4), 16) & 0x3) | 0x8).toString(16) + randomHex.slice(4, 7), // Variant bits
-        randomHex.slice(7, 19),
+        tsHex.slice(0, 8),
+        tsHex.slice(8, 12),
+        `7${randA}`,
+        `${variantNibble}${rndHex.slice(4, 7)}`,
+        rndHex.slice(7, 19),
     ].join('-')
 
     return uuid

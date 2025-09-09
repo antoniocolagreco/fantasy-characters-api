@@ -254,7 +254,7 @@ export async function createTestRace(
     const id = generateUUIDv7()
     const baseData: Prisma.RaceCreateInput = {
         id,
-        name: options.name || `Test Race ${id.slice(0, 8)}`,
+        name: options.name || `Test Race ${id.slice(0, 8)}-${Date.now()}`,
         visibility: (options.visibility as Visibility) || 'PUBLIC',
         // default attribute modifiers rely on Prisma defaults; only override when needed
     }
@@ -280,7 +280,7 @@ export async function createTestArchetype(
     const id = generateUUIDv7()
     const baseData: Prisma.ArchetypeCreateInput = {
         id,
-        name: options.name || `Test Archetype ${id.slice(0, 8)}`,
+        name: options.name || `Test Archetype ${id.slice(0, 8)}-${Date.now()}`,
         visibility: (options.visibility as Visibility) || 'PUBLIC',
     }
     const dataWithOptionals: Prisma.ArchetypeCreateInput = {

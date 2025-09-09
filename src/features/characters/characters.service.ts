@@ -41,8 +41,9 @@ export const characterService = {
             ]
         }
         // Categorical dual-mode filters: if UUID treat as id, else substring on related name
+        // Accept UUID v1-8 (including v7 used by our IDs)
         const uuidRegex =
-            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
         if (query.race) {
             if (uuidRegex.test(query.race)) businessFilters.raceId = query.race
             else

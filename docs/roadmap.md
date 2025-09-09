@@ -390,19 +390,18 @@ Duration: 5-7 days
 
 Duration: 4-6 days
 
-- [ ] 18.01 Scaffold equipment feature structure
-- [ ] 18.02 Create Equipment schemas (types derived from schemas)
-- [ ] 18.03 Implement Equipment repository layer
-- [ ] 18.04 Create equipment service layer with slot validation
-- [ ] 18.05 Implement `GET /api/v1/characters/:id/equipment` - Get character
-      equipment
-- [ ] 18.06 Implement `PUT /api/v1/characters/:id/equipment` - Update character
-      equipment
-- [ ] 18.07 Implement `GET /api/v1/equipment/stats` - Equipment statistics
-- [ ] 18.08 Implement error handling for all equipment operations
-- [ ] 18.09 Write comprehensive tests (80%+ coverage)
-- [ ] 18.10 Update OpenAPI docs for all equipment endpoints (schemas, params,
-      responses)
+- [x] 18.01 Scaffold equipment feature structure
+- [x] 18.02 Create Equipment schemas (types derived from schemas)
+- [x] 18.03 Implement Equipment repository layer
+- [x] 18.04 Create equipment service layer (initial — slot validation TODO)
+- [x] 18.05 Implement `GET /api/v1/characters/:id/equipment` (initial)
+- [x] 18.06 Implement `PUT /api/v1/characters/:id/equipment` (initial upsert)
+- [x] 18.07 Implement `GET /api/v1/equipment/stats` (initial)
+- [x] 18.08 Refine error handling & slot validation rules (two‑hand logic,
+      invalid item slot mismatch)
+- [x] 18.09 Write comprehensive tests (unit + integration, 80%+ coverage)
+- [x] 18.10 Finalize OpenAPI docs (ensure schemas & RBAC notes) and adjust
+      schema slot names to match Prisma
 
 ---
 
