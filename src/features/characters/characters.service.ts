@@ -11,6 +11,7 @@ import type {
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity, maskEquipmentSlots } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -18,12 +19,64 @@ import {
 } from '@/shared/utils/rbac.helpers'
 
 export const characterService = {
-    async getById(id: string, user?: AuthenticatedUser): Promise<Character> {
-        const character = await characterRepository.findById(id)
+    async getById(id: string, user?: AuthenticatedUser, expanded?: boolean): Promise<Character> {
+        const character = expanded
+            ? await characterRepository.findByIdExpanded(id)
+            : await characterRepository.findById(id)
         if (!character) throw err('RESOURCE_NOT_FOUND', 'Character not found')
         if (!canViewResource(user, character))
             throw err('RESOURCE_NOT_FOUND', 'Character not found')
-        return character
+
+        // Apply masking for hidden characters themselves
+        const maskedCharacter = maskHiddenEntity(character, user) as Character
+
+        if (!expanded) return maskedCharacter
+
+        type BasicEntity = {
+            id?: string
+            name?: string
+            description?: string
+            visibility?: string
+            ownerId?: string
+        }
+        type ExpandedMutable = Character & {
+            race?: BasicEntity | null
+            archetype?: BasicEntity | null
+            equipment?: Record<string, unknown> | null
+        }
+        const expandedChar = maskedCharacter as ExpandedMutable
+        if (expandedChar.race) {
+            const maskedRace = maskHiddenEntity(expandedChar.race, user) as
+                | BasicEntity
+                | null
+                | undefined
+            expandedChar.race = (maskedRace as BasicEntity) ?? null
+        }
+        if (expandedChar.archetype) {
+            const maskedArch = maskHiddenEntity(expandedChar.archetype, user) as
+                | BasicEntity
+                | null
+                | undefined
+            expandedChar.archetype = (maskedArch as BasicEntity) ?? null
+        }
+        if (expandedChar.equipment) {
+            expandedChar.equipment =
+                maskEquipmentSlots(expandedChar.equipment, user) || expandedChar.equipment
+            const slots = expandedChar.equipment
+            if (slots) {
+                for (const key of Object.keys(slots)) {
+                    const val = slots[key] as Record<string, unknown> | null | undefined
+                    if (val && typeof val === 'object') {
+                        const canView = canViewResource(
+                            user,
+                            val as { ownerId?: string; visibility?: string }
+                        )
+                        if (!canView) slots[key] = null
+                    }
+                }
+            }
+        }
+        return maskedCharacter
     },
     async getByName(name: string, user?: AuthenticatedUser): Promise<Character | null> {
         const character = await characterRepository.findByName(name)
@@ -101,8 +154,9 @@ export const characterService = {
             ...query,
             filters: secureFilters,
         })
+        const masked = characters.map(c => maskHiddenEntity(c, user) as Character)
         return {
-            characters,
+            characters: masked,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,

@@ -11,6 +11,7 @@ import type {
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -22,14 +23,14 @@ export const skillService = {
         const skill = await skillRepository.findById(id)
         if (!skill) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
         if (!canViewResource(user, skill)) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
-        return skill
+        return maskHiddenEntity(skill, user) as Skill
     },
 
     async getByName(name: string, user?: AuthenticatedUser): Promise<Skill | null> {
         const skill = await skillRepository.findByName(name)
         if (!skill) return null
         if (!canViewResource(user, skill)) return null
-        return skill
+        return maskHiddenEntity(skill, user) as Skill
     },
 
     async list(query: SkillListQuery, user?: AuthenticatedUser) {
@@ -49,9 +50,9 @@ export const skillService = {
             ...query,
             filters: secureFilters,
         })
-
+        const maskedSkills = skills.map(s => maskHiddenEntity(s, user) as Skill)
         return {
-            skills,
+            skills: maskedSkills,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,
@@ -105,7 +106,14 @@ export const skillService = {
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
         if (!canModifyResource(user, current))
             throw err('FORBIDDEN', 'You do not have permission to delete this skill')
-        await skillRepository.delete(id)
+        try {
+            await skillRepository.delete(id)
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+                throw err('RESOURCE_IN_USE', 'Resource is referenced and cannot be deleted')
+            }
+            throw e
+        }
     },
 
     async getStats(user?: AuthenticatedUser): Promise<SkillStats> {

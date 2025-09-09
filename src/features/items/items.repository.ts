@@ -169,7 +169,10 @@ export const itemRepository = {
             return true
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2025') throw err('NOT_FOUND', 'Item not found')
+                if (error.code === 'P2025') throw err('RESOURCE_NOT_FOUND', 'Item not found')
+                if (error.code === 'P2003') {
+                    throw err('RESOURCE_IN_USE', 'Item is referenced and cannot be deleted')
+                }
             }
             throw error
         }

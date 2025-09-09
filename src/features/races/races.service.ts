@@ -4,7 +4,9 @@ import { raceRepository } from './races.repository'
 import type { CreateRace, Race, RaceListQuery, RaceStats, UpdateRace } from './v1/races.http.schema'
 
 import type { AuthenticatedUser } from '@/features/auth'
+import { prisma } from '@/infrastructure/database'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -16,14 +18,16 @@ export const raceService = {
         const race = await raceRepository.findById(id)
         if (!race) throw err('RESOURCE_NOT_FOUND', 'Race not found')
         if (!canViewResource(user, race)) throw err('RESOURCE_NOT_FOUND', 'Race not found')
-        return race
+        const masked = maskHiddenEntity(race, user) as Race
+        return masked
     },
 
     async getByName(name: string, user?: AuthenticatedUser): Promise<Race | null> {
         const race = await raceRepository.findByName(name)
         if (!race) return null
         if (!canViewResource(user, race)) return null
-        return race
+        const masked = maskHiddenEntity(race, user) as Race
+        return masked
     },
 
     async list(query: RaceListQuery, user?: AuthenticatedUser) {
@@ -40,8 +44,9 @@ export const raceService = {
             ...query,
             filters: secureFilters,
         })
+        const maskedRaces = races.map(r => maskHiddenEntity(r, user) as Race)
         return {
-            races,
+            races: maskedRaces,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,
@@ -110,6 +115,11 @@ export const raceService = {
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Race not found')
         if (!canModifyResource(user, current))
             throw err('FORBIDDEN', 'You do not have permission to delete this race')
+        // Pre-check usage to return deterministic 409 instead of relying solely on FK constraint
+        const usage = await prisma.character.count({ where: { raceId: id } })
+        if (usage > 0) {
+            throw err('RESOURCE_IN_USE', 'Resource is referenced and cannot be deleted')
+        }
         await raceRepository.delete(id)
     },
 

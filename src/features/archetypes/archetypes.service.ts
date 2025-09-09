@@ -11,6 +11,7 @@ import type {
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -23,13 +24,13 @@ export const archetypeService = {
         if (!archetype) throw err('RESOURCE_NOT_FOUND', 'Archetype not found')
         if (!canViewResource(user, archetype))
             throw err('RESOURCE_NOT_FOUND', 'Archetype not found')
-        return archetype
+        return maskHiddenEntity(archetype, user) as Archetype
     },
     async getByName(name: string, user?: AuthenticatedUser): Promise<Archetype | null> {
         const archetype = await archetypeRepository.findByName(name)
         if (!archetype) return null
         if (!canViewResource(user, archetype)) return null
-        return archetype
+        return maskHiddenEntity(archetype, user) as Archetype
     },
     async list(query: ArchetypeListQuery, user?: AuthenticatedUser) {
         const businessFilters: Record<string, unknown> = {}
@@ -45,8 +46,9 @@ export const archetypeService = {
             ...query,
             filters: secureFilters,
         })
+        const masked = archetypes.map(a => maskHiddenEntity(a, user) as Archetype)
         return {
-            archetypes,
+            archetypes: masked,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,
@@ -91,7 +93,14 @@ export const archetypeService = {
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Archetype not found')
         if (!canModifyResource(user, current))
             throw err('FORBIDDEN', 'You do not have permission to delete this archetype')
-        await archetypeRepository.delete(id)
+        try {
+            await archetypeRepository.delete(id)
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+                throw err('RESOURCE_IN_USE', 'Resource is referenced and cannot be deleted')
+            }
+            throw e
+        }
     },
     async getStats(user?: AuthenticatedUser): Promise<ArchetypeStats> {
         if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {

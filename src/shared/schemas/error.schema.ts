@@ -19,6 +19,7 @@ export const ErrorCodeSchema = Type.String({
         'INVALID_TYPE', // 400
         'RESOURCE_NOT_FOUND', // 404
         'RESOURCE_CONFLICT', // 409
+        'RESOURCE_IN_USE', // 409
         'RESOURCE_LOCKED', // 423
         'RESOURCE_EXPIRED', // 410
         'INVALID_FILE_FORMAT', // 400

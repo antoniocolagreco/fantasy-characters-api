@@ -132,6 +132,8 @@ export const raceRepository = {
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
                 if (error.code === 'P2025') throw err('NOT_FOUND', 'Race not found')
+                if (error.code === 'P2003')
+                    throw err('RESOURCE_IN_USE', 'Resource is referenced and cannot be deleted')
             }
             throw error
         }

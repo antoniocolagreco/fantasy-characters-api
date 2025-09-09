@@ -7,6 +7,7 @@ import { prisma } from '@/infrastructure/database'
 import { err } from '@/shared/errors'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
+// Base transform (no relations)
 function transform(character: Prisma.CharacterGetPayload<object>): Character {
     return {
         id: character.id,
@@ -33,6 +34,36 @@ function transform(character: Prisma.CharacterGetPayload<object>): Character {
         ...(character.imageId ? { imageId: character.imageId } : {}),
         ...(character.sex ? { sex: character.sex } : {}),
     }
+}
+
+// Transform with minimal relations (race & archetype) for list endpoint convenience
+function transformWithBasics(
+    character: Prisma.CharacterGetPayload<{ include: { race: true; archetype: true } }>
+): Character {
+    const base = transform(character)
+    const race = character.race
+        ? {
+              id: character.race.id,
+              name: character.race.name,
+              ...(character.race.description !== null
+                  ? { description: character.race.description ?? '' }
+                  : {}),
+              visibility: String(character.race.visibility),
+              ...(character.race.ownerId ? { ownerId: character.race.ownerId } : {}),
+          }
+        : undefined
+    const archetype = character.archetype
+        ? {
+              id: character.archetype.id,
+              name: character.archetype.name,
+              ...(character.archetype.description !== null
+                  ? { description: character.archetype.description ?? '' }
+                  : {}),
+              visibility: String(character.archetype.visibility),
+              ...(character.archetype.ownerId ? { ownerId: character.archetype.ownerId } : {}),
+          }
+        : undefined
+    return { ...base, ...(race ? { race } : {}), ...(archetype ? { archetype } : {}) }
 }
 
 function applyCursor(
@@ -80,6 +111,75 @@ export const characterRepository = {
         const character = await prisma.character.findUnique({ where: { id } })
         return character ? transform(character) : null
     },
+    async findByIdExpanded(id: string) {
+        const character = await prisma.character.findUnique({
+            where: { id },
+            include: {
+                race: true,
+                archetype: true,
+                equipment: {
+                    include: {
+                        head: true,
+                        face: true,
+                        chest: true,
+                        legs: true,
+                        feet: true,
+                        hands: true,
+                        rightHand: true,
+                        leftHand: true,
+                        rightRing: true,
+                        leftRing: true,
+                        amulet: true,
+                        belt: true,
+                        backpack: true,
+                        cloak: true,
+                    },
+                },
+            },
+        })
+        if (!character) return null
+        const base = transform(character)
+        const equipment = character.equipment
+            ? {
+                  head: character.equipment.head || null,
+                  face: character.equipment.face || null,
+                  chest: character.equipment.chest || null,
+                  legs: character.equipment.legs || null,
+                  feet: character.equipment.feet || null,
+                  hands: character.equipment.hands || null,
+                  rightHand: character.equipment.rightHand || null,
+                  leftHand: character.equipment.leftHand || null,
+                  rightRing: character.equipment.rightRing || null,
+                  leftRing: character.equipment.leftRing || null,
+                  amulet: character.equipment.amulet || null,
+                  belt: character.equipment.belt || null,
+                  backpack: character.equipment.backpack || null,
+                  cloak: character.equipment.cloak || null,
+              }
+            : undefined
+        return {
+            ...base,
+            race: character.race
+                ? {
+                      id: character.race.id,
+                      name: character.race.name,
+                      description: character.race.description ?? undefined,
+                      visibility: character.race.visibility,
+                      ownerId: character.race.ownerId ?? undefined,
+                  }
+                : undefined,
+            archetype: character.archetype
+                ? {
+                      id: character.archetype.id,
+                      name: character.archetype.name,
+                      description: character.archetype.description ?? undefined,
+                      visibility: character.archetype.visibility,
+                      ownerId: character.archetype.ownerId ?? undefined,
+                  }
+                : undefined,
+            ...(equipment ? { equipment } : {}),
+        }
+    },
     async findByIdWithOwnerRole(id: string) {
         const character = await prisma.character.findUnique({
             where: { id },
@@ -95,15 +195,30 @@ export const characterRepository = {
     },
     async findMany(query: CharacterListQuery & { filters?: Record<string, unknown> }) {
         const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
+        const expanded: boolean = (query as unknown as { expanded?: boolean }).expanded === true
         const where = filters as Prisma.CharacterWhereInput
         const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
         const characters = await prisma.character.findMany({
             where: whereWithCursor,
             orderBy: orderBy(sortBy, sortDir as 'asc' | 'desc'),
             take: limit + 1,
+            include: expanded ? { race: true, archetype: true } : null,
         })
         const { items, hasNext, nextCursor } = paginate(characters, limit, sortBy)
-        return { characters: (items as typeof characters).map(transform), hasNext, nextCursor }
+        type CharacterWithBasics = Prisma.CharacterGetPayload<{
+            include: { race: true; archetype: true }
+        }>
+        function hasBasics(ch: unknown): ch is CharacterWithBasics {
+            if (typeof ch !== 'object' || ch === null) return false
+            if (!('race' in ch) || !('archetype' in ch)) return false
+            const rec = ch as Record<string, unknown>
+            return !!rec.race && !!rec.archetype
+        }
+        const mapped = (items as typeof characters).map(c => {
+            if (expanded && hasBasics(c)) return transformWithBasics(c)
+            return transform(c)
+        })
+        return { characters: mapped as Character[], hasNext, nextCursor }
     },
     async create(
         data: Omit<

@@ -224,8 +224,9 @@ model Race {
 
   // Relations
   characters Character[] @relation("CharacterRaces")
-  skills     Skill[]     @relation("RaceSkills")
-  archetypes Archetype[] @relation("ArchetypeRequiredRaces")
+  // Explicit many-to-many via join tables (Restrict deletions if referenced)
+  skills     RaceSkill[]
+  archetypes ArchetypeRequiredRace[]
   tags       Tag[]       @relation("RaceTags")
 
   // Visibility and metadata
@@ -253,9 +254,9 @@ model Archetype {
   image   Image?  @relation("ArchetypeImages", fields: [imageId], references: [id], onDelete: SetNull)
 
   // Relations
-  characters    Character[] @relation("CharacterArchetypes")
-  skills        Skill[]     @relation("ArchetypeSkills")
-  requiredRaces Race[]      @relation("ArchetypeRequiredRaces")
+  characters    Character[]            @relation("CharacterArchetypes")
+  skills        ArchetypeSkill[]
+  requiredRaces ArchetypeRequiredRace[]
   tags          Tag[]       @relation("ArchetypeTags")
 
   // Owner
@@ -286,10 +287,10 @@ model Skill {
   image   Image?  @relation("SkillImages", fields: [imageId], references: [id], onDelete: SetNull)
 
   // Relations
-  characters Character[] @relation("CharacterSkills")
-  races      Race[]      @relation("RaceSkills")
-  archetypes Archetype[] @relation("ArchetypeSkills")
-  items      Item[]      @relation("ItemBonusSkills")
+  characters CharacterSkill[]
+  races      RaceSkill[]
+  archetypes ArchetypeSkill[]
+  items      ItemBonusSkill[]
   tags       Tag[]       @relation("SkillTags")
 
   // Owner
@@ -321,8 +322,8 @@ model Perk {
   image   Image?  @relation("PerkImages", fields: [imageId], references: [id], onDelete: SetNull)
 
   // Relations
-  characters Character[] @relation("CharacterPerks")
-  items      Item[]      @relation("ItemBonusPerks")
+  characters CharacterPerk[]
+  items      ItemBonusPerk[]
   tags       Tag[]       @relation("PerkTags")
 
   // Owner
@@ -370,8 +371,8 @@ model Item {
   durability    Int     @default(100)
   maxDurability Int     @default(100)
   value         Int     @default(0)
-  bonusSkills   Skill[] @relation("ItemBonusSkills")
-  bonusPerks    Perk[]  @relation("ItemBonusPerks")
+  bonusSkills   ItemBonusSkill[]
+  bonusPerks    ItemBonusPerk[]
   tags          Tag[]   @relation("ItemTags")
 
   // Item flags
@@ -406,7 +407,7 @@ model Item {
   equipmentCloakSlot     Equipment[] @relation("EquipmentCloak")
 
   // Inventory
-  characterInventories Character[] @relation("CharacterInventory")
+  characterInventories CharacterInventory[]
 
   // Visibility and metadata
   visibility Visibility @default(PUBLIC)
@@ -434,46 +435,46 @@ model Equipment {
 
   // Fixed slots — each supports specific item types
   headId String? @db.Uuid
-  head   Item?   @relation("EquipmentHead", fields: [headId], references: [id], onDelete: SetNull)
+  head   Item?   @relation("EquipmentHead", fields: [headId], references: [id], onDelete: Restrict)
 
   faceId String? @db.Uuid
-  face   Item?   @relation("EquipmentFace", fields: [faceId], references: [id], onDelete: SetNull)
+  face   Item?   @relation("EquipmentFace", fields: [faceId], references: [id], onDelete: Restrict)
 
   chestId String? @db.Uuid
-  chest   Item?   @relation("EquipmentChest", fields: [chestId], references: [id], onDelete: SetNull)
+  chest   Item?   @relation("EquipmentChest", fields: [chestId], references: [id], onDelete: Restrict)
 
   legsId String? @db.Uuid
-  legs   Item?   @relation("EquipmentLegs", fields: [legsId], references: [id], onDelete: SetNull)
+  legs   Item?   @relation("EquipmentLegs", fields: [legsId], references: [id], onDelete: Restrict)
 
   feetId String? @db.Uuid
-  feet   Item?   @relation("EquipmentFeet", fields: [feetId], references: [id], onDelete: SetNull)
+  feet   Item?   @relation("EquipmentFeet", fields: [feetId], references: [id], onDelete: Restrict)
 
   handsId String? @db.Uuid
-  hands   Item?   @relation("EquipmentHands", fields: [handsId], references: [id], onDelete: SetNull)
+  hands   Item?   @relation("EquipmentHands", fields: [handsId], references: [id], onDelete: Restrict)
 
   rightHandId String? @db.Uuid
-  rightHand   Item?   @relation("EquipmentRightHand", fields: [rightHandId], references: [id], onDelete: SetNull)
+  rightHand   Item?   @relation("EquipmentRightHand", fields: [rightHandId], references: [id], onDelete: Restrict)
 
   leftHandId String? @db.Uuid
-  leftHand   Item?   @relation("EquipmentLeftHand", fields: [leftHandId], references: [id], onDelete: SetNull)
+  leftHand   Item?   @relation("EquipmentLeftHand", fields: [leftHandId], references: [id], onDelete: Restrict)
 
   rightRingId String? @db.Uuid
-  rightRing   Item?   @relation("EquipmentRightRing", fields: [rightRingId], references: [id], onDelete: SetNull)
+  rightRing   Item?   @relation("EquipmentRightRing", fields: [rightRingId], references: [id], onDelete: Restrict)
 
   leftRingId String? @db.Uuid
-  leftRing   Item?   @relation("EquipmentLeftRing", fields: [leftRingId], references: [id], onDelete: SetNull)
+  leftRing   Item?   @relation("EquipmentLeftRing", fields: [leftRingId], references: [id], onDelete: Restrict)
 
   amuletId String? @db.Uuid
-  amulet   Item?   @relation("EquipmentAmulet", fields: [amuletId], references: [id], onDelete: SetNull)
+  amulet   Item?   @relation("EquipmentAmulet", fields: [amuletId], references: [id], onDelete: Restrict)
 
   beltId String? @db.Uuid
-  belt   Item?   @relation("EquipmentBelt", fields: [beltId], references: [id], onDelete: SetNull)
+  belt   Item?   @relation("EquipmentBelt", fields: [beltId], references: [id], onDelete: Restrict)
 
   backpackId String? @db.Uuid
-  backpack   Item?   @relation("EquipmentBackpack", fields: [backpackId], references: [id], onDelete: SetNull)
+  backpack   Item?   @relation("EquipmentBackpack", fields: [backpackId], references: [id], onDelete: Restrict)
 
   cloakId String? @db.Uuid
-  cloak   Item?   @relation("EquipmentCloak", fields: [cloakId], references: [id], onDelete: SetNull)
+  cloak   Item?   @relation("EquipmentCloak", fields: [cloakId], references: [id], onDelete: Restrict)
 
   // Metadata
   createdAt DateTime @default(now())
@@ -523,11 +524,11 @@ model Character {
   equipment Equipment?
 
   // Inventory
-  inventory Item[] @relation("CharacterInventory")
+  inventory CharacterInventory[]
 
   // Other relations
-  skills Skill[] @relation("CharacterSkills")
-  perks  Perk[]  @relation("CharacterPerks")
+  skills CharacterSkill[]
+  perks  CharacterPerk[]
   tags   Tag[]   @relation("CharacterTags")
 
   // Visibility and metadata
@@ -539,4 +540,79 @@ model Character {
   @@index([ownerId, visibility, archetypeId, raceId, level(sort: Desc), createdAt(sort: Desc), id(sort: Desc)], map: "idx_characters_search_core")
   @@index([archetypeId, raceId, visibility, level(sort: Desc), createdAt(sort: Desc), id(sort: Desc)], map: "idx_characters_taxonomy")
   @@map("characters")
+}
+
+// Join tables with explicit Restrict referential actions
+
+model RaceSkill {
+  raceId  String @db.Uuid
+  skillId String @db.Uuid
+  race  Race  @relation(fields: [raceId], references: [id], onDelete: Restrict)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  @@id([raceId, skillId])
+  @@map("race_skills")
+}
+
+model ArchetypeRequiredRace {
+  archetypeId String @db.Uuid
+  raceId      String @db.Uuid
+  archetype Archetype @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  race      Race      @relation(fields: [raceId], references: [id], onDelete: Restrict)
+  @@id([archetypeId, raceId])
+  @@map("archetype_required_races")
+}
+
+model ArchetypeSkill {
+  archetypeId String @db.Uuid
+  skillId     String @db.Uuid
+  archetype Archetype @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  @@id([archetypeId, skillId])
+  @@map("archetype_skills")
+}
+
+model ItemBonusSkill {
+  itemId  String @db.Uuid
+  skillId String @db.Uuid
+  item  Item  @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  @@id([itemId, skillId])
+  @@map("item_bonus_skills")
+}
+
+model ItemBonusPerk {
+  itemId String @db.Uuid
+  perkId String @db.Uuid
+  item Item @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  perk Perk @relation(fields: [perkId], references: [id], onDelete: Restrict)
+  @@id([itemId, perkId])
+  @@map("item_bonus_perks")
+}
+
+model CharacterSkill {
+  characterId String @db.Uuid
+  skillId     String @db.Uuid
+  character Character @relation(fields: [characterId], references: [id], onDelete: Restrict)
+  skill     Skill     @relation(fields: [skillId], references: [id], onDelete: Restrict)
+  @@id([characterId, skillId])
+  @@map("character_skills")
+}
+
+model CharacterPerk {
+  characterId String @db.Uuid
+  perkId      String @db.Uuid
+  character Character @relation(fields: [characterId], references: [id], onDelete: Restrict)
+  perk      Perk      @relation(fields: [perkId], references: [id], onDelete: Restrict)
+  @@id([characterId, perkId])
+  @@map("character_perks")
+}
+
+model CharacterInventory {
+  characterId String @db.Uuid
+  itemId      String @db.Uuid
+  character Character @relation(fields: [characterId], references: [id], onDelete: Restrict)
+  item      Item      @relation(fields: [itemId], references: [id], onDelete: Restrict)
+  quantity  Int       @default(1)
+  @@id([characterId, itemId])
+  @@map("character_inventory")
 }

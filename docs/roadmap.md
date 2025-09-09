@@ -405,6 +405,25 @@ Duration: 4-6 days
 
 ---
 
+## 18.A 🧪 Unplanned Enhancements & Refactors (Post-Equipment)
+
+Lean record of high‑impact, out‑of‑scope improvements executed during/after Equipment work.
+
+Duration (retroactive): ~2–3 days
+
+- [x] Expanded contract clarified & enforced: list view → race + archetype only; single view → + full equipment
+- [x] Referential integrity tightening: Prisma relations switched to RESTRICT paths; surfaced as 409 conflict delete tests across races, archetypes, skills, perks, items, etc.
+- [x] Visibility masking: introduced `mask-hidden.helper.ts` to null/strip descriptive & sensitive fields when visibility=HIDDEN (with unit + integration coverage)
+- [x] Modular seeding architecture: decomposed monolith into clear/admin/taxonomy/items/characters + shared utils; easier targeted re-runs
+- [x] Rich dataset seeding: bulk multi-slot, multi-rarity item generation + automatic full character equipment & starter inventory population
+- [x] Resilient taxonomy/image seeding: graceful asset read fallback, id-only projection removing nullable leakage
+- [x] Strictness hardening: removed non-null assertions, aligned with `exactOptionalPropertyTypes`, consolidated Prisma imports to silence duplicate-import lint
+- [x] Deterministic helpers added (slot map + mulberry32 RNG scaffold) to enable future reproducible randomized stats
+- [x] OpenAPI regenerated to reflect new `expanded` semantics; related tests assert presence/absence of nested equipment
+- [x] Seed observability: summary logging for core entity counts (equipment & inventory rows) after run
+
+---
+
 ## 19 📊 Caching (Dependencies: M1-M18)
 
 Duration: 2-3 days

@@ -6,6 +6,7 @@ import type { CreateItem, Item, ItemListQuery, ItemStats, UpdateItem } from './v
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -17,13 +18,13 @@ export const itemService = {
         const item = await itemRepository.findById(id)
         if (!item) throw err('RESOURCE_NOT_FOUND', 'Item not found')
         if (!canViewResource(user, item)) throw err('RESOURCE_NOT_FOUND', 'Item not found')
-        return item
+        return maskHiddenEntity(item, user) as Item
     },
     async getByName(name: string, user?: AuthenticatedUser): Promise<Item | null> {
         const item = await itemRepository.findByName(name)
         if (!item) return null
         if (!canViewResource(user, item)) return null
-        return item
+        return maskHiddenEntity(item, user) as Item
     },
     async list(query: ItemListQuery, user?: AuthenticatedUser) {
         const businessFilters: Record<string, unknown> = {}
@@ -39,8 +40,9 @@ export const itemService = {
             ...query,
             filters: secureFilters,
         })
+        const maskedItems = items.map(i => maskHiddenEntity(i, user) as Item)
         return {
-            items,
+            items: maskedItems,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,
@@ -117,7 +119,14 @@ export const itemService = {
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Item not found')
         if (!canModifyResource(user, current))
             throw err('FORBIDDEN', 'You do not have permission to delete this item')
-        await itemRepository.delete(id)
+        try {
+            await itemRepository.delete(id)
+        } catch (e) {
+            if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2003') {
+                throw err('RESOURCE_IN_USE', 'Resource is referenced and cannot be deleted')
+            }
+            throw e
+        }
     },
     async getStats(user?: AuthenticatedUser): Promise<ItemStats> {
         if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {

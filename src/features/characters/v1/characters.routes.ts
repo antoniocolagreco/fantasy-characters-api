@@ -6,6 +6,7 @@ import {
     CharacterListQuerySchema,
     CharacterListResponseSchema,
     CharacterParamsSchema,
+    CharacterGetQuerySchema,
     CharacterResponseSchema,
     CharacterStatsResponseSchema,
     CreateCharacterSchema,
@@ -44,6 +45,7 @@ export const charactersRoutesV1: FastifyPluginAsync = async app => {
                 tags: ['Characters'],
                 summary: 'Get character by ID',
                 params: CharacterParamsSchema,
+                querystring: CharacterGetQuerySchema,
                 response: {
                     200: CharacterResponseSchema,
                     400: ErrorResponseSchema,

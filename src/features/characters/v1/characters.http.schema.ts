@@ -45,6 +45,19 @@ export const CharacterParamsSchema = Type.Object(
     { $id: 'CharacterParams' }
 )
 
+// Query for single character fetch (expansion toggle)
+export const CharacterGetQuerySchema = Type.Object(
+    {
+        expanded: Type.Optional(
+            Type.Boolean({
+                description: 'Include race, archetype and equipment details',
+                default: false,
+            })
+        ),
+    },
+    { $id: 'CharacterGetQuery' }
+)
+
 const CharacterSortQuerySchema = Type.Object(
     {
         sortBy: Type.Optional(
@@ -73,6 +86,13 @@ export const CharacterListQuerySchema = Type.Intersect(
         PaginationQuerySchema,
         CharacterSortQuerySchema,
         Type.Object({
+            expanded: Type.Optional(
+                Type.Boolean({
+                    description:
+                        'If true, include equipment slots (race & archetype are always included)',
+                    default: false,
+                })
+            ),
             // Categorical filters (dual-mode: UUID exact or substring on name)
             race: Type.Optional(
                 Type.String({
@@ -118,6 +138,9 @@ export const CharacterListQuerySchema = Type.Intersect(
     ],
     { $id: 'CharacterListQuery' }
 )
+
+// NOTE: List endpoint now returns basic embedded race & archetype objects (id, name, visibility, ownerId?, description?)
+// to support search result display without requiring a second round-trip.
 
 export const CharacterStatsSchema = Type.Object(
     {

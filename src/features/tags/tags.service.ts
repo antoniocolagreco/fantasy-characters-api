@@ -5,6 +5,7 @@ import type { CreateTagRequest, Tag, TagListQuery, TagStats, UpdateTag } from '.
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -23,8 +24,7 @@ export const tagService = {
         if (!canViewResource(user, tag)) {
             throw err('RESOURCE_NOT_FOUND', 'Tag not found')
         }
-
-        return tag
+        return maskHiddenEntity(tag, user) as Tag
     },
 
     async getByName(name: string, user?: AuthenticatedUser): Promise<Tag | null> {
@@ -37,8 +37,7 @@ export const tagService = {
         if (!canViewResource(user, tag)) {
             return null
         }
-
-        return tag
+        return maskHiddenEntity(tag, user) as Tag
     },
 
     async list(query: TagListQuery, user?: AuthenticatedUser) {
@@ -65,9 +64,9 @@ export const tagService = {
             ...query,
             filters: secureFilters,
         })
-
+        const maskedTags = tags.map(t => maskHiddenEntity(t, user) as Tag)
         return {
-            tags,
+            tags: maskedTags,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,

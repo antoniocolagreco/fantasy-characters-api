@@ -381,14 +381,33 @@ export async function seedTestDatabase(): Promise<{
  */
 export async function cleanupTestData(): Promise<void> {
     try {
-        // Delete all test data in dependency order (child tables first)
+        // Delete all test data in dependency order (child / join tables first to satisfy Restrict FKs)
+        // 1. Auth/session
         await testPrisma.refreshToken.deleteMany({})
+
+        // 2. Explicit join tables & associative entities (order matters due to Restrict)
+        await testPrisma.characterSkill.deleteMany({})
+        await testPrisma.characterPerk.deleteMany({})
+        await testPrisma.characterInventory.deleteMany({})
+        await testPrisma.itemBonusSkill.deleteMany({})
+        await testPrisma.itemBonusPerk.deleteMany({})
+        await testPrisma.raceSkill.deleteMany({})
+        await testPrisma.archetypeRequiredRace.deleteMany({})
+        await testPrisma.archetypeSkill.deleteMany({})
+
+        // 3. Characters (cascades equipment) & primary owned content
         await testPrisma.character.deleteMany({})
         await testPrisma.item.deleteMany({})
+        await testPrisma.perk.deleteMany({})
+        await testPrisma.skill.deleteMany({})
+
+        // 4. Media / taxonomy
         await testPrisma.image.deleteMany({})
         await testPrisma.archetype.deleteMany({})
         await testPrisma.race.deleteMany({})
         await testPrisma.tag.deleteMany({})
+
+        // 5. Users last
         await testPrisma.user.deleteMany({})
     } catch {
         // Ignore cleanup errors (e.g., when Prisma engine is shutting down)

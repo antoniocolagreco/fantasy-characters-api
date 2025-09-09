@@ -21,18 +21,32 @@ export const testPrisma = new PrismaClient({
  */
 export async function cleanTestDatabase(): Promise<void> {
     try {
-        // Delete in correct order to respect foreign key constraints
-        await testPrisma.equipment.deleteMany()
-        await testPrisma.character.deleteMany()
-        await testPrisma.item.deleteMany()
-        await testPrisma.skill.deleteMany()
-        await testPrisma.perk.deleteMany()
-        await testPrisma.archetype.deleteMany()
-        await testPrisma.race.deleteMany()
-        await testPrisma.tag.deleteMany()
-        await testPrisma.image.deleteMany()
-        await testPrisma.refreshToken.deleteMany()
-        await testPrisma.user.deleteMany()
+        // 1. Auth/session first
+        await testPrisma.refreshToken.deleteMany({})
+
+        // 2. Join/association tables (Restrict FKs) - delete BEFORE parent entities
+        await testPrisma.characterInventory.deleteMany({})
+        await testPrisma.characterSkill.deleteMany({})
+        await testPrisma.characterPerk.deleteMany({})
+        await testPrisma.itemBonusSkill.deleteMany({})
+        await testPrisma.itemBonusPerk.deleteMany({})
+        await testPrisma.raceSkill.deleteMany({})
+        await testPrisma.archetypeRequiredRace.deleteMany({})
+        await testPrisma.archetypeSkill.deleteMany({})
+
+        // 3. Dependent entities
+        await testPrisma.equipment.deleteMany({})
+        await testPrisma.character.deleteMany({})
+        await testPrisma.item.deleteMany({})
+        await testPrisma.perk.deleteMany({})
+        await testPrisma.skill.deleteMany({})
+        await testPrisma.archetype.deleteMany({})
+        await testPrisma.race.deleteMany({})
+        await testPrisma.tag.deleteMany({})
+        await testPrisma.image.deleteMany({})
+
+        // 4. Users last
+        await testPrisma.user.deleteMany({})
     } catch {
         // Ignore cleanup errors during test teardown to prevent unhandled rejections
         // This is expected when the Prisma engine is shutting down

@@ -128,6 +128,7 @@ export const archetypesRoutesV1: FastifyPluginAsync = async app => {
                     400: ErrorResponseSchema,
                     403: ErrorResponseSchema,
                     404: ErrorResponseSchema,
+                    409: ErrorResponseSchema,
                     500: ErrorResponseSchema,
                 },
             },

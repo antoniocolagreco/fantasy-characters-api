@@ -138,8 +138,9 @@ export const skillRepository = {
             return true
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2025') {
-                    throw err('NOT_FOUND', 'Skill not found')
+                if (error.code === 'P2025') throw err('RESOURCE_NOT_FOUND', 'Skill not found')
+                if (error.code === 'P2003') {
+                    throw err('RESOURCE_IN_USE', 'Skill is referenced and cannot be deleted')
                 }
             }
             throw error

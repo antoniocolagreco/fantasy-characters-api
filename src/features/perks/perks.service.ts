@@ -11,6 +11,7 @@ import type {
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
+import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -22,14 +23,14 @@ export const perkService = {
         const perk = await perkRepository.findById(id)
         if (!perk) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
         if (!canViewResource(user, perk)) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
-        return perk
+        return maskHiddenEntity(perk, user) as Perk
     },
 
     async getByName(name: string, user?: AuthenticatedUser): Promise<Perk | null> {
         const perk = await perkRepository.findByName(name)
         if (!perk) return null
         if (!canViewResource(user, perk)) return null
-        return perk
+        return maskHiddenEntity(perk, user) as Perk
     },
 
     async list(query: PerkListQuery, user?: AuthenticatedUser) {
@@ -46,8 +47,9 @@ export const perkService = {
             ...query,
             filters: secureFilters,
         })
+        const masked = perks.map(p => maskHiddenEntity(p, user) as Perk)
         return {
-            perks,
+            perks: masked,
             pagination: {
                 hasNext,
                 hasPrev: !!query.cursor,

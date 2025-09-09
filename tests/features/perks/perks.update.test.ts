@@ -37,11 +37,12 @@ describe('Perks API v1 - Update/Delete', () => {
         testUserId = generateUUIDv7()
         otherUserId = generateUUIDv7()
 
+        const uniqueSuffix = generateUUIDv7().slice(0, 8)
         await prismaService.user.createMany({
             data: [
                 {
                     id: testUserId,
-                    email: 'perkuser@example.com',
+                    email: `perkuser-${uniqueSuffix}@example.com`,
                     passwordHash: 'hashedpassword',
                     role: 'USER',
                     isEmailVerified: true,
@@ -50,7 +51,7 @@ describe('Perks API v1 - Update/Delete', () => {
                 },
                 {
                     id: otherUserId,
-                    email: 'otherperk@example.com',
+                    email: `otherperk-${uniqueSuffix}@example.com`,
                     passwordHash: 'hashedpassword',
                     role: 'USER',
                     isEmailVerified: true,

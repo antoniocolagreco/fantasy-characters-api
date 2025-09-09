@@ -113,6 +113,10 @@ export const archetypeRepository = {
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
                 if (error.code === 'P2025') throw err('NOT_FOUND', 'Archetype not found')
+                if (error.code === 'P2003') {
+                    // FK constraint violation -> in use
+                    throw err('RESOURCE_IN_USE', 'Archetype is referenced and cannot be deleted')
+                }
             }
             throw error
         }

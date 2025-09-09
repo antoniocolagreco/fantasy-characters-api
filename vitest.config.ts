@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
 import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
@@ -33,6 +33,8 @@ export default defineConfig({
                 '**/*.mock.ts',
                 'src/infrastructure/database/seed.ts',
                 'src/server.ts',
+                'src/infrastructure/database/seed/**',
+                'src/infrastructure/database/seed.ts',
             ],
 
             thresholds: {

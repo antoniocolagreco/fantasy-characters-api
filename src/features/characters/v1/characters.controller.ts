@@ -22,10 +22,14 @@ export const characterController = {
         return reply.code(HTTP_STATUS.OK).send(paginated(characters, pagination, request.id))
     },
     async getCharacterById(
-        request: FastifyRequest<{ Params: CharacterParams }>,
+        request: FastifyRequest<{ Params: CharacterParams; Querystring: { expanded?: boolean } }>,
         reply: FastifyReply
     ) {
-        const character = await characterService.getById(request.params.id, request.user)
+        const character = await characterService.getById(
+            request.params.id,
+            request.user,
+            request.query.expanded === true
+        )
         return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
     },
     async getCharacterStats(request: FastifyRequest, reply: FastifyReply) {
