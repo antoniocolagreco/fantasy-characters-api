@@ -33,14 +33,16 @@ describe('Image API Integration Tests', () => {
         expect(imageEndpoints).toContain('/api/v1/images/stats')
     })
 
-    it('should handle image endpoints appropriately without auth', async () => {
+    it('should list public images without auth', async () => {
         const response = await app.inject({
             method: 'GET',
             url: '/api/v1/images',
         })
-
-        // Should return 403 (RBAC denies access) or 401 (auth required)
-        expect([401, 403]).toContain(response.statusCode)
+        expect(response.statusCode).toBe(200)
+        const body = response.json()
+        expect(body).toHaveProperty('data')
+        expect(Array.isArray(body.data)).toBe(true)
+        expect(body).toHaveProperty('pagination')
     })
 
     it('should allow authenticated users to access image endpoints', async () => {

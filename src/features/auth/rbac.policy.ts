@@ -8,10 +8,18 @@ export function can(ctx: RbacContext): boolean {
     const { user, resource, action, ownerId, visibility, ownerRole, targetUserRole } = ctx
     const role = user?.role
 
-    // 1) Anonymous users - only read PUBLIC content
-    // Only allow reads of specific resources with PUBLIC visibility
+    // 1) Anonymous users
+    // Requirement (docs/authorization.md): Anonymous users may READ public content.
+    // For list endpoints we don't have per-resource visibility context yet (visibility is undefined),
+    // and the SERVICE layer applies security filtering (applySecurityFilters -> visibility: 'PUBLIC').
+    // Therefore we must ALLOW anonymous read when visibility is undefined so the request can reach
+    // the service layer, which will ensure only PUBLIC data is returned.
+    // For single-resource endpoints where ownership/visibility was resolved, we still enforce that
+    // the specific resource must be PUBLIC.
     if (!role) {
-        return action === 'read' && visibility === 'PUBLIC'
+        if (action !== 'read') return false
+        if (visibility === undefined) return true // list / unresolved context -> allow, service filters
+        return visibility === 'PUBLIC'
     }
 
     // 2) Admin - can do everything except modify other admins and manage own role

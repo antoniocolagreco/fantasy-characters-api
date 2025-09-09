@@ -168,6 +168,34 @@ export async function resolveOwnership(
                 }
             }
 
+            case 'equipment': {
+                // Equipment is 1:1 with character. Ownership is derived from character.ownerId.
+                const row = await client.equipment.findUnique({
+                    where: { id },
+                    select: {
+                        character: {
+                            select: {
+                                ownerId: true,
+                                owner: { select: { role: true } },
+                                visibility: true,
+                            },
+                        },
+                    },
+                })
+                const character = row?.character
+                return {
+                    ownerId: character?.ownerId ?? null,
+                    visibility:
+                        character && isValidVisibility(character.visibility)
+                            ? character.visibility
+                            : null,
+                    ownerRole:
+                        character?.owner && isValidRole(character.owner.role)
+                            ? character.owner.role
+                            : null,
+                }
+            }
+
             default:
                 return {}
         }
