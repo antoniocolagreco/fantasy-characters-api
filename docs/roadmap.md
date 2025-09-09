@@ -327,19 +327,19 @@ Duration: 2-3 days
 
 Duration: 2-3 days
 
-- [ ] 15.01 Scaffold archetypes feature structure
-- [ ] 15.02 Create Archetype schemas (types derived from schemas)
-- [ ] 15.03 Implement Archetype repository layer
-- [ ] 15.04 Create archetype service layer
-- [ ] 15.05 Implement `GET /api/v1/archetypes` - List archetypes
-- [ ] 15.06 Implement `GET /api/v1/archetypes/:id` - Get archetype by ID
-- [ ] 15.07 Implement `GET /api/v1/archetypes/stats` - Archetype statistics
-- [ ] 15.08 Implement `POST /api/v1/archetypes` - Create archetype
-- [ ] 15.09 Implement `PUT /api/v1/archetypes/:id` - Update archetype
-- [ ] 15.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
-- [ ] 15.11 Implement error handling for all archetype operations
-- [ ] 15.12 Write comprehensive tests (80%+ coverage)
-- [ ] 15.13 Update OpenAPI docs for all archetype endpoints (schemas, params,
+- [x] 15.01 Scaffold archetypes feature structure
+- [x] 15.02 Create Archetype schemas (types derived from schemas)
+- [x] 15.03 Implement Archetype repository layer
+- [x] 15.04 Create archetype service layer
+- [x] 15.05 Implement `GET /api/v1/archetypes` - List archetypes
+- [x] 15.06 Implement `GET /api/v1/archetypes/:id` - Get archetype by ID
+- [x] 15.07 Implement `GET /api/v1/archetypes/stats` - Archetype statistics
+- [x] 15.08 Implement `POST /api/v1/archetypes` - Create archetype
+- [x] 15.09 Implement `PUT /api/v1/archetypes/:id` - Update archetype
+- [x] 15.10 Implement `DELETE /api/v1/archetypes/:id` - Delete archetype
+- [x] 15.11 Implement error handling for all archetype operations
+- [x] 15.12 Write comprehensive tests (80%+ coverage)
+- [x] 15.13 Update OpenAPI docs for all archetype endpoints (schemas, params,
       responses)
 
 ---

@@ -1,6 +1,7 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import Fastify, { type FastifyInstance } from 'fastify'
 
+import { archetypesRoutesV1 } from '@/features/archetypes/v1/archetypes.routes'
 import { createOptionalAuthMiddleware } from '@/features/auth/auth.middleware'
 import { authRoutesV1 } from '@/features/auth/v1/auth.routes'
 import { imageRoutes } from '@/features/images/v1/images.routes'
@@ -107,6 +108,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(skillsRoutesV1, { prefix: '/api/v1' })
     await app.register(perksRoutesV1, { prefix: '/api/v1' })
     await app.register(racesRoutesV1, { prefix: '/api/v1' })
+    await app.register(archetypesRoutesV1, { prefix: '/api/v1' })
     await app.register(imageRoutes, { prefix: '/api/v1' })
 
     return app
