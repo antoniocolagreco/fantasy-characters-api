@@ -81,18 +81,19 @@ const CharacterSortQuerySchema = Type.Object(
 
 export const CharacterListQuerySchema = Type.Intersect(
     [
+        Type.Object({
+            expanded: Type.Optional(
+                Type.Boolean({
+                    description: 'If true, include race & archetype',
+                    default: false,
+                })
+            ),
+        }),
         SearchQuerySchema,
         VisibilityQuerySchema,
         PaginationQuerySchema,
         CharacterSortQuerySchema,
         Type.Object({
-            expanded: Type.Optional(
-                Type.Boolean({
-                    description:
-                        'If true, include equipment slots (race & archetype are always included)',
-                    default: false,
-                })
-            ),
             // Categorical filters (dual-mode: UUID exact or substring on name)
             race: Type.Optional(
                 Type.String({

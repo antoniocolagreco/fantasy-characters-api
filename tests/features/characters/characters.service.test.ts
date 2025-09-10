@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 
 import { characterService } from '@/features/characters/characters.service'
-import {
-    cleanupTestData,
-    createTestRace,
-    createTestArchetype,
-    createTestUserInDb,
-} from '@/tests/helpers/data.helper'
+import { seedTaxonomy } from '@/infrastructure/database/seed/taxonomy'
+import { cleanupTestData, createTestUserInDb } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 interface TestCtx {
@@ -17,9 +13,8 @@ interface TestCtx {
 
 async function seed(): Promise<TestCtx> {
     const owner = await createTestUserInDb({ role: 'USER' })
-    const race = await createTestRace({ ownerId: owner.id })
-    const archetype = await createTestArchetype({ ownerId: owner.id })
-    return { ownerId: owner.id, raceId: race.id, archetypeId: archetype.id }
+    const { races, archetypes } = await seedTaxonomy(testPrisma, owner.id)
+    return { ownerId: owner.id, raceId: races[0]!.id, archetypeId: archetypes[0]!.id }
 }
 
 describe('characterService', () => {

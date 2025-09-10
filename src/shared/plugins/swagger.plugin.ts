@@ -10,8 +10,8 @@ import { config } from '@/infrastructure/config'
  */
 export const swaggerPlugin = fp(
     async function (fastify: FastifyInstance): Promise<void> {
-            // Register Swagger schema generator
-            await fastify.register(fastifySwagger, {
+        // Register Swagger schema generator
+        await fastify.register(fastifySwagger, {
             openapi: {
                 info: {
                     title: 'Fantasy Characters API',
@@ -169,8 +169,14 @@ export const swaggerPlugin = fp(
                         if (Array.isArray(alt) && alt.length === 2) {
                             const a = alt[0]
                             const b = alt[1]
-                            const isNullA = a && typeof a === 'object' && (a as Record<string, unknown>).type === 'null'
-                            const isNullB = b && typeof b === 'object' && (b as Record<string, unknown>).type === 'null'
+                            const isNullA =
+                                a &&
+                                typeof a === 'object' &&
+                                (a as Record<string, unknown>).type === 'null'
+                            const isNullB =
+                                b &&
+                                typeof b === 'object' &&
+                                (b as Record<string, unknown>).type === 'null'
                             const schema = isNullA ? b : isNullB ? a : null
                             if (schema && typeof schema === 'object') {
                                 // Replace anyOf/oneOf with the other schema and nullable: true
@@ -225,7 +231,8 @@ export const swaggerPlugin = fp(
 
                     const seen = new WeakSet<object>()
                     function visit(node: unknown, path: string[]): unknown {
-                        if (Array.isArray(node)) return node.map((n, i) => visit(n, path.concat(String(i))))
+                        if (Array.isArray(node))
+                            return node.map((n, i) => visit(n, path.concat(String(i))))
                         if (!node || typeof node !== 'object') return node
                         if (seen.has(node as object)) return node
                         seen.add(node as object)
@@ -234,7 +241,8 @@ export const swaggerPlugin = fp(
                         // Do not transform already-component schemas
                         if (path.length >= 3 && path[0] === 'components' && path[1] === 'schemas') {
                             // Still traverse children to normalize nested schemas
-                            for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                            for (const [k, v] of Object.entries(obj))
+                                obj[k] = visit(v, path.concat(k))
                             return obj
                         }
 
@@ -245,13 +253,13 @@ export const swaggerPlugin = fp(
                                 : undefined) ||
                             (typeof obj.$id === 'string' ? (obj.$id as string) : undefined)
                         if (id && isSchemaLike(obj)) {
-                            // Clone without $id and recursively process nested children
-                            const { $id: _omit, ['x-schema-id']: _xid, ...rest } = obj as Record<
-                                string,
-                                unknown
-                            >
+                            // Clone without $id and vendor id, then recursively process nested children
+                            const rest: Record<string, unknown> = { ...obj }
+                            delete rest.$id
+                            delete (rest as Record<string, unknown>)['x-schema-id']
                             const processed: Record<string, unknown> = {}
-                            for (const [k, v] of Object.entries(rest)) processed[k] = visit(v, path.concat(k))
+                            for (const [k, v] of Object.entries(rest))
+                                processed[k] = visit(v, path.concat(k))
                             if (!collected[id]) collected[id] = processed
                             return { $ref: `#/components/schemas/${id}` }
                         }
@@ -279,7 +287,7 @@ export const swaggerPlugin = fp(
 
         // The /docs/json route is automatically registered by @fastify/swagger
         // As a final guard, scrub the JSON returned by docs endpoints so validators accept it
-    fastify.addHook('onSend', async (request, reply, payload) => {
+        fastify.addHook('onSend', async (request, reply, payload) => {
             try {
                 if (request.method !== 'GET') return
 
@@ -312,15 +320,23 @@ export const swaggerPlugin = fp(
                 const shouldStripKey = (key: string) =>
                     !(key === '$ref' || key === '$id' || key === 'x-schema-id') &&
                     (key.startsWith('$') || EXPLICIT_STRIP.has(key))
-                const normalizeNullable = (obj: Record<string, unknown>): Record<string, unknown> => {
+                const normalizeNullable = (
+                    obj: Record<string, unknown>
+                ): Record<string, unknown> => {
                     const keys = ['anyOf', 'oneOf'] as const
                     for (const key of keys) {
                         const alt = obj[key]
                         if (Array.isArray(alt) && alt.length === 2) {
                             const a = alt[0]
                             const b = alt[1]
-                            const isNullA = a && typeof a === 'object' && (a as Record<string, unknown>).type === 'null'
-                            const isNullB = b && typeof b === 'object' && (b as Record<string, unknown>).type === 'null'
+                            const isNullA =
+                                a &&
+                                typeof a === 'object' &&
+                                (a as Record<string, unknown>).type === 'null'
+                            const isNullB =
+                                b &&
+                                typeof b === 'object' &&
+                                (b as Record<string, unknown>).type === 'null'
                             const schema = isNullA ? b : isNullB ? a : null
                             if (schema && typeof schema === 'object') {
                                 const { $ref, ...rest } = schema as Record<string, unknown>
@@ -371,20 +387,24 @@ export const swaggerPlugin = fp(
                         'enum' in obj ||
                         'format' in obj
                     const visit = (node: unknown, path: string[]): unknown => {
-                        if (Array.isArray(node)) return node.map((n, i) => visit(n, path.concat(String(i))))
+                        if (Array.isArray(node))
+                            return node.map((n, i) => visit(n, path.concat(String(i))))
                         if (!node || typeof node !== 'object') return node
                         if (seen.has(node as object)) return node
                         seen.add(node as object)
                         const obj = node as Record<string, unknown>
                         if (path.length >= 3 && path[0] === 'components' && path[1] === 'schemas') {
-                            for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                            for (const [k, v] of Object.entries(obj))
+                                obj[k] = visit(v, path.concat(k))
                             return obj
                         }
                         const id = typeof obj.$id === 'string' ? (obj.$id as string) : undefined
                         if (id && isSchemaLike(obj)) {
-                            const { $id: _omit, ...rest } = obj
+                            const rest: Record<string, unknown> = { ...obj }
+                            delete rest.$id
                             const processed: Record<string, unknown> = {}
-                            for (const [k, v] of Object.entries(rest)) processed[k] = visit(v, path.concat(k))
+                            for (const [k, v] of Object.entries(rest))
+                                processed[k] = visit(v, path.concat(k))
                             if (!collected[id]) collected[id] = processed
                             return { $ref: `#/components/schemas/${id}` }
                         }

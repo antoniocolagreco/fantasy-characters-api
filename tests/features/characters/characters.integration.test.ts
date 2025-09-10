@@ -2,19 +2,17 @@ import type { FastifyInstance } from 'fastify'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
+import { seedTaxonomy } from '@/infrastructure/database/seed/taxonomy'
 import { HTTP_STATUS } from '@/shared/constants'
 import { createAuthHeaders } from '@/tests/helpers/auth.helper'
-import {
-    cleanupTestData,
-    createTestArchetype,
-    createTestRace,
-    createTestUserInDb,
-} from '@/tests/helpers/data.helper'
+import { cleanupTestData, createTestUserInDb } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 async function seedDependencies(ownerId: string) {
-    const race = await createTestRace({ ownerId })
-    const archetype = await createTestArchetype({ ownerId })
+    const { races, archetypes } = await seedTaxonomy(testPrisma, ownerId)
+    // pick first entries for deterministic usage in tests
+    const race = races[0]
+    const archetype = archetypes[0]
     return { race, archetype }
 }
 

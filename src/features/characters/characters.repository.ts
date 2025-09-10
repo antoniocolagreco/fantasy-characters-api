@@ -139,22 +139,45 @@ export const characterRepository = {
         })
         if (!character) return null
         const base = transform(character)
+        // Helper: map a Prisma Item to the minimal equipment slot shape
+        const mapItem = (item: unknown) => {
+            if (!item || typeof item !== 'object') return null
+            const i = item as Record<string, unknown>
+            const id = typeof i.id === 'string' ? i.id : undefined
+            const name = typeof i.name === 'string' ? i.name : undefined
+            const description =
+                typeof i.description === 'string' ? (i.description as string) : undefined
+            const ownerId = typeof i.ownerId === 'string' ? i.ownerId : undefined
+            const visibilityRaw = i.visibility
+            const visibility =
+                typeof visibilityRaw === 'string' ? (visibilityRaw as string) : undefined
+            if (id || name || description || ownerId || visibility) {
+                return {
+                    ...(id ? { id } : {}),
+                    ...(name ? { name } : {}),
+                    ...(description ? { description } : {}),
+                    ...(ownerId ? { ownerId } : {}),
+                    ...(visibility ? { visibility } : {}),
+                }
+            }
+            return null
+        }
         const equipment = character.equipment
             ? {
-                  head: character.equipment.head || null,
-                  face: character.equipment.face || null,
-                  chest: character.equipment.chest || null,
-                  legs: character.equipment.legs || null,
-                  feet: character.equipment.feet || null,
-                  hands: character.equipment.hands || null,
-                  rightHand: character.equipment.rightHand || null,
-                  leftHand: character.equipment.leftHand || null,
-                  rightRing: character.equipment.rightRing || null,
-                  leftRing: character.equipment.leftRing || null,
-                  amulet: character.equipment.amulet || null,
-                  belt: character.equipment.belt || null,
-                  backpack: character.equipment.backpack || null,
-                  cloak: character.equipment.cloak || null,
+                  head: mapItem(character.equipment.head),
+                  face: mapItem(character.equipment.face),
+                  chest: mapItem(character.equipment.chest),
+                  legs: mapItem(character.equipment.legs),
+                  feet: mapItem(character.equipment.feet),
+                  hands: mapItem(character.equipment.hands),
+                  rightHand: mapItem(character.equipment.rightHand),
+                  leftHand: mapItem(character.equipment.leftHand),
+                  rightRing: mapItem(character.equipment.rightRing),
+                  leftRing: mapItem(character.equipment.leftRing),
+                  amulet: mapItem(character.equipment.amulet),
+                  belt: mapItem(character.equipment.belt),
+                  backpack: mapItem(character.equipment.backpack),
+                  cloak: mapItem(character.equipment.cloak),
               }
             : undefined
         return {
@@ -164,7 +187,7 @@ export const characterRepository = {
                       id: character.race.id,
                       name: character.race.name,
                       description: character.race.description ?? undefined,
-                      visibility: character.race.visibility,
+                      visibility: String(character.race.visibility),
                       ownerId: character.race.ownerId ?? undefined,
                   }
                 : undefined,
@@ -173,7 +196,7 @@ export const characterRepository = {
                       id: character.archetype.id,
                       name: character.archetype.name,
                       description: character.archetype.description ?? undefined,
-                      visibility: character.archetype.visibility,
+                      visibility: String(character.archetype.visibility),
                       ownerId: character.archetype.ownerId ?? undefined,
                   }
                 : undefined,

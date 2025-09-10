@@ -3,10 +3,13 @@ import { beforeAll, describe, expect, it } from 'vitest'
 
 import { buildApp } from '@/app'
 import { prisma } from '@/infrastructure/database'
+import { seedBulkItems } from '@/infrastructure/database/seed/items'
+import { seedTaxonomy } from '@/infrastructure/database/seed/taxonomy'
 import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 import { createAuthHeaders } from '@/tests/helpers/test.helper'
-// Helper to create a user
+
+// Minimal helpers leveraging seed utilities for parity with app seeding
 async function createUser(role: 'USER' | 'MODERATOR' | 'ADMIN') {
     return prisma.user.create({
         data: {
@@ -16,55 +19,6 @@ async function createUser(role: 'USER' | 'MODERATOR' | 'ADMIN') {
             role,
             isEmailVerified: true,
             isActive: true,
-        },
-    })
-}
-
-async function createRace(ownerId: string, visibility: 'PUBLIC' | 'HIDDEN' = 'PUBLIC') {
-    return prisma.race.create({
-        data: {
-            id: generateUUIDv7(),
-            name: `Race-${generateUUIDv7()}`,
-            visibility,
-            ownerId,
-            description: 'Secret race desc',
-            healthModifier: 100,
-            manaModifier: 100,
-            staminaModifier: 100,
-            strengthModifier: 10,
-            constitutionModifier: 10,
-            dexterityModifier: 10,
-            intelligenceModifier: 10,
-            wisdomModifier: 10,
-            charismaModifier: 10,
-        },
-    })
-}
-
-async function createArchetype(ownerId: string, visibility: 'PUBLIC' | 'HIDDEN' = 'PUBLIC') {
-    return prisma.archetype.create({
-        data: {
-            id: generateUUIDv7(),
-            name: `Arch-${generateUUIDv7()}`,
-            visibility,
-            ownerId,
-            description: 'Secret archetype desc',
-        },
-    })
-}
-
-async function createItem(ownerId: string, visibility: 'PUBLIC' | 'HIDDEN' = 'PUBLIC') {
-    return prisma.item.create({
-        data: {
-            id: generateUUIDv7(),
-            name: `Item-${generateUUIDv7()}`,
-            slot: 'ONE_HAND',
-            requiredLevel: 1,
-            visibility,
-            ownerId,
-            value: 1,
-            weight: 1,
-            description: 'Secret item desc',
         },
     })
 }
@@ -118,13 +72,36 @@ describe('Character expanded & masking integration', () => {
         await app.ready()
     })
 
-    it('returns expanded view with masked nested entities and null (concealed) equipment for anonymous', async () => {
+    it('returns expanded view with masked nested entities and masked equipment for anonymous', async () => {
         const owner = await createUser('USER')
-        const hiddenRace = await createRace(owner.id, 'HIDDEN')
-        const hiddenArch = await createArchetype(owner.id, 'HIDDEN')
-        const hiddenItem = await createItem(owner.id, 'HIDDEN')
+        const { races, archetypes } = await seedTaxonomy(prisma, owner.id)
+        const { slotMap } = await seedBulkItems(prisma, owner.id)
+        const hiddenRace = races[0]
+        const hiddenArch = archetypes[0]
+        // Mark taxonomy entries as HIDDEN to test masking
+        await prisma.race.update({
+            where: { id: hiddenRace.id },
+            data: { visibility: 'HIDDEN' },
+        })
+        await prisma.archetype.update({
+            where: { id: hiddenArch.id },
+            data: { visibility: 'HIDDEN' },
+        })
         const character = await createCharacter(owner.id, hiddenRace.id, hiddenArch.id, 'PUBLIC')
-        await equipItem(character.id, hiddenItem.id)
+        const oneHandIds = slotMap.ONE_HAND
+        if (!Array.isArray(oneHandIds) || oneHandIds.length === 0) {
+            throw new Error('No ONE_HAND items available')
+        }
+        const firstId = oneHandIds[0]
+        if (typeof firstId !== 'string') {
+            throw new Error('Invalid ONE_HAND item id')
+        }
+        // Mark item as HIDDEN to test equipment masking
+        await prisma.item.update({
+            where: { id: firstId },
+            data: { visibility: 'HIDDEN' },
+        })
+        await equipItem(character.id, firstId)
 
         const res = await app.inject({
             method: 'GET',
@@ -134,17 +111,38 @@ describe('Character expanded & masking integration', () => {
         const body = res.json()
         expect(body.data.race.name).toBe('[HIDDEN]')
         expect(body.data.archetype.name).toBe('[HIDDEN]')
-        // Non-viewable equipment slot item should be null
-        expect(body.data.equipment.rightHand).toBeNull()
+        // Non-privileged viewers see hidden equipment masked (not null)
+        expect(body.data.equipment.rightHand).toBeTypeOf('object')
+        expect(body.data.equipment.rightHand.name).toBe('[HIDDEN]')
     })
 
     it('owner sees unmasked expanded data', async () => {
         const owner = await createUser('USER')
-        const race = await createRace(owner.id, 'HIDDEN')
-        const arch = await createArchetype(owner.id, 'HIDDEN')
-        const item = await createItem(owner.id, 'HIDDEN')
-        const character = await createCharacter(owner.id, race.id, arch.id, 'PUBLIC')
-        await equipItem(character.id, item.id)
+        const { races, archetypes } = await seedTaxonomy(prisma, owner.id)
+        const { slotMap } = await seedBulkItems(prisma, owner.id)
+        // Hide taxonomy entries
+        await prisma.race.update({
+            where: { id: races[0]!.id },
+            data: { visibility: 'HIDDEN' },
+        })
+        await prisma.archetype.update({
+            where: { id: archetypes[0]!.id },
+            data: { visibility: 'HIDDEN' },
+        })
+        const character = await createCharacter(owner.id, races[0]!.id, archetypes[0]!.id, 'PUBLIC')
+        const oneHandIds = slotMap.ONE_HAND
+        if (!Array.isArray(oneHandIds) || oneHandIds.length === 0) {
+            throw new Error('No ONE_HAND items available')
+        }
+        const firstId = oneHandIds[0]
+        if (typeof firstId !== 'string') {
+            throw new Error('Invalid ONE_HAND item id')
+        }
+        await prisma.item.update({
+            where: { id: firstId },
+            data: { visibility: 'HIDDEN' },
+        })
+        await equipItem(character.id, firstId)
         const headers = createAuthHeaders({ id: owner.id, role: 'USER', email: owner.email })
 
         const res = await app.inject({
@@ -163,11 +161,31 @@ describe('Character expanded & masking integration', () => {
     it('moderator sees unmasked hidden data', async () => {
         const owner = await createUser('USER')
         const mod = await createUser('MODERATOR')
-        const race = await createRace(owner.id, 'HIDDEN')
-        const arch = await createArchetype(owner.id, 'HIDDEN')
-        const item = await createItem(owner.id, 'HIDDEN')
-        const character = await createCharacter(owner.id, race.id, arch.id, 'PUBLIC')
-        await equipItem(character.id, item.id)
+        const { races, archetypes } = await seedTaxonomy(prisma, owner.id)
+        const { slotMap } = await seedBulkItems(prisma, owner.id)
+        // Hide taxonomy entries
+        await prisma.race.update({
+            where: { id: races[0]!.id },
+            data: { visibility: 'HIDDEN' },
+        })
+        await prisma.archetype.update({
+            where: { id: archetypes[0]!.id },
+            data: { visibility: 'HIDDEN' },
+        })
+        const character = await createCharacter(owner.id, races[0]!.id, archetypes[0]!.id, 'PUBLIC')
+        const oneHandIds = slotMap.ONE_HAND
+        if (!Array.isArray(oneHandIds) || oneHandIds.length === 0) {
+            throw new Error('No ONE_HAND items available')
+        }
+        const firstId = oneHandIds[0]
+        if (typeof firstId !== 'string') {
+            throw new Error('Invalid ONE_HAND item id')
+        }
+        await prisma.item.update({
+            where: { id: firstId },
+            data: { visibility: 'HIDDEN' },
+        })
+        await equipItem(character.id, firstId)
 
         const res = await app.inject({
             method: 'GET',

@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 
 import { characterService } from '@/features/characters/characters.service'
-import {
-    cleanupTestData,
-    createTestArchetype,
-    createTestRace,
-    createTestUserInDb,
-} from '@/tests/helpers/data.helper'
+import { seedTaxonomy } from '@/infrastructure/database/seed/taxonomy'
+import { cleanupTestData, createTestUserInDb } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 // Additional service tests focused on uncovered branches (filter building, range validation,
@@ -14,9 +10,8 @@ import { testPrisma } from '@/tests/setup'
 
 async function seedBase() {
     const owner = await createTestUserInDb({ role: 'USER' })
-    const race = await createTestRace({ ownerId: owner.id })
-    const archetype = await createTestArchetype({ ownerId: owner.id })
-    return { owner, race, archetype }
+    const { races, archetypes } = await seedTaxonomy(testPrisma, owner.id)
+    return { owner, race: races[0]!, archetype: archetypes[0]! }
 }
 
 describe('characterService (additional branch coverage)', () => {
@@ -123,8 +118,16 @@ describe('characterService (additional branch coverage)', () => {
 
     it('update: relation + attribute fields (visibility, sex, raceId, archetypeId)', async () => {
         const { owner, race, archetype } = await seedBase()
-        const otherRace = await createTestRace({ ownerId: owner.id })
-        const otherArch = await createTestArchetype({ ownerId: owner.id })
+        // Fetch different race/archetype from existing taxonomy to avoid reseeding
+        const otherRace = await testPrisma.race.findFirst({
+            where: { id: { not: race.id } },
+            orderBy: { name: 'asc' },
+        })
+        const otherArch = await testPrisma.archetype.findFirst({
+            where: { id: { not: archetype.id } },
+            orderBy: { name: 'asc' },
+        })
+        if (!otherRace || !otherArch) throw new Error('Missing extra taxonomy for update test')
         const created = await characterService.create(
             { name: 'RelChange', raceId: race.id, archetypeId: archetype.id },
             { id: owner.id, email: owner.email, role: owner.role }

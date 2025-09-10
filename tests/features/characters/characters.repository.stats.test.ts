@@ -1,21 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import { characterRepository } from '@/features/characters/characters.repository'
-import { generateUUIDv7 } from '@/shared/utils/uuid'
-import {
-    createTestArchetype,
-    createTestRace,
-    createTestUserInDb,
-} from '@/tests/helpers/data.helper'
+import { seedTaxonomy } from '@/infrastructure/database/seed/taxonomy'
+import { createTestUserInDb } from '@/tests/helpers/data.helper'
 import { testPrisma } from '@/tests/setup'
 
 // This file specifically targets uncovered branches in characters.repository.getStats
 
 async function seedBase(ownerId: string) {
-    const race = await createTestRace({ ownerId })
-    const archetypeA = await createTestArchetype({ ownerId, name: `ArchA-${generateUUIDv7()}` })
-    const archetypeB = await createTestArchetype({ ownerId, name: `ArchB-${generateUUIDv7()}` })
-    const archetypeC = await createTestArchetype({ ownerId, name: `ArchC-${generateUUIDv7()}` })
+    const { races, archetypes } = await seedTaxonomy(testPrisma, ownerId)
+    const race = races[0]
+    // Ensure at least 3 archetypes exist; taxonomy provides 4
+    const [archetypeA, archetypeB, archetypeC] = archetypes
     return { race, archetypeA, archetypeB, archetypeC }
 }
 

@@ -60,10 +60,9 @@ export const characterService = {
             expandedChar.archetype = (maskedArch as BasicEntity) ?? null
         }
         if (expandedChar.equipment) {
-            // Enhanced masking will null-out not-viewable slots
+            // Return masked equipment items for hidden content (no nulling): redacted descriptive fields
             expandedChar.equipment =
-                maskEquipmentSlots(expandedChar.equipment, user, { nullIfNotViewable: true }) ||
-                expandedChar.equipment
+                maskEquipmentSlots(expandedChar.equipment, user) || expandedChar.equipment
         }
         // Return the expanded/mutated object, not the base maskedCharacter
         return expandedChar as Character

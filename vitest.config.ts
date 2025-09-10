@@ -17,6 +17,8 @@ export default defineConfig({
                 'dist/**',
                 'coverage/**',
                 'scripts/**',
+                'src/infrastructure/database/seed.ts',
+                'src/infrastructure/database/seed/**',
                 'tests/**',
                 '**/*.d.ts',
                 '**/*.type.ts',
@@ -31,10 +33,7 @@ export default defineConfig({
                 '**/*.generator.ts',
                 '**/*.fixture.ts',
                 '**/*.mock.ts',
-                'src/infrastructure/database/seed.ts',
                 'src/server.ts',
-                'src/infrastructure/database/seed/**',
-                'src/infrastructure/database/seed.ts',
             ],
 
             thresholds: {
