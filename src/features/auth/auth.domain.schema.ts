@@ -70,8 +70,9 @@ export const TokenPairSchema = Type.Object(
 export const RefreshTokenPayloadSchema = Type.Object(
     {
         token: Type.String({
-            format: 'uuid',
-            description: 'Refresh token ID',
+            // Repository generates a 64-char hex token; not a UUID
+            minLength: 1,
+            description: 'Refresh token value (opaque string, generated server-side)',
         }),
         userId: Type.String({
             format: 'uuid',
@@ -202,9 +203,10 @@ export const RegisterRequestSchema = Type.Object(
 
 export const RefreshTokenRequestSchema = Type.Object(
     {
+        // Accept repository-generated tokens (64 hex chars). Using a strict pattern improves validation.
         refreshToken: Type.String({
-            format: 'uuid',
-            description: 'Refresh token for getting new access token',
+            pattern: '^[a-f0-9]{64}$',
+            description: 'Refresh token for getting new access token (64-hex characters)',
         }),
     },
     {

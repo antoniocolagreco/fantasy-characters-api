@@ -2,7 +2,7 @@ import { Prisma, Role } from '@prisma/client'
 
 import type {
     BanUser,
-    CreateUser,
+    CreateUserPersist,
     PublicUser,
     UpdateUser,
     User,
@@ -134,11 +134,11 @@ export const userRepository = {
         }
     },
 
-    async create(data: CreateUser) {
+    async create(data: CreateUserPersist) {
         const createData = {
             ...data,
             id: generateUUIDv7(),
-            passwordHash: '', // This should be provided by the service layer
+            passwordHash: data.passwordHash,
             role: (data.role || 'USER') as Role,
             name: data.name || null,
             bio: data.bio || null,

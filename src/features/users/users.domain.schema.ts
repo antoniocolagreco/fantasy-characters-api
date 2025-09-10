@@ -37,6 +37,27 @@ export const UserSchema = Type.Intersect(
     { $id: 'User' }
 )
 
+// ===== Repository-level Create schema (includes passwordHash) =====
+// For persistence only. HTTP layer must use CreateUserRequestSchema (no passwordHash).
+export const CreateUserPersistSchema = Type.Omit(
+    UserSchema,
+    [
+        'id',
+        'lastLogin',
+        'isBanned',
+        'banReason',
+        'bannedUntil',
+        'bannedById',
+        'createdAt',
+        'updatedAt',
+    ],
+    {
+        $id: 'CreateUserPersist',
+        title: 'Create User Persist',
+        description: 'User data for persistence (includes passwordHash; excludes system fields)',
+    }
+)
+
 // Public projection (domain-level projection used across layers)
 export const PublicUserSchema = Type.Pick(
     UserSchema,
@@ -76,6 +97,7 @@ export const RefreshTokenSchema = Type.Intersect(
 
 // ===== Domain Types =====
 export type User = Static<typeof UserSchema>
-export type PublicUser = Static<typeof PublicUserSchema>
+export type CreateUserPersist = Static<typeof CreateUserPersistSchema>
 export type RefreshToken = Static<typeof RefreshTokenSchema>
+export type PublicUser = Static<typeof PublicUserSchema>
 // Note: Do not re-export HTTP-layer schemas from domain to avoid cycles

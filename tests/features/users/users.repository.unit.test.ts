@@ -89,7 +89,8 @@ describe('users.repository unit', () => {
             role: 'USER',
             isEmailVerified: false,
             isActive: true,
-        } as any)
+            passwordHash: 'hash:test',
+        })
         expect(u.id).toBeDefined()
 
         const u2 = await userRepository.update(u.id, { name: 'New Name' })

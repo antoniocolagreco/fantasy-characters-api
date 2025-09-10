@@ -13,6 +13,7 @@ import { passwordService } from '@/features/auth/password.service'
 import { refreshTokenRepository, userService } from '@/features/users'
 import { config } from '@/infrastructure/config'
 import { err } from '@/shared/errors'
+import type { RoleLiterals } from '@/shared/schemas/common.schema'
 
 /**
  * Authentication Service
@@ -122,7 +123,7 @@ export const authService = {
 
         // Generate new access token
         const accessToken = jwtService.generateAccessToken(
-            { id: user.id, role: user.role as 'ADMIN' | 'MODERATOR' | 'USER', email: user.email },
+            { id: user.id, role: user.role as RoleLiterals, email: user.email },
             {
                 secret: config.JWT_SECRET,
                 accessTokenTtl: config.JWT_ACCESS_EXPIRES_IN,
@@ -196,7 +197,7 @@ export const authService = {
 
         // Generate access token
         const accessToken = jwtService.generateAccessToken(
-            { id: userId, role: role as 'ADMIN' | 'MODERATOR' | 'USER', email: user.email },
+            { id: userId, role: role as RoleLiterals, email: user.email },
             {
                 secret: config.JWT_SECRET,
                 accessTokenTtl: config.JWT_ACCESS_EXPIRES_IN,

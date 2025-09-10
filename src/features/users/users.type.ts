@@ -1,5 +1,6 @@
 import type { Static } from '@sinclair/typebox'
 
+import type { CreateUserPersistSchema } from './users.domain.schema'
 import type {
     BanUserSchema,
     CreateUserRequestSchema,
@@ -36,6 +37,7 @@ export type UserListQuery = Static<typeof UserListQuerySchema>
 
 // ===== Response Types =====
 export type UserStats = Static<typeof UserStatsSchema>
+export type CreateUserPersist = Static<typeof CreateUserPersistSchema>
 
 // ===== Repository Types =====
 export interface UserRepository {
@@ -44,7 +46,7 @@ export interface UserRepository {
     findMany(
         query: UserListQuery
     ): Promise<{ users: User[]; hasNext: boolean; nextCursor?: string }>
-    create(data: CreateUser): Promise<User>
+    create(data: CreateUserPersist): Promise<User>
     update(id: string, data: UpdateUser): Promise<User>
     delete(id: string): Promise<void>
     ban(id: string, data: BanUser, bannedById: string): Promise<User>

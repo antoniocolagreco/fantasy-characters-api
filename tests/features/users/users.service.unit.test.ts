@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { passwordService } from '@/features/auth/password.service'
+import type { RoleLiterals } from '@/shared/schemas/common.schema'
 import { generateUUIDv7 } from '@/shared/utils'
 import { testPrisma } from '@/tests/setup'
 
@@ -20,7 +21,7 @@ async function getServices() {
 }
 
 async function createMockAuthUser(
-    role: 'ADMIN' | 'MODERATOR' | 'USER' = 'ADMIN'
+    role: RoleLiterals = 'ADMIN'
 ): Promise<import('@/features/auth').AuthenticatedUser> {
     const uniqueId = generateUUIDv7().slice(-8)
     return {
@@ -56,6 +57,35 @@ async function seedUser(name: string, email: string, overrides: Partial<any> = {
 }
 
 describe('users.service unit', () => {
+    it('create passes a hashed password to repository (no fallback)', async () => {
+        const { userService } = await getServices()
+        const repoMod = await import('@/features/users/users.repository')
+
+        const spy = vi.spyOn(repoMod.userRepository, 'create')
+        const email = generateUniqueEmail('hashspy')
+        const plain = 'S0meStrongPassword!'
+
+        await userService.create({
+            email,
+            password: plain,
+            role: 'USER',
+        })
+
+        expect(spy).toHaveBeenCalledTimes(1)
+        const arg = spy.mock.calls[0]?.[0] as { passwordHash?: string; email?: string }
+        expect(arg).toBeDefined()
+        expect(arg?.email).toBe(email)
+        expect(typeof arg?.passwordHash).toBe('string')
+        expect(arg?.passwordHash && arg.passwordHash.length).toBeGreaterThan(0)
+        expect(arg?.passwordHash).not.toBe(plain)
+
+        const ok = arg?.passwordHash
+            ? await passwordService.verifyPassword(arg.passwordHash, plain)
+            : false
+        expect(ok).toBe(true)
+
+        spy.mockRestore()
+    })
     it('create throws on duplicate email', async () => {
         const { userService } = await getServices()
         const email = generateUniqueEmail('dup')
