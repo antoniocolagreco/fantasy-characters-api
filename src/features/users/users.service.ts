@@ -272,9 +272,9 @@ export const publicUserService = {
 
         // Apply security constraints using the helper
         const canAccess = canViewResource(user, { ownerId: targetUser.id, visibility: null })
-
         if (!canAccess) {
-            throw err('FORBIDDEN', 'Access denied to view this user')
+            // Conceal existence of users not viewable to caller
+            throw err('RESOURCE_NOT_FOUND', 'User not found')
         }
 
         return targetUser

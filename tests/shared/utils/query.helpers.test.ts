@@ -3,9 +3,13 @@ import { describe, expect, test } from 'vitest'
 import { PaginationQuerySchema } from '@/shared/schemas'
 import {
     applyCursor,
+    applyCursorByPath,
     buildOrderBy,
+    buildOrderByPath,
     buildPagination,
+    buildPaginationWith,
     buildWhere,
+    buildRange,
     validateRange,
 } from '@/shared/utils/query.helper'
 
@@ -124,6 +128,18 @@ describe('Query Helpers', () => {
         })
     })
 
+    describe('buildOrderByPath', () => {
+        test('should build nested orderBy for path with tie-breaker', () => {
+            const result = buildOrderByPath('owner.email', 'asc')
+            expect(result).toEqual([{ owner: { email: 'asc' } }, { id: 'asc' }])
+        })
+
+        test('should fallback to direct field when no dot in path', () => {
+            const result = buildOrderByPath('createdAt')
+            expect(result).toEqual([{ createdAt: 'desc' }, { id: 'desc' }])
+        })
+    })
+
     describe('buildPagination', () => {
         const sampleItems = [
             { id: '1', name: 'Item 1', createdAt: '2023-01-01' },
@@ -184,6 +200,21 @@ describe('Query Helpers', () => {
         })
     })
 
+    describe('buildPaginationWith', () => {
+        const sampleItems = [
+            { id: '1', owner: { email: 'b@example.com' } },
+            { id: '2', owner: { email: 'a@example.com' } },
+            { id: '3', owner: { email: 'c@example.com' } },
+        ]
+
+        test('should paginate with custom sort getter and produce cursor', () => {
+            const res = buildPaginationWith(sampleItems, 2, it => (it as any).owner?.email)
+            expect(res.items).toHaveLength(2)
+            expect(res.hasNext).toBe(true)
+            expect(typeof res.nextCursor).toBe('string')
+        })
+    })
+
     describe('validateRange', () => {
         test('should pass for valid range', () => {
             expect(() => validateRange(1, 10, 'min', 'max')).not.toThrow()
@@ -222,6 +253,46 @@ describe('Query Helpers', () => {
         test('should allow zero values', () => {
             expect(() => validateRange(0, 10, 'min', 'max')).not.toThrow()
             expect(() => validateRange(1, 0, 'min', 'max')).toThrow()
+        })
+    })
+
+    describe('buildRange', () => {
+        test('should return gte/lte object when both provided', () => {
+            const r = buildRange('minLevel', 5, 'maxLevel', 10)
+            expect(r).toEqual({ gte: 5, lte: 10 })
+        })
+
+        test('should return only gte when max is undefined', () => {
+            const r = buildRange('min', 3, 'max', undefined)
+            expect(r).toEqual({ gte: 3 })
+        })
+
+        test('should return undefined when both are undefined', () => {
+            const r = buildRange('min', undefined, 'max', undefined)
+            expect(r).toBeUndefined()
+        })
+
+        test('should throw when invalid range', () => {
+            expect(() => buildRange('min', 10, 'max', 2)).toThrow()
+        })
+    })
+
+    describe('applyCursorByPath', () => {
+        test('should apply cursor for nested path (desc)', () => {
+            const cursor = Buffer.from(
+                JSON.stringify({ lastValue: 'm@example.com', lastId: 'id123' })
+            ).toString('base64')
+            const baseWhere = { visibility: 'PUBLIC' }
+            const out = applyCursorByPath(baseWhere, cursor, 'owner.email', 'desc') as any
+            expect(out.OR).toBeDefined()
+            expect(out.OR[0]).toEqual({ owner: { email: { lt: 'm@example.com' } } })
+            expect(out.OR[1]).toEqual({ owner: { email: 'm@example.com' }, id: { lt: 'id123' } })
+        })
+
+        test('should throw on invalid cursor', () => {
+            expect(() => applyCursorByPath({ x: 1 }, 'not-base64', 'owner.email', 'asc')).toThrow(
+                'Invalid cursor'
+            )
         })
     })
 

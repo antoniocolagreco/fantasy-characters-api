@@ -1,4 +1,4 @@
-import { Prisma, Visibility, Sex } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 
 import { characterRepository } from './characters.repository'
 import type {
@@ -12,6 +12,7 @@ import type {
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
 import { maskHiddenEntity, maskEquipmentSlots } from '@/shared/utils/mask-hidden.helper'
+import { buildRange } from '@/shared/utils/query.helper'
 import {
     applySecurityFilters,
     canModifyResource,
@@ -27,7 +28,6 @@ export const characterService = {
         if (!canViewResource(user, character))
             throw err('RESOURCE_NOT_FOUND', 'Character not found')
 
-        // Apply masking for hidden characters themselves
         const maskedCharacter = maskHiddenEntity(character, user) as Character
 
         if (!expanded) return maskedCharacter
@@ -60,29 +60,19 @@ export const characterService = {
             expandedChar.archetype = (maskedArch as BasicEntity) ?? null
         }
         if (expandedChar.equipment) {
+            // Enhanced masking will null-out not-viewable slots
             expandedChar.equipment =
-                maskEquipmentSlots(expandedChar.equipment, user) || expandedChar.equipment
-            const slots = expandedChar.equipment
-            if (slots) {
-                for (const key of Object.keys(slots)) {
-                    const val = slots[key] as Record<string, unknown> | null | undefined
-                    if (val && typeof val === 'object') {
-                        const canView = canViewResource(
-                            user,
-                            val as { ownerId?: string; visibility?: string }
-                        )
-                        if (!canView) slots[key] = null
-                    }
-                }
-            }
+                maskEquipmentSlots(expandedChar.equipment, user, { nullIfNotViewable: true }) ||
+                expandedChar.equipment
         }
-        return maskedCharacter
+        // Return the expanded/mutated object, not the base maskedCharacter
+        return expandedChar as Character
     },
     async getByName(name: string, user?: AuthenticatedUser): Promise<Character | null> {
         const character = await characterRepository.findByName(name)
         if (!character) return null
         if (!canViewResource(user, character)) return null
-        return character
+        return maskHiddenEntity(character, user) as Character
     },
     async list(query: CharacterListQuery, user?: AuthenticatedUser) {
         const businessFilters: Record<string, unknown> = {}
@@ -113,41 +103,64 @@ export const characterService = {
         }
         if (query.sex) businessFilters.sex = query.sex
 
-        // Helper for range construction & validation
-        function range(min?: number, max?: number) {
-            if (min !== undefined && max !== undefined && min > max) {
-                throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
-            }
-            if (min === undefined && max === undefined) return undefined
-            return {
-                ...(min !== undefined ? { gte: min } : {}),
-                ...(max !== undefined ? { lte: max } : {}),
-            }
-        }
-
-        const levelRange = range(query.levelMin, query.levelMax)
+        const levelRange = buildRange('levelMin', query.levelMin, 'levelMax', query.levelMax)
         if (levelRange) businessFilters.level = levelRange
-        const experienceRange = range(query.experienceMin, query.experienceMax)
+        const experienceRange = buildRange(
+            'experienceMin',
+            query.experienceMin,
+            'experienceMax',
+            query.experienceMax
+        )
         if (experienceRange) businessFilters.experience = experienceRange
-        const healthRange = range(query.healthMin, query.healthMax)
+        const healthRange = buildRange('healthMin', query.healthMin, 'healthMax', query.healthMax)
         if (healthRange) businessFilters.health = healthRange
-        const manaRange = range(query.manaMin, query.manaMax)
+        const manaRange = buildRange('manaMin', query.manaMin, 'manaMax', query.manaMax)
         if (manaRange) businessFilters.mana = manaRange
-        const staminaRange = range(query.staminaMin, query.staminaMax)
+        const staminaRange = buildRange(
+            'staminaMin',
+            query.staminaMin,
+            'staminaMax',
+            query.staminaMax
+        )
         if (staminaRange) businessFilters.stamina = staminaRange
-        const strengthRange = range(query.strengthMin, query.strengthMax)
+        const strengthRange = buildRange(
+            'strengthMin',
+            query.strengthMin,
+            'strengthMax',
+            query.strengthMax
+        )
         if (strengthRange) businessFilters.strength = strengthRange
-        const constitutionRange = range(query.constitutionMin, query.constitutionMax)
+        const constitutionRange = buildRange(
+            'constitutionMin',
+            query.constitutionMin,
+            'constitutionMax',
+            query.constitutionMax
+        )
         if (constitutionRange) businessFilters.constitution = constitutionRange
-        const dexterityRange = range(query.dexterityMin, query.dexterityMax)
+        const dexterityRange = buildRange(
+            'dexterityMin',
+            query.dexterityMin,
+            'dexterityMax',
+            query.dexterityMax
+        )
         if (dexterityRange) businessFilters.dexterity = dexterityRange
-        const intelligenceRange = range(query.intelligenceMin, query.intelligenceMax)
+        const intelligenceRange = buildRange(
+            'intelligenceMin',
+            query.intelligenceMin,
+            'intelligenceMax',
+            query.intelligenceMax
+        )
         if (intelligenceRange) businessFilters.intelligence = intelligenceRange
-        const wisdomRange = range(query.wisdomMin, query.wisdomMax)
+        const wisdomRange = buildRange('wisdomMin', query.wisdomMin, 'wisdomMax', query.wisdomMax)
         if (wisdomRange) businessFilters.wisdom = wisdomRange
-        const charismaRange = range(query.charismaMin, query.charismaMax)
+        const charismaRange = buildRange(
+            'charismaMin',
+            query.charismaMin,
+            'charismaMax',
+            query.charismaMax
+        )
         if (charismaRange) businessFilters.charisma = charismaRange
-        const ageRange = range(query.ageMin, query.ageMax)
+        const ageRange = buildRange('ageMin', query.ageMin, 'ageMax', query.ageMax)
         if (ageRange) businessFilters.age = ageRange
         const secureFilters = applySecurityFilters(businessFilters, user)
         const { characters, hasNext, nextCursor } = await characterRepository.findMany({
@@ -169,9 +182,17 @@ export const characterService = {
     async create(data: CreateCharacter, user: AuthenticatedUser): Promise<Character> {
         const existing = await characterRepository.findByName(data.name)
         if (existing) throw err('RESOURCE_CONFLICT', 'Character with this name already exists')
+        // Normalize enums without assertions
+        let visibility: 'PUBLIC' | 'PRIVATE' | 'HIDDEN' = 'PUBLIC'
+        if (data.visibility === 'PRIVATE') visibility = 'PRIVATE'
+        else if (data.visibility === 'HIDDEN') visibility = 'HIDDEN'
+
+        let sex: 'MALE' | 'FEMALE' = 'MALE'
+        if (data.sex === 'FEMALE') sex = 'FEMALE'
+
         return characterRepository.create({
             name: data.name,
-            visibility: (data.visibility ?? 'PUBLIC') as Visibility,
+            visibility,
             ownerId: user.id,
             ...(data.description ? { description: data.description } : {}),
             ...(data.imageId ? { imageId: data.imageId } : {}),
@@ -187,7 +208,7 @@ export const characterService = {
             wisdom: data.wisdom ?? 10,
             charisma: data.charisma ?? 10,
             age: data.age ?? 18,
-            sex: (data.sex ?? 'MALE') as Sex,
+            sex,
             raceId: data.raceId,
             archetypeId: data.archetypeId,
         })
@@ -210,7 +231,12 @@ export const characterService = {
         const updateData: Prisma.CharacterUpdateInput = {}
         if (data.name !== undefined) updateData.name = data.name
         if (data.description !== undefined) updateData.description = data.description
-        if (data.visibility !== undefined) updateData.visibility = data.visibility as Visibility
+        if (data.visibility !== undefined) {
+            let v: 'PUBLIC' | 'PRIVATE' | 'HIDDEN' = 'PUBLIC'
+            if (data.visibility === 'PRIVATE') v = 'PRIVATE'
+            else if (data.visibility === 'HIDDEN') v = 'HIDDEN'
+            updateData.visibility = v
+        }
         if (data.imageId !== undefined) updateData.image = { connect: { id: data.imageId } }
         if (data.level !== undefined) updateData.level = data.level
         if (data.experience !== undefined) updateData.experience = data.experience
@@ -224,7 +250,9 @@ export const characterService = {
         if (data.wisdom !== undefined) updateData.wisdom = data.wisdom
         if (data.charisma !== undefined) updateData.charisma = data.charisma
         if (data.age !== undefined) updateData.age = data.age
-        if (data.sex !== undefined) updateData.sex = data.sex as Sex
+        if (data.sex !== undefined) {
+            updateData.sex = data.sex === 'FEMALE' ? 'FEMALE' : 'MALE'
+        }
         if (data.raceId !== undefined) updateData.race = { connect: { id: data.raceId } }
         if (data.archetypeId !== undefined)
             updateData.archetype = { connect: { id: data.archetypeId } }

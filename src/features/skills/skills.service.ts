@@ -12,17 +12,14 @@ import type {
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
 import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
-import {
-    applySecurityFilters,
-    canModifyResource,
-    canViewResource,
-} from '@/shared/utils/rbac.helpers'
+import { enforceModifyPermission, enforceViewPermission } from '@/shared/utils/permission.helper'
+import { applySecurityFilters, canViewResource } from '@/shared/utils/rbac.helpers'
 
 export const skillService = {
     async getById(id: string, user?: AuthenticatedUser): Promise<Skill> {
         const skill = await skillRepository.findById(id)
         if (!skill) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
-        if (!canViewResource(user, skill)) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
+        enforceViewPermission(user, skill, 'Skill not found')
         return maskHiddenEntity(skill, user) as Skill
     },
 
@@ -80,8 +77,12 @@ export const skillService = {
     async update(id: string, data: UpdateSkill, user: AuthenticatedUser): Promise<Skill> {
         const current = await skillRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to modify this skill')
+        enforceModifyPermission(
+            user,
+            current,
+            'Skill not found',
+            'You do not have permission to modify this skill'
+        )
 
         if (data.name && data.name !== current.name) {
             const existing = await skillRepository.findByName(data.name)
@@ -104,8 +105,12 @@ export const skillService = {
     async delete(id: string, user: AuthenticatedUser): Promise<void> {
         const current = await skillRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Skill not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to delete this skill')
+        enforceModifyPermission(
+            user,
+            current,
+            'Skill not found',
+            'You do not have permission to delete this skill'
+        )
         try {
             await skillRepository.delete(id)
         } catch (e) {

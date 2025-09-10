@@ -6,11 +6,8 @@ import type { CreateTagRequest, Tag, TagListQuery, TagStats, UpdateTag } from '.
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
 import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
-import {
-    applySecurityFilters,
-    canModifyResource,
-    canViewResource,
-} from '@/shared/utils/rbac.helpers'
+import { enforceModifyPermission, enforceViewPermission } from '@/shared/utils/permission.helper'
+import { applySecurityFilters, canViewResource } from '@/shared/utils/rbac.helpers'
 
 // ===== Tag Service =====
 export const tagService = {
@@ -20,10 +17,8 @@ export const tagService = {
             throw err('RESOURCE_NOT_FOUND', 'Tag not found')
         }
 
-        // Check if user can view this tag
-        if (!canViewResource(user, tag)) {
-            throw err('RESOURCE_NOT_FOUND', 'Tag not found')
-        }
+        // Conceal if not viewable
+        enforceViewPermission(user, tag, 'Tag not found')
         return maskHiddenEntity(tag, user) as Tag
     },
 
@@ -33,10 +28,8 @@ export const tagService = {
             return null
         }
 
-        // Check if user can view this tag
-        if (!canViewResource(user, tag)) {
-            return null
-        }
+        // Conceal existence on not-viewable
+        if (!canViewResource(user, tag)) return null
         return maskHiddenEntity(tag, user) as Tag
     },
 
@@ -101,10 +94,13 @@ export const tagService = {
             throw err('RESOURCE_NOT_FOUND', 'Tag not found')
         }
 
-        // Check if user can modify this tag
-        if (!canModifyResource(user, tag)) {
-            throw err('FORBIDDEN', 'You do not have permission to modify this tag')
-        }
+        // 404 if not viewable; 403 if viewable but not modifiable
+        enforceModifyPermission(
+            user,
+            tag,
+            'Tag not found',
+            'You do not have permission to modify this tag'
+        )
 
         // Check for name conflicts if name is being updated
         if (data.name && data.name !== tag.name) {
@@ -132,10 +128,13 @@ export const tagService = {
             throw err('RESOURCE_NOT_FOUND', 'Tag not found')
         }
 
-        // Check if user can modify this tag
-        if (!canModifyResource(user, tag)) {
-            throw err('FORBIDDEN', 'You do not have permission to delete this tag')
-        }
+        // 404 if not viewable; 403 if viewable but not modifiable
+        enforceModifyPermission(
+            user,
+            tag,
+            'Tag not found',
+            'You do not have permission to delete this tag'
+        )
 
         await tagRepository.delete(id)
     },

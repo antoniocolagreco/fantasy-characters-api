@@ -4,7 +4,8 @@ import type { Race } from './races.domain.schema'
 import type { RaceListQuery, RaceStats } from './v1/races.http.schema'
 
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 type CreateRaceData = {
@@ -47,45 +48,7 @@ function transform(race: Prisma.RaceGetPayload<object>): Race {
     }
 }
 
-function applyCursor(
-    where: Prisma.RaceWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.RaceWhereInput {
-    if (!cursor) return where
-    if (sortDir !== 'asc' && sortDir !== 'desc') throw new Error('Invalid sort direction')
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function orderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function paginate(
-    items: { id: string; [k: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [k: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-    if (!hasNext || finalItems.length === 0) return { items: finalItems, hasNext: false }
-    const last = finalItems[finalItems.length - 1]
-    if (!last) return { items: finalItems, hasNext: false }
-    const nextCursor = Buffer.from(
-        JSON.stringify({ lastValue: last[sortField], lastId: last.id })
-    ).toString('base64')
-    return { items: finalItems, hasNext, nextCursor }
-}
+// Local query helpers replaced by shared/utils/query.helper
 
 export const raceRepository = {
     async findById(id: string) {
@@ -99,13 +62,35 @@ export const raceRepository = {
     async findMany(query: RaceListQuery & { filters?: Record<string, unknown> }) {
         const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
         const where = filters as Prisma.RaceWhereInput
-        const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.RaceWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.RaceWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
         const races = await prisma.race.findMany({
             where: whereWithCursor,
-            orderBy: orderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.RaceOrderByWithRelationInput
+                | Prisma.RaceOrderByWithRelationInput[],
             take: limit + 1,
         })
-        const { items, hasNext, nextCursor } = paginate(races, limit, sortBy)
+        const { items, hasNext, nextCursor } = buildPagination(
+            races,
+            limit,
+            sortBy as keyof (typeof races)[number]
+        )
         return { races: (items as typeof races).map(transform), hasNext, nextCursor }
     },
     async create(data: CreateRaceData) {

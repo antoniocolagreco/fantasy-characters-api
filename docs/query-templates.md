@@ -103,7 +103,12 @@ export const SearchQuerySchema = Type.Object(
 
 // Combined query schema with all standard parameters
 export const StandardQuerySchema = Type.Intersect(
-  [PaginationQuerySchema, SortQuerySchema, VisibilityQuerySchema, SearchQuerySchema],
+  [
+    PaginationQuerySchema,
+    SortQuerySchema,
+    VisibilityQuerySchema,
+    SearchQuerySchema,
+  ],
   { $id: 'StandardQuery' }
 )
 
@@ -244,7 +249,10 @@ export function validateRange(
   maxFieldName: string
 ): void {
   if (min !== undefined && max !== undefined && min > max) {
-    throw err('VALIDATION_ERROR', `${minFieldName} cannot be greater than ${maxFieldName}`)
+    throw err(
+      'VALIDATION_ERROR',
+      `${minFieldName} cannot be greater than ${maxFieldName}`
+    )
   }
   if (min !== undefined && min < 0) {
     throw err('VALIDATION_ERROR', `${minFieldName} must be positive`)
@@ -264,19 +272,23 @@ building and pagination.
 export const characterService = {
   async list(query: CharacterListQuery, user?: AuthenticatedUser) {
     const businessFilters: Record<string, unknown> = {}
-    
-    if (query.visibility !== undefined) businessFilters.visibility = query.visibility
+
+    if (query.visibility !== undefined)
+      businessFilters.visibility = query.visibility
     if (query.search) {
       businessFilters.OR = [
         { name: { contains: query.search, mode: 'insensitive' } },
         { description: { contains: query.search, mode: 'insensitive' } },
       ]
     }
-    
+
     // Helper for range construction & validation
     function range(min?: number, max?: number) {
       if (min !== undefined && max !== undefined && min > max) {
-        throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
+        throw err(
+          'VALIDATION_ERROR',
+          'Min value cannot be greater than max value'
+        )
       }
       if (min === undefined && max === undefined) return undefined
       return {
@@ -290,15 +302,16 @@ export const characterService = {
 
     // Apply security filters
     const secureFilters = applySecurityFilters(businessFilters, user)
-    
+
     // Execute query with secure filters
-    const { characters, hasNext, nextCursor } = await characterRepository.findMany({
-      ...query,
-      filters: secureFilters,
-    })
+    const { characters, hasNext, nextCursor } =
+      await characterRepository.findMany({
+        ...query,
+        filters: secureFilters,
+      })
 
     const masked = characters.map(c => maskHiddenEntity(c, user) as Character)
-    
+
     return {
       characters: masked,
       pagination: {

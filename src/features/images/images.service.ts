@@ -118,9 +118,9 @@ export const imageService = {
             return null
         }
 
-        // Check permissions using helper
+        // Conceal existence if not viewable (404)
         if (!canViewResource(user, image)) {
-            throw err('FORBIDDEN', 'Access denied to this image')
+            throw err('RESOURCE_NOT_FOUND', 'Image not found')
         }
 
         return transformImageForApi(image)
@@ -136,9 +136,9 @@ export const imageService = {
             return null
         }
 
-        // Check permissions using helper
+        // Conceal existence if not viewable (404)
         if (!canViewResource(user, metadata)) {
-            throw err('FORBIDDEN', 'Access denied to this image')
+            throw err('RESOURCE_NOT_FOUND', 'Image not found')
         }
 
         // Get blob data
@@ -155,7 +155,11 @@ export const imageService = {
             return null
         }
 
-        // Check permissions using helper
+        // Conceal existence if not viewable
+        if (!canViewResource(user, existingImage)) {
+            throw err('RESOURCE_NOT_FOUND', 'Image not found')
+        }
+        // Visible but not modifiable -> 403
         if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to modify this image')
         }
@@ -174,7 +178,11 @@ export const imageService = {
             return false
         }
 
-        // Check permissions using helper
+        // Conceal existence if not viewable
+        if (!canViewResource(user, existingImage)) {
+            throw err('RESOURCE_NOT_FOUND', 'Image not found')
+        }
+        // Visible but not modifiable -> 403
         if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to delete this image')
         }
@@ -244,7 +252,11 @@ export const imageService = {
             return null
         }
 
-        // Check permissions using helper
+        // Conceal existence if not viewable
+        if (!canViewResource(user, existingImage)) {
+            throw err('RESOURCE_NOT_FOUND', 'Image not found')
+        }
+        // Visible but not modifiable -> 403
         if (!canModifyResource(user, existingImage)) {
             throw err('FORBIDDEN', 'Access denied to modify this image')
         }

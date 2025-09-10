@@ -12,17 +12,14 @@ import type {
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
 import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
-import {
-    applySecurityFilters,
-    canModifyResource,
-    canViewResource,
-} from '@/shared/utils/rbac.helpers'
+import { enforceModifyPermission, enforceViewPermission } from '@/shared/utils/permission.helper'
+import { applySecurityFilters, canViewResource } from '@/shared/utils/rbac.helpers'
 
 export const perkService = {
     async getById(id: string, user?: AuthenticatedUser): Promise<Perk> {
         const perk = await perkRepository.findById(id)
         if (!perk) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
-        if (!canViewResource(user, perk)) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
+        enforceViewPermission(user, perk, 'Perk not found')
         return maskHiddenEntity(perk, user) as Perk
     },
 
@@ -76,8 +73,12 @@ export const perkService = {
     async update(id: string, data: UpdatePerk, user: AuthenticatedUser): Promise<Perk> {
         const current = await perkRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to modify this perk')
+        enforceModifyPermission(
+            user,
+            current,
+            'Perk not found',
+            'You do not have permission to modify this perk'
+        )
         if (data.name && data.name !== current.name) {
             const existing = await perkRepository.findByName(data.name)
             if (existing && existing.id !== id) {
@@ -96,8 +97,12 @@ export const perkService = {
     async delete(id: string, user: AuthenticatedUser): Promise<void> {
         const current = await perkRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Perk not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to delete this perk')
+        enforceModifyPermission(
+            user,
+            current,
+            'Perk not found',
+            'You do not have permission to delete this perk'
+        )
         await perkRepository.delete(id)
     },
 

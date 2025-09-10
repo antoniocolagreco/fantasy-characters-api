@@ -4,7 +4,8 @@ import type { Item } from './items.domain.schema'
 import type { ItemListQuery, ItemStats } from './v1/items.http.schema'
 
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 type CreateItemData = {
@@ -52,45 +53,7 @@ function transform(model: Prisma.ItemGetPayload<object>): Item {
     }
 }
 
-function applyCursor(
-    where: Prisma.ItemWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.ItemWhereInput {
-    if (!cursor) return where
-    if (sortDir !== 'asc' && sortDir !== 'desc') throw new Error('Invalid sort direction')
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function orderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function paginate(
-    items: { id: string; [k: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [k: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-    if (!hasNext || finalItems.length === 0) return { items: finalItems, hasNext: false }
-    const last = finalItems[finalItems.length - 1]
-    if (!last) return { items: finalItems, hasNext: false }
-    const nextCursor = Buffer.from(
-        JSON.stringify({ lastValue: last[sortField], lastId: last.id })
-    ).toString('base64')
-    return { items: finalItems, hasNext, nextCursor }
-}
+// Local pagination helpers replaced by shared/utils/query.helper
 
 export const itemRepository = {
     async findById(id: string) {
@@ -102,28 +65,40 @@ export const itemRepository = {
         return model ? transform(model) : null
     },
     async findMany(query: ItemListQuery & { filters?: Record<string, unknown> }) {
-        const {
-            limit = 20,
-            cursor,
-            sortBy = 'createdAt',
-            sortDir = 'desc',
-            filters = {},
-            search,
-        } = query as ItemListQuery & { filters?: Record<string, unknown>; search?: string }
+        const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
 
-        const where: Prisma.ItemWhereInput = { ...(filters as Prisma.ItemWhereInput) }
+        const where = filters as Prisma.ItemWhereInput
 
-        if (search) {
-            where.name = { contains: search, mode: 'insensitive' }
+        let whereWithCursor: Prisma.ItemWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.ItemWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
         }
 
-        const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
         const rows = await prisma.item.findMany({
             where: whereWithCursor,
-            orderBy: orderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.ItemOrderByWithRelationInput
+                | Prisma.ItemOrderByWithRelationInput[],
             take: limit + 1,
         })
-        const { items, hasNext, nextCursor } = paginate(rows, limit, sortBy)
+        const { items, hasNext, nextCursor } = buildPagination(
+            rows,
+            limit,
+            sortBy as keyof (typeof rows)[number]
+        )
         return { items: (items as typeof rows).map(transform), hasNext, nextCursor }
     },
     async create(data: CreateItemData) {

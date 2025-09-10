@@ -4,7 +4,8 @@ import type { Archetype } from './archetypes.domain.schema'
 import type { ArchetypeListQuery, ArchetypeStats } from './v1/archetypes.http.schema'
 
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 type CreateArchetypeData = {
@@ -28,45 +29,7 @@ function transform(model: Prisma.ArchetypeGetPayload<object>): Archetype {
     }
 }
 
-function applyCursor(
-    where: Prisma.ArchetypeWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.ArchetypeWhereInput {
-    if (!cursor) return where
-    if (sortDir !== 'asc' && sortDir !== 'desc') throw new Error('Invalid sort direction')
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function orderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function paginate(
-    items: { id: string; [k: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [k: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-    if (!hasNext || finalItems.length === 0) return { items: finalItems, hasNext: false }
-    const last = finalItems[finalItems.length - 1]
-    if (!last) return { items: finalItems, hasNext: false }
-    const nextCursor = Buffer.from(
-        JSON.stringify({ lastValue: last[sortField], lastId: last.id })
-    ).toString('base64')
-    return { items: finalItems, hasNext, nextCursor }
-}
+// Local query helpers replaced by shared/utils/query.helper
 
 export const archetypeRepository = {
     async findById(id: string) {
@@ -80,13 +43,35 @@ export const archetypeRepository = {
     async findMany(query: ArchetypeListQuery & { filters?: Record<string, unknown> }) {
         const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
         const where = filters as Prisma.ArchetypeWhereInput
-        const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.ArchetypeWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.ArchetypeWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
         const rows = await prisma.archetype.findMany({
             where: whereWithCursor,
-            orderBy: orderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.ArchetypeOrderByWithRelationInput
+                | Prisma.ArchetypeOrderByWithRelationInput[],
             take: limit + 1,
         })
-        const { items, hasNext, nextCursor } = paginate(rows, limit, sortBy)
+        const { items, hasNext, nextCursor } = buildPagination(
+            rows,
+            limit,
+            sortBy as keyof (typeof rows)[number]
+        )
         return { archetypes: (items as typeof rows).map(transform), hasNext, nextCursor }
     },
     async create(data: CreateArchetypeData) {

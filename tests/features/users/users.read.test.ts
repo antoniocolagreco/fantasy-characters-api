@@ -69,7 +69,7 @@ describe('Users API - Read Operations', () => {
             expectSuccessResponse(response as TestResponse)
         })
 
-        it('should return 403 for unauthorized access', async () => {
+        it('should return 404 for unauthorized access (concealment)', async () => {
             // Arrange
             const { regularUser } = await seedTestDatabase()
 
@@ -81,7 +81,7 @@ describe('Users API - Read Operations', () => {
             })
 
             // Assert
-            expectErrorResponse(response, HTTP_STATUS.FORBIDDEN)
+            expectErrorResponse(response, HTTP_STATUS.NOT_FOUND)
         })
 
         it('should return 404 for non-existent user', async () => {

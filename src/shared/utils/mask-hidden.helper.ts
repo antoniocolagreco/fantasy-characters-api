@@ -61,7 +61,8 @@ export function maskHiddenEntities<T extends BaseVisibleEntity>(
 // Equipment slot helper: accepts an object whose properties may be item-like entities
 export function maskEquipmentSlots<T extends Record<string, unknown>>(
     equipment: T | null | undefined,
-    user?: AuthenticatedUser
+    user?: AuthenticatedUser,
+    options?: { nullIfNotViewable?: boolean }
 ): T | null | undefined {
     if (!equipment) return equipment
     const slotKeys = [
@@ -88,7 +89,20 @@ export function maskEquipmentSlots<T extends Record<string, unknown>>(
             const masked = maskHiddenEntity(val as BaseVisibleEntity, user)
             if (masked !== val) {
                 if (!clone) clone = { ...source }
-                clone[key] = masked
+                // If not viewable at all and option set, null out; else apply masked value
+                if (options?.nullIfNotViewable && masked && typeof masked === 'object') {
+                    const { visibility: vis, ownerId } = masked as BaseVisibleEntity
+                    // If the original was hidden and viewer not privileged, maskHiddenEntity returns a clone with sentinel
+                    // We still keep it masked unless explicit nulling desired and canView=false.
+                    // Determine visibility using canView semantics loosely: if hidden and not privileged, null it.
+                    if (vis === 'HIDDEN' && !isPrivileged(user, ownerId)) {
+                        clone[key] = null
+                    } else {
+                        clone[key] = masked
+                    }
+                } else {
+                    clone[key] = masked
+                }
             }
         }
     }

@@ -158,7 +158,7 @@ describe('Image Service Unit Tests', () => {
 
             await expect(
                 imageService.getImageById(created.id, await createAuthUser(other))
-            ).rejects.toThrow('Access denied')
+            ).rejects.toThrow('Image not found')
         })
 
         it('should return null for non-existent image', async () => {

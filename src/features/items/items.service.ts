@@ -7,17 +7,14 @@ import type { CreateItem, Item, ItemListQuery, ItemStats, UpdateItem } from './v
 import type { AuthenticatedUser } from '@/features/auth'
 import { err } from '@/shared/errors'
 import { maskHiddenEntity } from '@/shared/utils/mask-hidden.helper'
-import {
-    applySecurityFilters,
-    canModifyResource,
-    canViewResource,
-} from '@/shared/utils/rbac.helpers'
+import { enforceModifyPermission, enforceViewPermission } from '@/shared/utils/permission.helper'
+import { applySecurityFilters, canViewResource } from '@/shared/utils/rbac.helpers'
 
 export const itemService = {
     async getById(id: string, user?: AuthenticatedUser): Promise<Item> {
         const item = await itemRepository.findById(id)
         if (!item) throw err('RESOURCE_NOT_FOUND', 'Item not found')
-        if (!canViewResource(user, item)) throw err('RESOURCE_NOT_FOUND', 'Item not found')
+        enforceViewPermission(user, item, 'Item not found')
         return maskHiddenEntity(item, user) as Item
     },
     async getByName(name: string, user?: AuthenticatedUser): Promise<Item | null> {
@@ -81,8 +78,12 @@ export const itemService = {
     async update(id: string, data: UpdateItem, user: AuthenticatedUser): Promise<Item> {
         const current = await itemRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Item not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to modify this item')
+        enforceModifyPermission(
+            user,
+            current,
+            'Item not found',
+            'You do not have permission to modify this item'
+        )
         if (data.name && data.name !== current.name) {
             const existing = await itemRepository.findByName(data.name)
             if (existing && existing.id !== id) {
@@ -117,8 +118,12 @@ export const itemService = {
     async delete(id: string, user: AuthenticatedUser): Promise<void> {
         const current = await itemRepository.findById(id)
         if (!current) throw err('RESOURCE_NOT_FOUND', 'Item not found')
-        if (!canModifyResource(user, current))
-            throw err('FORBIDDEN', 'You do not have permission to delete this item')
+        enforceModifyPermission(
+            user,
+            current,
+            'Item not found',
+            'You do not have permission to delete this item'
+        )
         try {
             await itemRepository.delete(id)
         } catch (e) {

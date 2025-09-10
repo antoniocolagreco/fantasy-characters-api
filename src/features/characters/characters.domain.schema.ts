@@ -1,5 +1,7 @@
 import { Type, type Static } from '@sinclair/typebox'
 
+import { EquipmentSlotItemSchema } from '../equipment'
+
 import { OwnedEntitySchema } from '@/shared/schemas'
 
 // ===== Character Domain Schema =====
@@ -53,20 +55,38 @@ export const CharacterSchema = Type.Intersect(
                 equipment: Type.Optional(
                     Type.Partial(
                         Type.Object({
-                            head: Type.Optional(Type.Any()),
-                            face: Type.Optional(Type.Any()),
-                            chest: Type.Optional(Type.Any()),
-                            legs: Type.Optional(Type.Any()),
-                            feet: Type.Optional(Type.Any()),
-                            hands: Type.Optional(Type.Any()),
-                            rightHand: Type.Optional(Type.Any()),
-                            leftHand: Type.Optional(Type.Any()),
-                            rightRing: Type.Optional(Type.Any()),
-                            leftRing: Type.Optional(Type.Any()),
-                            amulet: Type.Optional(Type.Any()),
-                            belt: Type.Optional(Type.Any()),
-                            backpack: Type.Optional(Type.Any()),
-                            cloak: Type.Optional(Type.Any()),
+                            head: Type.Optional(Type.Union([EquipmentSlotItemSchema, Type.Null()])),
+                            face: Type.Optional(Type.Union([EquipmentSlotItemSchema, Type.Null()])),
+                            chest: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            legs: Type.Optional(Type.Union([EquipmentSlotItemSchema, Type.Null()])),
+                            feet: Type.Optional(Type.Union([EquipmentSlotItemSchema, Type.Null()])),
+                            hands: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            rightHand: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            leftHand: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            rightRing: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            leftRing: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            amulet: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            belt: Type.Optional(Type.Union([EquipmentSlotItemSchema, Type.Null()])),
+                            backpack: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
+                            cloak: Type.Optional(
+                                Type.Union([EquipmentSlotItemSchema, Type.Null()])
+                            ),
                         })
                     )
                 ),

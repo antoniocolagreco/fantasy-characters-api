@@ -127,7 +127,7 @@ describe('Item Service Unit Tests', () => {
             isTradeable: true,
         })
         await expect(itemService.update(id, { name: 'X' } as any, user)).rejects.toThrow(
-            'You do not have permission'
+            'Item not found'
         )
     })
 

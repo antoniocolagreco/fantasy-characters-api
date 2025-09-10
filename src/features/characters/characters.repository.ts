@@ -202,6 +202,7 @@ export const characterRepository = {
             where: whereWithCursor,
             orderBy: orderBy(sortBy, sortDir as 'asc' | 'desc'),
             take: limit + 1,
+            // Prisma includes expect object or null; null preserves typing with exactOptionalPropertyTypes
             include: expanded ? { race: true, archetype: true } : null,
         })
         const { items, hasNext, nextCursor } = paginate(characters, limit, sortBy)

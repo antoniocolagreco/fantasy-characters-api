@@ -4,8 +4,9 @@ import type { Tag } from './tags.domain.schema'
 import type { TagListQuery, TagStats } from './v1/tags.http.schema'
 
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
 import { generateUUIDv7 } from '@/shared/utils'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 
 // Internal repository type for creating tags
 type CreateTagData = {
@@ -29,62 +30,7 @@ function transformTagToSchema(tag: Prisma.TagGetPayload<object>): Tag {
 }
 
 // ===== Query Helpers =====
-function applyCursorPagination(
-    where: Prisma.TagWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.TagWhereInput {
-    if (!cursor) return where
-
-    // Validate sortDir at runtime
-    if (sortDir !== 'asc' && sortDir !== 'desc') {
-        throw new Error('Invalid sort direction')
-    }
-
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function buildOrderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function buildNextCursor(
-    items: { id: string; [key: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [key: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-
-    if (!hasNext || finalItems.length === 0) {
-        return { items: finalItems, hasNext: false }
-    }
-
-    const lastItem = finalItems[finalItems.length - 1]
-    if (!lastItem) {
-        return { items: finalItems, hasNext: false }
-    }
-
-    const nextCursor = Buffer.from(
-        JSON.stringify({
-            lastValue: lastItem[sortField],
-            lastId: lastItem.id,
-        })
-    ).toString('base64')
-
-    return { items: finalItems, hasNext, nextCursor }
-}
+// Refactored to use shared helpers; preserve legacy error messages where tests expect them
 
 // ===== Repository Implementation =====
 export const tagRepository = {
@@ -117,15 +63,39 @@ export const tagRepository = {
 
         // Use pre-built filters from service layer
         const where = filters as Prisma.TagWhereInput
-        const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.TagWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.TagWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            // Preserve repository-specific error message expected by tests
+            // Only map cursor parsing failures; let other validation errors bubble up
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
 
         const tags = await prisma.tag.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.TagOrderByWithRelationInput
+                | Prisma.TagOrderByWithRelationInput[],
             take: limit + 1,
         })
 
-        const { items, hasNext, nextCursor } = buildNextCursor(tags, limit, sortBy)
+        const { items, hasNext, nextCursor } = buildPagination(
+            tags,
+            limit,
+            sortBy as keyof (typeof tags)[number]
+        )
 
         return {
             tags: (items as typeof tags).map(transformTagToSchema),

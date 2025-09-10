@@ -10,8 +10,9 @@ import type {
     UserStats,
 } from '@/features/users/users.type'
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
 import { generateUUIDv7 } from '@/shared/utils'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 
 // ===== Transformation Helpers =====
 function transformUserToSchema(user: Prisma.UserGetPayload<object>): User {
@@ -58,63 +59,7 @@ function transformUserToPublicSchema(user: Prisma.UserGetPayload<object>): Publi
 }
 
 // ===== Query Helpers =====
-
-function applyCursorPagination(
-    where: Prisma.UserWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.UserWhereInput {
-    if (!cursor) return where
-
-    // Validate sortDir at runtime
-    if (sortDir !== 'asc' && sortDir !== 'desc') {
-        throw new Error('Invalid sort direction')
-    }
-
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function buildOrderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function buildNextCursor(
-    items: { id: string; [key: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [key: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-
-    if (!hasNext || finalItems.length === 0) {
-        return { items: finalItems, hasNext: false }
-    }
-
-    const lastItem = finalItems[finalItems.length - 1]
-    if (!lastItem) {
-        return { items: finalItems, hasNext: false }
-    }
-
-    const nextCursor = Buffer.from(
-        JSON.stringify({
-            lastValue: lastItem[sortField],
-            lastId: lastItem.id,
-        })
-    ).toString('base64')
-
-    return { items: finalItems, hasNext, nextCursor }
-}
+// Refactored to shared helpers; preserve legacy error messages where tests expect them
 
 // ===== Repository Implementation =====
 export const userRepository = {
@@ -147,20 +92,39 @@ export const userRepository = {
 
         // Use pre-built filters from service layer
         const where = filters as Prisma.UserWhereInput
-        const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.UserWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.UserWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            // Preserve repository-specific error message expected by tests
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
 
         // Execute query
         const users = await prisma.user.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.UserOrderByWithRelationInput
+                | Prisma.UserOrderByWithRelationInput[],
             take: limit + 1,
         })
 
         // Build pagination response
-        const { items, hasNext, nextCursor } = buildNextCursor(
-            users as { id: string; [key: string]: unknown }[],
+        const { items, hasNext, nextCursor } = buildPagination(
+            users,
             limit,
-            sortBy
+            sortBy as keyof (typeof users)[number]
         )
 
         return {
@@ -388,20 +352,38 @@ export const publicUserRepository = {
 
         // Use pre-built filters from service layer
         const where = filters as Prisma.UserWhereInput
-        const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.UserWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.UserWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
 
         // Execute query
         const users = await prisma.user.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.UserOrderByWithRelationInput
+                | Prisma.UserOrderByWithRelationInput[],
             take: limit + 1,
         })
 
         // Build pagination response
-        const { items, hasNext, nextCursor } = buildNextCursor(
-            users as { id: string; [key: string]: unknown }[],
+        const { items, hasNext, nextCursor } = buildPagination(
+            users,
             limit,
-            sortBy
+            sortBy as keyof (typeof users)[number]
         )
 
         return {

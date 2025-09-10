@@ -61,7 +61,7 @@ describe('Image Service - additional paths', () => {
         // make image private to test denial
         await testPrisma.image.update({ where: { id: img.id }, data: { visibility: 'PRIVATE' } })
         await expect(imageService.getImageFile(img.id, auth(other))).rejects.toThrow(
-            'Access denied'
+            'Image not found'
         )
     })
 

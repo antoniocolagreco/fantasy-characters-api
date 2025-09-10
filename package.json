@@ -32,7 +32,7 @@
     "validate:openapi": "tsx scripts/validate-openapi.ts",
     "generate:openapi": "tsx scripts/generate-openapi.ts",
     "validate": "pnpm format && pnpm typecheck && pnpm lint:fix && pnpm test:coverage && pnpm validate:coverage",
-    "smoke:test": "tsx scripts/smoke-tests.ts",
+    "smoke:test": "tsx scripts/smoke-tests.ts --start",
     "ci": "pnpm typecheck && pnpm lint && pnpm test:coverage && pnpm validate:env",
     "ci:quality": "pnpm run lint && pnpm run typecheck && pnpm run test:coverage",
     "ci:full": "pnpm run ci:quality && pnpm run validate:openapi",

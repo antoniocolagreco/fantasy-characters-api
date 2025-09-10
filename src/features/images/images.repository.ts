@@ -10,6 +10,14 @@ import type {
 } from './images.type'
 
 import { prisma } from '@/infrastructure/database/prisma.service'
+import {
+    applyCursor,
+    applyCursorByPath,
+    buildOrderBy,
+    buildOrderByPath,
+    buildPagination,
+    buildPaginationWith,
+} from '@/shared/utils/query.helper'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 /**
@@ -144,40 +152,25 @@ export async function listImagesInDb(
         }
     }
 
-    // Apply cursor pagination manually
+    // Apply cursor pagination using shared helpers
     if (cursor) {
         try {
-            const decoded = JSON.parse(Buffer.from(cursor, 'base64').toString()) as {
-                lastValue: unknown
-                lastId: string
-            }
-            const { lastValue, lastId } = decoded
-            const op = sortDir === 'desc' ? 'lt' : 'gt'
-
-            // Build cursor conditions
-            let cursorConditions: Prisma.ImageWhereInput
-            if (sortBy === 'email') {
-                cursorConditions = {
-                    OR: [
-                        { owner: { email: { [op]: lastValue } } },
-                        { owner: { email: lastValue as string }, id: { [op]: lastId } },
-                    ],
-                }
-            } else {
-                cursorConditions = {
-                    OR: [
-                        { [sortBy]: { [op]: lastValue } },
-                        { [sortBy]: lastValue, id: { [op]: lastId } },
-                    ],
-                }
-            }
-
-            // Combine with existing where clause
-            where = {
-                AND: [where, cursorConditions],
-            }
+            where =
+                sortBy === 'email'
+                    ? (applyCursorByPath(
+                          where,
+                          cursor,
+                          'owner.email',
+                          sortDir
+                      ) as Prisma.ImageWhereInput)
+                    : (applyCursor(
+                          where,
+                          cursor,
+                          sortBy as keyof Prisma.ImageWhereInput,
+                          sortDir
+                      ) as Prisma.ImageWhereInput)
         } catch {
-            // Invalid cursor, ignore
+            // Preserve legacy behavior: ignore invalid cursor for images list
         }
     }
 
@@ -186,11 +179,11 @@ export async function listImagesInDb(
         where,
         orderBy:
             sortBy === 'email'
-                ? [
-                      { owner: { email: sortDir as 'asc' | 'desc' } },
-                      { id: sortDir as 'asc' | 'desc' },
-                  ]
-                : [{ [sortBy]: sortDir as 'asc' | 'desc' }, { id: sortDir as 'asc' | 'desc' }],
+                ? (buildOrderByPath(
+                      'owner.email',
+                      sortDir
+                  ) as Prisma.ImageOrderByWithRelationInput[])
+                : (buildOrderBy(sortBy, sortDir) as Prisma.ImageOrderByWithRelationInput[]),
         take: limit + 1,
         select: {
             id: true,
@@ -213,33 +206,37 @@ export async function listImagesInDb(
         },
     })
 
-    // Build pagination response
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-
-    let nextCursor: string | undefined
-    if (hasNext && finalItems.length > 0) {
-        const lastItem = finalItems[finalItems.length - 1]
-        if (lastItem) {
-            let lastValue: unknown
-            if (sortBy === 'email') {
-                lastValue = (lastItem as typeof lastItem & { owner?: { email: string } }).owner
-                    ?.email
-            } else {
-                lastValue = lastItem[sortBy as keyof typeof lastItem]
-            }
-
-            nextCursor = Buffer.from(
-                JSON.stringify({
-                    lastValue,
-                    lastId: lastItem.id,
-                })
-            ).toString('base64')
+    // Build pagination response using shared helpers
+    if (sortBy === 'email') {
+        const {
+            items: trimmed,
+            hasNext,
+            nextCursor,
+        } = buildPaginationWith(
+            items,
+            limit,
+            (it: (typeof items)[number]) =>
+                (it as { owner?: { email?: string } | null }).owner?.email
+        )
+        return {
+            data: trimmed as unknown as Omit<Image, 'blob'>[],
+            pagination: {
+                limit,
+                hasNext,
+                hasPrev: !!cursor,
+                ...(nextCursor && { endCursor: nextCursor }),
+                ...(cursor && { startCursor: cursor }),
+            },
         }
     }
 
+    const {
+        items: trimmed,
+        hasNext,
+        nextCursor,
+    } = buildPagination(items, limit, sortBy as keyof (typeof items)[number])
     return {
-        data: finalItems,
+        data: trimmed,
         pagination: {
             limit,
             hasNext,

@@ -20,10 +20,10 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
 ): T {
     if (!user) {
         // Anonymous users: only PUBLIC content
-        if (filters.OR) {
-            // If there are existing OR conditions, combine with AND
+        if ((filters as Record<string, unknown>).OR) {
+            // Combine with AND to preserve OR
             return {
-                AND: [{ OR: filters.OR }, { visibility: 'PUBLIC' }],
+                AND: [{ OR: (filters as Record<string, unknown>).OR }, { visibility: 'PUBLIC' }],
             } as unknown as T
         }
         return { ...filters, visibility: 'PUBLIC' } as T
@@ -35,7 +35,7 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
     }
 
     if (user.role === 'MODERATOR') {
-        // Moderator: PUBLIC + PRIVATE + HIDDEN + own content (read-only for others' PRIVATE/HIDDEN)
+        // Moderator: PUBLIC + PRIVATE + HIDDEN + own content (read-only for others)
         const securityFilter = {
             OR: [
                 { visibility: 'PUBLIC' },
@@ -45,24 +45,22 @@ export function applySecurityFilters<T extends Record<string, unknown>>(
             ],
         }
 
-        if (filters.OR) {
-            // If there are existing OR conditions, combine with AND
+        if ((filters as Record<string, unknown>).OR) {
+            // Combine with AND to preserve OR
             return {
-                AND: [{ OR: filters.OR }, securityFilter],
+                AND: [{ OR: (filters as Record<string, unknown>).OR }, securityFilter],
             } as unknown as T
         }
         return { ...filters, ...securityFilter } as T
     }
 
     // Regular USER: PUBLIC + own content
-    const securityFilter = {
-        OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }],
-    }
+    const securityFilter = { OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }] }
 
-    if (filters.OR) {
-        // If there are existing OR conditions, combine with AND
+    if ((filters as Record<string, unknown>).OR) {
+        // Combine with AND to preserve OR
         return {
-            AND: [{ OR: filters.OR }, securityFilter],
+            AND: [{ OR: (filters as Record<string, unknown>).OR }, securityFilter],
         } as unknown as T
     }
     return { ...filters, ...securityFilter } as T
@@ -117,7 +115,7 @@ export function canViewResource(
     // Owner can see own content regardless of visibility
     if (resource.ownerId === user.id) return true
 
-    // Moderator can see PUBLIC and HIDDEN
+    // Moderator can see PUBLIC, PRIVATE and HIDDEN
     if (user.role === 'MODERATOR') {
         return ['PUBLIC', 'HIDDEN', 'PRIVATE'].includes(resource.visibility as string)
     }

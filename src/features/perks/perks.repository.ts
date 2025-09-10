@@ -4,7 +4,8 @@ import type { Perk } from './perks.domain.schema'
 import type { PerkListQuery, PerkStats } from './v1/perks.http.schema'
 
 import { prisma } from '@/infrastructure/database'
-import { err } from '@/shared/errors'
+import { AppError, err } from '@/shared/errors'
+import { applyCursor, buildOrderBy, buildPagination } from '@/shared/utils/query.helper'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
 
 // Internal repository type for creating perks
@@ -32,50 +33,7 @@ function transformPerkToSchema(perk: Prisma.PerkGetPayload<object>): Perk {
     }
 }
 
-// ===== Query Helpers =====
-function applyCursorPagination(
-    where: Prisma.PerkWhereInput,
-    cursor: string | undefined,
-    sortBy: string,
-    sortDir: string
-): Prisma.PerkWhereInput {
-    if (!cursor) return where
-    if (sortDir !== 'asc' && sortDir !== 'desc') {
-        throw new Error('Invalid sort direction')
-    }
-    try {
-        const { lastValue, lastId } = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        const op = sortDir === 'desc' ? 'lt' : 'gt'
-        return {
-            ...where,
-            OR: [{ [sortBy]: { [op]: lastValue } }, { [sortBy]: lastValue, id: { [op]: lastId } }],
-        }
-    } catch {
-        throw err('VALIDATION_ERROR', 'Invalid cursor format')
-    }
-}
-
-function buildOrderBy(sortBy: string = 'createdAt', sortDir: 'asc' | 'desc' = 'desc') {
-    return [{ [sortBy]: sortDir }, { id: sortDir }]
-}
-
-function buildNextCursor(
-    items: { id: string; [key: string]: unknown }[],
-    limit: number,
-    sortField: string
-): { items: { id: string; [key: string]: unknown }[]; hasNext: boolean; nextCursor?: string } {
-    const hasNext = items.length > limit
-    const finalItems = hasNext ? items.slice(0, limit) : items
-    if (!hasNext || finalItems.length === 0) {
-        return { items: finalItems, hasNext: false }
-    }
-    const lastItem = finalItems[finalItems.length - 1]
-    if (!lastItem) return { items: finalItems, hasNext: false }
-    const nextCursor = Buffer.from(
-        JSON.stringify({ lastValue: lastItem[sortField], lastId: lastItem.id })
-    ).toString('base64')
-    return { items: finalItems, hasNext, nextCursor }
-}
+// ===== Query Helpers replaced by shared/utils/query.helper =====
 
 // ===== Repository Implementation =====
 export const perkRepository = {
@@ -93,15 +51,37 @@ export const perkRepository = {
         const { limit = 20, cursor, sortBy = 'createdAt', sortDir = 'desc', filters = {} } = query
 
         const where = filters as Prisma.PerkWhereInput
-        const whereWithCursor = applyCursorPagination(where, cursor, sortBy, sortDir)
+        let whereWithCursor: Prisma.PerkWhereInput
+        try {
+            whereWithCursor = applyCursor(
+                where,
+                cursor ?? null,
+                sortBy as keyof Prisma.PerkWhereInput,
+                sortDir
+            )
+        } catch (error) {
+            if (error instanceof AppError) {
+                if (error.message === 'Invalid sort direction') throw error
+                if (error.message === 'Invalid cursor') {
+                    throw err('VALIDATION_ERROR', 'Invalid cursor format')
+                }
+            }
+            throw error
+        }
 
         const perks = await prisma.perk.findMany({
             where: whereWithCursor,
-            orderBy: buildOrderBy(sortBy, sortDir as 'asc' | 'desc'),
+            orderBy: buildOrderBy(sortBy, sortDir) as unknown as
+                | Prisma.PerkOrderByWithRelationInput
+                | Prisma.PerkOrderByWithRelationInput[],
             take: limit + 1,
         })
 
-        const { items, hasNext, nextCursor } = buildNextCursor(perks, limit, sortBy)
+        const { items, hasNext, nextCursor } = buildPagination(
+            perks,
+            limit,
+            sortBy as keyof (typeof perks)[number]
+        )
 
         return {
             perks: (items as typeof perks).map(transformPerkToSchema),
