@@ -65,14 +65,11 @@ export function success<T>(data: T, requestId?: string) {
   }
 }
 
-export function created<T>(data: T, location: string, requestId?: string) {
+export function successMessage(message: string, requestId?: string) {
   return {
-    response: {
-      data,
-      requestId,
-      timestamp: new Date().toISOString(),
-    },
-    headers: { Location: location },
+    message,
+    requestId,
+    timestamp: new Date().toISOString(),
   }
 }
 
@@ -131,7 +128,7 @@ export function createPaginatedResponseSchema<T>(itemSchema: T) {
 ### HTTP Status Constants
 
 ```typescript
-// src/common/constants/http-status.ts
+// src/shared/constants/http-status.ts
 export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
@@ -164,7 +161,7 @@ import {
 ### Controller Implementation
 
 ```typescript
-import { HTTP_STATUS } from '../../common/constants/http-status'
+import { HTTP_STATUS } from '@/shared/constants'
 
 // Object literal wrapper for clean organization
 export const characterController = {
@@ -175,12 +172,8 @@ export const characterController = {
 
   async createCharacter(request: FastifyRequest, reply: FastifyReply) {
     const character = await characterService.create(request.body)
-    const { response, headers } = created(
-      character,
-      `/api/v1/characters/${character.id}`,
-      request.id
-    )
-    return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
+    // Uniform approach: All POST endpoints use success() for 201 responses
+    return reply.code(HTTP_STATUS.CREATED).send(success(character, request.id))
   },
 
   async listCharacters(request: FastifyRequest, reply: FastifyReply) {
@@ -244,9 +237,39 @@ app.get(
 ## HTTP Status Codes
 
 - **200 OK**: GET (single/list), PUT, PATCH
-- **201 Created**: POST (set `Location` header)
+- **201 Created**: POST (all endpoints use `success()` helper with 201 status)
 - **204 No Content**: DELETE (no response body)
 - **4xx/5xx**: Use error envelope (see [error-handling.md](./error-handling.md))
+
+## Unified Usage Patterns
+
+**All endpoints follow consistent patterns:**
+
+1. **POST endpoints**: Use `success()` helper with 201 status
+
+   ```ts
+   return reply.code(HTTP_STATUS.CREATED).send(success(resource, request.id))
+   ```
+
+2. **List endpoints**: Use `paginated()` helper
+
+   ```ts
+   return reply
+     .code(HTTP_STATUS.OK)
+     .send(paginated(items, pagination, request.id))
+   ```
+
+3. **Single resource GET**: Use `success()` helper
+
+   ```ts
+   return reply.code(HTTP_STATUS.OK).send(success(resource, request.id))
+   ```
+
+4. **DELETE endpoints**: No response body
+
+   ```ts
+   return reply.code(HTTP_STATUS.NO_CONTENT).send()
+   ```
 
 ## Response Compression
 
@@ -265,7 +288,8 @@ plugin:
 await app.register(compress, {
   global: true,
   threshold: 1024, // Skip responses smaller than 1KB
-  customTypes: /^(text\/.*|application\/json|application\/.*\+json)$/i,
+  encodings: ['gzip', 'deflate', 'br'],
+  customTypes: /^text\/|json$|javascript$/,
 })
 ```
 
@@ -287,7 +311,7 @@ after your controller returns the response envelope.
 4. **Never** return raw objects - always use envelope
 5. **Always** use `HTTP_STATUS` constants instead of magic numbers
 6. **Always** use `$ref: 'ErrorResponse#'` for error responses
-7. **Always** use `created()` helper for 201 responses with Location header
+7. **Always** use `success()` helper for all 201 responses (uniform pattern)
 8. **Always** register compression plugin before routes for automatic JSON/text
    compression
 9. **Always** use consistent pagination with `hasNext`, `hasPrev`,

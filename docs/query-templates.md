@@ -75,14 +75,13 @@ export const VisibilityQuerySchema = Type.Object(
 export const SortQuerySchema = Type.Object(
   {
     sortBy: Type.Optional(
-      Type.Union([
-        Type.Literal('createdAt'),
-        Type.Literal('name'),
-        Type.Literal('level'),
-      ])
+      Type.String({
+        enum: ['createdAt', 'updatedAt', 'name'],
+      })
     ),
     sortDir: Type.Optional(
-      Type.Union([Type.Literal('asc'), Type.Literal('desc')], {
+      Type.String({
+        enum: ['asc', 'desc'],
         default: 'desc',
       })
     ),
@@ -90,10 +89,30 @@ export const SortQuerySchema = Type.Object(
   { $id: 'SortQuery' }
 )
 
+export const SearchQuerySchema = Type.Object(
+  {
+    search: Type.Optional(
+      Type.String({
+        minLength: 1,
+        maxLength: 100,
+      })
+    ),
+  },
+  { $id: 'SearchQuery' }
+)
+
+// Combined query schema with all standard parameters
+export const StandardQuerySchema = Type.Intersect(
+  [PaginationQuerySchema, SortQuerySchema, VisibilityQuerySchema, SearchQuerySchema],
+  { $id: 'StandardQuery' }
+)
+
 // Derive types
 export type PaginationQuery = Static<typeof PaginationQuerySchema>
 export type VisibilityQuery = Static<typeof VisibilityQuerySchema>
 export type SortQuery = Static<typeof SortQuerySchema>
+export type SearchQuery = Static<typeof SearchQuerySchema>
+export type StandardQuery = Static<typeof StandardQuerySchema>
 ```
 
 ## Route Implementation
@@ -134,7 +153,7 @@ Generic utilities to transform query params into Prisma where conditions with
 zero repetitive code.
 
 ```typescript
-// src/common/database/query-helpers.ts
+// src/shared/utils/query.helper.ts
 export function buildWhere<T extends Record<string, unknown>>(
   filters: Partial<T>
 ): T {
@@ -153,9 +172,14 @@ export function applyCursor<T extends Record<string, unknown>>(
   where: T,
   cursor: string | null,
   sortBy: keyof T,
-  sortDir: 'asc' | 'desc'
+  sortDir: string
 ): T {
   if (!cursor) return where
+
+  // Validate sortDir at runtime
+  if (sortDir !== 'asc' && sortDir !== 'desc') {
+    throw err('VALIDATION_ERROR', 'Invalid sort direction')
+  }
 
   try {
     const { lastValue, lastId } = JSON.parse(
@@ -176,23 +200,32 @@ export function applyCursor<T extends Record<string, unknown>>(
   }
 }
 
-export function buildOrderBy(sortBy: string, sortDir: 'asc' | 'desc') {
-  return [{ [sortBy]: sortDir }, { id: sortDir }] // Automatic tie-breaker
+export function buildOrderBy(sortBy: string, sortDir?: string) {
+  // Validate sortDir at runtime
+  if (sortDir && sortDir !== 'asc' && sortDir !== 'desc') {
+    throw err('VALIDATION_ERROR', 'Invalid sort direction')
+  }
+  const direction = sortDir || 'desc'
+  return [{ [sortBy]: direction }, { id: direction }] // Automatic tie-breaker
 }
 
 export function buildPagination<T extends { id: string }>(
-  data: T[],
+  items: T[],
   limit: number,
   sortField: keyof T
-): { data: T[]; hasNext: boolean; nextCursor?: string } {
-  const hasNext = data.length > limit
-  const finalData = hasNext ? data.slice(0, limit) : data
+): { items: T[]; hasNext: boolean; nextCursor?: string } {
+  const hasNext = items.length > limit
+  const finalItems = hasNext ? items.slice(0, limit) : items
 
-  if (!hasNext || finalData.length === 0) {
-    return { data: finalData, hasNext: false }
+  if (!hasNext || finalItems.length === 0) {
+    return { items: finalItems, hasNext: false }
   }
 
-  const lastItem = finalData[finalData.length - 1]
+  const lastItem = finalItems[finalItems.length - 1]
+  if (!lastItem) {
+    return { items: finalItems, hasNext: false }
+  }
+
   const nextCursor = Buffer.from(
     JSON.stringify({
       lastValue: lastItem[sortField],
@@ -200,7 +233,25 @@ export function buildPagination<T extends { id: string }>(
     })
   ).toString('base64')
 
-  return { data: finalData, hasNext, nextCursor }
+  return { items: finalItems, hasNext, nextCursor }
+}
+
+// Range validation helper
+export function validateRange(
+  min: number | undefined,
+  max: number | undefined,
+  minFieldName: string,
+  maxFieldName: string
+): void {
+  if (min !== undefined && max !== undefined && min > max) {
+    throw err('VALIDATION_ERROR', `${minFieldName} cannot be greater than ${maxFieldName}`)
+  }
+  if (min !== undefined && min < 0) {
+    throw err('VALIDATION_ERROR', `${minFieldName} must be positive`)
+  }
+  if (max !== undefined && max < 0) {
+    throw err('VALIDATION_ERROR', `${maxFieldName} must be positive`)
+  }
 }
 ```
 
@@ -211,50 +262,51 @@ building and pagination.
 
 ```typescript
 export const characterService = {
-  async listCharacters(
-    params: ListCharactersParams
-  ): Promise<ListCharactersResult> {
-    const {
-      limit = 20,
-      cursor,
-      sortBy = 'createdAt',
-      sortDir = 'desc',
-    } = params
+  async list(query: CharacterListQuery, user?: AuthenticatedUser) {
+    const businessFilters: Record<string, unknown> = {}
+    
+    if (query.visibility !== undefined) businessFilters.visibility = query.visibility
+    if (query.search) {
+      businessFilters.OR = [
+        { name: { contains: query.search, mode: 'insensitive' } },
+        { description: { contains: query.search, mode: 'insensitive' } },
+      ]
+    }
+    
+    // Helper for range construction & validation
+    function range(min?: number, max?: number) {
+      if (min !== undefined && max !== undefined && min > max) {
+        throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
+      }
+      if (min === undefined && max === undefined) return undefined
+      return {
+        ...(min !== undefined ? { gte: min } : {}),
+        ...(max !== undefined ? { lte: max } : {}),
+      }
+    }
 
-    // Build where clause - zero boilerplate
-    const where = buildWhere<Prisma.CharacterWhereInput>({
-      visibility: params.visibility,
-      raceId: params.raceId,
-      archetypeId: params.archetypeId,
-      level: params.level && { gte: params.minLevel, lte: params.maxLevel },
-      ownerId: params.ownerId,
+    const levelRange = range(query.levelMin, query.levelMax)
+    if (levelRange) businessFilters.level = levelRange
+
+    // Apply security filters
+    const secureFilters = applySecurityFilters(businessFilters, user)
+    
+    // Execute query with secure filters
+    const { characters, hasNext, nextCursor } = await characterRepository.findMany({
+      ...query,
+      filters: secureFilters,
     })
 
-    // Apply cursor pagination
-    const whereWithCursor = applyCursor(where, cursor, sortBy, sortDir)
-
-    // Execute query
-    const data = await prisma.character.findMany({
-      where: whereWithCursor,
-      orderBy: buildOrderBy(sortBy, sortDir), // Automatic tie-breaker
-      take: limit + 1,
-    })
-
-    // Build response with consistent pagination schema
-    const {
-      data: finalData,
-      hasNext,
-      nextCursor,
-    } = buildPagination(data, limit, sortBy)
-
+    const masked = characters.map(c => maskHiddenEntity(c, user) as Character)
+    
     return {
-      data: finalData,
+      characters: masked,
       pagination: {
-        limit,
         hasNext,
-        hasPrev: !!cursor, // Has previous if we used a cursor
-        endCursor: nextCursor,
-        startCursor: cursor,
+        hasPrev: !!query.cursor,
+        limit: query.limit ?? 20,
+        ...(nextCursor && { nextCursor }),
+        ...(query.cursor && { startCursor: query.cursor }),
       },
     }
   },
@@ -269,50 +321,30 @@ Specialized utilities for complex filtering scenarios like ranges, search, and
 validation.
 
 ```typescript
-// Range filters - returns Prisma-compatible filter object
-export function buildRangeFilter(min?: number, max?: number) {
-  if (!min && !max) return undefined
-  return { ...(min && { gte: min }), ...(max && { lte: max }) }
-}
-
-// Text search - returns Prisma-compatible OR clause
-export function buildTextSearch(search?: string, fields: string[] = ['name']) {
-  if (!search) return undefined
-  return {
-    OR: fields.map(field => ({
-      [field]: { contains: search, mode: 'insensitive' },
-    })),
-  }
-}
-
-// Usage
-const where = buildWhere<Prisma.CharacterWhereInput>({
-  visibility: params.visibility,
-  level: buildRangeFilter(params.minLevel, params.maxLevel),
-  ...buildTextSearch(params.search, ['name', 'description']),
-})
-
-// Range validation helper
-export function validateRange(
-  min: number | undefined,
-  max: number | undefined,
-  minFieldName: string,
-  maxFieldName: string
-): void {
+// Helper for range construction & validation (from characters.service.ts)
+function range(min?: number, max?: number) {
   if (min !== undefined && max !== undefined && min > max) {
-    throw err(
-      'VALIDATION_ERROR',
-      `${minFieldName} cannot be greater than ${maxFieldName}`
-    ) // See error-handling.md
+    throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
   }
-  if (min !== undefined && min < 0) {
-    throw err('VALIDATION_ERROR', `${minFieldName} must be positive`)
-  }
-  if (max !== undefined && max < 0) {
-    throw err('VALIDATION_ERROR', `${maxFieldName} must be positive`)
+  if (min === undefined && max === undefined) return undefined
+  return {
+    ...(min !== undefined ? { gte: min } : {}),
+    ...(max !== undefined ? { lte: max } : {}),
   }
 }
 
-// Validate before query
-validateRange(params.minLevel, params.maxLevel, 'minLevel', 'maxLevel')
+// Text search (from characters.service.ts)
+if (query.search) {
+  businessFilters.OR = [
+    { name: { contains: query.search, mode: 'insensitive' } },
+    { description: { contains: query.search, mode: 'insensitive' } },
+  ]
+}
+
+// Usage examples
+const levelRange = range(query.levelMin, query.levelMax)
+if (levelRange) businessFilters.level = levelRange
+
+const experienceRange = range(query.experienceMin, query.experienceMax)
+if (experienceRange) businessFilters.experience = experienceRange
 ```

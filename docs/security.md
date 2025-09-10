@@ -3,6 +3,38 @@
 Essential security patterns for initial API code development with Fastify +
 TypeScript.
 
+## 🏗️ **Actual Security Architecture**
+
+Your API request flows through 3 layers, each doing one specific job:
+
+```text
+1. MIDDLEWARE  →  2. CONTROLLER  →  3. SERVICE
+   "Can this      "Extract HTTP    "What can THIS user
+    user access    data and         do with THIS data?
+    this route?"   delegate"        Apply business security"
+```
+
+### **What Each Layer Does**
+
+| Layer          | Primary Job                           | Security Role                         |
+| -------------- | ------------------------------------- | ------------------------------------- |
+| **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access        |
+| **CONTROLLER** | Handle HTTP request/response          | Pure HTTP coordination, no security   |
+| **SERVICE**    | Apply business rules                  | Granular permissions & data filtering |
+
+### **Security Strategy**
+
+- **Middleware**: Route-level permission checks using `rbac.middleware.ts`
+- **Controller**: Security-agnostic HTTP coordination - just extract data and
+  delegate
+- **Service**: All business-level security decisions and data filtering
+
+### **Key Principle**
+
+Controllers do **NO security checks**. They are pure HTTP handlers that extract
+request data and delegate everything to services. Security happens in middleware
+(route-level) and services (business-level).
+
 ## Critical Web Application Security Risks
 
 Understanding and mitigating the most critical web application security risks.
@@ -221,18 +253,33 @@ const logger = pino({
 
 ## Required Authorization Pattern
 
-Always deny by default, allow only what policy grants. Always re-check ownership
-in services before data mutations.
+Always deny by default, allow only what policy grants. Use centralized security
+helpers for consistency.
 
 ```ts
-export async function enforceOwnership(userId: string, resourceId: string) {
-  const resource = await prisma.character.findFirst({
-    where: { id: resourceId, ownerId: userId },
-    select: { id: true },
-  })
+// ✅ CORRECT: Use centralized security helpers in services
+import { canViewResource, canModifyResource } from '@/shared/utils/rbac.helpers'
 
-  if (!resource) {
-    throw err('FORBIDDEN', 'Resource not found or access denied')
+export async function enforceViewPermission(
+  user: AuthenticatedUser | undefined,
+  resource: { ownerId?: string; visibility?: string; ownerRole?: string }
+) {
+  if (!canViewResource(user, resource)) {
+    // Concealment policy: return 404 to hide existence
+    throw err('RESOURCE_NOT_FOUND', 'Resource not found')
+  }
+}
+
+export async function enforceModifyPermission(
+  user: AuthenticatedUser,
+  resource: { ownerId?: string; visibility?: string; ownerRole?: string }
+) {
+  // First check if user can view the resource
+  enforceViewPermission(user, resource)
+
+  // Then check modify permissions
+  if (!canModifyResource(user, resource)) {
+    throw err('FORBIDDEN', 'You do not have permission to modify this resource')
   }
 }
 ```
@@ -253,36 +300,56 @@ for (const envVar of requiredEnvVars) {
 
 ## Required RBAC Implementation
 
-Always check permissions in both controllers and services. Deny by default,
-allow only what policy grants.
+Security is handled in **middleware** and **services**, not controllers.
+Controllers are pure HTTP coordinators. Deny by default, allow only what policy
+grants.
 
 ```ts
-import { can } from './rbac.policy'
+// ✅ CORRECT: Middleware handles route-level permissions
+// In routes file
+app.put(
+  '/characters/:id',
+  {
+    preHandler: [toFastifyPreHandler(rbac.update('characters'))],
+  },
+  characterController.updateCharacter
+)
 
-// Controller preHandler
-export function rbacPreHandler(resource: string, action: string) {
-  return async function (req: any) {
-    if (!can({ user: req.user, resource, action, ownerId: req.params.id })) {
-      throw err('FORBIDDEN', 'Not allowed')
-    }
-  }
-}
+// ✅ CORRECT: Controller is security-agnostic, delegates to service
+export const characterController = {
+  async updateCharacter(req: FastifyRequest, reply: FastifyReply) {
+    if (!req.user) throw err('UNAUTHORIZED', 'Login required')
+    const character = await characterService.update(
+      req.params.id,
+      req.body,
+      req.user
+    )
+    return reply.code(200).send(success(character, req.id))
+  },
+} as const
 
-// Service-level check (always re-check)
+// ✅ CORRECT: Service handles granular business security
 export const characterService = {
-  async updateCharacter(id: string, data: any, user: any) {
-    const character = await prisma.character.findUnique({ where: { id } })
-    if (
-      !can({
-        user,
-        resource: 'characters',
-        action: 'update',
-        ownerId: character.ownerId,
-      })
-    ) {
-      throw err('FORBIDDEN', 'Not allowed')
-    }
-    // ... update logic
+  async update(
+    id: string,
+    data: any,
+    user: AuthenticatedUser
+  ): Promise<Character> {
+    const current = await characterRepository.findByIdWithOwnerRole(id)
+    if (!current) throw err('RESOURCE_NOT_FOUND', 'Character not found')
+
+    // Check view permission (concealment: return 404 if not viewable)
+    if (!canViewResource(user, current))
+      throw err('RESOURCE_NOT_FOUND', 'Character not found')
+
+    // Check modify permission (403 if visible but not modifiable)
+    if (!canModifyResource(user, current))
+      throw err(
+        'FORBIDDEN',
+        'You do not have permission to modify this character'
+      )
+
+    return characterRepository.update(id, data)
   },
 } as const
 ```
@@ -551,7 +618,14 @@ COPY --from=security /app/node_modules ./node_modules
 - [ ] Body size limit set (1MB default) and request timeout (15s)
 - [ ] All TypeBox schemas have `additionalProperties: false` and `maxLength`
 - [ ] Input sanitization for all user content (HTML and strings)
-- [ ] RBAC checks in both controllers and services with `can()` function
+- [ ] RBAC middleware configured on all routes with `rbac.read()`,
+      `rbac.create()`, etc.
+- [ ] Controllers are security-agnostic and delegate all business logic to
+      services
+- [ ] Services use centralized `canViewResource()` and `canModifyResource()`
+      helpers
+- [ ] Service concealment policy: return 404 for unauthorized access, 403 for
+      visible but non-modifiable
 - [ ] CSRF protection for cookie-based authentication
 - [ ] JWT tokens have short TTL (15min) with proper aud/iss claims
 - [ ] Refresh tokens rotate and store only hashes in database

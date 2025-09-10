@@ -6,7 +6,7 @@ import type { CreateImage, ImageListQuery, ImageParams, UpdateImage } from './im
 
 import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { err } from '@/shared/errors'
-import { success, paginated, created } from '@/shared/utils/response.helper'
+import { success, paginated } from '@/shared/utils/response.helper'
 
 /**
  * Image controllers - handle HTTP requests and responses
@@ -33,9 +33,8 @@ export const imageController = {
             user
         )
 
-        // Format HTTP response
-        const { response, headers } = created(image, `/api/v1/images/${image.id}`, request.id)
-        return reply.code(HTTP_STATUS.CREATED).headers(headers).send(response)
+        // Format HTTP response using consistent success() pattern
+        return reply.code(HTTP_STATUS.CREATED).send(success(image, request.id))
     },
 
     async getImageById(request: FastifyRequest, reply: FastifyReply) {

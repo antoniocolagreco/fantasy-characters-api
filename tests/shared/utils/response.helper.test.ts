@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { Pagination } from '@/shared/schemas'
-import { created, paginated, success, successMessage } from '@/shared/utils/response.helper'
+import { paginated, success, successMessage } from '@/shared/utils/response.helper'
 
 describe('response.helper', () => {
     const mockTimestamp = '2025-09-07T10:30:00.000Z'
@@ -229,88 +229,70 @@ describe('response.helper', () => {
         })
     })
 
-    describe('created()', () => {
-        it('should return created response with data, location header, and timestamp', () => {
+    describe('success() with different scenarios', () => {
+        it('should return success response for resource creation with timestamp', () => {
             const testData = { id: '123', name: 'New User' }
-            const location = '/api/v1/users/123'
 
-            const result = created(testData, location)
+            const result = success(testData)
 
             expect(result).toEqual({
-                response: {
-                    data: testData,
-                    requestId: undefined,
-                    timestamp: mockTimestamp,
-                },
-                headers: { Location: location },
+                data: testData,
+                requestId: undefined,
+                timestamp: mockTimestamp,
             })
         })
 
-        it('should include requestId when provided', () => {
+        it('should include requestId for resource creation when provided', () => {
             const testData = { id: '456' }
-            const location = '/api/v1/items/456'
             const requestId = 'req-created'
 
-            const result = created(testData, location, requestId)
+            const result = success(testData, requestId)
 
             expect(result).toEqual({
-                response: {
-                    data: testData,
-                    requestId,
-                    timestamp: mockTimestamp,
-                },
-                headers: { Location: location },
+                data: testData,
+                requestId,
+                timestamp: mockTimestamp,
             })
         })
 
-        it('should handle empty location string', () => {
+        it('should handle resource creation with minimal data', () => {
             const testData = { id: '789' }
-            const location = ''
 
-            const result = created(testData, location)
+            const result = success(testData)
 
             expect(result).toEqual({
-                response: {
-                    data: testData,
-                    requestId: undefined,
-                    timestamp: mockTimestamp,
-                },
-                headers: { Location: '' },
+                data: testData,
+                requestId: undefined,
+                timestamp: mockTimestamp,
             })
         })
 
-        it('should handle complex location URLs', () => {
-            const testData = { id: '999' }
-            const location = 'https://api.example.com/v2/resources/999?include=details'
+        it('should handle resource creation with complex data', () => {
+            const testData = { id: '999', metadata: { created: true, version: 'v2' } }
 
-            const result = created(testData, location)
+            const result = success(testData)
 
-            expect(result.headers.Location).toBe(location)
+            expect(result.data.id).toBe('999')
+            expect(result.data.metadata.created).toBe(true)
         })
 
-        it('should handle null data in created response', () => {
-            const location = '/api/v1/actions/complete'
-
-            const result = created(null, location)
+        it('should handle null data for action completion', () => {
+            const result = success(null)
 
             expect(result).toEqual({
-                response: {
-                    data: null,
-                    requestId: undefined,
-                    timestamp: mockTimestamp,
-                },
-                headers: { Location: location },
+                data: null,
+                requestId: undefined,
+                timestamp: mockTimestamp,
             })
         })
 
-        it('should preserve original data object reference', () => {
+        it('should preserve original data object reference for created resources', () => {
             const testData = { id: '123', nested: { value: 'test' } }
-            const location = '/api/v1/test/123'
 
-            const result = created(testData, location)
+            const result = success(testData)
 
-            expect(result.response.data).toBe(testData)
-            expect(result.response.data.nested).toBe(testData.nested)
+            expect(result.data).toBe(testData)
+            expect(result.data.nested).toBe(testData.nested)
         })
     })
 

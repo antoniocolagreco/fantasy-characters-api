@@ -29,14 +29,3 @@ export function paginated<T>(items: T[], pagination: Pagination, requestId?: str
         timestamp: new Date().toISOString(),
     }
 }
-
-export function created<T>(data: T, location: string, requestId?: string) {
-    return {
-        response: {
-            data,
-            requestId,
-            timestamp: new Date().toISOString(),
-        },
-        headers: { Location: location },
-    }
-}
