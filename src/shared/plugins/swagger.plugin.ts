@@ -10,8 +10,8 @@ import { config } from '@/infrastructure/config'
  */
 export const swaggerPlugin = fp(
     async function (fastify: FastifyInstance): Promise<void> {
-        // Register Swagger schema generator
-        await fastify.register(fastifySwagger, {
+            // Register Swagger schema generator
+            await fastify.register(fastifySwagger, {
             openapi: {
                 info: {
                     title: 'Fantasy Characters API',
@@ -67,6 +67,19 @@ export const swaggerPlugin = fp(
                 ],
             },
             hideUntagged: false, // Show all endpoints for debugging
+            // Keep $id references so schemas are hoisted into components.schemas
+            refResolver: {
+                buildLocalReference(json, _baseUri, _fragment, i) {
+                    // Prefer TypeBox $id for stable model names; fallback to def-i
+                    // json may be unknown; ensure string result
+                    const maybeObj = json as { $id?: unknown }
+                    const id =
+                        typeof maybeObj?.$id === 'string' && maybeObj.$id.length > 0
+                            ? (maybeObj.$id as string)
+                            : undefined
+                    return typeof id === 'string' && id.length > 0 ? id : `def-${i}`
+                },
+            },
             // Scrub non-OpenAPI keywords from route schemas when generating docs only
             transform: ({ schema, url }) => {
                 // Remove JSON-Schema-only or tool-specific keys that OAS 3.x does not allow
@@ -80,16 +93,20 @@ export const swaggerPlugin = fp(
                 ])
 
                 function shouldStripKey(key: string): boolean {
-                    if (key === '$ref') return false
-                    if (key.startsWith('$')) return true // strips $id, $schema, etc.
+                    if (key === '$ref' || key === '$id') return false
+                    if (key.startsWith('$')) return true // strips $schema, etc.
                     return EXPLICIT_STRIP.has(key)
                 }
 
                 function scrub(input: unknown): unknown {
                     if (Array.isArray(input)) return input.map(scrub)
                     if (input && typeof input === 'object') {
+                        const src = input as Record<string, unknown>
                         const out: Record<string, unknown> = {}
-                        for (const [k, v] of Object.entries(input)) {
+                        // Preserve a stable vendor extension for schema id so it survives OpenAPI conversion
+                        const id = typeof src.$id === 'string' ? (src.$id as string) : undefined
+                        if (id) out['x-schema-id'] = id
+                        for (const [k, v] of Object.entries(src)) {
                             if (shouldStripKey(k)) continue
                             out[k] = scrub(v)
                         }
@@ -140,29 +157,129 @@ export const swaggerPlugin = fp(
                     'unevaluatedProperties',
                 ])
                 function shouldStripKey(key: string): boolean {
-                    if (key === '$ref') return false
+                    if (key === '$ref' || key === '$id' || key === 'x-schema-id') return false
                     if (key.startsWith('$')) return true
                     return EXPLICIT_STRIP.has(key)
+                }
+                // Normalize JSON Schema nullability (TypeBox Null) to OpenAPI 3.0 nullable
+                function normalizeNullable(obj: Record<string, unknown>): Record<string, unknown> {
+                    const keys = ['anyOf', 'oneOf'] as const
+                    for (const key of keys) {
+                        const alt = obj[key]
+                        if (Array.isArray(alt) && alt.length === 2) {
+                            const a = alt[0]
+                            const b = alt[1]
+                            const isNullA = a && typeof a === 'object' && (a as Record<string, unknown>).type === 'null'
+                            const isNullB = b && typeof b === 'object' && (b as Record<string, unknown>).type === 'null'
+                            const schema = isNullA ? b : isNullB ? a : null
+                            if (schema && typeof schema === 'object') {
+                                // Replace anyOf/oneOf with the other schema and nullable: true
+                                const { $ref, ...rest } = schema as Record<string, unknown>
+                                // Clear the combiner
+                                delete obj[key]
+                                if ($ref && typeof $ref === 'string') {
+                                    obj.$ref = $ref
+                                    obj.nullable = true
+                                    // Merge remaining properties if any
+                                    for (const [rk, rv] of Object.entries(rest)) obj[rk] = rv
+                                } else {
+                                    // Inline schema: merge into current level
+                                    for (const [rk, rv] of Object.entries(schema)) obj[rk] = rv
+                                    obj.nullable = true
+                                }
+                            }
+                        }
+                    }
+                    return obj
                 }
                 function scrub(input: unknown): unknown {
                     if (Array.isArray(input)) return input.map(scrub)
                     if (input && typeof input === 'object') {
-                        const out: Record<string, unknown> = {}
+                        let out: Record<string, unknown> = {}
                         for (const [k, v] of Object.entries(input)) {
                             if (shouldStripKey(k)) continue
                             out[k] = scrub(v)
                         }
+                        // After recursive scrub, normalize anyOf/oneOf + null → nullable
+                        out = normalizeNullable(out)
                         return out
                     }
                     return input
                 }
-                return scrub(swaggerObject) as Record<string, unknown>
+                // Second pass: hoist all objects with $id into components.schemas and replace with $ref
+                function isSchemaLike(obj: Record<string, unknown>): boolean {
+                    return (
+                        'type' in obj ||
+                        'properties' in obj ||
+                        'allOf' in obj ||
+                        'anyOf' in obj ||
+                        'oneOf' in obj ||
+                        'enum' in obj ||
+                        'format' in obj
+                    )
+                }
+                function hoistSchemas(spec: Record<string, unknown>): Record<string, unknown> {
+                    const components = (spec.components as Record<string, unknown>) || {}
+                    const existingSchemas = (components.schemas as Record<string, unknown>) || {}
+                    const collected: Record<string, unknown> = { ...existingSchemas }
+
+                    const seen = new WeakSet<object>()
+                    function visit(node: unknown, path: string[]): unknown {
+                        if (Array.isArray(node)) return node.map((n, i) => visit(n, path.concat(String(i))))
+                        if (!node || typeof node !== 'object') return node
+                        if (seen.has(node as object)) return node
+                        seen.add(node as object)
+
+                        const obj = node as Record<string, unknown>
+                        // Do not transform already-component schemas
+                        if (path.length >= 3 && path[0] === 'components' && path[1] === 'schemas') {
+                            // Still traverse children to normalize nested schemas
+                            for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                            return obj
+                        }
+
+                        // If this node looks like a schema and has $id, hoist it
+                        const id =
+                            (typeof obj['x-schema-id'] === 'string'
+                                ? (obj['x-schema-id'] as string)
+                                : undefined) ||
+                            (typeof obj.$id === 'string' ? (obj.$id as string) : undefined)
+                        if (id && isSchemaLike(obj)) {
+                            // Clone without $id and recursively process nested children
+                            const { $id: _omit, ['x-schema-id']: _xid, ...rest } = obj as Record<
+                                string,
+                                unknown
+                            >
+                            const processed: Record<string, unknown> = {}
+                            for (const [k, v] of Object.entries(rest)) processed[k] = visit(v, path.concat(k))
+                            if (!collected[id]) collected[id] = processed
+                            return { $ref: `#/components/schemas/${id}` }
+                        }
+
+                        // Regular object: recurse
+                        for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                        return obj
+                    }
+
+                    const transformed = visit(spec, []) as Record<string, unknown>
+                    return {
+                        ...transformed,
+                        components: {
+                            ...(transformed.components as Record<string, unknown>),
+                            schemas: collected,
+                        },
+                    }
+                }
+
+                const scrubbed = scrub(swaggerObject) as Record<string, unknown>
+                const hoisted = hoistSchemas(scrubbed)
+                return hoisted
             },
         })
 
         // The /docs/json route is automatically registered by @fastify/swagger
         // As a final guard, scrub the JSON returned by docs endpoints so validators accept it
-        fastify.addHook('onSend', async (request, reply, payload) => {
+    fastify.addHook('onSend', async (request, reply, payload) => {
             try {
                 if (request.method !== 'GET') return
 
@@ -193,22 +310,98 @@ export const swaggerPlugin = fp(
                     'unevaluatedProperties',
                 ])
                 const shouldStripKey = (key: string) =>
-                    key !== '$ref' && (key.startsWith('$') || EXPLICIT_STRIP.has(key))
+                    !(key === '$ref' || key === '$id' || key === 'x-schema-id') &&
+                    (key.startsWith('$') || EXPLICIT_STRIP.has(key))
+                const normalizeNullable = (obj: Record<string, unknown>): Record<string, unknown> => {
+                    const keys = ['anyOf', 'oneOf'] as const
+                    for (const key of keys) {
+                        const alt = obj[key]
+                        if (Array.isArray(alt) && alt.length === 2) {
+                            const a = alt[0]
+                            const b = alt[1]
+                            const isNullA = a && typeof a === 'object' && (a as Record<string, unknown>).type === 'null'
+                            const isNullB = b && typeof b === 'object' && (b as Record<string, unknown>).type === 'null'
+                            const schema = isNullA ? b : isNullB ? a : null
+                            if (schema && typeof schema === 'object') {
+                                const { $ref, ...rest } = schema as Record<string, unknown>
+                                delete obj[key]
+                                if ($ref && typeof $ref === 'string') {
+                                    obj.$ref = $ref
+                                    obj.nullable = true
+                                    for (const [rk, rv] of Object.entries(rest)) obj[rk] = rv
+                                } else {
+                                    for (const [rk, rv] of Object.entries(schema)) obj[rk] = rv
+                                    obj.nullable = true
+                                }
+                            }
+                        }
+                    }
+                    return obj
+                }
                 const scrub = (input: unknown): unknown => {
                     if (Array.isArray(input)) return input.map(scrub)
                     if (input && typeof input === 'object') {
-                        const out: Record<string, unknown> = {}
-                        for (const [k, v] of Object.entries(input)) {
+                        const src = input as Record<string, unknown>
+                        let out: Record<string, unknown> = {}
+                        const id = typeof src.$id === 'string' ? (src.$id as string) : undefined
+                        if (id) out['x-schema-id'] = id
+                        for (const [k, v] of Object.entries(src)) {
                             if (shouldStripKey(k)) continue
                             out[k] = scrub(v)
                         }
+                        out = normalizeNullable(out)
                         return out
                     }
                     return input
                 }
 
                 const cleaned = scrub(json)
-                const serialized = JSON.stringify(cleaned)
+                // Hoist $id schemas to components.schemas and replace with $ref
+                const hoistSchemas = (spec: Record<string, unknown>): Record<string, unknown> => {
+                    const components = (spec.components as Record<string, unknown>) || {}
+                    const existingSchemas = (components.schemas as Record<string, unknown>) || {}
+                    const collected: Record<string, unknown> = { ...existingSchemas }
+                    const seen = new WeakSet<object>()
+                    const isSchemaLike = (obj: Record<string, unknown>) =>
+                        'type' in obj ||
+                        'properties' in obj ||
+                        'allOf' in obj ||
+                        'anyOf' in obj ||
+                        'oneOf' in obj ||
+                        'enum' in obj ||
+                        'format' in obj
+                    const visit = (node: unknown, path: string[]): unknown => {
+                        if (Array.isArray(node)) return node.map((n, i) => visit(n, path.concat(String(i))))
+                        if (!node || typeof node !== 'object') return node
+                        if (seen.has(node as object)) return node
+                        seen.add(node as object)
+                        const obj = node as Record<string, unknown>
+                        if (path.length >= 3 && path[0] === 'components' && path[1] === 'schemas') {
+                            for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                            return obj
+                        }
+                        const id = typeof obj.$id === 'string' ? (obj.$id as string) : undefined
+                        if (id && isSchemaLike(obj)) {
+                            const { $id: _omit, ...rest } = obj
+                            const processed: Record<string, unknown> = {}
+                            for (const [k, v] of Object.entries(rest)) processed[k] = visit(v, path.concat(k))
+                            if (!collected[id]) collected[id] = processed
+                            return { $ref: `#/components/schemas/${id}` }
+                        }
+                        for (const [k, v] of Object.entries(obj)) obj[k] = visit(v, path.concat(k))
+                        return obj
+                    }
+                    const transformed = visit(spec, []) as Record<string, unknown>
+                    return {
+                        ...transformed,
+                        components: {
+                            ...(transformed.components as Record<string, unknown>),
+                            schemas: collected,
+                        },
+                    }
+                }
+                const hoisted = hoistSchemas(cleaned as Record<string, unknown>)
+                const serialized = JSON.stringify(hoisted)
                 reply.header('content-length', Buffer.byteLength(serialized))
                 return serialized
             } catch {
