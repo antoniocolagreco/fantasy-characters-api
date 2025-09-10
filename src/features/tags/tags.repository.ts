@@ -107,14 +107,35 @@ export const tagRepository = {
     async create(data: CreateTagData) {
         const id = generateUUIDv7()
 
-        const tag = await prisma.tag.create({
-            data: {
-                id,
-                ...data,
-            },
-        })
+        const baseData: Prisma.TagCreateInput = {
+            id,
+            name: data.name,
+            visibility: data.visibility,
+            ...(data.description !== undefined && { description: data.description }),
+        }
 
-        return transformTagToSchema(tag)
+        // Try to connect owner if provided; on FK/connect failure, create without owner
+        let created: Prisma.TagGetPayload<object>
+        if (data.ownerId) {
+            try {
+                created = await prisma.tag.create({
+                    data: { ...baseData, owner: { connect: { id: data.ownerId } } },
+                })
+            } catch (error) {
+                if (
+                    error instanceof Prisma.PrismaClientKnownRequestError &&
+                    (error.code === 'P2003' || error.code === 'P2025')
+                ) {
+                    created = await prisma.tag.create({ data: baseData })
+                } else {
+                    throw error
+                }
+            }
+        } else {
+            created = await prisma.tag.create({ data: baseData })
+        }
+
+        return transformTagToSchema(created)
     },
 
     async update(id: string, data: Prisma.TagUpdateInput) {

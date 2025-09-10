@@ -11,14 +11,44 @@ import type {
 
 import { HTTP_STATUS } from '@/shared/constants'
 import { err } from '@/shared/errors'
-import { paginated, success } from '@/shared/utils'
+import {
+    paginated,
+    success,
+    buildCacheKey,
+    getCache,
+    setCache,
+    invalidateByPrefix,
+    setNoStore,
+    setPublicListCache,
+    setPublicResourceCache,
+} from '@/shared/utils'
 
 export const characterController = {
     async listCharacters(
         request: FastifyRequest<{ Querystring: CharacterListQuery }>,
         reply: FastifyReply
     ) {
+        const isAnonymous = !request.user
+        const cachePrefix = 'characters:list'
+        if (isAnonymous) {
+            const key = buildCacheKey(cachePrefix, request.query)
+            type CharListResult = Awaited<ReturnType<typeof characterService.list>>
+            const hit = getCache<CharListResult>(key)
+            if (hit) {
+                setPublicListCache(reply)
+                return reply
+                    .code(HTTP_STATUS.OK)
+                    .send(paginated(hit.characters, hit.pagination, request.id))
+            }
+            const result = await characterService.list(request.query, request.user)
+            setCache(key, result, 30_000)
+            setPublicListCache(reply)
+            return reply
+                .code(HTTP_STATUS.OK)
+                .send(paginated(result.characters, result.pagination, request.id))
+        }
         const { characters, pagination } = await characterService.list(request.query, request.user)
+        setPublicListCache(reply)
         return reply.code(HTTP_STATUS.OK).send(paginated(characters, pagination, request.id))
     },
     async getCharacterById(
@@ -30,15 +60,19 @@ export const characterController = {
             request.user,
             request.query.expanded === true
         )
+        setPublicResourceCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
     },
     async getCharacterStats(request: FastifyRequest, reply: FastifyReply) {
         const stats = await characterService.getStats(request.user)
+        setPublicListCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
     },
     async createCharacter(request: FastifyRequest<{ Body: CreateCharacter }>, reply: FastifyReply) {
         if (!request.user) throw err('UNAUTHORIZED', 'Login required')
         const character = await characterService.create(request.body, request.user)
+        invalidateByPrefix('characters:list')
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.CREATED).send(success(character, request.id))
     },
     async updateCharacter(
@@ -51,6 +85,8 @@ export const characterController = {
             request.body,
             request.user
         )
+        invalidateByPrefix('characters:list')
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(character, request.id))
     },
     async deleteCharacter(
@@ -59,6 +95,8 @@ export const characterController = {
     ) {
         if (!request.user) throw err('UNAUTHORIZED', 'Login required')
         await characterService.delete(request.params.id, request.user)
+        invalidateByPrefix('characters:list')
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.NO_CONTENT).send()
     },
 } as const

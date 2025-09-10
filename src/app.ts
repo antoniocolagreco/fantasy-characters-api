@@ -18,12 +18,14 @@ import prismaService from '@/infrastructure/database/prisma.service'
 import { compressionPlugin } from '@/shared/plugins/compression.plugin'
 import corsPlugin from '@/shared/plugins/cors.plugin'
 import { errorHandlerPlugin } from '@/shared/plugins/error-handler.plugin'
+import etagPlugin from '@/shared/plugins/etag.plugin'
 import { healthCheckPlugin } from '@/shared/plugins/health.plugin'
 import helmetPlugin from '@/shared/plugins/helmet.plugin'
 import loggingPlugin from '@/shared/plugins/logging.plugin'
 import { multipartPlugin } from '@/shared/plugins/multipart.plugin'
 import rateLimitPlugin from '@/shared/plugins/rate-limit.plugin'
 import sanitizationPlugin from '@/shared/plugins/sanitization.plugin'
+import stableEtagPlugin from '@/shared/plugins/stable-etag.plugin'
 import { swaggerPlugin } from '@/shared/plugins/swagger.plugin'
 import validationPlugin from '@/shared/plugins/validation.plugin'
 import { generateUUIDv7 } from '@/shared/utils/uuid'
@@ -69,7 +71,9 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(swaggerPlugin)
 
     // Performance plugins
+    await app.register(stableEtagPlugin) // compute stable ETags before compression/etag
     await app.register(compressionPlugin)
+    await app.register(etagPlugin)
 
     // Security plugins
     await app.register(helmetPlugin)

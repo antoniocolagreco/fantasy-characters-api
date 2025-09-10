@@ -6,6 +6,7 @@ import type { CreateImage, ImageListQuery, ImageParams, UpdateImage } from './im
 
 import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { err } from '@/shared/errors'
+import { setNoStore, setPublicListCache, setPublicResourceCache } from '@/shared/utils'
 import { success, paginated } from '@/shared/utils/response.helper'
 
 /**
@@ -34,6 +35,7 @@ export const imageController = {
         )
 
         // Format HTTP response using consistent success() pattern
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.CREATED).send(success(image, request.id))
     },
 
@@ -50,6 +52,7 @@ export const imageController = {
         }
 
         // Format HTTP response
+        setPublicResourceCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
@@ -82,6 +85,7 @@ export const imageController = {
         const result = await imageService.listImages(query, user)
 
         // Format HTTP response
+        setPublicListCache(reply)
         return reply
             .code(HTTP_STATUS.OK)
             .send(paginated(result.data, result.pagination, request.id))
@@ -101,6 +105,7 @@ export const imageController = {
         }
 
         // Format HTTP response
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
@@ -129,6 +134,7 @@ export const imageController = {
         }
 
         // Format HTTP response
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
@@ -145,6 +151,7 @@ export const imageController = {
         }
 
         // Format HTTP response (204 No Content)
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.NO_CONTENT).send()
     },
 
@@ -157,6 +164,7 @@ export const imageController = {
         const stats = await imageService.getImageStats(query.ownerId, user)
 
         // Format HTTP response
+        setPublicListCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
     },
 } as const

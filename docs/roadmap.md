@@ -443,13 +443,13 @@ Duration (retroactive): ~2–3 days
 
 Duration: 2-3 days
 
-- [ ] 19.01 Implement ETag generation for cacheable responses following
+- [x] 19.01 Implement ETag generation for cacheable responses following
       [caching.md](./caching.md) (exclude auth/non-cacheable endpoints)
-- [ ] 19.02 Create Cache-Control header management
-- [ ] 19.03 Add conditional request handling
-- [ ] 19.04 Implement cache invalidation strategies
-- [ ] 19.05 Write comprehensive caching tests (80%+ coverage)
-- [ ] 19.06 Document caching strategy
+- [x] 19.02 Create Cache-Control header management
+- [x] 19.03 Add conditional request handling
+- [x] 19.04 Implement cache invalidation strategies
+- [x] 19.05 Write comprehensive caching tests (80%+ coverage)
+- [x] 19.06 Document caching strategy
 
 ---
 

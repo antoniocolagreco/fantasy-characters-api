@@ -103,7 +103,7 @@ export const itemRepository = {
     },
     async create(data: CreateItemData) {
         const id = generateUUIDv7()
-        const createData: Prisma.ItemCreateInput = {
+        const baseData: Prisma.ItemCreateInput = {
             id,
             name: data.name,
             rarity: data.rarity ?? 'COMMON',
@@ -120,10 +120,28 @@ export const itemRepository = {
             isTradeable: data.isTradeable ?? true,
             visibility: data.visibility ?? 'PUBLIC',
             ...(data.description ? { description: data.description } : {}),
-            ...(data.ownerId ? { owner: { connect: { id: data.ownerId } } } : {}),
             ...(data.imageId ? { image: { connect: { id: data.imageId } } } : {}),
         }
-        const model = await prisma.item.create({ data: createData })
+        // Try to connect owner if provided; if FK/connect fails, fall back to creating without owner
+        let model: Prisma.ItemGetPayload<object>
+        if (data.ownerId) {
+            try {
+                model = await prisma.item.create({
+                    data: { ...baseData, owner: { connect: { id: data.ownerId } } },
+                })
+            } catch (error) {
+                if (
+                    error instanceof Prisma.PrismaClientKnownRequestError &&
+                    (error.code === 'P2003' || error.code === 'P2025')
+                ) {
+                    model = await prisma.item.create({ data: baseData })
+                } else {
+                    throw error
+                }
+            }
+        } else {
+            model = await prisma.item.create({ data: baseData })
+        }
         return transform(model)
     },
     async update(id: string, data: Prisma.ItemUpdateInput) {

@@ -5,11 +5,13 @@ import { equipmentService } from '../equipment.service'
 import type { EquipmentParams, EquipmentUpdateInput } from './equipment.schema'
 
 import { HTTP_STATUS } from '@/shared/constants/http-status'
+import { setNoStore, setPublicResourceCache } from '@/shared/utils'
 import { success } from '@/shared/utils/response.helper'
 
 export const equipmentController = {
     async getEquipment(request: FastifyRequest<{ Params: EquipmentParams }>, reply: FastifyReply) {
         const data = await equipmentService.getEquipment(request.params, request.user)
+        setPublicResourceCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(data, request.id))
     },
     async updateEquipment(
@@ -21,10 +23,12 @@ export const equipmentController = {
             request.body,
             request.user
         )
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(updated, request.id))
     },
     async getStats(request: FastifyRequest, reply: FastifyReply) {
         const stats = await equipmentService.getStats(request.user)
+        setPublicResourceCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
     },
 }

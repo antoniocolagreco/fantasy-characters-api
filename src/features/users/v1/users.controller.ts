@@ -10,26 +10,36 @@ import type {
     UserParams,
 } from '@/features/users/users.type'
 import { HTTP_STATUS } from '@/shared/constants'
-import { paginated, success } from '@/shared/utils'
+import {
+    paginated,
+    success,
+    setNoStore,
+    setPublicListCache,
+    setPublicResourceCache,
+} from '@/shared/utils'
 
 export const userController = {
     async getUserById(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
         const user = await publicUserService.getById(request.params.id, request.user)
+        setPublicResourceCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
     },
 
     async listUsers(request: FastifyRequest<{ Querystring: UserListQuery }>, reply: FastifyReply) {
         const { users, pagination } = await publicUserService.list(request.query, request.user)
+        setPublicListCache(reply)
         return reply.code(HTTP_STATUS.OK).send(paginated(users, pagination, request.id))
     },
 
     async getUserStats(request: FastifyRequest, reply: FastifyReply) {
         const stats = await userService.getStats(request.user)
+        setPublicListCache(reply)
         return reply.code(HTTP_STATUS.OK).send(success(stats, request.id))
     },
 
     async createUser(request: FastifyRequest<{ Body: CreateUserInput }>, reply: FastifyReply) {
         const user = await userService.create(request.body)
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.CREATED).send(success(user, request.id))
     },
 
@@ -38,11 +48,13 @@ export const userController = {
         reply: FastifyReply
     ) {
         const user = await userService.update(request.params.id, request.body, request.user)
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(user, request.id))
     },
 
     async deleteUser(request: FastifyRequest<{ Params: UserParams }>, reply: FastifyReply) {
         await userService.delete(request.params.id, request.user)
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.NO_CONTENT).send()
     },
 
@@ -61,7 +73,7 @@ export const userController = {
         const updatedUser = isUnban
             ? await userService.unban(request.params.id, user)
             : await userService.ban(request.params.id, request.body, user.id, user)
-
+        setNoStore(reply)
         return reply.code(HTTP_STATUS.OK).send(success(updatedUser, request.id))
     },
 } as const
