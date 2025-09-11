@@ -3,19 +3,20 @@ import type { FastifyPluginAsync } from 'fastify'
 
 import { authController } from './auth.controller'
 import {
-    LoginRequestSchema,
-    LoginResponseSchema,
-    RegisterRequestSchema,
-    RegisterResponseSchema,
-    RefreshTokenRequestSchema,
-    RefreshTokenResponseSchema,
     ChangePasswordRequestSchema,
     ChangePasswordResponseSchema,
+    LoginRequestSchema,
+    LoginResponseSchema,
     LogoutResponseSchema,
+    RefreshTokenRequestSchema,
+    RefreshTokenResponseSchema,
+    RegisterRequestSchema,
+    RegisterResponseSchema,
 } from './auth.http.schema'
 
 import { createAuthMiddleware } from '@/features/auth/auth.middleware'
 import { config } from '@/infrastructure/config'
+import type { BasicAuthRequest, BasicReply } from '@/shared'
 import { ErrorResponseSchema } from '@/shared/schemas'
 
 export const authRoutesV1: FastifyPluginAsync = async app => {
@@ -110,9 +111,8 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
         '/auth/logout-all',
         {
             preHandler: async (request, reply) => {
-                const authRequest =
-                    request as unknown as import('@/shared/types/http').BasicAuthRequest
-                const authReply = reply as unknown as import('@/shared/types/http').BasicReply
+                const authRequest = request as BasicAuthRequest
+                const authReply = reply as BasicReply
                 authMiddleware(authRequest, authReply)
             },
             schema: {
@@ -133,9 +133,8 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
         '/auth/change-password',
         {
             preHandler: async (request, reply) => {
-                const authRequest =
-                    request as unknown as import('@/shared/types/http').BasicAuthRequest
-                const authReply = reply as unknown as import('@/shared/types/http').BasicReply
+                const authRequest = request as BasicAuthRequest
+                const authReply = reply as BasicReply
                 authMiddleware(authRequest, authReply)
             },
             schema: {

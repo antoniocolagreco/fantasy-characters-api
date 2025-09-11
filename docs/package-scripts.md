@@ -67,17 +67,33 @@ They cover setup, development, testing, and deployment in a standardized way.
 ## ✅ Testing
 
 - **`pnpm run test`**  
-  Runs tests in watch mode (useful during development).
-
-- **`pnpm run test:run`**  
   Runs the test suite once.  
   👉 Used in CI/CD pipelines.
+
+- **`pnpm run test:watch`**  
+  Runs tests in watch mode (useful during development).
 
 - **`pnpm run test:coverage`**  
   Runs tests and generates a coverage report.
 
-- **`pnpm run test:e2e`**  
-  Runs end-to-end tests simulating real API requests.
+- **`pnpm run test:ui`**  
+  Runs tests with Vitest UI for visualization.
+
+---
+
+## 🔧 Validation & Quality
+
+- **`pnpm run validate`**  
+  Runs complete validation pipeline (format, typecheck, lint, tests, coverage).
+
+- **`pnpm run validate:coverage`**  
+  Validates test coverage meets requirements.
+
+- **`pnpm run validate:env`**  
+  Validates environment variables configuration.
+
+- **`pnpm run validate:openapi`**  
+  Validates OpenAPI schema generation.
 
 ---
 
@@ -124,6 +140,9 @@ They cover setup, development, testing, and deployment in a standardized way.
 - **`pnpm run docs:serve`**  
   Serves the documentation locally.
 
+- **`pnpm run generate:openapi`**  
+  Generates OpenAPI schema from code.
+
 ---
 
 ## 🔒 Security
@@ -141,8 +160,11 @@ They cover setup, development, testing, and deployment in a standardized way.
 - **`pnpm run ci`**  
   Runs typecheck + lint + tests (basic CI pipeline).
 
-- **`pnpm run ci:coverage`**  
-  Same as `ci` but also generates a coverage report.
+- **`pnpm run ci:quality`**  
+  Runs lint + typecheck + test coverage.
+
+- **`pnpm run ci:full`**  
+  Runs complete CI pipeline including OpenAPI validation.
 
 ---
 
@@ -151,7 +173,7 @@ They cover setup, development, testing, and deployment in a standardized way.
 ```bash
 pnpm run typecheck
 pnpm run lint
-pnpm run test:run
+pnpm run test
 ```
 
 This ensures your code meets the team’s standards.

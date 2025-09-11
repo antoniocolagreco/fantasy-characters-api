@@ -140,7 +140,7 @@ export const testPatterns = {
                     })
                 )
 
-                const body = expectSuccessResponse(response as unknown as TestResponse)
+                const body = expectSuccessResponse(response as TestResponse)
                 expect(body.data).toMatchObject(testData.expectedData)
                 testData.validate?.(body.data)
             },
@@ -157,7 +157,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.NOT_FOUND)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.NOT_FOUND)
             },
         }),
 
@@ -170,7 +170,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.FORBIDDEN)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.FORBIDDEN)
             },
         }),
 
@@ -183,7 +183,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.BAD_REQUEST)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.BAD_REQUEST)
             },
         }),
     },
@@ -203,7 +203,7 @@ export const testPatterns = {
                     })
                 )
 
-                const body = expectPaginatedResponse(response as unknown as TestResponse)
+                const body = expectPaginatedResponse(response as TestResponse)
                 expect(Array.isArray(body.data)).toBe(true)
                 if (Array.isArray(body.data) && body.data.length > 0) {
                     expect(body.data.length).toBeGreaterThan(0)
@@ -223,7 +223,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.FORBIDDEN)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.FORBIDDEN)
             },
         }),
     },
@@ -246,7 +246,7 @@ export const testPatterns = {
                     })
                 )
 
-                const body = expectSuccessResponse(response as unknown as TestResponse, 201)
+                const body = expectSuccessResponse(response as TestResponse, 201)
                 expect(body.data).toMatchObject(validPayload)
                 options?.validate?.(body.data)
             },
@@ -262,7 +262,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.BAD_REQUEST)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.BAD_REQUEST)
             },
         }),
 
@@ -276,7 +276,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.FORBIDDEN)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.FORBIDDEN)
             },
         }),
     },
@@ -302,7 +302,7 @@ export const testPatterns = {
                     })
                 )
 
-                const body = expectSuccessResponse(response as unknown as TestResponse)
+                const body = expectSuccessResponse(response as TestResponse)
                 expect(body.data).toMatchObject(testData.updatePayload)
                 testData.validate?.(body.data)
             },
@@ -320,7 +320,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.NOT_FOUND)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.NOT_FOUND)
             },
         }),
     },
@@ -353,7 +353,7 @@ export const testPatterns = {
                     })
                 )
 
-                expectErrorResponse(response as unknown as TestResponse, HTTP_STATUS.NOT_FOUND)
+                expectErrorResponse(response as TestResponse, HTTP_STATUS.NOT_FOUND)
             },
         }),
     },

@@ -15,6 +15,13 @@ pnpm install
 cp .env.example .env
 # Edit .env with your configuration
 
+# Start database
+pnpm docker:compose:dev
+
+# Setup database
+pnpm db:migrate
+pnpm db:seed
+
 # Start development
 pnpm dev
 ```
@@ -105,7 +112,7 @@ This API manages fantasy characters with rich taxonomies and relationships:
 
 ## 🛠️ Tech Stack Highlights
 
-- **Backend**: Node.js 24+, TypeScript, Fastify v5+
+- **Backend**: Node.js 20+, TypeScript, Fastify v5+
 - **Database**: PostgreSQL with Prisma ORM
 - **Validation**: TypeBox + Ajv with automatic OpenAPI generation
 - **Auth**: JWT with refresh token rotation
@@ -127,7 +134,7 @@ This API manages fantasy characters with rich taxonomies and relationships:
 
 ### Local Development
 
-1. **Prerequisites**: Node.js 24+, PostgreSQL, pnpm
+1. **Prerequisites**: Node.js 20+, PostgreSQL, pnpm
 2. **Install**: `pnpm install`
 3. **Configure**: Copy `.env.example` to `.env` and configure
 4. **Database**: `pnpm db:migrate` and `pnpm db:seed`
@@ -179,7 +186,8 @@ Once running, visit:
 
 - **Swagger UI**: `http://localhost:3000/docs`
 - **OpenAPI JSON**: `http://localhost:3000/docs/json`
-- **Health Check**: `http://localhost:3000/api/v1/live`
+- **Health Check**: `http://localhost:3000/api/health`
+- **Readiness Check**: `http://localhost:3000/api/ready`
 
 ## 👨‍💻 Author
 

@@ -24,9 +24,9 @@ Notes
 
 ### Milestone completion gates
 
-- [ ] Zero type-check errors (TypeScript strict)
-- [ ] Zero lint errors (ESLint) and formatted (Prettier)
-- [ ] All tests pass with ≥ 80% global coverage (aim for ≥ 80% per file)
+- [x] Zero type-check errors (TypeScript strict)
+- [x] Zero lint errors (ESLint) and formatted (Prettier)
+- [x] All tests pass with ≥ 80% global coverage (aim for ≥ 80% per file)
 
 ---
 
@@ -468,13 +468,13 @@ Duration: 2-3 days
 
 ### Quality Gates
 
-- [ ] All TypeScript types are strict (no `any` types)
-- [ ] All endpoints have comprehensive TypeBox schemas
-- [ ] Global coverage ≥ 80% (CI enforces); critical services aim for 80%+
-- [ ] All endpoints have integration tests
-- [ ] All features have proper error handling
-- [ ] OpenAPI schema validated in CI
-- [ ] RBAC checks applied in routes and services
-- [ ] All API changes are documented
-- [ ] All security requirements are met
-- [ ] All performance requirements are met
+- [x] All TypeScript types are strict (no `any` types)
+- [x] All endpoints have comprehensive TypeBox schemas
+- [x] Global coverage ≥ 80% (CI enforces); critical services aim for 80%+
+- [x] All endpoints have integration tests
+- [x] All features have proper error handling
+- [x] OpenAPI schema validated in CI
+- [x] RBAC checks applied in routes and services
+- [x] All API changes are documented
+- [x] All security requirements are met
+- [x] All performance requirements are met

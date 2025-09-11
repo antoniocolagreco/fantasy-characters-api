@@ -23,7 +23,7 @@ const USER_ID = generateUUIDv7()
 const IMAGE_ID = generateUUIDv7()
 const TEST_DESC = 'Test description'
 
-const mockService = imageService as unknown as {
+const mockService = imageService as {
     createImage: ReturnType<typeof vi.fn>
     getImageById: ReturnType<typeof vi.fn>
     getImageFile: ReturnType<typeof vi.fn>

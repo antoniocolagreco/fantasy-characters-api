@@ -194,7 +194,7 @@ Register health endpoint with proper schema validation and documentation.
 
 ```ts
 app.get(
-  '/health',
+  '/api/health',
   {
     schema: {
       tags: ['health'],

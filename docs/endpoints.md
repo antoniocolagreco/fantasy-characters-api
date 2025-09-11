@@ -29,11 +29,9 @@ POST   /api/v1/users/:id/ban     # Ban/Unban a user (RBAC: moderator→USER only
 POST   /api/v1/auth/register      # Register new user
 POST   /api/v1/auth/login         # User login (returns JWT)
 POST   /api/v1/auth/logout        # User logout (invalidate/rotate token)
+POST   /api/v1/auth/logout-all    # Logout from all devices
 POST   /api/v1/auth/refresh       # Refresh JWT token
-
-GET    /api/v1/auth/profile       # Get current user profile
-PUT    /api/v1/auth/profile       # Update user profile
-PUT    /api/v1/auth/password      # Change password
+PUT    /api/v1/auth/change-password      # Change password
 
 # OAuth2 (Optional)
 GET    /api/v1/auth/oauth/:provider/start     # Redirect to provider (google, github)

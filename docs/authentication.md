@@ -21,7 +21,9 @@ it predictable and minimal.
   - POST /api/auth/refresh → returns new accessToken (+ optionally new
     refreshToken)
   - POST /api/auth/logout → revoke refresh token
-  - GET /api/auth/profile, PUT /api/auth/profile, PUT /api/auth/password
+  - POST /api/v1/auth/register, POST /api/v1/auth/login, POST
+    /api/v1/auth/logout, POST /api/v1/auth/refresh, PUT
+    /api/v1/auth/change-password
 - OAuth2 (Google/GitHub):
   - GET /api/auth/oauth/:provider/start → redirect to provider (provider ∈
     {google, github})

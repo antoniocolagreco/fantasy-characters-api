@@ -54,10 +54,7 @@ describe('Users API v1 - Create Operations', () => {
                 },
             })
 
-            const body = expectSuccessResponse(
-                response as unknown as TestResponse,
-                HTTP_STATUS.CREATED
-            )
+            const body = expectSuccessResponse(response as TestResponse, HTTP_STATUS.CREATED)
             expect(body.data).toMatchObject({
                 email: userData.email,
                 name: userData.name,

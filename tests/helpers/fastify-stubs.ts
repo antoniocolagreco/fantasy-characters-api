@@ -58,5 +58,5 @@ export function createRequestStub<TBody = unknown>(
         params: opts?.params,
     }
     // Internally assert to FastifyRequest for testing purposes
-    return base as unknown as RequestStub<TBody>
+    return base as RequestStub<TBody>
 }
