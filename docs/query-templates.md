@@ -1,4 +1,4 @@
-# AI Query & Validation
+# Query & Validation
 
 Essential patterns for schema-first query handling and validation using TypeBox.
 
@@ -319,45 +319,9 @@ export const characterService = {
         hasPrev: !!query.cursor,
         limit: query.limit ?? 20,
         ...(nextCursor && { nextCursor }),
-        ...(query.cursor && { startCursor: query.cursor }),
+        ...(query.cursor && { prevCursor: query.cursor }),
       },
     }
   },
-
-  // ... other character operations
 } as const
-```
-
-## Advanced Query Helpers (Examples)
-
-Specialized utilities for complex filtering scenarios like ranges, search, and
-validation.
-
-```typescript
-// Helper for range construction & validation (from characters.service.ts)
-function range(min?: number, max?: number) {
-  if (min !== undefined && max !== undefined && min > max) {
-    throw err('VALIDATION_ERROR', 'Min value cannot be greater than max value')
-  }
-  if (min === undefined && max === undefined) return undefined
-  return {
-    ...(min !== undefined ? { gte: min } : {}),
-    ...(max !== undefined ? { lte: max } : {}),
-  }
-}
-
-// Text search (from characters.service.ts)
-if (query.search) {
-  businessFilters.OR = [
-    { name: { contains: query.search, mode: 'insensitive' } },
-    { description: { contains: query.search, mode: 'insensitive' } },
-  ]
-}
-
-// Usage examples
-const levelRange = range(query.levelMin, query.levelMax)
-if (levelRange) businessFilters.level = levelRange
-
-const experienceRange = range(query.experienceMin, query.experienceMax)
-if (experienceRange) businessFilters.experience = experienceRange
 ```

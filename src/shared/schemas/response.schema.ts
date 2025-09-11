@@ -41,12 +41,13 @@ export const PaginationSchema = Type.Object(
         hasPrev: Type.Boolean({
             description: 'Whether there are more items before this page',
         }),
-        startCursor: Type.Optional(
+        prevCursor: Type.Optional(
             Type.String({
-                description: 'Cursor pointing to the first item in this page',
+                description:
+                    'Cursor pointing to the first item in this page - use for previous page',
             })
         ),
-        endCursor: Type.Optional(
+        nextCursor: Type.Optional(
             Type.String({
                 description: 'Cursor pointing to the last item in this page - use for next page',
             })

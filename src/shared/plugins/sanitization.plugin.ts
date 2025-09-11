@@ -3,6 +3,8 @@ import fp from 'fastify-plugin'
 import stripTags from 'striptags'
 import validator from 'validator'
 
+import { isRecord } from '@/shared/utils/type-guards'
+
 export type SanitizationPluginOptions = {
     methods?: ReadonlyArray<'POST' | 'PUT' | 'PATCH'>
     maxDepth?: number
@@ -62,12 +64,12 @@ function createSanitizer(options?: SanitizationPluginOptions) {
             if (Array.isArray(v)) {
                 out[k] = v.map(item => {
                     if (item && typeof item === 'object') {
-                        return sanitizeObjectDeep(item as Record<string, unknown>, depth + 1)
+                        return sanitizeDeep(item, depth + 1)
                     }
                     return sanitizeValue(item)
                 })
             } else if (v && typeof v === 'object') {
-                out[k] = sanitizeObjectDeep(v as Record<string, unknown>, depth + 1)
+                out[k] = sanitizeDeep(v, depth + 1)
             } else {
                 out[k] = sanitizeValue(v)
             }
@@ -75,14 +77,31 @@ function createSanitizer(options?: SanitizationPluginOptions) {
         return out
     }
 
+    function sanitizeDeep(value: unknown, depth: number): unknown {
+        if (typeof value === 'string') return sanitizeValue(value)
+        if (Array.isArray(value)) {
+            return value.map(item =>
+                item && typeof item === 'object'
+                    ? sanitizeDeep(item, depth + 1)
+                    : sanitizeValue(item)
+            )
+        }
+        if (value && typeof value === 'object') {
+            if (isRecord(value)) {
+                return sanitizeObjectDeep(value, depth)
+            }
+            return value
+        }
+        return value
+    }
+
     async function middleware(request: FastifyRequest, _reply: FastifyReply) {
         if (!methods.includes(request.method as 'POST' | 'PUT' | 'PATCH')) return
         if (!isJsonContentType(request)) return
-        if (!request.body || typeof request.body !== 'object') return
+        if (request.body === undefined || request.body === null) return
 
         try {
-            const body = request.body as Record<string, unknown>
-            request.body = sanitizeObjectDeep(body, 0)
+            request.body = sanitizeDeep(request.body, 0)
         } catch (error) {
             request.log.warn({ error, url: request.url }, 'request sanitization failed')
         }

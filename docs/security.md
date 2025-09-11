@@ -1,17 +1,17 @@
-# AI Security
+# Security
 
 Essential security patterns for initial API code development with Fastify +
 TypeScript.
 
 ## 🏗️ **Actual Security Architecture**
 
-Your API request flows through 3 layers, each doing one specific job:
+Your API request flows through layers with specific security responsibilities:
 
 ```text
-1. MIDDLEWARE  →  2. CONTROLLER  →  3. SERVICE
-   "Can this      "Extract HTTP    "What can THIS user
-    user access    data and         do with THIS data?
-    this route?"   delegate"        Apply business security"
+1. MIDDLEWARE  →  2. CONTROLLER  →  3. SERVICE  →  4. REPOSITORY
+   "Can this      "Extract HTTP    "What can THIS    "Execute with
+    user access    data and         user do with      pre-secured
+    this route?"   delegate"        THIS data?"       filters"
 ```
 
 ### **What Each Layer Does**
@@ -21,6 +21,10 @@ Your API request flows through 3 layers, each doing one specific job:
 | **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access        |
 | **CONTROLLER** | Handle HTTP request/response          | Pure HTTP coordination, no security   |
 | **SERVICE**    | Apply business rules                  | Granular permissions & data filtering |
+| **REPOSITORY** | Execute database operations           | Use pre-filtered, secure queries      |
+
+**Note**: Only 3 layers perform actual security checks (Middleware, Service,
+Repository). Controllers are security-agnostic coordinators.
 
 ### **Security Strategy**
 
@@ -28,6 +32,7 @@ Your API request flows through 3 layers, each doing one specific job:
 - **Controller**: Security-agnostic HTTP coordination - just extract data and
   delegate
 - **Service**: All business-level security decisions and data filtering
+- **Repository**: Execute queries with security filters pre-built by services
 
 ### **Key Principle**
 
@@ -44,7 +49,8 @@ Understanding and mitigating the most critical web application security risks.
 **Problem**: Users can access resources they shouldn't have permission to view
 or modify.  
 **Solution**: Implement RBAC with deny-by-default policy, check permissions in
-both controllers and services.
+middleware (route-level) and services (business-level). Controllers should not
+perform security checks.
 
 ### 2. Cryptographic Failures
 
@@ -135,7 +141,7 @@ await fastify.register(helmet, {
 })
 ```
 
-## Required HTTPS Enforcement
+## Recommended HTTPS Enforcement (not enabled by default)
 
 Always redirect HTTP to HTTPS and enforce secure connections.
 
@@ -179,7 +185,7 @@ app.addHook('onRequest', async (request, reply) => {
 })
 ```
 
-## Required Rate Limiting
+## Rate Limiting (implemented by default)
 
 ```ts
 import rateLimit from '@fastify/rate-limit'
@@ -188,7 +194,7 @@ await fastify.register(rateLimit, {
   global: true,
   keyGenerator: req =>
     (req as any).user?.id ? `user:${(req as any).user.id}` : `ip:${req.ip}`,
-  max: (_req, key) => (key.startsWith('user:') ? 600 : 100),
+  max: (_req, key) => (key.startsWith('user:') ? 500 : 150),
   timeWindow: '1 minute',
 })
 ```
@@ -426,7 +432,7 @@ const app = fastify({
 Queste opzioni rimuovono chiavi pericolose come `__proto__` e `constructor` da
 input JSON.
 
-## Required CSRF Protection
+## Recommended CSRF Protection (not enabled by default)
 
 Protect state-changing operations from cross-site request forgery.
 
@@ -614,7 +620,7 @@ COPY --from=security /app/node_modules ./node_modules
 - [ ] HTTPS enforcement: redirect server running on port 80, TLS certificates
       configured
 - [ ] Helmet security headers enabled with CSP
-- [ ] Rate limiting configured (100/min anon, 600/min auth)
+- [ ] Rate limiting configured (150/min anon, 500/min auth)
 - [ ] Body size limit set (1MB default) and request timeout (15s)
 - [ ] All TypeBox schemas have `additionalProperties: false` and `maxLength`
 - [ ] Input sanitization for all user content (HTML and strings)

@@ -55,8 +55,8 @@ export type RawImageListResult = {
         limit: number
         hasNext: boolean
         hasPrev: boolean
-        startCursor?: string
-        endCursor?: string
+        prevCursor?: string
+        nextCursor?: string
     }
 }
 

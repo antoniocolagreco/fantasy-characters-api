@@ -1,153 +1,206 @@
-# AI Caching
+# Caching Strategy
 
-Essential caching patterns for initial API development with HTTP headers and
-simple in-memory cache.
+Caching implementation for this API to optimize performance while ensuring data
+consistency.
 
-## Critical Caching Rules
+## Core Principles
 
-1. **Always set Cache-Control headers** - Public for public data, no-store for
-   auth/sensitive
-2. **Always use ETag for JSON responses** - Enables 304 Not Modified responses
-3. **Never cache user-specific data** across different users
-4. **Always use short TTLs** - 30-60 seconds for public data, immediate
-   invalidation
-5. **Always invalidate on mutations** - Clear cache when data changes
+**1. Set cache headers everywhere**  
+Public data gets cached, sensitive data does not.
 
-## Required ETag Setup
+**2. Use ETags for performance**  
+When data hasn't changed, return a 304 "Not Modified" to save bandwidth and
+processing.
 
-Automatic ETag generation for all JSON responses to enable efficient client
-caching.
+**3. Keep user data separate**  
+Never let one user see another user's cached data for security reasons.
+
+**4. Short cache times**  
+30-60 seconds maximum for most content to avoid serving stale data.
+
+**5. Clear cache on mutations**  
+Create/update/delete operations should clear related cache immediately.
+
+## ETag Implementation
+
+The API uses a two-layer ETag approach:
+
+**Layer 1: Stable ETags**  
+A custom plugin creates hashes from the important response fields (`data` and
+`pagination` only). This means that timestamp changes don't invalidate cache
+when the actual data remains the same.
+
+**Layer 2: Standard ETags**  
+Fastify's built-in ETag plugin provides strong ETags (no "W/" prefix).
+
+When a client sends `If-None-Match` with a matching ETag, the server returns a
+304 response to save bandwidth.
 
 ```ts
-import fp from 'fastify-plugin'
-import etag from '@fastify/etag'
+// Configuration in src/app.ts
+await app.register(stableEtagPlugin) // custom stable layer
+await app.register(compressionPlugin)
+await app.register(etagPlugin) // fastify's standard layer
+```
 
-export default fp(async function etagPlugin(fastify) {
-  await fastify.register(etag, {
-    weak: false, // Strong ETag for JSON responses
-  })
+## Cache Header Management
+
+Use the provided helper functions instead of setting cache headers manually.
+This ensures consistency and prevents configuration errors.
+
+```ts
+import {
+  setPublicResourceCache, // 60 seconds for single items
+  setPublicListCache, // 30 seconds for lists
+  setNoStore, // never cache this
+  setLongLivedBinaryCache, // cache files for a year
+} from '@/shared/utils'
+```
+
+### Implementation Examples
+
+**Single resources** (characters, users, items, etc.)
+
+```ts
+app.get('/api/v1/characters/:id', async (req, reply) => {
+  const character = await characterService.getById(req.params.id)
+  setPublicResourceCache(reply) // Caches for 60 seconds
+  return reply.send(success(character, req.id))
 })
 ```
 
-## Required Cache Headers
-
-Set appropriate cache headers based on data sensitivity and access patterns.
+**Lists and searches** (change more frequently)
 
 ```ts
-// Public data (characters, items, etc.) - cacheable for 60 seconds
-app.get('/api/v1/characters/:id', async (req, reply) => {
-  const character = await characterService.getById(req.params.id)
-  reply.header('Cache-Control', 'public, max-age=60, stale-while-revalidate=30')
-  return reply.send(success(character, req.id))
-})
-
-// Public lists - shorter cache time due to pagination
 app.get('/api/v1/characters', async (req, reply) => {
   const result = await characterService.list(req.query)
-  reply.header('Cache-Control', 'public, max-age=30, stale-while-revalidate=15')
+  setPublicListCache(reply) // Caches for 30 seconds
   return reply.send(paginated(result.items, result.pagination, req.id))
 })
+```
 
-// User-specific data - never cache across users
-app.get('/api/v1/auth/profile', async (req, reply) => {
-  const profile = await userService.getProfile(req.user.id)
-  reply.header('Cache-Control', 'no-store')
-  return reply.send(success(profile, req.id))
+**User-specific content** (depends on requesting user)
+
+```ts
+app.get('/api/v1/users/:id', async (req, reply) => {
+  const user = await publicUserService.getById(req.params.id, req.user)
+  // For truly private data, use setNoStore(reply)
+  setPublicResourceCache(reply)
+  return reply.send(success(user, req.id))
 })
+```
 
-// Mutations - never cache
+**Data mutations** (creates, updates, deletes)
+
+```ts
 app.post('/api/v1/characters', async (req, reply) => {
-  const character = await characterService.create(req.body, req.user.id)
-  reply.header('Cache-Control', 'no-store')
+  const character = await characterService.create(req.body, req.user?.id)
+  setNoStore(reply) // Never cache mutations
   return reply.code(201).send(success(character, req.id))
 })
+```
 
-// Static images - long cache with immutable flag
+**Files and images** (rarely change)
+
+```ts
 app.get('/api/v1/images/:id/file', async (req, reply) => {
   const image = await imageService.getFile(req.params.id)
-  reply.header('Cache-Control', 'public, max-age=31536000, immutable')
+  setLongLivedBinaryCache(reply) // Cache for one year
   reply.header('Content-Type', image.mimeType)
   return reply.send(image.blob)
 })
 ```
 
-## Optional In-Memory Cache
+## In-Memory Caching
 
-Simple in-memory cache for expensive public queries with automatic expiration.
+For expensive database queries, the API provides in-memory caching helpers with
+automatic expiration.
+
+Available functions in `src/shared/utils/cache.helper.ts`:
+
+- `getCache(key)` - Get cached data
+- `setCache(key, data, ttlMs)` - Store data with expiration
+- `invalidateByPrefix(prefix)` - Clear all cache keys starting with a prefix
+- `buildCacheKey(prefix, data)` - Create a stable hash from any data structure
+
+## In-Memory Cache Usage
+
+Use in-memory caching only for expensive queries on public data. Implementation
+pattern:
 
 ```ts
-// src/common/utils/micro-cache.ts
-type CacheEntry<T> = { value: T; expiresAt: number }
-const store = new Map<string, CacheEntry<unknown>>()
-
-export function getCache<T>(key: string): T | undefined {
-  const hit = store.get(key)
-  if (!hit || hit.expiresAt < Date.now()) {
-    store.delete(key)
-    return undefined
-  }
-  return hit.value as T
-}
-
-export function setCache<T>(key: string, value: T, ttlMs: number): void {
-  store.set(key, { value, expiresAt: Date.now() + ttlMs })
-}
-
-export function invalidateByPrefix(prefix: string): void {
-  for (const key of store.keys()) {
-    if (key.startsWith(prefix)) store.delete(key)
-  }
-}
+import {
+  buildCacheKey,
+  getCache,
+  setCache,
+  invalidateByPrefix,
+  setPublicListCache,
+  setNoStore,
+} from '@/shared/utils'
 ```
 
-## Required Cache Usage Pattern
-
-Use micro-cache only for expensive public queries with proper key generation and
-invalidation.
+### Caching list endpoints
 
 ```ts
-// Example: Cached public list endpoint
 app.get('/api/v1/characters', async (req, reply) => {
-  // Generate unique cache key including all query parameters
-  const cacheKey = `characters:list:${JSON.stringify(req.query)}`
+  // Create a unique key that includes all query parameters
+  const cachePrefix = 'characters:list'
+  const key = buildCacheKey(cachePrefix, req.query)
 
-  // Try cache first
-  const cached = getCache<CharacterListResult>(cacheKey)
+  // Check cache first
+  const cached = getCache<CharacterListResult>(key)
   if (cached) {
-    reply.header('Cache-Control', 'public, max-age=30')
+    setPublicListCache(reply)
     return reply.send(cached)
   }
 
-  // Query database
+  // Query database if not cached
   const result = await characterService.list(req.query)
 
-  // Cache for 30 seconds
-  setCache(cacheKey, result, 30_000)
+  // Store in cache for 30 seconds
+  setCache(key, result, 30_000)
 
-  reply.header('Cache-Control', 'public, max-age=30')
+  setPublicListCache(reply)
   return reply.send(result)
 })
+```
 
-// Invalidate cache on mutations
+### Cache invalidation on mutations
+
+```ts
 app.post('/api/v1/characters', async (req, reply) => {
-  const character = await characterService.create(req.body, req.user.id)
+  const character = await characterService.create(req.body, req.user?.id)
 
-  // Clear all character list caches
-  invalidateByPrefix('characters:list:')
+  // Clear all character list caches (regardless of query parameters)
+  invalidateByPrefix('characters:list')
 
-  reply.header('Cache-Control', 'no-store')
+  setNoStore(reply)
   return reply.code(201).send(success(character, req.id))
 })
 ```
 
-## Required Cache Strategy
+**Note:** The `buildCacheKey` function creates consistent hashes regardless of
+query parameter order, preventing cache misses from equivalent queries like
+`?limit=10&page=2` vs `?page=2&limit=10`.
 
-Simple rules for what to cache and how long based on data access patterns.
+## Cache Configuration Reference
 
-| Data Type            | Cache-Control                         | TTL    | ETag | Notes                      |
-| -------------------- | ------------------------------------- | ------ | ---- | -------------------------- |
-| **Public Resources** | `public, max-age=60`                  | 60s    | ✅   | Characters, items, races   |
-| **Public Lists**     | `public, max-age=30`                  | 30s    | ✅   | Paginated results          |
-| **Static Images**    | `public, max-age=31536000, immutable` | 1 year | ❌   | Use ID as filename         |
-| **User Data**        | `no-store`                            | Never  | ❌   | Profile, private resources |
-| **Mutations**        | `no-store`                            | Never  | ❌   | POST/PUT/PATCH/DELETE      |
+| Content Type                               | Cache Duration | ETag? | Helper Function             |
+| ------------------------------------------ | -------------- | ----- | --------------------------- |
+| **Single items** (characters, users, etc.) | 60 seconds     | ✅    | `setPublicResourceCache()`  |
+| **Lists and searches**                     | 30 seconds     | ✅    | `setPublicListCache()`      |
+| **Images and files**                       | 1 year         | ❌    | `setLongLivedBinaryCache()` |
+| **Private user data**                      | Never          | ❌    | `setNoStore()`              |
+| **Create/update/delete**                   | Never          | ❌    | `setNoStore()`              |
+
+### Cache Duration Rationale
+
+- **60s for single items**: Balances performance with data freshness for
+  individual resources
+- **30s for lists**: Shorter duration because lists change more frequently with
+  new items and updates
+- **1 year for files**: Images and downloads rarely change, and content-based
+  URLs are used
+- **Never for mutations**: POST/PUT/DELETE responses should never be cached
+- **Never for private data**: Prevents security issues with cross-user data
+  exposure

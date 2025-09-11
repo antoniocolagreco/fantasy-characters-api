@@ -148,8 +148,8 @@ describe('response.helper', () => {
             limit: 20,
             hasNext: true,
             hasPrev: false,
-            startCursor: 'start-123',
-            endCursor: 'end-456',
+            prevCursor: 'prev-123',
+            nextCursor: 'next-456',
         }
 
         it('should return paginated response with items and pagination', () => {

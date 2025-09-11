@@ -1,4 +1,4 @@
-# AI Secrets & Config
+# Secrets & Config
 
 Essential patterns for secure configuration management in Fastify + TypeScript.
 

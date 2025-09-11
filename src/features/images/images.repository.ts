@@ -223,9 +223,9 @@ export async function listImagesInDb(
             pagination: {
                 limit,
                 hasNext,
-                hasPrev: !!cursor,
-                ...(nextCursor && { endCursor: nextCursor }),
-                ...(cursor && { startCursor: cursor }),
+                hasPrev: Boolean(cursor),
+                ...(nextCursor && { nextCursor }),
+                ...(cursor && { prevCursor: cursor }),
             },
         }
     }
@@ -240,9 +240,9 @@ export async function listImagesInDb(
         pagination: {
             limit,
             hasNext,
-            hasPrev: !!cursor,
-            ...(nextCursor && { endCursor: nextCursor }),
-            ...(cursor && { startCursor: cursor }),
+            hasPrev: Boolean(cursor),
+            ...(nextCursor && { nextCursor }),
+            ...(cursor && { prevCursor: cursor }),
         },
     }
 }

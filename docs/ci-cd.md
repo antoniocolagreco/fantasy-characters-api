@@ -1,4 +1,4 @@
-# AI CI/CD
+# CI/CD
 
 Essential CI/CD pipeline configuration for automated quality checks and safe
 deployments.

@@ -1,4 +1,4 @@
-# AI Code Generation
+# Code Generation
 
 ## Complete Directory Structure with Versioning
 
@@ -6,40 +6,43 @@
 src/
 ├── features/                                # Feature-based modules
 │   ├── feature-name/
-│   │   ├── v1/                              # Version 1 API
+│   │   ├── v1/                              # Version 1 API (HTTP layer only)
 │   │   │   ├── feature-name.controller.ts   # v1 HTTP handling
-│   │   │   ├── feature-name.schema.ts       # v1 request/response schemas (HTTP)
-│   │   │   ├── feature-name.routes.ts       # v1 route definitions (plural)
-│   │   │   └── feature-name.adapter.ts      # Domain → v1 API conversion
-│   │   ├── v2/                              # Version 2 API
-│   │   │   ├── feature-name.controller.ts   # v2 HTTP handling
-│   │   │   ├── feature-name.schema.ts       # v2 request/response schemas (HTTP)
-│   │   │   ├── feature-name.routes.ts       # v2 route definitions (plural)
-│   │   │   └── feature-name.adapter.ts      # Domain → v2 API conversion
+│   │   │   ├── feature-name.http.schema.ts  # v1 request/response schemas (HTTP)
+│   │   │   └── feature-name.routes.ts       # v1 route definitions (plural)
 │   │   ├── feature-name.service.ts          # Shared business logic (version-agnostic)
 │   │   ├── feature-name.repository.ts       # Database access layer
-│   │   ├── feature-name.types.ts            # Domain types
-│   │   └── index.ts                         # Barrel exports
+│   │   ├── feature-name.domain.schema.ts    # Domain schemas and types
+│   │   ├── feature-name.type.ts             # Type exports barrel
+│   │   └── index.ts                         # Feature barrel exports
 │   └── ...                                  # Other features
 ├── infrastructure/                          # Technical layer
+│   ├── config.ts                            # Application configuration
 │   ├── database/
-│   │   ├── prisma.service.ts
-│   │   └── connection.ts
-│   ├── cache/
-│   │   └── redis.service.ts
-│   ├── logging/
-│   │   ├── logger.service.ts
-│   │   └── log-transport.ts
-│   └── middleware/                          # App-specific middleware
-├── shared/                                  # Generic, reusable mini-toolbox
-│   ├── utils/                               # Pure helper functions
-│   ├── errors/                              # Custom error classes
-│   ├── types/                               # Shared TypeScript types
+│   │   ├── index.ts                         # Database exports
+│   │   ├── prisma.service.ts                # Prisma client setup
+│   │   ├── seed.ts                          # Database seeding
+│   │   ├── test-data.generator.ts           # Test data generation
+│   │   └── seed/                            # Seed data files
+│   └── logging/
+│       └── logger.service.ts                # Pino logger configuration
+├── shared/                                  # Generic, reusable utilities
 │   ├── constants/                           # Shared constants
-│   └── plugins/                             # Generic wrappers only
+│   ├── errors/                              # Custom error classes
+│   ├── plugins/                             # Fastify plugins
+│   ├── schemas/                             # Shared TypeBox schemas
+│   ├── types/                               # Shared TypeScript types
+│   ├── utils/                               # Pure helper functions
+│   ├── fastify.d.ts                         # Fastify type extensions
+│   └── index.ts                             # Shared exports
+├── app.ts                                   # Application setup
+├── server.ts                                # Server entry point
 └── tests/
-    ├── features/
-    └── shared/
+    ├── features/                            # Feature-specific tests
+    ├── helpers/                             # Test utilities
+    ├── infrastructure/                      # Infrastructure tests
+    ├── setup/                               # Test setup utilities
+    └── shared/                              # Shared test utilities
 ```
 
 ## Key Rules
@@ -50,37 +53,75 @@ src/
 - Controllers don't build error JSON
 - Keep files <500 lines
 - shared/ contains only generic, reusable utilities
-- Version ONLY the HTTP layer (routes/controller/schema) inside `v1/`, `v2/`;
-  keep `service`/`repository`/`types` at feature root
-- Prefer an `adapter` per version when response shape differs between API
-  versions
+- Version ONLY the HTTP layer (routes/controller/schema) inside `v1/` folder
+- Use `.http.schema.ts` for HTTP layer schemas, `.domain.schema.ts` for domain
+  schemas
+- Use `.type.ts` files as type export barrels to avoid circular dependencies
 
 ## Core File Responsibilities
 
-- **feature-name.routes.ts**: Register endpoints, attach schemas
-- **feature-name.schema.ts**: TypeBox validation schemas, export TS types
-- **feature-name.controller.ts**: HTTP → service calls, exported as object
-  literal wrapper
-- **feature-name.service.ts**: Business logic, coordinates repositories,
-  exported as object literal wrapper
-- **feature-name.repository.ts**: Database access layer (Prisma operations),
-  pure functions
-- **feature-name.adapter.ts**: Transform domain models to API responses
-- **feature-name.types.ts**: Domain TypeScript types
+### **HTTP Layer (Versioned - in `v1/` folder)**
 
-Tip: Place request/response schemas used by the HTTP layer inside the version
-folder (e.g., `v1/feature-name.schema.ts`). Keep domain-level types/schemas (if
-any) at the feature root.
+- **feature-name.routes.ts**: Register Fastify endpoints with schemas,
+  middleware, and attach controllers
+- **feature-name.http.schema.ts**: TypeBox validation schemas for HTTP
+  requests/responses, API contracts
+- **feature-name.controller.ts**: HTTP coordination layer - extract request
+  data, call services, format responses. Exported as object literal wrapper with
+  `as const`
+
+### **Business Layer (Version-agnostic - at feature root)**
+
+- **feature-name.service.ts**: Core business logic, granular authorization
+  checks, coordinate repository calls. Handle RBAC filtering and permission
+  validation. Exported as object literal wrapper with `as const`
+- **feature-name.repository.ts**: Pure database access layer using Prisma.
+  Execute queries with pre-secured filters from services. Transform Prisma
+  models to domain types. Pure functions only
+- **feature-name.domain.schema.ts**: Domain-level TypeBox schemas and business
+  types. Mirrors Prisma models but with TypeScript types
+
+### **Type Management**
+
+- **feature-name.type.ts**: Type export barrel to avoid circular dependencies.
+  Re-exports domain types and HTTP types cleanly
+
+### **Specialized Files**
+
+- **feature-name.middleware.ts**: Custom middleware for feature-specific
+  concerns (auth, RBAC, validation)
+- **feature-name.policy.ts**: Pure policy functions for authorization decisions
+  (used by middleware)
+- **feature-name.processing.ts**: Business logic processors (e.g., image
+  processing, data transformation)
+- **feature-name.helper.ts**: Pure utility functions specific to the feature
+  domain
+
+### **Shared Utilities (in `/shared/utils/`)**
+
+- **name.helper.ts**: Reusable utility functions for specific domains (query
+  building, RBAC, response formatting, caching)
+- **type-guards.ts**: Runtime type validation functions for safe type assertions
+
+### **Feature Exports**
+
+- **index.ts**: Feature barrel exports - re-export public APIs from the feature
+  (services, types, schemas)
+
+**Note**: HTTP schemas are versioned in `v1/` folder for API evolution. Domain
+schemas and business logic remain at feature root since they're
+version-agnostic. Services handle granular authorization using RBAC helpers,
+while repositories execute pre-filtered secure queries.
 
 ## Feature Creation Workflow
 
 ### Plan → Scaffold → Schema → Types → Repo → Service → Controller → Errors → Tests → Docs
 
 1. **Plan**: Define feature requirements and API endpoints
-2. **Scaffold**: Generate versioned folders (`v1/`, `v2/`) + shared files
-3. **Schema**: Create TypeBox validation schemas in each version (HTTP layer
-   only)
-4. **Types**: Define domain TypeScript types
+2. **Scaffold**: Generate versioned folders (`v1/`) + shared files
+3. **Schema**: Create TypeBox validation schemas in version folder (HTTP layer)
+   and domain schemas at feature root
+4. **Types**: Define domain TypeScript types in `.type.ts` export barrel
 5. **Repository**: Set up Prisma models and database access layer
 6. **Service**: Implement business logic and coordinate repositories
 7. **Controller**: Create HTTP handlers calling services
@@ -96,24 +137,27 @@ When files exceed 500 lines, split by operation/responsibility:
 
 **Services**: Split by HTTP operation
 
-- `feature-name.service.list.ts` (list/search operations)
-- `feature-name.service.get.ts` (read by ID)
-- `feature-name.service.post.ts` (create operations)
-- `feature-name.service.put.ts` (update operations)
-- `feature-name.service.delete.ts` (delete operations)
+- `feature-name.list.service.ts` (list/search operations)
+- `feature-name.get.service.ts` (read by ID)
+- `feature-name.create.service.ts` (create operations)
+- `feature-name.update.service.ts` (update operations)
+- `feature-name.delete.service.ts` (delete operations)
 
 **Repositories**: Split by entity operation
 
-- `feature-name.repository.query.ts` (complex queries)
-- `feature-name.repository.mutation.ts` (create/update/delete)
+- `feature-name.query.repository.ts` (complex queries)
+- `feature-name.mutation.repository.ts` (create/update/delete)
 
 ## Versioning Policy
 
-- Default: version only the HTTP layer (`v1/`, `v2/`) to evolve the public
-  contract without duplicating domain logic
+- Default: version only the HTTP layer (`v1/`) to evolve the public contract
+  without duplicating domain logic
 - Services and repositories remain version-agnostic and shared across versions
-- Use per-version adapters when you need to change the response or request
-  shapes between versions
+- Use transformation in repositories when you need to change the response shapes
+  between versions
 - Consider placing authentication/session-related persistence (e.g., refresh
   tokens) under the `auth` feature to respect SRP and keep `users` focused on
   user domain data
+
+**Note**: Currently only v1 is implemented. Future versions (v2, etc.) will
+follow the same pattern.

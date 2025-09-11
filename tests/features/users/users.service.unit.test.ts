@@ -321,7 +321,7 @@ describe('users.service unit', () => {
 
             const result = await userService.list({ limit: 1 })
             expect(result.pagination.hasPrev).toBe(false)
-            expect(result.pagination.startCursor).toBeUndefined()
+            expect(result.pagination.prevCursor).toBeUndefined()
         })
     })
 

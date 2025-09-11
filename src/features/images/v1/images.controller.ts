@@ -2,7 +2,13 @@ import type { FastifyReply, FastifyRequest } from 'fastify'
 
 import { imageService } from '../images.service'
 
-import type { CreateImage, ImageListQuery, ImageParams, UpdateImage } from './images.schema'
+import type {
+    CreateImage,
+    ImageListQuery,
+    ImageParams,
+    UpdateImage,
+    ImageStatsQuery,
+} from './images.schema'
 
 import { HTTP_STATUS } from '@/shared/constants/http-status'
 import { err } from '@/shared/errors'
@@ -15,7 +21,7 @@ import { success, paginated } from '@/shared/utils/response.helper'
  */
 
 export const imageController = {
-    async uploadImage(request: FastifyRequest, reply: FastifyReply) {
+    async uploadImage(request: FastifyRequest<{ Body: CreateImage }>, reply: FastifyReply) {
         // Extract HTTP data
         const file = await request.file()
         if (!file) {
@@ -23,7 +29,7 @@ export const imageController = {
         }
 
         const buffer = await file.toBuffer()
-        const body = request.body as CreateImage
+        const { body } = request
         const { user } = request // Set by auth middleware
 
         // Delegate to service - service handles all business logic and security
@@ -39,9 +45,9 @@ export const imageController = {
         return reply.code(HTTP_STATUS.CREATED).send(success(image, request.id))
     },
 
-    async getImageById(request: FastifyRequest, reply: FastifyReply) {
+    async getImageById(request: FastifyRequest<{ Params: ImageParams }>, reply: FastifyReply) {
         // Extract HTTP parameters
-        const { id } = request.params as ImageParams
+        const { id } = request.params
         const { user } = request
 
         // Delegate to service
@@ -56,9 +62,9 @@ export const imageController = {
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
-    async getImageFile(request: FastifyRequest, reply: FastifyReply) {
+    async getImageFile(request: FastifyRequest<{ Params: ImageParams }>, reply: FastifyReply) {
         // Extract HTTP parameters
-        const { id } = request.params as ImageParams
+        const { id } = request.params
         const { user } = request
 
         // Delegate to service
@@ -76,9 +82,12 @@ export const imageController = {
         return reply.send(imageFile.blob)
     },
 
-    async listImages(request: FastifyRequest, reply: FastifyReply) {
+    async listImages(
+        request: FastifyRequest<{ Querystring: ImageListQuery }>,
+        reply: FastifyReply
+    ) {
         // Extract HTTP parameters
-        const query = request.query as ImageListQuery
+        const { query } = request
         const { user } = request
 
         // Delegate to service
@@ -91,10 +100,13 @@ export const imageController = {
             .send(paginated(result.data, result.pagination, request.id))
     },
 
-    async updateImage(request: FastifyRequest, reply: FastifyReply) {
+    async updateImage(
+        request: FastifyRequest<{ Params: ImageParams; Body: UpdateImage }>,
+        reply: FastifyReply
+    ) {
         // Extract HTTP parameters
-        const { id } = request.params as ImageParams
-        const data = request.body as UpdateImage
+        const { id } = request.params
+        const data = request.body
         const { user } = request
 
         // Delegate to service
@@ -109,9 +121,9 @@ export const imageController = {
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
-    async replaceImageFile(request: FastifyRequest, reply: FastifyReply) {
+    async replaceImageFile(request: FastifyRequest<{ Params: ImageParams }>, reply: FastifyReply) {
         // Extract HTTP data
-        const { id } = request.params as ImageParams
+        const { id } = request.params
         const file = await request.file()
 
         if (!file) {
@@ -138,9 +150,9 @@ export const imageController = {
         return reply.code(HTTP_STATUS.OK).send(success(image, request.id))
     },
 
-    async deleteImage(request: FastifyRequest, reply: FastifyReply) {
+    async deleteImage(request: FastifyRequest<{ Params: ImageParams }>, reply: FastifyReply) {
         // Extract HTTP parameters
-        const { id } = request.params as ImageParams
+        const { id } = request.params
         const { user } = request
 
         // Delegate to service
@@ -155,9 +167,12 @@ export const imageController = {
         return reply.code(HTTP_STATUS.NO_CONTENT).send()
     },
 
-    async getImageStats(request: FastifyRequest, reply: FastifyReply) {
+    async getImageStats(
+        request: FastifyRequest<{ Querystring: ImageStatsQuery }>,
+        reply: FastifyReply
+    ) {
         // Extract HTTP parameters
-        const query = request.query as { ownerId?: string }
+        const { query } = request
         const { user } = request
 
         // Delegate to service

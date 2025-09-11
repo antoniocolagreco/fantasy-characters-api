@@ -40,7 +40,7 @@ describe('Images Repository - coverage branches', () => {
         expect(res.data.length).toBe(1)
         expect(res.pagination.hasNext).toBe(true)
         expect(
-            typeof res.pagination.endCursor === 'string' || res.pagination.endCursor === undefined
+            typeof res.pagination.nextCursor === 'string' || res.pagination.nextCursor === undefined
         ).toBe(true)
     })
 

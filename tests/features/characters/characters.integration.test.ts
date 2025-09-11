@@ -99,8 +99,7 @@ describe('Characters API - integration', () => {
         expect(list1.statusCode).toBe(HTTP_STATUS.OK)
         const listBody1 = list1.json()
         // Accept either hasNext true or false depending on service logic
-        const cursor: string | undefined =
-            listBody1.pagination.nextCursor || listBody1.pagination.endCursor
+        const cursor: string | undefined = listBody1.pagination.nextCursor
         if (cursor) {
             const list2 = await app.inject({
                 method: 'GET',

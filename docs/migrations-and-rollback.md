@@ -1,4 +1,4 @@
-# AI Database Migration
+# Database Migration
 
 Essential patterns for safe database migrations with Prisma in initial API
 development.

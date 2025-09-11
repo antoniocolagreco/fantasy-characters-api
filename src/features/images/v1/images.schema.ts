@@ -79,6 +79,7 @@ export const CreateImageSchema = Type.Object(
         $id: 'CreateImage',
         title: 'Create Image',
         description: 'Data for creating a new image',
+        additionalProperties: false,
     }
 )
 
@@ -96,6 +97,7 @@ export const UpdateImageSchema = Type.Object(
         $id: 'UpdateImage',
         title: 'Update Image',
         description: 'Updateable image properties',
+        additionalProperties: false,
     }
 )
 
@@ -111,6 +113,7 @@ export const ImageParamsSchema = Type.Object(
         $id: 'ImageParams',
         title: 'Image Parameters',
         description: 'URL parameters for image endpoints',
+        additionalProperties: false,
     }
 )
 
@@ -122,7 +125,7 @@ export const ImageListQuerySchema = Type.Intersect(
         Type.Object({
             sortBy: Type.Optional(
                 Type.String({
-                    enum: ['createdAt', 'email'],
+                    enum: ['createdAt', 'updatedAt'],
                     description: 'Field to sort by',
                 })
             ),
@@ -144,6 +147,21 @@ export const ImageListQuerySchema = Type.Intersect(
         $id: 'ImageListQuery',
         title: 'Image List Query',
         description: 'Query parameters for listing images',
+    }
+)
+
+// Stats query schema (for filtering by owner)
+export const ImageStatsQuerySchema = Type.Object(
+    {
+        ownerId: Type.Optional(
+            Type.String({ format: 'uuid', description: 'Aggregate stats for a specific owner' })
+        ),
+    },
+    {
+        $id: 'ImageStatsQuery',
+        title: 'Image Stats Query',
+        description: 'Query parameters for image statistics',
+        additionalProperties: false,
     }
 )
 
@@ -201,3 +219,4 @@ export type UpdateImage = Static<typeof UpdateImageSchema>
 export type ImageParams = Static<typeof ImageParamsSchema>
 export type ImageListQuery = Static<typeof ImageListQuerySchema>
 export type ImageStats = Static<typeof ImageStatsSchema>
+export type ImageStatsQuery = Static<typeof ImageStatsQuerySchema>

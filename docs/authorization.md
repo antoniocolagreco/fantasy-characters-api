@@ -1,30 +1,32 @@
 # RBAC Implementation Guide
 
-**Core Principle**: Security is handled at 4 different layers. Each layer has a
+**Core Principle**: Security is handled at 3 different layers. Each layer has a
 single, clear responsibility and works together to create defense in depth.
 
 ---
 
-## 🏗️ **4-Layer Security Architecture**
+## 🏗️ **3-Layer Security Architecture**
 
-Your API request flows through 4 layers, each doing one specific job:
+Your API request flows through 3 layers, each doing one specific job:
 
 ```text
-1. MIDDLEWARE  →  2. CONTROLLER  →  3. SERVICE  →  4. REPOSITORY
-   "Can this      "What data       "What can     "Execute the
-    user access    does the user    THIS user     database query
-    this route?"   want?"          do with       with filters"
-                                   THIS data?"
+1. MIDDLEWARE  →  2. SERVICE  →  3. REPOSITORY
+   "Can this      "What can     "Execute the
+    user access    THIS user     database query
+    this route?"   do with       with filters"
+                   THIS data?"
 ```
 
 ### **What Each Layer Does**
 
-| Layer          | Primary Job                           | Security Role                     |
-| -------------- | ------------------------------------- | --------------------------------- |
-| **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access    |
-| **CONTROLLER** | Handle HTTP request/response          | Transport user context to service |
-| **SERVICE**    | Apply business rules                  | Check specific permissions        |
-| **REPOSITORY** | Execute database operations           | Use pre-filtered, secure queries  |
+| Layer          | Primary Job                           | Security Role                    |
+| -------------- | ------------------------------------- | -------------------------------- |
+| **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access   |
+| **SERVICE**    | Apply business rules                  | Check specific permissions       |
+| **REPOSITORY** | Execute database operations           | Use pre-filtered, secure queries |
+
+**Note**: Controllers are pure HTTP coordinators that transport data between
+middleware and services - they don't perform security checks.
 
 ### **Security Strategy**
 
@@ -32,7 +34,6 @@ Each layer **validates independently** - never trust that previous layers got it
 right:
 
 - **Middleware**: "Are you even allowed to try this endpoint?"
-- **Controller**: "Here's the user info and request data" (security courier)
 - **Service**: "Can you actually do this specific action on this specific data?"
 - **Repository**: "Here's your data, pre-filtered for security"
 
@@ -252,7 +253,8 @@ Let's trace a request: `GET /api/v1/images?tags=fantasy`
 
 1. **MIDDLEWARE**: "Can USER role access /images route?" ✅ Yes, USERs can read
    images
-2. **CONTROLLER**: Extract `tags=fantasy` and `user` from request, call service
+2. **CONTROLLER**: Extract `tags=fantasy` and `user` from request, delegate to
+   service
 3. **SERVICE**: Build security filters for this user + combine with business
    filters
 4. **REPOSITORY**: Execute database query with secure filters
@@ -356,7 +358,7 @@ async rbacMiddleware(req) {
 
 // ✅ CORRECT: Clean separation
 // Middleware: route-level permissions
-// Controller: HTTP coordination
+// Controller: HTTP coordination (no security)
 // Service: business logic + granular RBAC
 // Repository: pure data access
 ```

@@ -55,7 +55,7 @@ export const skillService = {
                 hasPrev: !!query.cursor,
                 limit: query.limit ?? 20,
                 ...(nextCursor && { nextCursor }),
-                ...(query.cursor && { startCursor: query.cursor }),
+                ...(query.cursor && { prevCursor: query.cursor }),
             },
         }
     },

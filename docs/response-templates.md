@@ -1,4 +1,4 @@
-# AI Response Patterns
+# Response Patterns
 
 Essential response formats for consistent API development.
 
@@ -23,8 +23,8 @@ Essential response formats for consistent API development.
     "limit": 20,
     "hasNext": true,
     "hasPrev": false,
-    "startCursor": "abc123",
-    "endCursor": "xyz987"
+    "prevCursor": "abc123",
+    "nextCursor": "xyz987"
   },
   "requestId": "string",
   "timestamp": "string"
@@ -75,13 +75,8 @@ export function successMessage(message: string, requestId?: string) {
 
 export function paginated<T>(
   items: T[],
-  pagination: {
-    limit: number
-    hasNext: boolean
-    hasPrev: boolean
-    startCursor?: string
-    endCursor?: string
-  },
+  // In code we use the centralized Pagination type from shared schemas
+  pagination: Pagination,
   requestId?: string
 ) {
   return {
@@ -93,35 +88,48 @@ export function paginated<T>(
 }
 
 ```typescript
-// src/shared/schemas/response.schema.ts (centralized exports)
-export const BaseResponseSchema = Type.Object({
-  requestId: Type.Optional(Type.String()),
-  timestamp: Type.Optional(Type.String({ format: 'date-time' })),
-}, { $id: 'BaseResponse' })
+// src/shared/schemas/response.schema.ts (centralized exports as implemented)
+export const BaseResponseSchema = Type.Object(
+  {
+    requestId: Type.Optional(Type.String()),
+    timestamp: Type.Optional(Type.String({ format: 'date-time' })),
+  },
+  { $id: 'BaseResponse' }
+)
 
-export const PaginationSchema = Type.Object({
-  limit: Type.Number({ minimum: 1, maximum: 100 }),
-  hasNext: Type.Boolean(),
-  hasPrev: Type.Boolean(),
-  startCursor: Type.Optional(Type.String()),
-  endCursor: Type.Optional(Type.String()),
-}, { $id: 'Pagination' })
+export const PaginationSchema = Type.Object(
+  {
+    limit: Type.Number({ minimum: 1, maximum: 100 }),
+    hasNext: Type.Boolean(),
+    hasPrev: Type.Boolean(),
+    prevCursor: Type.Optional(Type.String()),
+    nextCursor: Type.Optional(Type.String()),
+  },
+  { $id: 'Pagination' }
+)
 
-export function createSuccessResponseSchema<T>(dataSchema: T) {
-  return Type.Intersect([
-    BaseResponseSchema,
-    Type.Object({ data: dataSchema }),
-  ])
+// Note: our implementation accepts an optional schemaId to enrich OpenAPI titles/descriptions
+export function createSuccessResponseSchema<T>(dataSchema: T, schemaId?: string) {
+  return Type.Intersect(
+    [
+      BaseResponseSchema,
+      Type.Object({ data: dataSchema }),
+    ],
+    schemaId ? { $id: schemaId } : {}
+  )
 }
 
-export function createPaginatedResponseSchema<T>(itemSchema: T) {
-  return Type.Intersect([
-    BaseResponseSchema,
-    Type.Object({
-      data: Type.Array(itemSchema),
-      pagination: PaginationSchema,
-    }),
-  ])
+export function createPaginatedResponseSchema<T>(itemSchema: T, schemaId?: string) {
+  return Type.Intersect(
+    [
+      BaseResponseSchema,
+      Type.Object({
+        data: Type.Array(itemSchema),
+        pagination: PaginationSchema,
+      }),
+    ],
+    schemaId ? { $id: schemaId } : {}
+  )
 }
 ````
 
@@ -153,7 +161,7 @@ import {
   PaginationSchema,
   createSuccessResponseSchema,
   createPaginatedResponseSchema,
-} from '../shared/schemas'
+} from '@/shared/schemas'
 ```
 
 ## Usage Patterns
@@ -195,8 +203,9 @@ app.get(
     schema: {
       response: {
         200: createSuccessResponseSchema(CharacterSchema),
-        404: { $ref: 'ErrorResponse#' }, // See error-handling.md for ErrorResponseSchema
-        500: { $ref: 'ErrorResponse#' },
+        // Prefer using the exported constant directly (as implemented in code)
+        404: ErrorResponseSchema,
+        500: ErrorResponseSchema,
       },
     },
   },
@@ -210,9 +219,9 @@ app.post(
       body: CreateCharacterSchema,
       response: {
         201: createSuccessResponseSchema(CharacterSchema),
-        400: { $ref: 'ErrorResponse#' },
-        409: { $ref: 'ErrorResponse#' },
-        500: { $ref: 'ErrorResponse#' },
+        400: ErrorResponseSchema,
+        409: ErrorResponseSchema,
+        500: ErrorResponseSchema,
       },
     },
   },
@@ -225,8 +234,8 @@ app.get(
     schema: {
       response: {
         200: createPaginatedResponseSchema(CharacterSchema),
-        400: { $ref: 'ErrorResponse#' },
-        500: { $ref: 'ErrorResponse#' },
+        400: ErrorResponseSchema,
+        500: ErrorResponseSchema,
       },
     },
   },
@@ -273,8 +282,8 @@ app.get(
 
 ## Response Compression
 
-**Automatic compression** is handled transparently by `@fastify/compress`
-plugin:
+**Automatic compression** is handled transparently by `@fastify/compress` plugin
+(registered by our `compressionPlugin`):
 
 - **JSON/Text responses** are automatically compressed (Brotli or gzip) based on
   client's `Accept-Encoding` header
@@ -284,7 +293,7 @@ plugin:
 - **Threshold**: Only responses > 1KB are compressed to skip tiny payloads
 
 ```typescript
-// Plugin configuration (register early in app setup)
+// Plugin configuration (example; in this project we register via compressionPlugin)
 await app.register(compress, {
   global: true,
   threshold: 1024, // Skip responses smaller than 1KB
@@ -310,9 +319,11 @@ after your controller returns the response envelope.
 3. **Always** use cursor-based pagination for lists
 4. **Never** return raw objects - always use envelope
 5. **Always** use `HTTP_STATUS` constants instead of magic numbers
-6. **Always** use `$ref: 'ErrorResponse#'` for error responses
+6. Prefer using `ErrorResponseSchema` directly for error responses (as
+   implemented); `$ref: 'ErrorResponse#'` is also supported if you register
+   schemas globally
 7. **Always** use `success()` helper for all 201 responses (uniform pattern)
 8. **Always** register compression plugin before routes for automatic JSON/text
    compression
-9. **Always** use consistent pagination with `hasNext`, `hasPrev`,
-   `startCursor`, `endCursor`
+9. **Always** use consistent pagination with `hasNext`, `hasPrev`, `prevCursor`,
+   `nextCursor`

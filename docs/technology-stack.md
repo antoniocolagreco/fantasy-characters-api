@@ -41,10 +41,8 @@ Always use the latest stable versions of all dependencies. run
 
 ## Authentication
 
-- **JWT (@fastify/jwt)**: Fastify JWT plugin for signing/verification and
-  request decorators
-- **jsonwebtoken**: Low-level JWT utilities (sign/verify) if used outside
-  Fastify decorators
+- **jsonwebtoken**: Token signing/verification used by our custom middleware
+  (current)
 - **OAuth (optional, via @fastify/oauth2)**: Server-side OAuth2 code flow
   (Google/GitHub) with backend JWT issuance
 - **@fastify/session** (optional): Session-based auth when needed (e.g., admin

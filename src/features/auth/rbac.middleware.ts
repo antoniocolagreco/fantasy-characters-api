@@ -9,6 +9,7 @@ import type {
     RbacMiddlewareReply,
     RbacMiddlewareRequest,
 } from '@/shared/types/http'
+import { hasId, isRecord } from '@/shared/utils/type-guards'
 // Note: We intentionally avoid depending on Fastify types here to keep
 // the middleware easy to unit-test with plain objects.
 
@@ -40,15 +41,12 @@ export async function resolveOwnership(
     }
 
     // Extract ID from params if available
-    const id =
-        request.params && typeof request.params === 'object' && 'id' in request.params
-            ? (request.params as { id: string }).id
-            : null
+    const id = hasId(request.params) ? request.params.id : null
 
     if (!id) {
         // Fallback for creation routes - get from request body
-        if (request.body && typeof request.body === 'object' && request.body !== null) {
-            const body = request.body as Record<string, unknown>
+        if (isRecord(request.body)) {
+            const { body } = request
             return {
                 ownerId: typeof body.ownerId === 'string' ? body.ownerId : null,
                 visibility: isValidVisibility(body.visibility) ? body.visibility : null,
@@ -232,9 +230,9 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
 
         // Get route-specific RBAC config if available
         const routeConfig = (() => {
-            const ro = request.routeOptions as { config?: unknown } | undefined
-            const cfg = ro?.config
-            if (cfg && typeof cfg === 'object' && 'rbac' in (cfg as Record<string, unknown>)) {
+            const ro = request.routeOptions
+            const cfg = isRecord(ro) ? (ro as { config?: unknown }).config : undefined
+            if (isRecord(cfg) && 'rbac' in cfg) {
                 return (cfg as { rbac?: OwnershipData }).rbac
             }
             return undefined
@@ -287,9 +285,54 @@ export function toFastifyPreHandler(
     fn: (req: RbacMiddlewareRequest, reply: RbacMiddlewareReply) => Promise<void>
 ) {
     return async function preHandler(request: unknown, reply: unknown): Promise<void> {
-        // Convert using unknown to avoid any
-        const rq = request as unknown as RbacMiddlewareRequest
-        const rp = reply as unknown as RbacMiddlewareReply
+        // Build a minimal BasicRequest safely without type assertions
+        const rq: RbacMiddlewareRequest = (() => {
+            const result: RbacMiddlewareRequest = {}
+            if (isRecord(request)) {
+                // user
+                const u = request.user
+                if (isRecord(u)) {
+                    if (typeof u.id === 'string' && typeof u.role === 'string') {
+                        result.user = { id: u.id, role: u.role }
+                    }
+                }
+
+                // routeOptions
+                const ro = request.routeOptions
+                if (isRecord(ro)) {
+                    result.routeOptions = { config: ro.config }
+                }
+
+                // passthrough unknowns
+                if ('params' in request) result.params = request.params
+                if ('body' in request) result.body = request.body
+                if ('prisma' in request) result.prisma = request.prisma
+            }
+            return result
+        })()
+
+        // Build a minimal BasicReply using wrapper functions to preserve types
+        const rp: RbacMiddlewareReply = {
+            code: (statusCode: number) => {
+                if (isRecord(reply) && typeof reply.code === 'function') {
+                    return reply.code(statusCode)
+                }
+                return undefined
+            },
+            send: (payload: unknown) => {
+                if (isRecord(reply) && typeof reply.send === 'function') {
+                    return reply.send(payload)
+                }
+                return undefined
+            },
+            header: (name: string, value: string) => {
+                if (isRecord(reply) && typeof reply.header === 'function') {
+                    return reply.header(name, value)
+                }
+                return undefined
+            },
+        }
+
         await fn(rq, rp)
     }
 }

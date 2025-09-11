@@ -1,11 +1,11 @@
-# AI CORS
+# CORS
 
 Essential CORS configuration for browser-based API access with explicit origin
-allowlisting and credential support.
+allow-listing and credential support.
 
 ## Critical CORS Rules
 
-1. **Always use explicit origin allowlist** - Never use "\*" in production
+1. **Always use explicit origin allow-list** - Never use "\*" in production
 2. **Always allow Authorization header** - Required for JWT authentication
 3. **Always allow Content-Type header** - Required for JSON requests
 4. **Enable credentials only when needed** - For cookie-based refresh tokens
@@ -13,12 +13,13 @@ allowlisting and credential support.
 
 ## Required CORS Plugin
 
-Safe CORS configuration with environment-based origin allowlisting and dev
+Safe CORS configuration with environment-based origin allow-listing and dev
 defaults.
 
 ```ts
-import fp from 'fastify-plugin'
 import cors from '@fastify/cors'
+import type { FastifyInstance } from 'fastify'
+import fp from 'fastify-plugin'
 
 function parseOrigins(envString?: string): string[] {
   if (!envString) return []
@@ -28,7 +29,7 @@ function parseOrigins(envString?: string): string[] {
     .filter(Boolean)
 }
 
-export default fp(async function corsPlugin(fastify) {
+export default fp(async (fastify: FastifyInstance) => {
   const isProd = process.env.NODE_ENV === 'production'
 
   // Development defaults for local frontends
@@ -84,16 +85,18 @@ Register CORS plugin early in the application setup before routes.
 
 ```ts
 // src/app.ts
-import corsPlugin from './plugins/cors'
+import corsPlugin from '@/shared/plugins/cors.plugin'
 
-const app = fastify({ logger: true })
+const app = Fastify({ logger: true })
 
-// Register CORS before other plugins and routes
+// Register CORS after security plugins but before routes
+await app.register(helmetPlugin)
 await app.register(corsPlugin)
+await app.register(rateLimitPlugin)
 
 // Register other plugins and routes after CORS
-await app.register(authPlugin)
-await app.register(routesPlugin)
+await app.register(multipartPlugin)
+await app.register(healthCheckPlugin)
 ```
 
 ## Required Environment Configuration
@@ -101,7 +104,7 @@ await app.register(routesPlugin)
 Set allowed origins and credential policy through environment variables.
 
 ```bash
-# .env.development
+# .env.example
 NODE_ENV=development
 CORS_ORIGINS=http://localhost:3000,http://localhost:5173
 CORS_CREDENTIALS=true
@@ -151,9 +154,26 @@ await fetch('/api/v1/images', {
 
 Simple rules for different types of API access patterns.
 
-| Scenario         | Origin Policy              | Credentials | Headers                            |
-| ---------------- | -------------------------- | ----------- | ---------------------------------- |
-| Solo JWT         | Lista esplicita di origini | false       | Authorization, Content-Type        |
-| Cookie + JWT     | Lista esplicita di origini | true        | Authorization, Content-Type        |
-| Caricamento file | Lista esplicita di origini | true        | Authorization, (Content-Type auto) |
-| API pubblica     | Lista esplicita di origini | false       | Solo Content-Type                  |
+| Scenario     | Origin Policy       | Credentials | Headers                            |
+| ------------ | ------------------- | ----------- | ---------------------------------- |
+| JWT Only     | Explicit allow-list | false       | Authorization, Content-Type        |
+| Cookie + JWT | Explicit allow-list | true        | Authorization, Content-Type        |
+| File Upload  | Explicit allow-list | true        | Authorization, (Content-Type auto) |
+| Public API   | Explicit allow-list | false       | Content-Type only                  |
+
+## Common CORS Issues
+
+**Problem**: "CORS error" in browser console
+
+- **Solution**: Check origin is in CORS_ORIGINS environment variable
+- **Debug**: Verify exact protocol/host/port match (http vs https)
+
+**Problem**: Authorization header blocked
+
+- **Solution**: Ensure 'Authorization' is in allowedHeaders array
+- **Debug**: Check preflight OPTIONS response includes Authorization
+
+**Problem**: Credentials not sent
+
+- **Solution**: Set credentials: 'include' in frontend fetch calls
+- **Debug**: Verify CORS_CREDENTIALS=true in backend environment

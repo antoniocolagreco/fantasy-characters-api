@@ -1,4 +1,3 @@
-// Stub service (implementation in later tasks)
 import { Prisma, type Rarity, type Slot, type Visibility } from '@prisma/client'
 
 import { itemRepository } from './items.repository'
@@ -45,7 +44,7 @@ export const itemService = {
                 hasPrev: !!query.cursor,
                 limit: query.limit ?? 20,
                 ...(nextCursor && { nextCursor }),
-                ...(query.cursor && { startCursor: query.cursor }),
+                ...(query.cursor && { prevCursor: query.cursor }),
             },
         }
     },

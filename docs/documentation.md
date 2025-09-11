@@ -1,4 +1,4 @@
-# AI API Documentation
+# API Documentation
 
 Comprehensive guide to create consistent OpenAPI documentation using TypeBox
 schemas as the single source of truth.
@@ -14,7 +14,8 @@ Auto-validate requests → Auto-type TypeScript
 
 ## Critical Documentation Rules
 
-1. **Always use TypeBox as source of truth** - No inline JSON schemas in routes
+1. **Always use TypeBox as source of truth** - Prefer centralized schemas; keep
+   inline JSON schemas minimal and consistent when necessary
 2. **Always add $id to shared schemas** - Enables proper OpenAPI component refs
 3. **Always reuse schemas** - Use Type.Pick/Omit instead of duplicating
 4. **Always tag endpoints** - Group related operations for better organization
@@ -52,22 +53,23 @@ Install and configure Swagger with TypeBox integration for automatic schema
 generation.
 
 ```ts
-// src/plugins/swagger.ts
+// src/shared/plugins/swagger.plugin.ts
+import fastifySwagger from '@fastify/swagger'
+import fastifySwaggerUi from '@fastify/swagger-ui'
 import fp from 'fastify-plugin'
-import swagger from '@fastify/swagger'
-import swaggerUi from '@fastify/swagger-ui'
+import { config } from '@/infrastructure/config'
 
-export default fp(async function swaggerPlugin(app) {
-  await app.register(swagger, {
+export const swaggerPlugin = fp(async function (fastify) {
+  await fastify.register(fastifySwagger, {
     openapi: {
       info: {
         title: 'Fantasy Characters API',
-        version: '1.0.0',
         description:
-          'RESTful API for managing fantasy characters, items, and game data',
+          'A comprehensive API for managing fantasy characters, races, classes, and equipment',
+        version: '1.0.0',
         contact: {
-          name: 'API Support',
-          email: 'support@example.com',
+          name: 'Antonio Colagreco',
+          email: 'nevenbridge@gmail.com',
         },
         license: {
           name: 'MIT',
@@ -75,8 +77,10 @@ export default fp(async function swaggerPlugin(app) {
         },
       },
       servers: [
-        { url: '/api/v1', description: 'API v1' },
-        { url: 'https://api.example.com/v1', description: 'Production' },
+        {
+          url: `http://localhost:${config.PORT}`,
+          description: 'Development server',
+        },
       ],
       components: {
         securitySchemes: {
@@ -84,28 +88,30 @@ export default fp(async function swaggerPlugin(app) {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
-            description: 'JWT Access Token',
+            description: 'JWT token for authentication',
           },
         },
       },
+      security: [{ bearerAuth: [] }], // Global security (route can override/omit)
     },
-    hideUntagged: false,
-    refResolver: {
-      buildLocalReference(json, _baseUri, _fragment, i) {
-        // Create stable component references for schema deduplication
-        return json.$id || json.title || `schema-${i}`
-      },
+    transform: ({ schema, url }) => {
+      // Custom schema transformation for OpenAPI compliance
+      return { schema: cleanSchema(schema), url }
     },
   })
 
-  await app.register(swaggerUi, {
+  await fastify.register(fastifySwaggerUi, {
     routePrefix: '/docs',
-    staticCSP: true,
     uiConfig: {
       docExpansion: 'list',
-      deepLinking: false,
-      displayRequestDuration: true,
+      deepLinking: true,
+      defaultModelsExpandDepth: 2,
+      defaultModelExpandDepth: 2,
+      supportedSubmitMethods: ['get', 'post', 'put', 'delete', 'patch'],
+      persistAuthorization: true,
     },
+    staticCSP: false,
+    transformSpecificationClone: true,
   })
 })
 ```
@@ -119,20 +125,16 @@ exports.
 // src/features/{feature}/v1/{feature}.schema.ts
 import { Type, Static } from '@sinclair/typebox'
 
-// 1. Base Entity Schema (with $id for OpenAPI components)
-export const {Feature}Schema = Type.Object({
-  id: Type.String({ format: 'uuid' }),
-  name: Type.String({ minLength: 1, maxLength: 80 }),
-  description: Type.Optional(Type.String({ maxLength: 2000 })),
-  ownerId: Type.String({ format: 'uuid' }),
-  visibility: Type.Union([
-    Type.Literal('PUBLIC'),
-    Type.Literal('PRIVATE'),
-    Type.Literal('HIDDEN')
-  ]),
-  createdAt: Type.String({ format: 'date-time' }),
-  updatedAt: Type.String({ format: 'date-time' }),
-}, { $id: '{Feature}' })
+// 1. Base Entity Schema (extends from BaseEntitySchema)
+export const {Feature}Schema = Type.Intersect([
+  BaseEntitySchema, // From shared/schemas - provides id, createdAt, updatedAt
+  OwnedEntitySchema, // From shared/schemas - provides ownerId, visibility
+  Type.Object({
+    name: Type.String({ minLength: 1, maxLength: 80 }),
+    description: Type.Optional(Type.String({ maxLength: 2000 })),
+    // Feature-specific fields here
+  })
+], { $id: '{Feature}' })
 
 // 2. Request Schemas (derived from base)
 export const Create{Feature}Schema = Type.Omit({Feature}Schema, [
@@ -148,27 +150,39 @@ export const {Feature}ParamsSchema = Type.Object({
   id: Type.String({ format: 'uuid' })
 }, { $id: '{Feature}Params' })
 
-// 4. Query Schemas (use base query schemas from common)
+// 4. Query Schemas (feature-specific sort + standard queries)
+const {Feature}SortQuerySchema = Type.Object({
+  sortBy: Type.Optional(Type.String({
+    enum: ['createdAt', 'updatedAt', 'name'],
+    description: 'Field to sort by'
+  })),
+  sortDir: Type.Optional(Type.String({
+    enum: ['asc', 'desc'],
+    default: 'desc',
+    description: 'Sort direction'
+  }))
+}, { $id: '{Feature}SortQuery' })
+
 export const {Feature}ListQuerySchema = Type.Intersect([
+  PaginationQuerySchema,    // From shared/schemas
+  SearchQuerySchema,        // From shared/schemas
+  VisibilityQuerySchema,    // From shared/schemas
+  {Feature}SortQuerySchema, // Feature-specific sort
   Type.Object({
-    visibility: Type.Optional(Type.Union([
-      Type.Literal('PUBLIC'),
-      Type.Literal('PRIVATE')
-    ])),
-    // Feature-specific filters here
-  }),
-  PaginationQuerySchema, // From shared/schemas/query.schema.ts
-  SortQuerySchema,       // From shared/schemas/query.schema.ts
+    // Additional feature-specific filters here
+  })
 ], { $id: '{Feature}ListQuery' })
 
-// 5. Response Schemas (consistent envelope pattern)
+// 5. Response Schemas (use factory functions from shared/schemas)
 export const {Feature}ResponseSchema = createSuccessResponseSchema(
-  {Feature}Schema // From shared/schemas/response.schema.ts
-), { $id: '{Feature}Response' })
+  {Feature}Schema,
+  '{Feature}Response'
+)
 
 export const {Feature}ListResponseSchema = createPaginatedResponseSchema(
-  {Feature}Schema // From shared/schemas/response.schema.ts
-), { $id: '{Feature}ListResponse' })
+  {Feature}Schema,
+  '{Feature}ListResponse'
+)
 
 // 6. Export TypeScript Types
 export type {Feature} = Static<typeof {Feature}Schema>
@@ -186,27 +200,28 @@ export type {Feature}ListQuery = Static<typeof {Feature}ListQuerySchema>
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import type { FastifyPluginAsync } from 'fastify'
 import * as schemas from './{feature}.schema'
-import { ErrorResponseSchema } from '../../shared/schemas'
+import { ErrorResponseSchema } from '@/shared/schemas'
 
-export const {feature}Routes: FastifyPluginAsync = async (app) => {
+export const {feature}RoutesV1: FastifyPluginAsync = async (app) => {
   app.withTypeProvider<TypeBoxTypeProvider>()
 
   // GET /{features}/:id - Single resource
   app.get('/{features}/:id', {
+    preHandler: [toFastifyPreHandler(rbac.read('{features}'))],
     schema: {
       tags: ['{Features}'],
       summary: 'Get {feature} by ID',
       description: 'Retrieve a single {feature} by its unique identifier',
-      security: [{ bearerAuth: [] }],
       params: schemas.{Feature}ParamsSchema,
       response: {
         200: schemas.{Feature}ResponseSchema,
-        404: ErrorResponseSchema,
+        400: ErrorResponseSchema,
         403: ErrorResponseSchema,
+        404: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
-  }, {feature}Controller.getById)
+  }, {feature}Controller.get{Feature}ById)
 
   // GET /{features} - List with pagination
   app.get('/{features}', {
@@ -262,20 +277,20 @@ export const {feature}Routes: FastifyPluginAsync = async (app) => {
 
   // DELETE /{features}/:id - Delete resource
   app.delete('/{features}/:id', {
+    preHandler: [toFastifyPreHandler(rbac.delete('{features}'))],
     schema: {
       tags: ['{Features}'],
       summary: 'Delete {feature}',
       description: 'Delete a {feature} by ID',
-      security: [{ bearerAuth: [] }],
       params: schemas.{Feature}ParamsSchema,
       response: {
-        204: Type.Null(),
+        204: { type: 'null' },
         404: ErrorResponseSchema,
         403: ErrorResponseSchema,
         500: ErrorResponseSchema,
       },
     },
-  }, {feature}Controller.delete)
+  }, {feature}Controller.delete{Feature})
 }
 ```
 
@@ -288,39 +303,63 @@ Create reusable schema components to maintain consistency across all features.
 // Import them from the centralized exports:
 
 import {
-  PaginationQuerySchema,
-  PaginationSchema,
-  SortQuerySchema,
-  VisibilitySchema,
   BaseEntitySchema,
+  OwnedEntitySchema,
+  PaginationQuerySchema,
+  SearchQuerySchema,
+  VisibilityQuerySchema,
   createSuccessResponseSchema,
   createPaginatedResponseSchema,
-} from '../shared/schemas'
-
-// Use the centralized schemas in your feature schemas
-// Example:
+} from '@/shared/schemas'
 
 // Example feature schema using centralized schemas:
 export const CharacterSchema = Type.Intersect(
   [
-    BaseEntitySchema,
+    BaseEntitySchema, // Provides: id, createdAt, updatedAt
+    OwnedEntitySchema, // Provides: ownerId, visibility
     Type.Object({
       name: Type.String({ minLength: 1, maxLength: 100 }),
       level: Type.Integer({ minimum: 1, maximum: 100 }),
+      raceId: Type.String({ format: 'uuid' }),
+      archetypeId: Type.String({ format: 'uuid' }),
       // ... other character fields
     }),
   ],
   { $id: 'Character' }
 )
 
+// Feature-specific sort schema
+const CharacterSortQuerySchema = Type.Object(
+  {
+    sortBy: Type.Optional(
+      Type.String({
+        enum: ['createdAt', 'updatedAt', 'name', 'level'],
+        description: 'Field to sort by',
+      })
+    ),
+    sortDir: Type.Optional(
+      Type.String({
+        enum: ['asc', 'desc'],
+        default: 'desc',
+        description: 'Sort direction',
+      })
+    ),
+  },
+  { $id: 'CharacterSortQuery' }
+)
+
 // Query schema composition
 export const CharacterListQuerySchema = Type.Intersect(
   [
     PaginationQuerySchema,
-    SortQuerySchema,
+    SearchQuerySchema,
+    VisibilityQuerySchema,
+    CharacterSortQuerySchema,
     Type.Object({
       minLevel: Type.Optional(Type.Integer({ minimum: 1 })),
       maxLevel: Type.Optional(Type.Integer({ minimum: 1 })),
+      raceId: Type.Optional(Type.String({ format: 'uuid' })),
+      archetypeId: Type.Optional(Type.String({ format: 'uuid' })),
     }),
   ],
   { $id: 'CharacterListQuery' }
@@ -343,7 +382,7 @@ export const CharacterListResponseSchema = createPaginatedResponseSchema(
 Standardized error responses for consistent API documentation.
 
 ```ts
-// src/common/schemas/error.schema.ts
+// src/shared/schemas/error.schema.ts
 import { Type } from '@sinclair/typebox'
 
 export const ErrorDetailSchema = Type.Object(
@@ -372,7 +411,7 @@ export const ErrorResponseSchema = Type.Object(
 )
 ```
 
-## AI Coding Instructions
+## Coding Instructions
 
 When creating new API documentation for any feature, follow this exact process:
 
@@ -410,9 +449,14 @@ When creating new API documentation for any feature, follow this exact process:
 
 ### Step 5: Security Requirements
 
-- Add `security: [{ bearerAuth: [] }]` to all protected endpoints
-- Public endpoints (like registration) omit security
-- Health checks omit security
+- Use `preHandler: [toFastifyPreHandler(rbac.{action}('{resource}'))]` for
+  protected endpoints
+- Import rbac from `@/features/auth/rbac.middleware`
+- Available actions: `read`, `create`, `update`, `delete`, `manage` (when
+  applicable)
+- Public endpoints (e.g., auth/register, health, docs) omit preHandler
+- Global swagger security is enabled; you can still add route-level `security`
+  when needed or leave it implicit
 
 ## Validation and Quality Checks
 

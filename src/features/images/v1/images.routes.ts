@@ -90,6 +90,7 @@ export const imageRoutes: FastifyPluginAsync = async app => {
                 summary: 'Get image statistics',
                 description: 'Retrieve aggregated statistics about images',
                 security: [{ bearerAuth: [] }],
+                querystring: schemas.ImageStatsQuerySchema,
                 response: {
                     200: schemas.ImageStatsResponseSchema,
                     403: ErrorResponseSchema,

@@ -28,15 +28,19 @@ They cover setup, development, testing, and deployment in a standardized way.
   Starts the server in debug mode (with breakpoint support).  
   👉 Use this if you need to investigate complex bugs.
 
+- **`pnpm run clean`**  
+  Cleans build artifacts, coverage reports, and cache files.  
+  👉 Use this when you encounter build or cache issues.
+
 ---
 
 ## 🗄️ Database
 
 - **`pnpm run db:migrate`**  
-  Applies pending migrations locally.
+  Applies pending database migrations in development mode.
 
 - **`pnpm run db:generate`**  
-  Regenerates the Prisma client.
+  Regenerates the Prisma client after schema changes.
 
 - **`pnpm run db:seed`**  
   Seeds the database with test data.
@@ -44,6 +48,10 @@ They cover setup, development, testing, and deployment in a standardized way.
 - **`pnpm run db:reset`**  
   Resets the local database (⚠️ deletes all data).  
   👉 Use this if your DB gets corrupted or you need a clean start.
+
+- **`pnpm run db:studio`**  
+  Opens Prisma Studio for visual database management.  
+  👉 Useful for inspecting and editing data during development.
 
 ---
 
@@ -57,6 +65,10 @@ They cover setup, development, testing, and deployment in a standardized way.
 
 - **`pnpm run format`**  
   Applies consistent formatting with Prettier.
+
+- **`pnpm run format:check`**  
+  Checks if code is properly formatted without making changes.  
+  👉 Useful in CI/CD to ensure code is formatted correctly.
 
 - **`pnpm run typecheck`**  
   Runs TypeScript type checks without building.  
@@ -95,6 +107,10 @@ They cover setup, development, testing, and deployment in a standardized way.
 - **`pnpm run validate:openapi`**  
   Validates OpenAPI schema generation.
 
+- **`pnpm run smoke:test`**  
+  Runs smoke tests against the API to verify basic functionality.  
+  👉 Quick health check for deployed applications.
+
 ---
 
 ## ⚙️ Build & Production
@@ -119,29 +135,39 @@ They cover setup, development, testing, and deployment in a standardized way.
   Runs the API inside a Docker container.
 
 - **`pnpm run docker:compose:dev`**  
-  Starts the development stack (PostgreSQL, optional pgAdmin) via Docker Compose
-  v2.
+  Starts the development stack (PostgreSQL, optional pgAdmin) via Docker
+  Compose.
+
 - **`pnpm run docker:compose:prod`**  
-  Starts the production stack (API + PostgreSQL) via Docker Compose v2.
+  Starts the production stack (API + PostgreSQL) via Docker Compose.
+
 - **`pnpm run docker:compose:integration`**  
-  Starts the integration testing stack via Docker Compose v2.
+  Starts the integration testing stack via Docker Compose.
+
 - **`pnpm run docker:compose:dev:down`**  
   Stops the development stack.
+
+- **`pnpm run docker:compose:prod:down`**  
+  Stops the production stack.
+
+- **`pnpm run docker:compose:integration:down`**  
+  Stops the integration testing stack.
+
 - **`pnpm run docker:compose:all:down`**  
-  Stops all stacks (dev, prod, integration).
+  Stops all Docker Compose stacks (dev, prod, integration).
 
 ---
 
 ## 📖 Documentation
 
 - **`pnpm run docs:generate`**  
-  Generates the API documentation (Swagger/OpenAPI).
+  Generates API documentation from code annotations.
 
 - **`pnpm run docs:serve`**  
-  Serves the documentation locally.
+  Serves the generated documentation locally on port 8080.
 
 - **`pnpm run generate:openapi`**  
-  Generates OpenAPI schema from code.
+  Generates OpenAPI schema from route definitions.
 
 ---
 
@@ -158,7 +184,8 @@ They cover setup, development, testing, and deployment in a standardized way.
 ## 🤖 CI/CD
 
 - **`pnpm run ci`**  
-  Runs typecheck + lint + tests (basic CI pipeline).
+  Runs typecheck + lint + test coverage + environment validation (basic CI
+  pipeline).
 
 - **`pnpm run ci:quality`**  
   Runs lint + typecheck + test coverage.

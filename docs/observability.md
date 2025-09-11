@@ -1,115 +1,168 @@
-# AI Observability
+# Observability
 
-Essential patterns for basic logging and debugging in initial API development.
+Structured logging, health monitoring, and request correlation for production
+debugging and monitoring.
 
-## Critical Observability Rules
+## Core Features
 
-1. **Always use structured JSON logging** with Pino and requestId correlation
-2. **Always implement basic health check** for service availability
-3. **Never log passwords or tokens** - keep other logging simple for
-   demo/development
-4. **Always use consistent log levels** (info/warn/error mapping)
+1. **Structured JSON logging** with request correlation
+2. **Health/readiness endpoints** for monitoring
+3. **Request performance tracking** with timing metrics
+4. **Security-aware data redaction** for sensitive information
 
-## Required Structured Logging
+## Logging Implementation
 
-Simple Pino setup for development and demo - minimal redaction, focus on request
-correlation.
+### Environment-Specific Configuration
 
 ```ts
-import pino from 'pino'
+// Development: Pretty-printed logs
+const developmentConfig = {
+  transport: {
+    target: 'pino-pretty',
+    options: { colorize: true, translateTime: 'HH:MM:ss' },
+  },
+}
 
-export const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  // Minimal redaction - just sensitive auth data
+// Production: Structured JSON
+const productionConfig = {
+  level: process.env.LOG_LEVEL ?? 'info',
   redact: ['req.body.password', 'req.headers.authorization'],
-})
-
-// Fastify integration
-const app = fastify({
-  logger,
-  genReqId: () => generateUUIDv7(), // Consistent with other IDs
-})
+}
 ```
 
-## Required Health Checks
+### Request Correlation
 
-Health endpoint for monitoring and readiness endpoint for orchestration.
+Every request gets a UUID v7 correlation ID for tracking across the system:
 
 ```ts
-// Basic health check for monitoring
-app.get('/api/health', async (req, reply) => {
-  try {
-    // Quick DB check
-    await prisma.$queryRaw`SELECT 1`
+// Automatic correlation ID generation
+const app = Fastify({
+  genReqId: () => generateUUIDv7(),
+  logger: {
+    /* redaction config */
+  },
+})
 
-    return reply.code(200).send({
+// Expose correlation ID to clients
+reply.header('x-request-id', request.id)
+```
+
+## Performance Monitoring
+
+### Request Timing
+
+High-resolution performance tracking with nanosecond precision:
+
+```ts
+// Start timing on request
+request.requestStartTime = process.hrtime.bigint()
+
+// Calculate response time
+const diff = process.hrtime.bigint() - request.requestStartTime
+const responseTimeMs = Number(diff / 1_000_000n) // Convert to milliseconds
+
+// Log with metrics
+request.log.info(
+  {
+    requestId: request.id,
+    method: request.method,
+    statusCode: reply.statusCode,
+    responseTime: `${responseTimeMs}ms`,
+    userId: request.user?.id,
+  },
+  'Request completed'
+)
+```
+
+## Health Monitoring
+
+### Essential Health Checks
+
+Simple endpoints for load balancers and orchestration:
+
+```ts
+// Basic health check
+app.get('/api/health', async (request, reply) => {
+  try {
+    await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 3000)
+      ),
+    ])
+
+    return reply.status(200).send({
       status: 'ok',
       timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
     })
   } catch (error) {
-    return reply.code(503).send({
-      status: 'error',
-      error: 'Database connection failed',
-      timestamp: new Date().toISOString(),
-    })
+    return reply.status(503).send({ status: 'error' })
   }
 })
 
-// Readiness check for orchestration
-app.get('/api/ready', async (req, reply) => {
-  // Check database and migrations readiness
-  // Returns 200 if ready, 503 if not ready
-  // See health.md for full implementation
+// Detailed readiness check
+app.get('/api/ready', async (request, reply) => {
+  const checks = {
+    database: await checkDatabase(),
+    migrations: await checkMigrations(),
+  }
+
+  const isReady = Object.values(checks).every(check => check.status === 'ready')
+  return reply
+    .status(isReady ? 200 : 503)
+    .send({ status: isReady ? 'ready' : 'not_ready', checks })
 })
 ```
 
-## Required Error Logging
+## Error Observability
 
-Centralize error handling with appropriate log levels and structured error
-information.
+### Structured Error Logging
+
+Context-aware error logging with intelligent severity levels:
 
 ```ts
-// Global error handler with structured logging
-app.setErrorHandler((error, request, reply) => {
-  const statusCode = error.statusCode || 500
-  const isServerError = statusCode >= 500
-
-  // Log server errors, warn for auth issues, skip client validation errors
-  if (isServerError) {
-    request.log.error(
-      {
-        error: {
-          message: error.message,
-          stack: error.stack,
-          code: error.code,
-        },
-        requestId: request.id,
-        userId: (request as any).user?.id,
-        url: request.url,
-        method: request.method,
-      },
-      'Server error occurred'
-    )
-  } else if ([401, 403].includes(statusCode)) {
-    request.log.warn(
-      {
-        errorCode: error.code,
-        requestId: request.id,
-        url: request.url,
-      },
-      'Authentication/authorization error'
-    )
-  }
-
-  // Return error response (see error-handling.md)
-  return reply.code(statusCode).send({
-    error: {
-      code: error.code || 'INTERNAL_SERVER_ERROR',
-      message: isServerError ? 'Internal server error' : error.message,
-      status: statusCode,
+// Log based on error type and severity
+if (error.status >= 500) {
+  request.log.error(
+    {
+      requestId: request.id,
+      error: { message: error.message, stack: error.stack },
+      userId: request.user?.id,
+      method: request.method,
+      url: request.url,
     },
-    requestId: request.id,
-    timestamp: new Date().toISOString(),
-  })
-})
+    'Server error'
+  )
+} else {
+  request.log.warn(
+    {
+      requestId: request.id,
+      errorCode: error.code,
+      userId: request.user?.id,
+    },
+    'Client error'
+  )
+}
+```
+
+## Data Security
+
+### Sensitive Data Redaction
+
+Automatic redaction of sensitive information from logs:
+
+```ts
+// Comprehensive redaction paths
+const redactPaths = [
+  'req.headers.authorization',
+  'res.headers["set-cookie"]',
+  'password',
+  'token',
+  'JWT_SECRET',
+  'DATABASE_URL',
+]
+
+// Applied automatically to all log entries
+const logger = pino({ redact: { paths: redactPaths, remove: true } })
 ```

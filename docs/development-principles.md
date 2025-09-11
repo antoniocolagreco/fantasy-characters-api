@@ -1,4 +1,4 @@
-# 🤖 AI Development Quick Reference
+# Development Quick Reference
 
 ## Key Principles
 
@@ -41,6 +41,7 @@ import {
   SortQuerySchema,
   VisibilitySchema,
   BaseEntitySchema,
+  OwnedEntitySchema,
   createSuccessResponseSchema,
   createPaginatedResponseSchema,
 } from '../shared/schemas'
@@ -59,17 +60,33 @@ export const UserSchema = Type.Intersect(
 
 // 2. Derive Types (in feature-name.types.ts)
 export type User = Static<typeof UserSchema>
-export const CreateUserSchema = Type.Omit(UserSchema, ['id'])
-export type CreateUserInput = Static<typeof CreateUserSchema>
+export const CreateUserPersistSchema = Type.Omit(UserSchema, [
+  'id',
+  'lastLogin',
+  'isBanned',
+  'banReason',
+  'bannedUntil',
+  'bannedById',
+  'createdAt',
+  'updatedAt',
+])
+export type CreateUserPersist = Static<typeof CreateUserPersistSchema>
 
 // 3. Repository Layer (in feature-name.repository.ts)
-export async function createUserInDb(data: CreateUserInput): Promise<User> {
-  return prisma.user.create({ data: { ...data, id: generateUUIDv7() } })
+export async function createUserInDb(data: CreateUserPersist): Promise<User> {
+  const id = generateUUIDv7()
+  return prisma.user.create({
+    data: {
+      id,
+      ...data,
+      lastLogin: new Date().toISOString(),
+    },
+  })
 }
 
 // 4. Service Layer (in feature-name.service.ts) - Object literal wrapper
 export const userService = {
-  async createUser(data: CreateUserInput): Promise<User> {
+  async createUser(data: CreateUserPersist): Promise<User> {
     // Business logic validation
     const existingUser = await findUserByEmail(data.email)
     if (existingUser) throw err('EMAIL_ALREADY_EXISTS', 'Email already exists') // See error-handling.md
@@ -99,14 +116,14 @@ export const userController = {
   // ... other controller methods
 } as const
 
-// 6. Register Routes (in feature-name.route.ts)
+// 6. Register Routes (in feature-name.routes.ts)
 app.post(
   '/users',
   {
     schema: {
-      body: CreateUserSchema, // Validates input
+      body: CreateUserRequestSchema, // Validates input (HTTP layer)
       response: {
-        201: createSuccessResponseSchema(UserSchema, 'UserResponse'),
+        201: createSuccessResponseSchema(PublicUserSchema, 'UserResponse'),
       }, // Centralized response helper
     },
   },

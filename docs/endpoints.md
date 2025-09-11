@@ -33,7 +33,7 @@ POST   /api/v1/auth/logout-all    # Logout from all devices
 POST   /api/v1/auth/refresh       # Refresh JWT token
 PUT    /api/v1/auth/change-password      # Change password
 
-# OAuth2 (Optional)
+# OAuth2 (Optional, disabled by default)
 GET    /api/v1/auth/oauth/:provider/start     # Redirect to provider (google, github)
 GET    /api/v1/auth/oauth/:provider/callback  # Handle callback
 POST   /api/v1/auth/oauth/link                # Link provider to account

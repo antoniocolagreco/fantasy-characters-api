@@ -3,6 +3,98 @@
 A modern, REST API for managing fantasy characters, built with Node.js,
 TypeScript, and Fastify.
 
+## ⚡ Technical Features
+
+### 🏗️ **Architecture & Performance**
+
+- **Schema-First Development** - TypeBox schemas drive both validation and
+  TypeScript types
+- **Fastify v5+** - High-performance web framework with built-in validation
+- **Modular Feature Architecture** - Clean separation with versioned API
+  endpoints (v1/v2)
+- **Cursor-Based Pagination** - Efficient pagination with stable sorting and
+  tie-breakers
+- **Response Compression** - Automatic Brotli/gzip compression for JSON
+  responses
+- **HTTP ETags** - Conditional requests and efficient caching headers
+
+### 🔒 **Security & Authentication**
+
+- **JWT with Refresh Tokens** - Stateless authentication with automatic token
+  rotation
+- **3-Layer RBAC System** - Role-based access control (Admin/Moderator/User)
+  across middleware, services, and repositories
+- **Defense in Depth** - Multiple security validation layers with
+  ownership-based resource filtering
+- **Input Sanitization** - HTML stripping and text normalization via Ajv
+  transforms
+- **Rate Limiting** - Request throttling (150/min anonymous, 500/min
+  authenticated)
+- **Security Headers** - Helmet protection with CSP, HSTS, and frame options
+
+### 🛡️ **Validation & Type Safety**
+
+- **Runtime Schema Validation** - TypeBox + Ajv for request/response validation
+- **Auto-Generated OpenAPI** - Swagger documentation derived from validation
+  schemas
+- **Strict TypeScript** - Zero `any` types, no type assertions, library-native
+  typing
+- **Error Normalization** - Standardized error responses with detailed
+  validation feedback
+- **Query Helpers** - Reusable pagination, filtering, and range validation
+  utilities
+
+### 🖼️ **File Processing**
+
+- **Image Pipeline** - Sharp-based WebP conversion with automatic resizing and
+  metadata stripping
+- **Multipart Upload** - Fastify multipart handling with size limits and MIME
+  validation
+- **Security-First Storage** - Server-generated UUIDs, no original filenames,
+  format normalization
+
+### 🗄️ **Database & ORM**
+
+- **Prisma ORM** - Type-safe database access with auto-generated client
+- **PostgreSQL** - ACID-compliant relational database with UUID v7 support
+- **Migration System** - Versioned schema changes with rollback capabilities
+- **Connection Pooling** - Efficient database connection management
+- **Seeding & Fixtures** - Comprehensive test data generation
+
+### 🧪 **Testing & Quality**
+
+- **Vitest Testing** - Unit, integration, and E2E tests with 80%+ coverage
+- **Mocking Strategy** - Repository mocks for unit tests, real DB for
+  integration
+- **Test Factories** - Standardized test creation with fixtures and helpers
+- **Coverage Validation** - Automated coverage thresholds with CI/CD integration
+
+### 🐳 **DevOps & Deployment**
+
+- **Multi-Stage Docker** - Optimized production builds (~261MB) with non-root
+  user
+- **Docker Compose** - Separate configurations for dev, prod, and testing
+- **Health Checks** - Application health and readiness endpoints for
+  orchestration
+- **Environment Validation** - TypeBox-based configuration validation
+- **Hot Reload** - TypeScript watch mode for development
+
+### 📊 **Monitoring & Observability**
+
+- **Structured Logging** - Pino logger with request correlation IDs
+- **Performance Metrics** - Response time tracking and error rate monitoring
+- **Request Tracing** - UUID v7-based request correlation across services
+- **Health Endpoints** - Database connectivity and migration status checks
+
+### 🔧 **Developer Experience**
+
+- **Code Generation** - Automated OpenAPI spec generation and validation
+- **Type Inference** - Full TypeScript inference from schemas to request
+  handlers
+- **Lint & Format** - ESLint + Prettier with strict rules and auto-formatting
+- **Script Automation** - Comprehensive package.json scripts for all workflows
+- **Documentation** - Extensive markdown docs with implementation examples
+
 ## 🚀 Quick Start
 
 ```bash

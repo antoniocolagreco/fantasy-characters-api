@@ -1,73 +1,100 @@
-# Authentication — JWT and OAuth2 (Google/GitHub)
+# Authentication — JWT (implemented) and OAuth2 (planned)
 
 This spec explains how clients authenticate and how we wire it server‑side. Keep
 it predictable and minimal.
 
 ---
 
+## Current Implementation Status
+
+**✅ Implemented:**
+
+- Username/password authentication with JWT
+- Access token (15 minutes) and refresh token system (refresh defaults to 7 days
+  in code; configurable)
+- Token rotation on refresh
+- Password hashing with Argon2
+- User model with OAuth fields prepared
+- JWT middleware for route protection
+- Complete auth endpoints: register, login, logout, logout-all, refresh,
+  change-password
+
+**📋 Planned (Not Yet Implemented):**
+
+- OAuth2 integration with Google/GitHub providers
+- OAuth start/callback endpoints
+- Provider linking/unlinking functionality
+- OAuth-specific business logic
+
+---
+
 ## Summary
 
-- Two auth modes: username/password with JWT; OAuth2 login via Google/GitHub
-- Single user table; OAuth accounts link to user via `(oauthProvider, oauthId)`
+- Primary mode: username/password with JWT (fully implemented)
+- OAuth2 login via Google/GitHub (planned, infrastructure ready)
+- Single user table with OAuth fields prepared: `oauthProvider`, `oauthId`
 - Access token (JWT) short‑lived; Refresh token rotates; Logout revokes refresh
 
 ---
 
 ## Endpoints (see endpoints.md for full list)
 
-- Local (JWT):
-  - POST /api/auth/register → create user (email, password)
-  - POST /api/auth/login → returns accessToken + refreshToken
-  - POST /api/auth/refresh → returns new accessToken (+ optionally new
-    refreshToken)
-  - POST /api/auth/logout → revoke refresh token
-  - POST /api/v1/auth/register, POST /api/v1/auth/login, POST
-    /api/v1/auth/logout, POST /api/v1/auth/refresh, PUT
-    /api/v1/auth/change-password
-- OAuth2 (Google/GitHub):
-  - GET /api/auth/oauth/:provider/start → redirect to provider (provider ∈
-    {google, github})
-  - GET /api/auth/oauth/:provider/callback → finalize login; set/return tokens
-  - Optional: POST /api/auth/oauth/link → link provider to logged‑in user
-  - Optional: POST /api/auth/oauth/unlink → unlink provider from logged‑in user
+**✅ Implemented (JWT endpoints):**
+
+- `POST /api/v1/auth/register` — Register new user (email, password)
+- `POST /api/v1/auth/login` — User login (returns accessToken + refreshToken)
+- `POST /api/v1/auth/refresh` — Refresh JWT token (rotates refresh token)
+- `POST /api/v1/auth/logout` — User logout (revoke refresh token)
+- `POST /api/v1/auth/logout-all` — Logout from all devices
+- `PUT /api/v1/auth/change-password` — Change user password
+
+**📋 Planned (OAuth2 endpoints):**
+
+- `GET /api/v1/auth/oauth/:provider/start` — Redirect to provider (google,
+  github)
+- `GET /api/v1/auth/oauth/:provider/callback` — Handle OAuth callback
+- `POST /api/v1/auth/oauth/link` — Link provider to logged‑in user
+- `POST /api/v1/auth/oauth/unlink` — Unlink provider from logged‑in user
 
 ---
 
 ## Tokens and lifetimes
 
-- Access token: JWT signed (HS256); lifetime 15 minutes
-- Refresh token: opaque UUIDv7 stored in DB (RefreshToken model); lifetime 30
-  days; rotate on use
-- Where to send:
-  - Access token: Authorization: Bearer `<jwt>`
-  - Refresh token: HTTP‑only cookie (preferred) or body on refresh/logout
-- JWT claims:
-  - sub: userId
-  - role: Role
-  - iat/exp: issuedAt/expiry
+- **Access token**: JWT signed (HS256); lifetime 15 minutes (configurable via
+  `JWT_ACCESS_EXPIRES_IN`)
+- **Refresh token**: opaque 64-character hex string (32 random bytes) stored in
+  DB (RefreshToken model); default lifetime 7 days in service; recommended to
+  align with `JWT_REFRESH_EXPIRES_IN` configuration; rotates on use
+- **Where to send**:
+  - Access token: `Authorization: Bearer <jwt>`
+  - Refresh token: Request body for refresh/logout operations
+- **JWT claims**:
+  - sub: userId (UUID format)
+  - role: Role (USER|MODERATOR|ADMIN)
+  - iat/exp: issuedAt/expiry timestamps
   - jti: token id (optional; useful for blacklisting)
 
 ### JWT claims — types (copy/paste)
 
-TypeScript (one-line type):
+TypeScript (actual implementation):
 
 ```ts
 export type JwtClaims = {
-  sub: string
+  sub: string // UUID format user ID
   role: 'USER' | 'MODERATOR' | 'ADMIN'
-  iat: number
-  exp: number
-  jti?: string
+  iat: number // Issued at timestamp
+  exp: number // Expiration timestamp
+  jti?: string // Optional JWT ID (UUID format)
 }
 ```
 
-TypeBox schema (for route validation / docs):
+TypeBox schema (actual implementation):
 
 ```ts
 import { Type } from '@sinclair/typebox'
 
 export const JwtClaimsSchema = Type.Object({
-  sub: Type.String(),
+  sub: Type.String({ format: 'uuid' }),
   role: Type.Union([
     Type.Literal('USER'),
     Type.Literal('MODERATOR'),
@@ -75,7 +102,7 @@ export const JwtClaimsSchema = Type.Object({
   ]),
   iat: Type.Integer(),
   exp: Type.Integer(),
-  jti: Type.Optional(Type.String()),
+  jti: Type.Optional(Type.String({ format: 'uuid' })),
 })
 ```
 
@@ -84,37 +111,48 @@ Note: always verify the JWT signature and `exp` server-side; use
 
 ---
 
-## Local flow (JWT)
+## Local flow (JWT) — Implemented
 
-1. Register
-   - Input: email, password (min length; strong hashing via Argon2)
-   - If email already used with OAuth only, allow setting password to enable
-     both modes
+1. **Register**
+   - Input: email, password, optional name
+   - Password must be 8+ characters; hashed with Argon2
+   - Creates user with role USER and isActive=true
+   - Returns user data with access + refresh tokens
 
-2. Login
-   - Verify password; deny if user.isBanned or !isActive
-   - Issue accessToken (JWT) + refreshToken (DB row)
+2. **Login**
+   - Verify email/password; deny if user.isBanned or !isActive
+   - Issue accessToken (JWT) + refreshToken (64-hex string in DB)
    - Store token device info (ip, userAgent)
+   - Returns user data with tokens
 
-3. Refresh
+3. **Refresh**
    - Validate refresh token (not revoked, not expired)
    - Rotate: revoke old, issue new refresh + access tokens
-   - Return new access token (and optionally set cookie for refresh)
+   - Return new access token and new refresh token
 
-4. Logout
-   - Revoke the refresh token; access token expires naturally
+4. **Logout**
+   - Revoke the specific refresh token; access token expires naturally
+   - Returns success message
+
+5. **Logout All**
+   - Revoke all refresh tokens for the user
+   - Requires valid access token for authentication
 
 ---
 
-## OAuth2 flow (Google/GitHub)
+## OAuth2 flow (Google/GitHub) — Planned Implementation
 
-1. Start
-   - Client hits /oauth/:provider/start → Fastify redirects to provider with
+**Note**: This section describes the planned OAuth2 implementation. The
+infrastructure is ready (config vars, dependencies, user model fields), but the
+actual OAuth endpoints and business logic are not yet implemented.
+
+1. **Start** (Planned)
+   - Client hits `/oauth/:provider/start` → Fastify redirects to provider with
      scopes:
      - Google: openid email profile
      - GitHub: read:user user:email
 
-2. Callback
+2. **Callback** (Planned)
    - Exchange code for provider tokens
    - Fetch user profile (id, email, name, avatar)
    - Link or create user:
@@ -124,36 +162,47 @@ Note: always verify the JWT signature and `exp` server-side; use
    - Apply business checks: isBanned/isActive
    - Issue access + refresh tokens as in local login
 
-3. Optional link/unlink
+3. **Optional link/unlink** (Planned)
    - Link requires logged‑in user; store oauthProvider+oauthId in user record
    - Unlink allowed when user still has another login method (password or other
      provider)
 
 ---
 
-## Fastify integration (ready-for-@fastify/oauth2)
+## Fastify integration
 
-Environment variables
+**✅ Current Implementation:**
 
-- OAUTH_ENABLED=false
-- GOOGLE_CLIENT_ID
-- GOOGLE_CLIENT_SECRET
-- GOOGLE_CALLBACK_URL
-- GITHUB_CLIENT_ID
-- GITHUB_CLIENT_SECRET
-- GITHUB_CALLBACK_URL
+Environment variables (configured):
 
-Quick register snippet (scaffold — see `src/features/auth/oauth.plugin.ts` in
-the repo):
+- `JWT_SECRET` — JWT signing secret
+- `JWT_REFRESH_SECRET` — Refresh token secret (optional)
+- `JWT_ACCESS_EXPIRES_IN` — Access token TTL (default: "15m")
+- `JWT_REFRESH_EXPIRES_IN` — Refresh token TTL (default: "30d")
+- `OAUTH_ENABLED` — OAuth feature flag (default: false)
+
+**📋 OAuth Configuration (Ready for Implementation):**
+
+Environment variables (ready but not used):
+
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `GOOGLE_CALLBACK_URL`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`
+- `GITHUB_CALLBACK_URL`
+
+OAuth plugin scaffold (guidance for future implementation):
 
 ```ts
-// plugin registers providers behind feature flag; start/callback routes are exposed only when enabled
+// Future OAuth plugin implementation
 import fastifyOauth2 from '@fastify/oauth2'
+
 export default async function oauthPlugin(fastify) {
   const disabled = process.env.OAUTH_ENABLED !== 'true'
-  if (disabled) return
+  if (disabled) return // Currently always disabled
 
-  // Google
+  // Google configuration
   await fastify.register(fastifyOauth2, {
     name: 'googleOAuth2',
     scope: ['openid', 'email', 'profile'],
@@ -164,11 +213,11 @@ export default async function oauthPlugin(fastify) {
       },
       auth: fastifyOauth2.GOOGLE_CONFIGURATION,
     },
-    startRedirectPath: '/api/auth/oauth/google/start',
+    startRedirectPath: '/api/v1/auth/oauth/google/start',
     callbackUri: process.env.GOOGLE_CALLBACK_URL,
   })
 
-  // GitHub (similar)
+  // GitHub configuration
   await fastify.register(fastifyOauth2, {
     name: 'githubOAuth2',
     scope: ['read:user', 'user:email'],
@@ -179,38 +228,74 @@ export default async function oauthPlugin(fastify) {
       },
       auth: fastifyOauth2.GITHUB_CONFIGURATION,
     },
-    startRedirectPath: '/api/auth/oauth/github/start',
+    startRedirectPath: '/api/v1/auth/oauth/github/start',
     callbackUri: process.env.GITHUB_CALLBACK_URL,
   })
 
-  // Callback routes: exchange code, fetch profile, link/create user, set HttpOnly refresh cookie and redirect to SPA
-  // See scaffold for implementation details and helpers (jwtSign, createRefreshToken)
+  // TODO: Implement callback routes with user creation/linking logic
 }
 ```
 
-Notes
+Notes:
 
-- Plugin is a scaffold: real logic must create/lookup users, check
-  `isBanned`/`isActive`, persist refresh token, and set cookie.
-- Keep providers disabled by default (`OAUTH_ENABLED=false`) so enabling is a
-  config change only.
-- We prefer server-side exchange (no client secret in browser). Use PKCE if you
-  later move the exchange to the client.
+- OAuth infrastructure is ready but not implemented
+- Keep providers disabled by default (`OAUTH_ENABLED=false`)
+- User model includes `oauthProvider` and `oauthId` fields
+- `@fastify/oauth2` dependency is already installed
+- JWT implementation uses `jsonwebtoken` and custom middleware
 
 ## Account model alignment (see data-models.md)
 
-- User.oauthProvider (String?) and User.oauthId (String?)
-- RefreshToken model for rotating tokens
-- Ban fields: isBanned, banReason, bannedUntil (RBAC governs who can set)
+**✅ Implemented User model fields:**
+
+- Core auth: `id`, `email`, `passwordHash`, `role`, `isActive`
+- OAuth ready: `oauthProvider` (String?), `oauthId` (String?)
+- Security: `isEmailVerified`, `lastPasswordChange`, `lastLogin`
+- Moderation: `isBanned`, `banReason`, `bannedUntil`, `bannedById`
+- RefreshToken model: separate table for rotating tokens with device info
+
+**Database schema (actual):**
+
+```prisma
+model User {
+  id              String  @id @db.Uuid
+  email           String  @unique
+  passwordHash    String
+  role            Role    @default(USER)
+  isEmailVerified Boolean @default(false)
+  isActive        Boolean @default(true)
+
+  // OAuth fields (ready for implementation)
+  oauthProvider   String?
+  oauthId         String?
+
+  // Security & moderation
+  isBanned        Boolean   @default(false)
+  banReason       String?
+  bannedUntil     DateTime?
+  bannedById      String?
+
+  // ... other fields
+}
+```
 
 ---
 
 ## Server wiring (Fastify)
 
-- Access token verification middleware on protected routes
-- Decorate request with req.user (id, role) from JWT
-- OAuth start/callback via provider SDKs or simple OAuth client
-- Refresh/logout endpoints operate only on the presented refresh token
+**✅ Current Implementation:**
+
+- JWT middleware (`createAuthMiddleware`) for protected routes
+- Request decoration with `req.user` (id, role) from JWT
+- Complete auth service with password hashing, token management
+- Refresh token repository with device tracking
+- Route protection via `preHandler` middleware
+
+**📋 Planned:**
+
+- OAuth start/callback routes via provider SDKs
+- Provider-specific user profile fetching
+- Account linking/unlinking business logic
 
 ---
 
@@ -227,34 +312,55 @@ Notes
 
 ---
 
-## Minimal contracts (for juniors/AI)
+## Minimal contracts
 
-Inputs
+**✅ Implemented Inputs:**
 
-- register: { email, password }
-- login: { email, password }
-- refresh: cookie.refreshToken or { refreshToken }
+- register: `{ email, password, name? }`
+- login: `{ email, password }`
+- refresh: `{ refreshToken }` (64-character hex string)
+- logout: `{ refreshToken }` (64-character hex string)
+- change-password: `{ currentPassword, newPassword }`
+
+**✅ Implemented Outputs:**
+
+- login/register: `{ data: { id, email, role, accessToken, refreshToken } }`
+- refresh: `{ data: { accessToken, refreshToken } }`
+- logout/change-password: `{ message, timestamp, requestId }`
+
+**📋 Planned (OAuth):**
+
 - oauth start: GET redirect
 - oauth callback: provider code in query
+- oauth link/unlink: provider management
 
-Outputs
+**Error codes:**
 
-- login/refresh/callback: { accessToken } (+ set-cookie: refreshToken)
-- logout: 204 or { requestId, timestamp }
-- profile: user JSON (filtered by role)
-
-Errors
-
-- 400 validation; 401 invalid credentials/token; 403 banned/inactive; 429 rate
-  limit
+- 400 validation errors
+- 401 invalid credentials/token
+- 403 banned/inactive user
+- 409 email already exists (register)
+- 429 rate limit exceeded
 
 ---
 
 ## Testing checklist
 
-- Register/login → 200 with JWT, cookie refresh
-- Refresh rotates token; old refresh is revoked
-- Logout revokes refresh; refresh again → 401/400
+**✅ Implemented & Testable:**
+
+- Register/login → 201/200 with JWT and refresh token in response body
+- Refresh rotates token; old refresh token is revoked
+- Logout revokes specific refresh token; using it again → 401
+- Logout-all revokes all user tokens
+- Change password requires valid current password
+- Banned user cannot login (403)
+- JWT contains correct user data (sub=userId, role, iat, exp)
+- Password hashing uses Argon2
+- Access token expires in 15 minutes
+- Refresh token expires in 30 days
+
+**📋 Planned (OAuth):**
+
 - OAuth callback creates/links account and issues tokens
-- Banned user cannot login/OAuth (403)
-- Profile requires valid access token; role is present in JWT claims
+- Provider linking respects existing accounts
+- Provider unlinking maintains login methods
