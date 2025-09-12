@@ -14,7 +14,6 @@ import { skillsRoutesV1 } from '@/features/skills/v1/skills.routes'
 import { tagsRoutesV1 } from '@/features/tags/v1/tags.routes'
 import { usersRoutesV1 } from '@/features/users/v1/users.routes'
 import { config } from '@/infrastructure/config'
-import prismaService from '@/infrastructure/database/prisma.service'
 import { compressionPlugin } from '@/shared/plugins/compression.plugin'
 import corsPlugin from '@/shared/plugins/cors.plugin'
 import { errorHandlerPlugin } from '@/shared/plugins/error-handler.plugin'
@@ -85,11 +84,14 @@ export async function buildApp(): Promise<FastifyInstance> {
     await app.register(multipartPlugin)
     await app.register(healthCheckPlugin)
 
-    // Add Prisma to all requests (use undefined to satisfy Fastify's GetterSetter typing)
+    // Add Prisma to all requests unless running in docs mode
     app.decorateRequest('prisma', undefined)
-    app.addHook('onRequest', async request => {
-        request.prisma = prismaService
-    })
+    if (process.env.DOCS_MODE !== 'true') {
+        const prismaModule = await import('@/infrastructure/database/prisma.service')
+        app.addHook('onRequest', async request => {
+            request.prisma = prismaModule.default
+        })
+    }
 
     // Create authentication middleware instance (available for RBAC when needed)
     const authMiddleware = createOptionalAuthMiddleware({

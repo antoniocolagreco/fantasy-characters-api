@@ -70,10 +70,15 @@ export const characterController = {
     },
     async createCharacter(request: FastifyRequest<{ Body: CreateCharacter }>, reply: FastifyReply) {
         if (!request.user) throw err('UNAUTHORIZED', 'Login required')
-        const character = await characterService.create(request.body, request.user)
-        invalidateByPrefix('characters:list')
-        setNoStore(reply)
-        return reply.code(HTTP_STATUS.CREATED).send(success(character, request.id))
+        try {
+            const character = await characterService.create(request.body, request.user)
+            invalidateByPrefix('characters:list')
+            setNoStore(reply)
+            return reply.code(HTTP_STATUS.CREATED).send(success(character, request.id))
+        } catch (e) {
+            request.log.error({ err: e, body: request.body }, 'createCharacter failed')
+            throw e
+        }
     },
     async updateCharacter(
         request: FastifyRequest<{ Params: CharacterParams; Body: UpdateCharacter }>,

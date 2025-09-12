@@ -40,6 +40,7 @@ export default fp(async (fastify: FastifyInstance) => {
             register: { max: 3, timeWindow: '1 minute' },
             forgotPassword: { max: 3, timeWindow: '1 minute' },
             refreshToken: { max: 10, timeWindow: '1 minute' },
+            verifySend: { max: 3, timeWindow: '1 minute' },
         },
         crud: {
             create: { max: 30, timeWindow: '1 minute' },
@@ -63,6 +64,7 @@ declare module 'fastify' {
                 register: { max: number; timeWindow: string }
                 forgotPassword: { max: number; timeWindow: string }
                 refreshToken: { max: number; timeWindow: string }
+                verifySend: { max: number; timeWindow: string }
             }
             crud: {
                 create: { max: number; timeWindow: string }

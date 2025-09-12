@@ -53,6 +53,7 @@ export const ConfigSchema = Type.Object(
 
         // Features
         RBAC_ENABLED: Type.Boolean({ default: true }),
+        EMAIL_VERIFICATION_ENABLED: Type.Boolean({ default: true }),
 
         // File upload
         MAX_FILE_SIZE: Type.Integer({ minimum: 1024, default: 5 * 1024 * 1024 }), // 5MB

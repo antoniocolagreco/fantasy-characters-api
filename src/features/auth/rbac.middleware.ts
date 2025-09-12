@@ -2,6 +2,7 @@ import type { PrismaClient } from '@prisma/client'
 
 import { can } from '@/features/auth/rbac.policy'
 import type { Action, OwnershipData, RbacContext, Resource } from '@/features/auth/rbac.schema'
+import { config } from '@/infrastructure/config'
 import { err } from '@/shared/errors'
 import type { Role, Visibility } from '@/shared/schemas'
 import type {
@@ -226,6 +227,32 @@ export function createRbacMiddleware(resource: Resource, action: Action) {
         // enforce visibility (returning 404 when resource not viewable) and RBAC nuances.
         if (action === 'read') {
             return
+        }
+
+        // Email verification gate: non-admin/moderator users must verify email before CREATE
+        if (action === 'create') {
+            // Skip when feature flag is disabled (allow runtime override via env for tests)
+            const flagEnabled =
+                config.EMAIL_VERIFICATION_ENABLED &&
+                process.env.EMAIL_VERIFICATION_ENABLED !== 'false'
+            if (!flagEnabled) {
+                // fallthrough to regular RBAC
+            } else {
+                const u = request.user
+                if (u && isValidRole(u.role) && u.role !== 'ADMIN' && u.role !== 'MODERATOR') {
+                    const client = request.prisma
+                    if (!isPrismaClient(client)) {
+                        throw err('DATABASE_ERROR', 'Prisma instance not available')
+                    }
+                    const row = await client.user.findUnique({
+                        where: { id: u.id },
+                        select: { isEmailVerified: true },
+                    })
+                    if (!row?.isEmailVerified) {
+                        throw err('FORBIDDEN', 'Email not verified')
+                    }
+                }
+            }
         }
 
         // Get route-specific RBAC config if available

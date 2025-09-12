@@ -4,6 +4,14 @@ All endpoints are exposed under versioned prefixes. Current stable version is
 `v1`. Future versions (e.g., `v2`) will live alongside v1 without breaking
 changes.
 
+Note
+
+- By default, regular users must verify their email before using any POST create
+  endpoints.
+- Admins and moderators are exempt.
+- Set `EMAIL_VERIFICATION_ENABLED=false` to disable this restriction (e.g., in
+  local/dev).
+
 ## 1. Utility / health checks
 
 ```http
@@ -32,6 +40,10 @@ POST   /api/v1/auth/logout        # User logout (invalidate/rotate token)
 POST   /api/v1/auth/logout-all    # Logout from all devices
 POST   /api/v1/auth/refresh       # Refresh JWT token
 PUT    /api/v1/auth/change-password      # Change password
+
+# Email verification
+POST   /api/v1/auth/verify/send          # Send verification email (auth required)
+GET    /api/v1/auth/verify/confirm       # Confirm email verification (public)
 
 # OAuth2 (Optional, disabled by default)
 GET    /api/v1/auth/oauth/:provider/start     # Redirect to provider (google, github)

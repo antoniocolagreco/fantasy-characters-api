@@ -1,7 +1,7 @@
 import { Value } from '@sinclair/typebox/value'
 
-import 'dotenv/config'
 import { type Config, ConfigSchema } from '@/shared/schemas'
+import 'dotenv/config'
 
 export function loadConfig(): Config {
     const rawConfig = {
@@ -34,6 +34,7 @@ export function loadConfig(): Config {
         LOG_PRETTY: process.env.LOG_PRETTY === 'true',
 
         RBAC_ENABLED: process.env.RBAC_ENABLED !== 'false',
+        EMAIL_VERIFICATION_ENABLED: process.env.EMAIL_VERIFICATION_ENABLED !== 'false',
 
         MAX_FILE_SIZE: process.env.MAX_FILE_SIZE
             ? parseInt(process.env.MAX_FILE_SIZE, 10)

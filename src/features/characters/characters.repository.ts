@@ -264,32 +264,42 @@ export const characterRepository = {
         }
     ) {
         const id = generateUUIDv7()
-        const character = await prisma.character.create({
-            data: {
-                id,
-                name: data.name,
-                visibility: data.visibility,
-                owner: { connect: { id: data.ownerId } },
-                ...(data.description ? { description: data.description } : {}),
-                ...(data.imageId ? { image: { connect: { id: data.imageId } } } : {}),
-                level: data.level,
-                experience: data.experience,
-                health: data.health,
-                mana: data.mana,
-                stamina: data.stamina,
-                strength: data.strength,
-                constitution: data.constitution,
-                dexterity: data.dexterity,
-                intelligence: data.intelligence,
-                wisdom: data.wisdom,
-                charisma: data.charisma,
-                age: data.age,
-                sex: data.sex ?? 'MALE',
-                race: { connect: { id: data.raceId } },
-                archetype: { connect: { id: data.archetypeId } },
-            },
-        })
-        return transform(character)
+        try {
+            const character = await prisma.character.create({
+                data: {
+                    id,
+                    name: data.name,
+                    visibility: data.visibility,
+                    owner: { connect: { id: data.ownerId } },
+                    ...(data.description ? { description: data.description } : {}),
+                    ...(data.imageId ? { image: { connect: { id: data.imageId } } } : {}),
+                    level: data.level,
+                    experience: data.experience,
+                    health: data.health,
+                    mana: data.mana,
+                    stamina: data.stamina,
+                    strength: data.strength,
+                    constitution: data.constitution,
+                    dexterity: data.dexterity,
+                    intelligence: data.intelligence,
+                    wisdom: data.wisdom,
+                    charisma: data.charisma,
+                    age: data.age,
+                    sex: data.sex ?? 'MALE',
+                    race: { connect: { id: data.raceId } },
+                    archetype: { connect: { id: data.archetypeId } },
+                },
+            })
+            return transform(character)
+        } catch (error) {
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2002')
+                    throw err('RESOURCE_CONFLICT', 'Character name already exists')
+                if (error.code === 'P2003' || error.code === 'P2025')
+                    throw err('RESOURCE_NOT_FOUND', 'Related resource not found')
+            }
+            throw error
+        }
     },
     async update(id: string, data: Prisma.CharacterUpdateInput) {
         try {
@@ -297,8 +307,9 @@ export const characterRepository = {
             return transform(character)
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2002') throw err('CONFLICT', 'Character name already exists')
-                if (error.code === 'P2025') throw err('NOT_FOUND', 'Character not found')
+                if (error.code === 'P2002')
+                    throw err('RESOURCE_CONFLICT', 'Character name already exists')
+                if (error.code === 'P2025') throw err('RESOURCE_NOT_FOUND', 'Character not found')
             }
             throw error
         }
@@ -309,7 +320,7 @@ export const characterRepository = {
             return true
         } catch (error) {
             if (error instanceof Prisma.PrismaClientKnownRequestError) {
-                if (error.code === 'P2025') throw err('NOT_FOUND', 'Character not found')
+                if (error.code === 'P2025') throw err('RESOURCE_NOT_FOUND', 'Character not found')
             }
             throw error
         }

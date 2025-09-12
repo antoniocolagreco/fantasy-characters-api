@@ -1,4 +1,5 @@
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+import { Type } from '@sinclair/typebox'
 import type { FastifyPluginAsync } from 'fastify'
 
 import { authController } from './auth.controller'
@@ -15,6 +16,7 @@ import {
 } from './auth.http.schema'
 
 import { createAuthMiddleware } from '@/features/auth/auth.middleware'
+import { verificationController } from '@/features/auth/v1/verification.controller'
 import { config } from '@/infrastructure/config'
 import type { BasicAuthRequest, BasicReply } from '@/shared'
 import { ErrorResponseSchema } from '@/shared/schemas'
@@ -150,5 +152,52 @@ export const authRoutesV1: FastifyPluginAsync = async app => {
             },
         },
         authController.changePassword
+    )
+
+    // POST /api/v1/auth/verify/send (auth required)
+    app.post(
+        '/auth/verify/send',
+        {
+            preHandler: async (request, reply) => {
+                const authRequest = request as BasicAuthRequest
+                const authReply = reply as BasicReply
+                authMiddleware(authRequest, authReply)
+            },
+            config: { rateLimit: app.rateLimitConfigs.auth.verifySend },
+            schema: {
+                tags: ['Authentication'],
+                summary: 'Send email verification link',
+                // Explicit empty body to satisfy content-type application/json without payload
+                body: Type.Object({}, { additionalProperties: false }),
+                response: {
+                    200: LogoutResponseSchema,
+                    202: LogoutResponseSchema,
+                    401: ErrorResponseSchema,
+                    429: ErrorResponseSchema,
+                    500: ErrorResponseSchema,
+                },
+            },
+        },
+        verificationController.send
+    )
+
+    // GET /api/v1/auth/verify/confirm
+    app.get(
+        '/auth/verify/confirm',
+        {
+            // Confirmation is public; keep default global rate limit
+            schema: {
+                tags: ['Authentication'],
+                summary: 'Confirm email verification',
+                querystring: Type.Object({ token: Type.Optional(Type.String()) }),
+                response: {
+                    200: LogoutResponseSchema,
+                    400: ErrorResponseSchema,
+                    429: ErrorResponseSchema,
+                    500: ErrorResponseSchema,
+                },
+            },
+        },
+        verificationController.confirm
     )
 }

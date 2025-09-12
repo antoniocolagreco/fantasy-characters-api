@@ -10,8 +10,10 @@ import type {
 
 import { jwtService } from '@/features/auth/jwt.service'
 import { passwordService } from '@/features/auth/password.service'
+import { verificationService } from '@/features/auth/verification.service'
 import { refreshTokenRepository, userService } from '@/features/users'
 import { config } from '@/infrastructure/config'
+import { mailer } from '@/infrastructure/email/mailer.service'
 import { err } from '@/shared/errors'
 import type { RoleLiterals } from '@/shared/schemas/common.schema'
 
@@ -86,6 +88,22 @@ export const authService = {
         }
 
         const user = await userService.create(userData)
+
+        // Send verification email if feature enabled
+        if (config.EMAIL_VERIFICATION_ENABLED) {
+            try {
+                const token = await verificationService.issue(user.id)
+                const base = process.env.APP_BASE_URL || ''
+                const link = `${base}/api/v1/auth/verify/confirm?token=${encodeURIComponent(token)}`
+                await mailer.send({
+                    to: user.email,
+                    subject: 'Verify your email',
+                    html: `<p>Please verify your email by clicking the link below:</p><p><a href="${link}">Verify Email</a></p>`,
+                })
+            } catch {
+                // Best-effort; do not block registration on email errors
+            }
+        }
 
         return {
             id: user.id,

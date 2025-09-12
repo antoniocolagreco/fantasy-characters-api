@@ -147,6 +147,17 @@ Duration: 4–6 days
 - [x] 6.13 Add error handling for all user operations
 - [x] 6.14 Write user tests (≥ 80% coverage)
 - [x] 6.15 Update OpenAPI docs for all user endpoints
+- [x] 6.16 Email verification - [x] 6.16.01 Add EMAIL_VERIFICATION_ENABLED flag
+      (config schema + loader) - [x] 6.16.02 Enforce RBAC CREATE gate for
+      unverified non‑admin/moderator users - [x] 6.16.03 Implement mailer
+      service (SMTP via Nodemailer; no‑op if SMTP not set) - [x] 6.16.04
+      Implement verification service (short‑lived JWT with audience
+      `email-verification`) - [x] 6.16.05 Add endpoints:
+      `POST /api/v1/auth/verify/send`, `GET /api/v1/auth/verify/confirm` - [x]
+      6.16.06 Trigger verification email on register when feature is enabled -
+      [x] 6.16.07 Update docs: authentication, endpoints, email - [ ] 6.16.08
+      Follow‑ups: tests (register/send/confirm, RBAC gate under flag on/off),
+      rate‑limit `POST /auth/verify/send`
 
 ---
 

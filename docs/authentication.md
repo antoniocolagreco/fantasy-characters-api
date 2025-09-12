@@ -18,6 +18,9 @@ it predictable and minimal.
 - JWT middleware for route protection
 - Complete auth endpoints: register, login, logout, logout-all, refresh,
   change-password
+- Email verification flow: send verification email, confirm token, and RBAC gate
+  blocking CREATE for unverified regular users (toggle via
+  EMAIL_VERIFICATION_ENABLED)
 
 **📋 Planned (Not Yet Implemented):**
 
@@ -47,6 +50,9 @@ it predictable and minimal.
 - `POST /api/v1/auth/logout` — User logout (revoke refresh token)
 - `POST /api/v1/auth/logout-all` — Logout from all devices
 - `PUT /api/v1/auth/change-password` — Change user password
+- `POST /api/v1/auth/verify/send` — Send verification email (requires auth)
+- `GET /api/v1/auth/verify/confirm?token=...` — Confirm email verification
+  (public)
 
 **📋 Planned (OAuth2 endpoints):**
 
@@ -113,30 +119,57 @@ Note: always verify the JWT signature and `exp` server-side; use
 
 ## Local flow (JWT) — Implemented
 
-1. **Register**
-   - Input: email, password, optional name
-   - Password must be 8+ characters; hashed with Argon2
-   - Creates user with role USER and isActive=true
-   - Returns user data with access + refresh tokens
+### Register
 
-2. **Login**
-   - Verify email/password; deny if user.isBanned or !isActive
-   - Issue accessToken (JWT) + refreshToken (64-hex string in DB)
-   - Store token device info (ip, userAgent)
-   - Returns user data with tokens
+- Input: email, password, optional name
+- Password must be 8+ characters; hashed with Argon2
+- Creates user with role USER and isActive=true
+- Sets isEmailVerified=false (user must verify email before creating content)
+- Returns user data with access + refresh tokens
 
-3. **Refresh**
-   - Validate refresh token (not revoked, not expired)
-   - Rotate: revoke old, issue new refresh + access tokens
-   - Return new access token and new refresh token
+### Login
 
-4. **Logout**
-   - Revoke the specific refresh token; access token expires naturally
-   - Returns success message
+- Verify email/password; deny if user.isBanned or !isActive
+- Issue accessToken (JWT) + refreshToken (64-hex string in DB)
+- Store token device info (ip, userAgent)
+- Returns user data with tokens
 
-5. **Logout All**
-   - Revoke all refresh tokens for the user
-   - Requires valid access token for authentication
+### Email verification gate
+
+- Non-verified users can authenticate and read public data, but cannot CREATE
+  domain entities
+- Enforcement happens in RBAC middleware for all create actions (see
+  Authorization doc)
+- Error: 403 FORBIDDEN with message "Email not verified"
+- Feature flag: set `EMAIL_VERIFICATION_ENABLED=false` to disable this gate
+  (useful for tests/dev)
+
+### Email verification flow
+
+- On register, if `EMAIL_VERIFICATION_ENABLED=true`, the server attempts to send
+  a verification email with a short‑lived tokenized link
+- Users can request a new link via `POST /api/v1/auth/verify/send` (auth
+  required)
+- The confirmation endpoint `GET /api/v1/auth/verify/confirm?token=...` verifies
+  the token and marks the user as verified
+- If the feature flag is disabled, the server won’t send emails and the gate is
+  not enforced
+
+### Refresh
+
+- Validate refresh token (not revoked, not expired)
+- Rotate: revoke old, issue new refresh + access tokens
+- Return new access token and new refresh token
+
+### Logout
+
+- Revoke the specific refresh token; access token expires naturally
+- Returns success message
+
+### Logout All
+
+- Revoke all refresh tokens for the user
+- Requires valid access token for authentication
 
 ---
 
@@ -296,6 +329,27 @@ model User {
 - OAuth start/callback routes via provider SDKs
 - Provider-specific user profile fetching
 - Account linking/unlinking business logic
+- Email verification delivery: token email + verify endpoint (planned). For now,
+  admins can verify via internal tooling or a future endpoint using
+  users.service.markEmailAsVerified()
+
+### Minimal enforcement example (current)
+
+```ts
+// RBAC middleware enforces the verification gate for all create actions
+if (action === 'create') {
+  const client = request.prisma
+  const userId = request.user?.id
+  const role = request.user?.role
+  if (client && userId && role !== 'ADMIN' && role !== 'MODERATOR') {
+    const row = await client.user.findUnique({
+      where: { id: userId },
+      select: { isEmailVerified: true },
+    })
+    if (!row?.isEmailVerified) throw err('FORBIDDEN', 'Email not verified')
+  }
+}
+```
 
 ---
 

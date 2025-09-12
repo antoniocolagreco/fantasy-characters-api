@@ -91,6 +91,24 @@ export function rbac(resource: string, action: string) {
 }
 ```
 
+Email verification gate (create-only):
+
+```typescript
+// Enforced in middleware for all CREATE actions
+if (
+  action === 'create' &&
+  user &&
+  user.role !== 'ADMIN' &&
+  user.role !== 'MODERATOR'
+) {
+  const row = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { isEmailVerified: true },
+  })
+  if (!row?.isEmailVerified) throw err('FORBIDDEN', 'Email not verified')
+}
+```
+
 **Usage**: Attach to routes to block users who shouldn't even try.
 
 ```typescript
@@ -328,6 +346,8 @@ export function canViewResource(
 - **Separation of concerns**: Each layer has ONE responsibility
 - **Pre-secured filters**: Service builds filters, repository applies them
 - **Consistent helpers**: Use centralized utilities for RBAC logic
+- **Create gating**: Block create actions for non-verified USERs
+  (middleware-level)
 
 ### **DON'T**
 

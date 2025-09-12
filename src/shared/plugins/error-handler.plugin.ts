@@ -129,7 +129,7 @@ export function errorHandlerPlugin(fastify: FastifyInstance): void {
             }
 
             // Handle generic errors
-            const errorResponse: ErrorResponse = {
+            const base: ErrorResponse = {
                 error: {
                     code: 'INTERNAL_SERVER_ERROR',
                     message: 'Internal server error',
@@ -140,6 +140,18 @@ export function errorHandlerPlugin(fastify: FastifyInstance): void {
                 requestId,
                 timestamp,
             }
+
+            // In test environment, include minimal diagnostic to help pinpoint failures
+            const errorResponse: ErrorResponse | (ErrorResponse & { diagnostic?: unknown }) =
+                process.env.NODE_ENV === 'test'
+                    ? {
+                          ...base,
+                          diagnostic: {
+                              name: (error as Error)?.name,
+                              message: (error as Error)?.message,
+                          },
+                      }
+                    : base
 
             request.log.error({ error: errorResponse, originalError: error }, 'Unknown error')
             return reply.status(500).send(errorResponse)
