@@ -102,7 +102,18 @@ export const CreateUserSchema = Type.Omit(
 )
 
 export const UpdateUserSchema = Type.Partial(
-    Type.Pick(UserSchema, ['name', 'bio', 'isEmailVerified', 'isActive', 'profilePictureId']),
+    Type.Intersect([
+        Type.Pick(UserSchema, ['name', 'bio', 'isEmailVerified', 'isActive', 'profilePictureId']),
+        Type.Object({
+            email: Type.Optional(
+                Type.String({
+                    format: 'email',
+                    transform: ['trim', 'toLowerCase'],
+                    description: 'User email address',
+                })
+            ),
+        }),
+    ]),
     {
         $id: 'UpdateUser',
         title: 'Update User',

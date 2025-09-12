@@ -14,6 +14,9 @@ import {
 
 import type { AuthenticatedUser } from '@/features/auth'
 import { passwordService } from '@/features/auth/password.service'
+import { verificationService } from '@/features/auth/verification.service'
+import { config } from '@/infrastructure/config'
+import { mailer } from '@/infrastructure/email/mailer.service'
 import { err } from '@/shared/errors'
 import {
     applyUserSecurityFilters,
@@ -129,7 +132,42 @@ export const userService = {
             throw err('FORBIDDEN', 'Access denied to update this user')
         }
 
-        return userRepository.update(id, data)
+        // Detect email change and enforce re-verification
+        const incomingEmail = data.email
+        const emailChanged =
+            typeof incomingEmail === 'string' &&
+            incomingEmail.length > 0 &&
+            incomingEmail !== existingUser.email
+
+        const updateData: UpdateUser = {
+            ...data,
+            ...(emailChanged ? { isEmailVerified: false } : {}),
+        }
+
+        const updated = await userRepository.update(id, updateData)
+
+        if (emailChanged) {
+            // Revoke all refresh tokens to force re-auth
+            await refreshTokenRepository.revokeAllByUserId(id)
+
+            // Best-effort: send verification email if enabled
+            if (config.EMAIL_VERIFICATION_ENABLED) {
+                try {
+                    const token = await verificationService.issue(id)
+                    const base = process.env.APP_BASE_URL || ''
+                    const link = `${base}/api/v1/auth/verify/confirm?token=${encodeURIComponent(token)}`
+                    await mailer.send({
+                        to: updated.email,
+                        subject: 'Verify your new email',
+                        html: `<p>Your email was changed. Please verify your new address by clicking the link below:</p><p><a href="${link}">Verify Email</a></p>`,
+                    })
+                } catch {
+                    // Ignore mail errors (non-blocking)
+                }
+            }
+        }
+
+        return updated
     },
 
     async delete(id: string, user?: AuthenticatedUser): Promise<void> {

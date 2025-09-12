@@ -171,8 +171,14 @@ export const userRepository = {
 
             return transformUserToSchema(user)
         } catch (error) {
-            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-                throw err('RESOURCE_NOT_FOUND', 'User not found')
+            if (error instanceof Prisma.PrismaClientKnownRequestError) {
+                if (error.code === 'P2025') {
+                    throw err('RESOURCE_NOT_FOUND', 'User not found')
+                }
+                if (error.code === 'P2002') {
+                    // Unique constraint failed (likely on email)
+                    throw err('EMAIL_ALREADY_EXISTS', 'User with this email already exists')
+                }
             }
             throw error
         }

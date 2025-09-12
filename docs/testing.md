@@ -441,3 +441,6 @@ pnpm test users.test.ts     # Run specific test
 pnpm test:watch             # Watch mode
 pnpm test:coverage          # Coverage report
 ```
+
+For deployment validation and health checks, see
+[smoke-testing.md](./smoke-testing.md).

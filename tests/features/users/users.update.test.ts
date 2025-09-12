@@ -139,5 +139,60 @@ describe('Users API v1 - Update Operations', () => {
 
             expect(response.statusCode).toBe(404)
         })
+
+        it('resets email verification and revokes tokens when email changes', async () => {
+            // Create a verified user (admin action)
+            const createResp = await app.inject({
+                method: 'POST',
+                url: '/api/v1/users',
+                payload: {
+                    email: 'verified.user@example.com',
+                    password: 'password123',
+                    name: 'Verified User',
+                    role: 'USER' as const,
+                    isEmailVerified: true,
+                },
+                headers: {
+                    'content-type': 'application/json',
+                    ...createAuthHeaders({ role: 'ADMIN' }),
+                },
+            })
+            const verifiedUserId = createResp.json().data.id as string
+
+            // Login to obtain a refresh token
+            const loginResp = await app.inject({
+                method: 'POST',
+                url: '/api/v1/auth/login',
+                payload: { email: 'verified.user@example.com', password: 'password123' },
+                headers: { 'content-type': 'application/json' },
+            })
+            expect(loginResp.statusCode).toBe(200)
+            const refreshToken = loginResp.json().data.refreshToken as string
+
+            // Change the user's email (admin)
+            const newEmail = 'new.email@example.com'
+            const updateResp = await app.inject({
+                method: 'PUT',
+                url: `/api/v1/users/${verifiedUserId}`,
+                payload: { email: newEmail },
+                headers: {
+                    'content-type': 'application/json',
+                    ...createAuthHeaders({ role: 'ADMIN' }),
+                },
+            })
+            expect(updateResp.statusCode).toBe(200)
+            const body = updateResp.json()
+            expect(body.data.email).toBe(newEmail)
+            expect(body.data.isEmailVerified).toBe(false)
+
+            // Attempt to refresh tokens with the old refresh token — should fail (revoked)
+            const refreshResp = await app.inject({
+                method: 'POST',
+                url: '/api/v1/auth/refresh',
+                payload: { refreshToken },
+                headers: { 'content-type': 'application/json' },
+            })
+            expect([400, 401]).toContain(refreshResp.statusCode)
+        })
     })
 })
