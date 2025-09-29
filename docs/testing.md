@@ -1,56 +1,43 @@
 # Testing Guide
 
-Comprehensive testing practices for the Fantasy Characters API using Vitest.
+Testing strategy and practices using Vitest.
 
-## Test Types & Organization
+## Test Organization
 
-The project uses **feature-based test organization** rather than test-type
-separation:
+Feature-based test organization:
 
 ```text
 tests/
-├── features/           # Feature-based tests (main)
-│   ├── characters/     # Character-related tests
-│   ├── auth/          # Authentication tests
-│   ├── users/         # User management tests
-│   ├── images/        # Image processing tests
-│   └── ...            # Other feature tests
+├── features/           # Feature tests
 ├── shared/            # Shared utility tests
 ├── infrastructure/    # Infrastructure tests
-├── helpers/           # Test utilities & factories
-├── setup/            # Test setup utilities
-└── setup.ts          # Global test configuration
+├── helpers/           # Test utilities
+└── setup/            # Test setup
 ```
 
-**Test Categories by Suffix:**
+### Test Types
 
-- **`.test.ts`** - Standard feature tests (integration + some unit)
-- **`.unit.test.ts`** - Pure unit tests with mocked dependencies
-- **`.integration.test.ts`** - API endpoint tests with real database
-- **`.service.test.ts`** - Service layer tests (usually unit with mocks)
-- **`.repository.test.ts`** - Repository layer tests (integration with database)
+- `.test.ts` - Integration tests
+- `.unit.test.ts` - Unit tests with mocks
+- `.integration.test.ts` - API endpoint tests
+- `.service.test.ts` - Service layer tests
+- `.repository.test.ts` - Repository tests
 
-## Actual Testing Architecture
+## Configuration
 
-### **Integration-First Approach**
+### Architecture
 
-Most tests are integration tests that use a real test database, providing
-confidence in the full stack while maintaining reasonable speed.
+- Integration-first approach with real database
+- Single `vitest.config.ts` configuration
+- 80% coverage threshold
+- Single-threaded execution
 
-### **Unified Configuration**
+### Database Strategy
 
-Single `vitest.config.ts` configuration handles all test types with:
-
-- **Global setup**: Database initialization, mocking, environment
-- **Single-threaded execution**: Prevents database conflicts
-- **Comprehensive coverage**: 80% global threshold with detailed exclusions
-
-### **Database Strategy**
-
-- **Shared test database**: PostgreSQL with full schema
-- **Global cleanup**: Automated cleanup between tests
-- **Seed utilities**: Comprehensive test data factories
-- **Transactional isolation**: Each test gets clean state
+- PostgreSQL test database
+- Automated cleanup between tests
+- Test data factories
+- Transactional isolation
 
 ## Test Template
 
@@ -122,7 +109,7 @@ export async function cleanupTestData() {
 }
 ```
 
-## Configuration
+## Test Configuration
 
 **Main**: `vitest.config.ts` - Unified configuration for all test types
 
@@ -133,9 +120,6 @@ export async function cleanupTestData() {
   "test:coverage": "vitest run --coverage"
 }
 ```
-
-**Note**: Previous specialized configurations (unit/integration/e2e) have been
-consolidated into the unified setup for simplicity.
 
 **Coverage**: 80% global, 95% for auth/validation/errors
 

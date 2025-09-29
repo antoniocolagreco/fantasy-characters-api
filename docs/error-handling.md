@@ -1,7 +1,6 @@
-# Error Handling Reference
+# Error Handling
 
-Complete implementation guide for centralized error handling in Fastify +
-TypeScript.
+Centralized error handling implementation for Fastify + TypeScript.
 
 ## Error Response Format
 

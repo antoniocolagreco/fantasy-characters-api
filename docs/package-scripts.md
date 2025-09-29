@@ -5,7 +5,7 @@ They cover setup, development, testing, and deployment in a standardized way.
 
 ---
 
-## 🚀 Setup environment
+## Setup Environment
 
 - **`pnpm run setup`**  
   Installs dependencies, prepares the database, and compiles the project.  
@@ -93,7 +93,7 @@ They cover setup, development, testing, and deployment in a standardized way.
 
 ---
 
-## 🔧 Validation & Quality
+## Validation & Quality
 
 - **`pnpm run validate`**  
   Runs complete validation pipeline (format, typecheck, lint, tests, coverage).

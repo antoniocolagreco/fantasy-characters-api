@@ -1,38 +1,20 @@
-# Development Quick Reference
+# Development Standards
 
-## Key Principles
+## Core Principles
 
-1. **Schema-First**: Define TypeBox schemas, derive TypeScript types
-2. **Single Source of Truth**: Never duplicate type definitions - always import
-   from `src/shared/schemas`
-3. **Functional over OOP**: Pure functions wrapped in object literals for
-   organization
-4. **KISS**: Simplest code that works
-5. **YAGNI**: Only build what's needed right now
-6. **DRY**: Extract common code, don't over-abstract
-7. **Centralized Schemas**: All shared schemas in `src/shared/schemas/` with
-   proper exports
-8. **Object Literal Wrappers**: Use object literals to namespace and organize
-   pure functions
+1. **Schema-First Development**: Define TypeBox schemas, derive TypeScript types
+2. **Single Source of Truth**: Centralized type definitions in `src/shared/schemas`
+3. **Functional Architecture**: Pure functions organized in object literals
+4. **Type Safety**: Strict TypeScript with no `any` types or assertions
 
-## Schema-First Development Workflow
+## Implementation Workflow
 
-This workflow aligns with our [project structure](./project-structure.md) and
-ensures consistent implementation across all features.
-
-### Plan → Scaffold → Schema → Types → Repository → Service → Controller → Errors → Tests → Docs
-
-1. **Plan** - Define feature requirements and API endpoints
-2. **Scaffold** - Generate versioned folders (`v1/`, `v2/`) + shared files
-3. **Schema** - Create TypeBox validation schemas in each version
-4. **Types** - Define domain TypeScript types
-5. **Repository** - Set up Prisma models and database access layer
-6. **Service** - Implement business logic and coordinate repositories
-7. **Controller** - Create HTTP handlers calling services
-8. **Errors** - Add custom error handling (see
-   [error-handling.md](./error-handling.md))
-9. **Tests** - Write unit and integration tests
-10. **Docs** - Document API endpoints and usage
+1. **Schema Definition**: Create TypeBox validation schemas
+2. **Type Generation**: Derive TypeScript types from schemas
+3. **Repository Layer**: Database access with Prisma
+4. **Service Layer**: Business logic implementation
+5. **Controller Layer**: HTTP request handling
+6. **Testing**: Unit and integration test coverage
 
 ```ts
 // 1. Import centralized schemas (ALWAYS required first step)

@@ -22,7 +22,7 @@ it predictable and minimal.
   blocking CREATE for unverified regular users (toggle via
   EMAIL_VERIFICATION_ENABLED)
 
-**📋 Planned (Not Yet Implemented):**
+**Planned (Not Yet Implemented):**
 
 - OAuth2 integration with Google/GitHub providers
 - OAuth start/callback endpoints
@@ -54,7 +54,7 @@ it predictable and minimal.
 - `GET /api/v1/auth/verify/confirm?token=...` — Confirm email verification
   (public)
 
-**📋 Planned (OAuth2 endpoints):**
+**Planned (OAuth2 endpoints):**
 
 - `GET /api/v1/auth/oauth/:provider/start` — Redirect to provider (google,
   github)
@@ -214,7 +214,7 @@ Environment variables (configured):
 - `JWT_REFRESH_EXPIRES_IN` — Refresh token TTL (default: "30d")
 - `OAUTH_ENABLED` — OAuth feature flag (default: false)
 
-**📋 OAuth Configuration (Ready for Implementation):**
+**OAuth Configuration (Ready for Implementation):**
 
 Environment variables (ready but not used):
 
@@ -324,7 +324,7 @@ model User {
 - Refresh token repository with device tracking
 - Route protection via `preHandler` middleware
 
-**📋 Planned:**
+**Planned:**
 
 - OAuth start/callback routes via provider SDKs
 - Provider-specific user profile fetching

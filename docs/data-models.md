@@ -19,7 +19,7 @@ using Prisma schema format. This reflects the current implementation.
 - Equipment slots use `onDelete: Restrict` (not `SetNull`)
 - All foreign key fields explicitly use `@db.Uuid`
 
-**📋 Documentation vs Implementation:**
+**Documentation vs Implementation:**
 
 The original documentation showed aspirational designs. This version reflects
 the actual implemented schema with these key differences:
@@ -241,7 +241,7 @@ model User {
   security)
 - **isActive**: ⚠️ Present but unused - Could be removed or used for account
   deactivation
-- **OAuth fields**: 📋 Ready for implementation (`oauthProvider`, `oauthId`)
+- **OAuth fields**: Ready for implementation (`oauthProvider`, `oauthId`)
 - **Relations**: Use explicit relation names for Prisma compatibility
 
 ### RefreshToken

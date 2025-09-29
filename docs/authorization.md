@@ -1,4 +1,16 @@
-# RBAC Implementation Guide
+# Authorization & RBAC
+
+## Security Architecture
+
+API req## Implementation
+
+### 1. Middleware Layer
+
+**Purpose**: Authenticate users and check if their ROLE can access the ROUTE.w through three security layers:
+
+```text
+MIDDLEWARE → SERVICE → REPOSITORY
+```ion Guide
 
 **Core Principle**: Security is handled at 3 different layers. Each layer has a
 single, clear responsibility and works together to create defense in depth.
@@ -17,31 +29,19 @@ Your API request flows through 3 layers, each doing one specific job:
                    THIS data?"
 ```
 
-### **What Each Layer Does**
+### Layer Responsibilities
 
-| Layer          | Primary Job                           | Security Role                    |
-| -------------- | ------------------------------------- | -------------------------------- |
-| **MIDDLEWARE** | Check if user's role can use endpoint | Block unauthorized role access   |
-| **SERVICE**    | Apply business rules                  | Check specific permissions       |
-| **REPOSITORY** | Execute database operations           | Use pre-filtered, secure queries |
-
-**Note**: Controllers are pure HTTP coordinators that transport data between
-middleware and services - they don't perform security checks.
-
-### **Security Strategy**
-
-Each layer **validates independently** - never trust that previous layers got it
-right:
-
-- **Middleware**: "Are you even allowed to try this endpoint?"
-- **Service**: "Can you actually do this specific action on this specific data?"
-- **Repository**: "Here's your data, pre-filtered for security"
+| Layer        | Responsibility                        |
+| ------------ | ------------------------------------- |
+| MIDDLEWARE   | Route-level role authorization        |
+| SERVICE      | Business logic and resource ownership |
+| REPOSITORY   | Execute pre-filtered queries          |
 
 ---
 
-## 🎯 **Roles & Permissions**
+## Roles & Permissions
 
-### **User Roles**
+### User Roles
 
 - **ADMIN**: Can do everything except, modify other admins. Can promote users to
   moderator and viceversa.
@@ -61,7 +61,7 @@ right:
 
 ---
 
-## 🛠️ **Implementation**
+## Implementation
 
 ### **1. Middleware Layer**
 
@@ -75,10 +75,8 @@ export function rbac(resource: string, action: string) {
     const { user } = req
     const role = user?.role
 
-    // Anonymous users can only read
     if (!role) return action === 'read'
 
-    // Define what each role can do at route level
     const permissions = {
       ADMIN: ['read', 'create', 'update', 'delete', 'manage'],
       MODERATOR: ['read', 'create', 'update', 'delete'],
@@ -91,10 +89,9 @@ export function rbac(resource: string, action: string) {
 }
 ```
 
-Email verification gate (create-only):
+Email verification middleware:
 
 ```typescript
-// Enforced in middleware for all CREATE actions
 if (
   action === 'create' &&
   user &&
@@ -109,65 +106,29 @@ if (
 }
 ```
 
-**Usage**: Attach to routes to block users who shouldn't even try.
+### 2. Service Layer
 
-```typescript
-app.get(
-  '/images',
-  {
-    preHandler: [rbac('images', 'read')],
-  },
-  controller.listImages
-)
-```
-
-### **2. Service Layer**
-
-**Purpose**: This is where the REAL security decisions happen. Check ownership,
-visibility, and business rules.
-
-**Key concept**: The service decides WHO can see WHAT data by building security
-filters.
+**Purpose**: Business logic and authorization checks, resource ownership validation.
 
 ```typescript
 export const imageService = {
   async listImages(params: any, user?: User) {
-    // Step 1: Build security filters based on user role
     const securityFilters = this.buildSecurityFilters(user)
-
-    // Step 2: Combine with business filters (tags, etc.)
     const filters = { ...securityFilters, tags: params.tags }
-
-    // Step 3: Let repository execute with secure filters
     return imageRepository.findImages(filters)
   },
 
   async updateImage(id: string, data: any, user: User) {
-    // Step 1: Get current resource state
     const image = await imageRepository.findById(id)
     if (!image) throw err('NOT_FOUND')
-
-    // Step 2: Check if THIS user can modify THIS specific resource
     if (!this.canModify(user, image)) throw err('FORBIDDEN')
-
-    // Step 3: Perform the update
     return imageRepository.update(id, data)
   },
 
-  // PRIVATE: Build security filters for different roles
   buildSecurityFilters(user?: User) {
-    if (!user) {
-      // Anonymous: only public content
-      return { visibility: 'PUBLIC' }
-    }
-
-    if (user.role === 'ADMIN') {
-      // Admin sees everything
-      return {}
-    }
-
+    if (!user) return { visibility: 'PUBLIC' }
+    if (user.role === 'ADMIN') return {}
     if (user.role === 'MODERATOR') {
-      // Moderator sees: PUBLIC + HIDDEN + own content
       return {
         OR: [
           { visibility: 'PUBLIC' },
@@ -176,38 +137,23 @@ export const imageService = {
         ],
       }
     }
-
-    // Regular USER sees: PUBLIC + own content
     return {
       OR: [{ visibility: 'PUBLIC' }, { ownerId: user.id }],
     }
   },
 
-  // PRIVATE: Check if user can modify specific resource
   canModify(user: User, resource: any): boolean {
-    // Owner can always modify their own content
     if (resource.ownerId === user.id) return true
-
-    // Admin can modify non-admin content
-    if (user.role === 'ADMIN') {
-      return resource.ownerRole !== 'ADMIN'
-    }
-
-    // Moderator can modify USER content
-    if (user.role === 'MODERATOR') {
-      return resource.ownerRole === 'USER'
-    }
-
+    if (user.role === 'ADMIN') return resource.ownerRole !== 'ADMIN'
+    if (user.role === 'MODERATOR') return resource.ownerRole === 'USER'
     return false
   },
 }
 ```
 
-### **3. Repository Layer**
+### 3. Repository Layer
 
-**Purpose**: Execute database queries with filters that are ALREADY SECURE.
-
-**Important**: Repository has NO idea about users, roles, or permissions!
+**Purpose**: Execute database queries with pre-filtered, secure conditions.
 
 ```typescript
 export const imageRepository = {
@@ -289,7 +235,7 @@ Let's trace a request: `GET /api/v1/images?tags=fantasy`
 
 ---
 
-## 🔧 **Reusable Helpers**
+## Reusable Helpers
 
 Create these utility functions to avoid repeating security logic:
 
@@ -385,7 +331,7 @@ async rbacMiddleware(req) {
 
 ---
 
-## 📋 **Quick Templates**
+## Quick Templates
 
 ### **Route Setup**
 

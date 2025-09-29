@@ -11,12 +11,6 @@ Current versioning strategy and patterns for maintaining API compatibility.
 - Shared business logic across versions
 - Version-specific HTTP schemas and controllers
 
-**📋 Planned (Not Yet Implemented):**
-
-- v2 API version
-- Domain-to-version adapters
-- Breaking change handling between versions
-
 ## Core Pattern
 
 Use URL versioning with major versions only: `/api/v1/`, `/api/v2/`

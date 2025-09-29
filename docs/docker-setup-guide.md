@@ -1,30 +1,22 @@
-# 🐳 Docker Setup Guide - Fantasy Characters API
+# Docker Setup Guide
 
-Complete guide for junior developers on Docker, Docker Compose, and package.json
-integration for the Fantasy Characters API.
+Docker and Docker Compose configuration for the Fantasy Characters API
 
-## 📋 Table of Contents
+## Table of Contents
 
-1. [General Overview](#-general-overview)
-2. [Project Docker Structure](#-project-docker-structure)
-3. [Main Dockerfile](#-main-dockerfile)
-4. [Custom PostgreSQL](#-custom-postgresql)
-5. [Docker Compose Configurations](#-docker-compose-configurations)
-6. [Package.json Scripts](#-packagejson-scripts)
-7. [Development Workflow](#-development-workflow)
+1. [Overview](#overview)
+2. [Project Structure](#project-structure)
+3. [Dockerfile](#dockerfile)
+4. [PostgreSQL Configuration](#postgresql-configuration)
+5. [Docker Compose](#docker-compose)
+6. [Package Scripts](#package-scripts)
+7. [Usage](#usage)
 
 ---
 
-## 🎯 General Overview
+## Overview
 
-The project uses **Docker** and **Docker Compose** for:
-
-- **Consistent environment**: Same setup across all machines (dev, staging,
-  prod)
-- **Managed database**: PostgreSQL with automatic configuration
-- **Zero manual setup**: One command and everything works
-- **Isolation**: Each service in its own container
-- **Scalability**: Easy to add Redis, pgAdmin, etc.
+The project uses Docker and Docker Compose for containerized development and deployment with PostgreSQL database management.
 
 ### Container Architecture
 
@@ -41,66 +33,51 @@ The project uses **Docker** and **Docker Compose** for:
 
 ---
 
-## 📁 Project Docker Structure
+## Project Structure
 
 ```text
 fantasy-characters-api/
-├── Dockerfile                          # API Node.js build
-├── docker-compose.dev.yml              # Local development
-├── docker-compose.prod.yml             # Production
-├── docker-compose.integration.yml      # Integration testing
+├── Dockerfile
+├── docker-compose.dev.yml
+├── docker-compose.prod.yml
+├── docker-compose.integration.yml
 └── docker/
     └── postgres/
-        ├── Dockerfile                   # Custom PostgreSQL
+        ├── Dockerfile
         └── init/
-            └── 01-init-db.sql          # DB initialization script
+            └── 01-init-db.sql
 ```
 
 ---
 
-## 🚀 Main Dockerfile
+## Dockerfile
 
-### Multi-Stage Build Strategy
-
-The `Dockerfile` uses **4 stages** to optimize size and security:
+### Multi-Stage Build
 
 ```dockerfile
-# 1. BASE: Node.js 24 + pnpm + utilities
 FROM node:24-alpine AS base
 RUN corepack enable pnpm
-RUN apk add --no-cache openssl wget  # For Prisma and health checks
+RUN apk add --no-cache openssl wget
 
-# 2. DEPS: Production dependencies only
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
-# 3. BUILD: Compile TypeScript and generate Prisma
 FROM base AS build
 RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm db:generate && pnpm build
 
-# 4. RUNTIME: Minimal final image
 FROM base AS runtime
-# Create non-root user for security
 RUN adduser --system --uid 1001 apiuser
 COPY --from=build --chown=apiuser:nodejs /app/dist ./dist
 USER apiuser
 CMD ["node", "dist/server.js"]
 ```
 
-### Key Features
-
-- **Alpine Linux**: Lightweight base image (vs Ubuntu)
-- **Multi-stage**: Removes build tools from final image
-- **Non-root user**: Container security
-- **Health checks**: Automatic monitoring
-- **Prisma-ready**: Includes OpenSSL for database
-
 ---
 
-## 🐘 Custom PostgreSQL
+## PostgreSQL Configuration
 
 ### PostgreSQL Dockerfile
 
@@ -130,25 +107,22 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 SET timezone = 'UTC';
 ```
 
-### Why Custom?
+### Features
 
-- **UUID v7 support**: Required by Prisma models
-- **Consistent timezone**: Always UTC
-- **Zero manual configuration**: Everything automatic
-- **Same setup everywhere**: Dev, test, production
+- UUID v7 extension support
+- UTC timezone configuration
+- Automated initialization
 
 ---
 
-## 🔧 Docker Compose Configurations
+## Docker Compose
 
-### docker-compose.dev.yml (Development)
-
-**Purpose**: Local development with persistent database
+### Development Configuration
 
 ```yaml
 services:
   postgres:
-    build: ./docker/postgres # Uses custom PostgreSQL
+    build: ./docker/postgres
     environment:
       POSTGRES_DB: fantasy_characters_dev
       POSTGRES_USER: fantasy_user
@@ -156,26 +130,22 @@ services:
     ports:
       - '5432:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data # Persists data
+      - postgres_data:/var/lib/postgresql/data
       - ./docker/postgres/init:/docker-entrypoint-initdb.d
 
-  pgadmin: # Graphical database interface
+  pgadmin:
     image: dpage/pgadmin4:latest
     ports:
       - '8080:80'
-    profiles: [admin] # Start only with --profile admin
+    profiles: [admin]
 ```
 
-**Command**: `pnpm docker:compose:dev` → PostgreSQL + pgAdmin only
-
-### docker-compose.prod.yml (Production)
-
-**Purpose**: Complete API + Database deployment
+### Production Configuration
 
 ```yaml
 services:
   api:
-    build: . # Uses main Dockerfile
+    build: .
     environment:
       NODE_ENV: production
       DATABASE_URL: postgresql://fantasy_user:fantasy_password@postgres:5432/fantasy_characters_dev
@@ -183,194 +153,122 @@ services:
       - '3000:3000'
     depends_on:
       postgres:
-        condition: service_healthy # Wait for postgres to be ready
+        condition: service_healthy
 
   postgres:
-    # Same setup as dev
+    # Same configuration as development
 ```
 
-**Command**: `pnpm docker:compose:prod` → API + PostgreSQL + pgAdmin
-
-### docker-compose.integration.yml (Testing)
-
-**Purpose**: Automated testing with temporary database
+### Integration Testing Configuration
 
 ```yaml
 services:
   api:
-    # Setup for testing with LOG_LEVEL: debug
     volumes:
-      - ./src:/app/src:ro # Read-only mount for debugging
+      - ./src:/app/src:ro
 
-  redis: # Cache for advanced testing
+  redis:
     image: redis:7-alpine
     profiles: [cache]
 ```
 
-**Command**: `pnpm docker:compose:integration` → Complete setup for CI/CD
-
 ---
 
-## 📜 Package.json Scripts
+## Package Scripts
 
-### Main Docker Scripts
+### Docker Commands
 
 ```json
 {
   "scripts": {
-    // Build API image
     "docker:build": "docker build -t fantasy-characters-api .",
-
-    // Run single API container
     "docker:run": "docker run -p 3000:3000 fantasy-characters-api",
-
-    // Docker Compose for development (DB only)
     "docker:compose:dev": "docker compose -f docker-compose.dev.yml up -d",
-
-    // Docker Compose production (API + DB)
     "docker:compose:prod": "docker compose -f docker-compose.prod.yml up -d",
-
-    // Docker Compose for CI/CD testing
     "docker:compose:integration": "docker compose -f docker-compose.integration.yml up -d",
-
-    // Stop all containers
     "docker:compose:dev:down": "docker compose -f docker-compose.dev.yml down",
-
-    // Stop ALL environments
     "docker:compose:all:down": "docker compose -f docker-compose.dev.yml down && docker compose -f docker-compose.prod.yml down && docker compose -f docker-compose.integration.yml down"
   }
 }
 ```
 
-### Related Scripts
+### Database Management
 
 ```json
 {
   "scripts": {
-    // Database management (works with containers)
-    "db:migrate": "prisma migrate dev", // Create/apply migrations
-    "db:generate": "prisma generate", // Generate Prisma client
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
     "db:seed": "tsx src/infrastructure/database/seed.ts",
     "db:reset": "prisma migrate reset --force",
-    "db:studio": "prisma studio", // Database GUI
-
-    // Development
-    "dev": "tsx watch src/server.ts", // Local development
-    "build": "tsc && tsc-alias -p tsconfig.json", // Build for Docker
-
-    // CI/CD integration
-    "smoke:test": "tsx scripts/smoke-tests.ts" // Test after deployment
+    "db:studio": "prisma studio"
   }
 }
 ```
 
 ---
 
-## 🔄 Development Workflow
+## Usage
 
-### 1. Initial Project Setup
+### Setup
 
 ```bash
-# Clone repository
-git clone <repo-url>
-cd fantasy-characters-api
-
-# Install dependencies
 pnpm install
-
-# Start PostgreSQL database
 pnpm docker:compose:dev
-
-# Generate Prisma client
 pnpm db:generate
-
-# Apply migrations
 pnpm db:migrate
-
-# Seed test data
 pnpm db:seed
 ```
 
-### 2. Daily Development
+### Development
 
 ```bash
-# Morning: Start database
 pnpm docker:compose:dev
-
-# Development: API in watch mode (outside Docker)
 pnpm dev
-
-# Database GUI (optional)
-pnpm docker compose -f docker-compose.dev.yml --profile admin up -d
-# Open http://localhost:8080
 ```
 
-### 3. Integration Testing
+### Testing
 
 ```bash
-# Setup test environment
 pnpm docker:compose:integration
-
-# Run test suite
 pnpm test:e2e
-
-# Cleanup
-pnpm docker:compose:dev:down
 ```
 
-### 4. Build and Deploy
+### Production
 
 ```bash
-# Build Docker image
 pnpm docker:build
-
-# Test in production-like environment
 pnpm docker:compose:prod
+```
 
-# Smoke test
+---
+
+## Commands
+
+### Local Development
+
+```bash
+pnpm docker:compose:dev
+pnpm dev
+```
+
+### Production Deployment
+
+```bash
+pnpm docker:compose:prod
 pnpm smoke:test
+```
 
-# Cleanup
+### Database Admin
+
+```bash
+pnpm docker compose -f docker-compose.dev.yml --profile admin up -d
+# Access pgAdmin at http://localhost:8080
+```
+
+### Cleanup
+
+```bash
 pnpm docker:compose:all:down
+docker system prune -f
 ```
-
----
-
-## 🎯 Quick Commands
-
-### Quick Setup
-
-```bash
-pnpm docker:compose:dev          # Start database only
-pnpm dev                         # Start API in development
-```
-
-### Complete Test
-
-```bash
-pnpm docker:compose:prod         # Start everything (API + DB)
-pnpm smoke:test                  # Verify it works
-pnpm docker:compose:dev:down     # Stop everything (dev)
-```
-
-### Debug Database
-
-```bash
-pnpm docker compose -f docker-compose.dev.yml --profile admin up -d  # Start pgAdmin
-# Go to http://localhost:8080
-# Login: admin@fantasy-api.dev / admin123
-```
-
-### Complete Reset
-
-```bash
-pnpm docker:compose:all:down     # Stop all environments
-docker system prune -f           # Clean images/cache
-pnpm docker:compose:dev          # Restart from scratch
-```
-
----
-
-**Note**: This Docker configuration ensures every developer has the same
-environment, simplifies deployment, and reduces "works on my machine" problems
-🚀

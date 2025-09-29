@@ -2,7 +2,7 @@
 
 Managing dependencies between features with clear and unidirectional rules.
 
-## 💡 Key Rule: Always Unidirectional
+## Key Rule: Always Unidirectional
 
 ```text
 SHARED ← INFRASTRUCTURE ← USER ← AUTH (with RBAC) ← FEATURES (protected)
@@ -30,7 +30,7 @@ import { passwordService } from '@/features/auth/password.service'
 import { rbac } from '@/features/auth/rbac.middleware'
 ```
 
-### 🔧 Architecture Clarifications
+### Architecture Clarifications
 
 **RBAC is integrated within AUTH feature**, not separate:
 

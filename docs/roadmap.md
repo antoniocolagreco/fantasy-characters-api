@@ -1,4 +1,6 @@
-# Fantasy Characters API — Development Roadmap (v1)
+# Development Roadmap (v1)
+
+This roadmap outlines development milestones and task dependencies following the project's documented principles.tasy Characters API — Development Roadmap (v1)
 
 This roadmap is structured as independent, junior-friendly tasks with clear
 milestones. It follows the project’s documented principles and uses the same
@@ -292,7 +294,7 @@ Duration: 2-3 days
 
 ---
 
-## 13 🎯 Perks System (Dependencies: M1-M12)
+## 13. Perks System (Dependencies: M1-M12)
 
 Duration: 2-3 days
 
@@ -464,7 +466,7 @@ Duration: 2-3 days
 
 ---
 
-## 📋 Development Guidelines
+## Development Guidelines
 
 ### Mandatory Workflow for Each Feature
 

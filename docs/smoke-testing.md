@@ -44,7 +44,7 @@ docker exec fantasy-characters-api-api-1 npx prisma db seed
 pnpm smoke:test --start
 ```
 
-> **💡 Note**: The `--start` option starts the API server but doesn't handle
+> **Note**: The `--start` option starts the API server but doesn't handle
 > database setup. You must apply migrations and seed data manually first.
 
 ## Quick Usage
